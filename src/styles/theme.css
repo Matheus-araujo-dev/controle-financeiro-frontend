@@ -1,0 +1,90 @@
+:root {
+  color: #1f1d1a;
+  background:
+    radial-gradient(circle at top right, rgba(19, 93, 102, 0.14), transparent 32%),
+    linear-gradient(180deg, #fbf7ef 0%, #f0e5d8 100%);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.admin-layout {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.admin-layout__sider {
+  border-inline-end: 1px solid rgba(19, 93, 102, 0.1);
+  background: rgba(255, 252, 247, 0.92) !important;
+  backdrop-filter: blur(12px);
+}
+
+.admin-layout__brand {
+  padding: 24px 20px;
+}
+
+.admin-layout__brand h4 {
+  margin: 0;
+}
+
+.admin-layout__header {
+  height: auto;
+  padding: 24px 24px 8px;
+  background: transparent;
+}
+
+.admin-layout__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.admin-layout__content {
+  padding: 0 24px 24px;
+}
+
+.admin-layout__breadcrumb {
+  margin: 0 0 16px;
+}
+
+.admin-layout__panel {
+  padding: 24px;
+  border: 1px solid rgba(19, 93, 102, 0.12);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 24px 50px rgba(31, 29, 26, 0.06);
+}
+
+.dashboard-card {
+  min-height: 176px;
+}
+
+.page-state {
+  display: flex;
+  min-height: 240px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-direction: column;
+}
+
+@media (max-width: 992px) {
+  .admin-layout__header {
+    padding: 20px 16px 8px;
+  }
+
+  .admin-layout__content {
+    padding: 0 16px 16px;
+  }
+
+  .admin-layout__panel {
+    padding: 16px;
+  }
+}

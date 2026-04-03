@@ -1,0 +1,42 @@
+name: frontend-ci
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+
+jobs:
+  build-test-sonar:
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_VERSION: '22'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test with coverage
+        run: npm run coverage
+
+      - name: Sonar scan
+        if: ${{ secrets.SONAR_TOKEN != '' && secrets.SONAR_HOST_URL != '' }}
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Require Sonar configuration
+        if: ${{ secrets.SONAR_TOKEN == '' || secrets.SONAR_HOST_URL == '' }}
+        run: echo "Sonar disabled in CI because SONAR_TOKEN or SONAR_HOST_URL is missing. Configure secrets to enforce the quality gate."

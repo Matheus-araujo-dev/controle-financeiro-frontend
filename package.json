@@ -1,0 +1,41 @@
+{
+  "name": "controle-financeiro-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend administrativo do sistema de controle financeiro.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "quality:check": "npm run build && npm run coverage"
+  },
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "antd": "^6.3.5",
+    "axios": "^1.14.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-hook-form": "^7.72.1",
+    "react-router-dom": "^7.14.0",
+    "zod": "^4.3.6",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^25.5.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.2",
+    "jsdom": "^29.0.1",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.3",
+    "vitest": "^4.1.2"
+  }
+}
