@@ -1,8 +1,10 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage';
 import { AdminLayout } from '../layouts/AdminLayout';
+import { AccessDeniedPage } from '../pages/AccessDeniedPage';
 import { NotFoundPage } from './NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
+import { placeholderRouteObjects } from './route-definitions';
 
 export const appRoutes: RouteObject[] = [
   {
@@ -26,8 +28,13 @@ export const appRoutes: RouteObject[] = [
         handle: {
           title: 'Dashboard'
         }
-      }
+      },
+      ...placeholderRouteObjects
     ]
+  },
+  {
+    path: '/acesso-negado',
+    element: <AccessDeniedPage />
   },
   {
     path: '*',

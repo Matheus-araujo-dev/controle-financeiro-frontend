@@ -10,7 +10,7 @@ const bootstrapChecklist = [
 
 export function DashboardPage() {
   return (
-    <Space direction={undefined} orientation="vertical" size={24} style={{ width: '100%' }}>
+    <Space orientation="vertical" size={24} style={{ width: '100%' }}>
       <Row gutter={[16, 16]}>
         <Col xs={24} md={8}>
           <Card className="dashboard-card">
@@ -40,7 +40,7 @@ export function DashboardPage() {
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={14}>
           <Card title="Estrutura inicial pronta">
-            <Space direction={undefined} orientation="vertical" size={12}>
+            <Space orientation="vertical" size={12}>
               {bootstrapChecklist.map((item) => (
                 <Typography.Text key={item}>{item}</Typography.Text>
               ))}

@@ -1,6 +1,6 @@
 # Frontend - Controle Financeiro
 
-Bootstrap inicial do frontend administrativo do sistema de controle financeiro, alinhado a `Fase 0` do workspace.
+Fundacao tecnica inicial do frontend administrativo do sistema de controle financeiro, alinhada ate a `Fase 1` do workspace.
 
 ## Stack
 
@@ -45,6 +45,7 @@ npm run coverage
 
 - copiar `.env.example` para `.env.local` quando quiser trocar a base URL da API
 - valor padrao: `http://localhost:5000/api/v1`
+- auth de tela pode ser preparada por `VITE_AUTH_MODE=development` ou `VITE_AUTH_MODE=jwt`
 
 ## Qualidade
 
@@ -57,7 +58,10 @@ npm run coverage
 - shell administrativo
 - layout base
 - rota `/dashboard`
-- cliente HTTP inicial
-- store base
+- rotas placeholder das proximas fases
+- cliente HTTP com interceptors
+- store base de shell, auth e notificacoes
+- tabela padrao e shell de formulario
+- guard de rota preparado
 - estados padrao de tela
 - testes e cobertura desde o bootstrap

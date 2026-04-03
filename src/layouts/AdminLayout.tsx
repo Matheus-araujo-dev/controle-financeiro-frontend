@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Breadcrumb, Layout, Menu, Space, Typography } from 'antd';
-import { Link, Outlet, useMatches } from 'react-router-dom';
+import { Link, Outlet, useLocation, useMatches } from 'react-router-dom';
 import { navigationItems } from '../constants/navigation';
 import { useAppShellStore } from '../store/app-shell-store';
 
@@ -10,6 +10,7 @@ type RouteHandle = {
 
 export function AdminLayout() {
   const matches = useMatches();
+  const location = useLocation();
   const { collapsed, pageTitle, setCollapsed, setPageTitle } = useAppShellStore();
 
   const breadcrumbItems = useMemo(
@@ -20,6 +21,17 @@ export function AdminLayout() {
         .map((title) => ({ title })),
     [matches]
   );
+
+  const selectedKey = useMemo(() => {
+    const currentPath = location.pathname;
+
+    return (
+      navigationItems
+        .map((item) => item.key)
+        .sort((left, right) => right.length - left.length)
+        .find((key) => currentPath === key || currentPath.startsWith(`${key}/`)) ?? '/dashboard'
+    );
+  }, [location.pathname]);
 
   useEffect(() => {
     setPageTitle(breadcrumbItems.at(-1)?.title ?? 'Dashboard');
@@ -41,7 +53,7 @@ export function AdminLayout() {
         </div>
         <Menu
           mode="inline"
-          selectedKeys={['/dashboard']}
+          selectedKeys={[selectedKey]}
           items={navigationItems.map((item) => ({
             key: item.key,
             label: <Link to={item.key}>{item.label}</Link>
@@ -50,7 +62,7 @@ export function AdminLayout() {
       </Layout.Sider>
       <Layout>
         <Layout.Header className="admin-layout__header">
-          <Space direction={undefined} orientation="vertical" size={0}>
+          <Space orientation="vertical" size={0}>
             <Typography.Text className="admin-layout__eyebrow">Nucleo administrativo</Typography.Text>
             <Typography.Title level={3}>{pageTitle}</Typography.Title>
           </Space>
