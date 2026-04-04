@@ -32,6 +32,10 @@ export const navigationItems = [
     label: 'Contas a receber'
   },
   {
+    key: '/movimentacoes',
+    label: 'Movimentacoes'
+  },
+  {
     key: '/faturas',
     label: 'Faturas'
   }

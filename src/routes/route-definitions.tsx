@@ -8,6 +8,10 @@ import {
   formasPagamentoModuleConfig,
   pessoasModuleConfig
 } from '../features/cadastros/module-config';
+import { FinancialAccountFormPage } from '../features/financeiro/FinancialAccountFormPage';
+import { FinancialAccountListPage } from '../features/financeiro/FinancialAccountListPage';
+import { MovimentacoesPage } from '../features/financeiro/MovimentacoesPage';
+import { contasPagarModuleConfig, contasReceberModuleConfig } from '../features/financeiro/module-config';
 import { ModulePlaceholderPage } from '../pages/ModulePlaceholderPage';
 
 type PlaceholderRouteDefinition = {
@@ -18,13 +22,6 @@ type PlaceholderRouteDefinition = {
 };
 
 const placeholderRoutes: PlaceholderRouteDefinition[] = [
-  { path: 'contas-pagar', title: 'Contas a pagar', summary: 'Modulo previsto para a fase 3.', phase: 3 },
-  { path: 'contas-pagar/nova', title: 'Nova conta a pagar', summary: 'Formulario previsto para a fase 3.', phase: 3 },
-  { path: 'contas-pagar/:id', title: 'Detalhe de conta a pagar', summary: 'Edicao prevista para a fase 3.', phase: 3 },
-  { path: 'contas-receber', title: 'Contas a receber', summary: 'Modulo previsto para a fase 3.', phase: 3 },
-  { path: 'contas-receber/nova', title: 'Nova conta a receber', summary: 'Formulario previsto para a fase 3.', phase: 3 },
-  { path: 'contas-receber/:id', title: 'Detalhe de conta a receber', summary: 'Edicao prevista para a fase 3.', phase: 3 },
-  { path: 'movimentacoes', title: 'Movimentacoes', summary: 'Modulo previsto para a fase 3.', phase: 3 },
   { path: 'faturas', title: 'Faturas', summary: 'Modulo previsto para a fase 4.', phase: 4 },
   { path: 'faturas/:id', title: 'Detalhe de fatura', summary: 'Visao detalhada prevista para a fase 4.', phase: 4 },
   { path: 'importacoes-whatsapp', title: 'Importacoes WhatsApp', summary: 'Modulo previsto para a fase 7.', phase: 7 },
@@ -144,6 +141,58 @@ export const supportRegistryRouteObjects: RouteObject[] = [
     element: <MasterDataFormPage config={contasGerenciaisModuleConfig} />,
     handle: {
       title: 'Detalhe de conta gerencial'
+    }
+  }
+];
+
+export const financialRouteObjects: RouteObject[] = [
+  {
+    path: 'contas-pagar',
+    element: <FinancialAccountListPage config={contasPagarModuleConfig} />,
+    handle: {
+      title: 'Contas a pagar'
+    }
+  },
+  {
+    path: 'contas-pagar/nova',
+    element: <FinancialAccountFormPage config={contasPagarModuleConfig} />,
+    handle: {
+      title: 'Nova conta a pagar'
+    }
+  },
+  {
+    path: 'contas-pagar/:id',
+    element: <FinancialAccountFormPage config={contasPagarModuleConfig} />,
+    handle: {
+      title: 'Detalhe de conta a pagar'
+    }
+  },
+  {
+    path: 'contas-receber',
+    element: <FinancialAccountListPage config={contasReceberModuleConfig} />,
+    handle: {
+      title: 'Contas a receber'
+    }
+  },
+  {
+    path: 'contas-receber/nova',
+    element: <FinancialAccountFormPage config={contasReceberModuleConfig} />,
+    handle: {
+      title: 'Nova conta a receber'
+    }
+  },
+  {
+    path: 'contas-receber/:id',
+    element: <FinancialAccountFormPage config={contasReceberModuleConfig} />,
+    handle: {
+      title: 'Detalhe de conta a receber'
+    }
+  },
+  {
+    path: 'movimentacoes',
+    element: <MovimentacoesPage />,
+    handle: {
+      title: 'Movimentacoes'
     }
   }
 ];

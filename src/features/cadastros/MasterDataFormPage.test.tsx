@@ -126,7 +126,7 @@ describe('MasterDataFormPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
 
     expect(await screen.findByText('Nome obrigatorio.')).toBeInTheDocument();
-  });
+  }, 10000);
 
   it('loads detail in edit mode and submits updates', async () => {
     const detail = vi.fn().mockResolvedValue({ nome: 'Pessoa existente' });

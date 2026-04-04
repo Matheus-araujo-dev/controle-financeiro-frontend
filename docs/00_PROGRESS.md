@@ -1,7 +1,7 @@
 # Progress Log - Frontend
 
 ## Ultima fase concluida
-- Fase 2: cadastros de apoio concluida com listas, formularios e integracao HTTP para pessoas, formas de pagamento, contas bancarias, cartoes e contas gerenciais.
+- Fase 3: nucleo financeiro concluida com listas, formularios e acoes de negocio para contas a pagar, contas a receber e movimentacoes.
 
 ## Decisoes locais
 - O bootstrap foi feito manualmente, sem template Vite gerado, para manter a estrutura exatamente alinhada ao workspace.
@@ -11,6 +11,9 @@
 - A validacao local de build e testes precisa rodar fora do sandbox porque Vite/Vitest precisam spawnar o loader de configuracao.
 - A protecao de rota ficou preparada por store de auth e modo configuravel via `VITE_AUTH_MODE`, sem exigir login real nesta fase.
 - A fase 2 foi concentrada em shells genericos de cadastro e configuracao por modulo para reduzir duplicacao e manter a cobertura sustentavel.
+- A fase 3 reaproveitou o shell generico para o nucleo financeiro, mas adicionou comportamento proprio para rateio, calculo de valor liquido e acoes `liquidar` e `cancelar`.
+- Os contratos do backend passaram a ser refletidos em `types`, `services` HTTP, `module-config`, schemas e rotas reais, substituindo os placeholders da fase 3.
+- O setup global de testes ganhou `ResizeObserver` mock para manter os componentes do Ant Design validaveis em ambiente `jsdom`.
 
 ## Pendencias nao criticas
 - configurar secrets reais de SonarQube/SonarCloud no CI para ativar o quality gate remoto.
