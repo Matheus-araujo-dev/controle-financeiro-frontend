@@ -6,9 +6,12 @@ export function applyServerValidationErrors(
 ) {
   Object.entries(errors).forEach(([field, messages]) => {
     const firstMessage = messages[0];
+    const normalizedField = field.length > 0
+      ? `${field.charAt(0).toLowerCase()}${field.slice(1)}`
+      : field;
 
     if (firstMessage) {
-      setFieldError(field, firstMessage);
+      setFieldError(normalizedField, firstMessage);
     }
   });
 }

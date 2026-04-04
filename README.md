@@ -1,6 +1,6 @@
 # Frontend - Controle Financeiro
 
-Fundacao tecnica inicial do frontend administrativo do sistema de controle financeiro, alinhada ate a `Fase 1` do workspace.
+Frontend administrativo do sistema de controle financeiro, alinhado ate a `Fase 2` do workspace.
 
 ## Stack
 
@@ -58,10 +58,11 @@ npm run coverage
 - shell administrativo
 - layout base
 - rota `/dashboard`
-- rotas placeholder das proximas fases
+- rotas reais da fase 2 para cadastros de apoio
 - cliente HTTP com interceptors
 - store base de shell, auth e notificacoes
 - tabela padrao e shell de formulario
 - guard de rota preparado
 - estados padrao de tela
 - testes e cobertura desde o bootstrap
+- types e services HTTP espelhados com os contratos do backend para os cadastros de apoio

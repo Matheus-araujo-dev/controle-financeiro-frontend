@@ -4,7 +4,7 @@ import { AdminLayout } from '../layouts/AdminLayout';
 import { AccessDeniedPage } from '../pages/AccessDeniedPage';
 import { NotFoundPage } from './NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
-import { placeholderRouteObjects } from './route-definitions';
+import { placeholderRouteObjects, supportRegistryRouteObjects } from './route-definitions';
 
 export const appRoutes: RouteObject[] = [
   {
@@ -29,6 +29,7 @@ export const appRoutes: RouteObject[] = [
           title: 'Dashboard'
         }
       },
+      ...supportRegistryRouteObjects,
       ...placeholderRouteObjects
     ]
   },

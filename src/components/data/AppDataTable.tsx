@@ -1,11 +1,13 @@
 import { Button, Empty, Table, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
+import type { TablePaginationConfig } from 'antd';
 import { PageState } from '../states/PageState';
 
 type AppDataTableProps<T extends object> = {
   columns: TableColumnsType<T>;
   dataSource: T[];
   rowKey: keyof T | ((record: T) => string);
+  pagination?: false | TablePaginationConfig;
   loading?: boolean;
   errorMessage?: string;
   emptyMessage?: string;
@@ -16,6 +18,7 @@ export function AppDataTable<T extends object>({
   columns,
   dataSource,
   rowKey,
+  pagination = false,
   loading = false,
   errorMessage,
   emptyMessage = 'Nenhum registro encontrado.',
@@ -51,7 +54,7 @@ export function AppDataTable<T extends object>({
       columns={columns}
       dataSource={dataSource}
       rowKey={rowKey}
-      pagination={false}
+      pagination={pagination}
     />
   );
 }

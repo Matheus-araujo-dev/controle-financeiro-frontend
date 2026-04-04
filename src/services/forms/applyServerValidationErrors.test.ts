@@ -28,4 +28,17 @@ describe('applyServerValidationErrors', () => {
 
     expect(setFieldError).not.toHaveBeenCalled();
   });
+
+  it('normalizes pascal case field names from the backend', () => {
+    const setFieldError = vi.fn();
+
+    applyServerValidationErrors(
+      {
+        Nome: ['Nome obrigatorio.']
+      },
+      setFieldError
+    );
+
+    expect(setFieldError).toHaveBeenCalledWith('nome', 'Nome obrigatorio.');
+  });
 });

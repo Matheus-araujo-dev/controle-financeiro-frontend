@@ -8,6 +8,22 @@ export const navigationItems = [
     label: 'Pessoas'
   },
   {
+    key: '/formas-pagamento',
+    label: 'Formas de pagamento'
+  },
+  {
+    key: '/contas-bancarias',
+    label: 'Contas bancarias'
+  },
+  {
+    key: '/cartoes',
+    label: 'Cartoes'
+  },
+  {
+    key: '/contas-gerenciais',
+    label: 'Contas gerenciais'
+  },
+  {
     key: '/contas-pagar',
     label: 'Contas a pagar'
   },
