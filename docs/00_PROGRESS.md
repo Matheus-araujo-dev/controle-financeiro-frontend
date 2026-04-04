@@ -1,7 +1,7 @@
 # Progress Log - Frontend
 
 ## Ultima fase concluida
-- Fase 3: nucleo financeiro concluida com listas, formularios e acoes de negocio para contas a pagar, contas a receber e movimentacoes.
+- Fase 4: cartoes e faturas concluida com listagem de faturas, detalhe com itens agrupados e acao de pagamento.
 
 ## Decisoes locais
 - O bootstrap foi feito manualmente, sem template Vite gerado, para manter a estrutura exatamente alinhada ao workspace.
@@ -14,6 +14,9 @@
 - A fase 3 reaproveitou o shell generico para o nucleo financeiro, mas adicionou comportamento proprio para rateio, calculo de valor liquido e acoes `liquidar` e `cancelar`.
 - Os contratos do backend passaram a ser refletidos em `types`, `services` HTTP, `module-config`, schemas e rotas reais, substituindo os placeholders da fase 3.
 - O setup global de testes ganhou `ResizeObserver` mock para manter os componentes do Ant Design validaveis em ambiente `jsdom`.
+- A fase 4 substituiu o placeholder de `faturas` por telas reais de listagem e detalhe, refletindo os contratos de agrupamento, itens e pagamento vindos do backend.
+- O frontend passou a expor a rastreabilidade da fatura tambem nas movimentacoes, com `faturaCartaoId` incorporado aos tipos financeiros.
+- O fluxo de pagamento da fatura ficou isolado na tela de detalhe, com recarga do estado da propria fatura apos a acao para manter a coerencia da visao economica versus caixa.
 
 ## Pendencias nao criticas
 - configurar secrets reais de SonarQube/SonarCloud no CI para ativar o quality gate remoto.

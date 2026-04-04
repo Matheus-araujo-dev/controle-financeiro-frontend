@@ -10,6 +10,8 @@ import {
 } from '../features/cadastros/module-config';
 import { FinancialAccountFormPage } from '../features/financeiro/FinancialAccountFormPage';
 import { FinancialAccountListPage } from '../features/financeiro/FinancialAccountListPage';
+import { FaturaDetailPage } from '../features/financeiro/FaturaDetailPage';
+import { FaturasPage } from '../features/financeiro/FaturasPage';
 import { MovimentacoesPage } from '../features/financeiro/MovimentacoesPage';
 import { contasPagarModuleConfig, contasReceberModuleConfig } from '../features/financeiro/module-config';
 import { ModulePlaceholderPage } from '../pages/ModulePlaceholderPage';
@@ -22,8 +24,6 @@ type PlaceholderRouteDefinition = {
 };
 
 const placeholderRoutes: PlaceholderRouteDefinition[] = [
-  { path: 'faturas', title: 'Faturas', summary: 'Modulo previsto para a fase 4.', phase: 4 },
-  { path: 'faturas/:id', title: 'Detalhe de fatura', summary: 'Visao detalhada prevista para a fase 4.', phase: 4 },
   { path: 'importacoes-whatsapp', title: 'Importacoes WhatsApp', summary: 'Modulo previsto para a fase 7.', phase: 7 },
   { path: 'importacoes-whatsapp/:id', title: 'Detalhe da importacao', summary: 'Revisao prevista para a fase 7.', phase: 7 },
   { path: 'conciliacao', title: 'Conciliacao', summary: 'Modulo previsto para a fase 8.', phase: 8 }
@@ -193,6 +193,20 @@ export const financialRouteObjects: RouteObject[] = [
     element: <MovimentacoesPage />,
     handle: {
       title: 'Movimentacoes'
+    }
+  },
+  {
+    path: 'faturas',
+    element: <FaturasPage />,
+    handle: {
+      title: 'Faturas'
+    }
+  },
+  {
+    path: 'faturas/:id',
+    element: <FaturaDetailPage />,
+    handle: {
+      title: 'Detalhe de fatura'
     }
   }
 ];

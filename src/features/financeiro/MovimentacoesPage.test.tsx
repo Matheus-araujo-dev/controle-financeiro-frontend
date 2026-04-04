@@ -32,6 +32,7 @@ describe('MovimentacoesPage', () => {
           contaBancariaNome: 'Conta principal',
           contaPagarId: null,
           contaReceberId: 'cr1',
+          faturaCartaoId: null,
           observacao: 'Recebimento do cliente'
         }
       ],

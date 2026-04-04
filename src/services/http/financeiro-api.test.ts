@@ -14,7 +14,7 @@ describe('financeiroApi', () => {
     vi.clearAllMocks();
   });
 
-  it('calls the expected endpoints for contas a pagar, contas a receber and movimentacoes', async () => {
+  it('calls the expected endpoints for contas a pagar, contas a receber, movimentacoes and faturas', async () => {
     vi.mocked(apiClient.get).mockResolvedValue({ data: { items: [] } } as never);
     vi.mocked(apiClient.post).mockResolvedValue({ data: { id: '1' } } as never);
     vi.mocked(apiClient.put).mockResolvedValue({ data: { id: '1' } } as never);
@@ -108,6 +108,14 @@ describe('financeiroApi', () => {
     await financeiroApi.movimentacoes.listar({ page: 1, pageSize: 20, search: 'receita' });
     await financeiroApi.movimentacoes.obterPorId('m1');
 
+    await financeiroApi.faturas.listar({ page: 1, pageSize: 10, search: 'abril', competencia: '2026-04' });
+    await financeiroApi.faturas.obterPorId('f1');
+    await financeiroApi.faturas.pagar('f1', {
+      dataPagamento: '2026-04-20',
+      contaBancariaPagamentoId: 'cb1',
+      observacao: 'Pagamento integral'
+    });
+
     expect(apiClient.get).toHaveBeenCalledWith('/contas-pagar', { params: { page: 1, pageSize: 10, search: '' } });
     expect(apiClient.get).toHaveBeenCalledWith('/contas-pagar/1');
     expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar', expect.any(Object));
@@ -124,5 +132,13 @@ describe('financeiroApi', () => {
 
     expect(apiClient.get).toHaveBeenCalledWith('/movimentacoes', { params: { page: 1, pageSize: 20, search: 'receita' } });
     expect(apiClient.get).toHaveBeenCalledWith('/movimentacoes/m1');
+
+    expect(apiClient.get).toHaveBeenCalledWith('/faturas', { params: { page: 1, pageSize: 10, search: 'abril', competencia: '2026-04' } });
+    expect(apiClient.get).toHaveBeenCalledWith('/faturas/f1');
+    expect(apiClient.post).toHaveBeenCalledWith('/faturas/f1/pagar', {
+      dataPagamento: '2026-04-20',
+      contaBancariaPagamentoId: 'cb1',
+      observacao: 'Pagamento integral'
+    });
   });
 });

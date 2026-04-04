@@ -2,6 +2,7 @@ import type { PagedResult } from './api';
 
 export type LancamentoOrigem = 'Manual' | 'Recorrencia' | 'Importacao';
 export type StatusContaCodigo = 'PENDENTE' | 'LIQUIDADA' | 'VENCIDA' | 'CANCELADA' | 'PARCIAL';
+export type StatusFaturaCodigo = 'ABERTA' | 'PAGA';
 export type TipoMovimentacao = 'Entrada' | 'Saida';
 export type NaturezaMovimentacao = 'Prevista' | 'Realizada' | 'Economica';
 
@@ -204,6 +205,7 @@ export type MovimentacaoResumo = {
   contaBancariaNome: string | null;
   contaPagarId: string | null;
   contaReceberId: string | null;
+  faturaCartaoId: string | null;
   observacao: string | null;
 };
 
@@ -218,6 +220,52 @@ export type MovimentacaoFilters = ListQueryBase & {
   statusCodigo?: string;
   tipo?: TipoMovimentacao;
   natureza?: NaturezaMovimentacao;
+};
+
+export type FaturaResumo = {
+  id: string;
+  cartaoId: string;
+  cartaoNome: string;
+  competencia: string;
+  dataFechamento: string;
+  dataVencimento: string;
+  valorTotal: number;
+  dataPagamento: string | null;
+  statusCodigo: StatusFaturaCodigo;
+  statusNome: string;
+  quantidadeItens: number;
+};
+
+export type FaturaItem = {
+  contaPagarId: string;
+  descricao: string;
+  recebedorNome: string;
+  dataCompra: string;
+  valorLiquido: number;
+  statusCodigo: StatusContaCodigo;
+  numeroParcela: number;
+  quantidadeParcelas: number;
+};
+
+export type FaturaDetalhe = FaturaResumo & {
+  contaBancariaPagamentoId: string | null;
+  contaBancariaPagamentoNome: string | null;
+  observacao: string | null;
+  itens: FaturaItem[];
+  createdAtUtc: string;
+  updatedAtUtc: string;
+};
+
+export type FaturaFilters = ListQueryBase & {
+  cartaoId?: string;
+  competencia?: string;
+  statusCodigo?: StatusFaturaCodigo;
+};
+
+export type PagarFaturaPayload = {
+  dataPagamento: string;
+  contaBancariaPagamentoId: string;
+  observacao: string | null;
 };
 
 export type PagedFinanceiro<T> = PagedResult<T>;

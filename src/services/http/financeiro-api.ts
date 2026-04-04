@@ -8,10 +8,14 @@ import type {
   ContaReceberFilters,
   ContaReceberPayload,
   ContaReceberResumo,
+  FaturaDetalhe,
+  FaturaFilters,
+  FaturaResumo,
   LiquidacaoPayload,
   MovimentacaoDetalhe,
   MovimentacaoFilters,
   MovimentacaoResumo,
+  PagarFaturaPayload,
   PagedFinanceiro
 } from '../../types/financeiro';
 
@@ -55,5 +59,10 @@ export const financeiroApi = {
   movimentacoes: {
     listar: (params: MovimentacaoFilters) => getPaged<MovimentacaoResumo>('/movimentacoes', params),
     obterPorId: (id: string) => getById<MovimentacaoDetalhe>(`/movimentacoes/${id}`)
+  },
+  faturas: {
+    listar: (params: FaturaFilters) => getPaged<FaturaResumo>('/faturas', params),
+    obterPorId: (id: string) => getById<FaturaDetalhe>(`/faturas/${id}`),
+    pagar: (id: string, payload: PagarFaturaPayload) => post<FaturaDetalhe>(`/faturas/${id}/pagar`, payload)
   }
 };

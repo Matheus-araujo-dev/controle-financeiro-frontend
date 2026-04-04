@@ -60,13 +60,13 @@ describe('appRoutes', () => {
 
   it('renders the placeholder route for future modules', async () => {
     const router = createMemoryRouter(appRoutes, {
-      initialEntries: ['/faturas']
+      initialEntries: ['/importacoes-whatsapp']
     });
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByText('Modulo previsto para a fase 4.')).toBeInTheDocument();
-    expect(screen.getAllByText('Faturas').length).toBeGreaterThan(0);
+    expect(await screen.findByText('Modulo previsto para a fase 7.')).toBeInTheDocument();
+    expect(screen.getAllByText('Importacoes WhatsApp').length).toBeGreaterThan(0);
   });
 
   it('renders the contas a pagar route with the real phase 3 page', async () => {
@@ -78,5 +78,16 @@ describe('appRoutes', () => {
 
     expect(await screen.findByRole('heading', { level: 4, name: 'Contas a pagar' })).toBeInTheDocument();
     expect(screen.getByText('Controle financeiro das obrigacoes a pagar com rateio, parcelamento e acoes de liquidacao.')).toBeInTheDocument();
+  });
+
+  it('renders the faturas route with the real phase 4 page', async () => {
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ['/faturas']
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByRole('heading', { level: 4, name: 'Faturas' })).toBeInTheDocument();
+    expect(screen.getByText('Acompanhe a competencia dos cartoes, os itens agrupados e o pagamento das faturas.')).toBeInTheDocument();
   });
 });
