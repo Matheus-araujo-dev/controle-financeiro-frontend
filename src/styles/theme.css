@@ -66,6 +66,41 @@ body {
   min-height: 176px;
 }
 
+.dashboard-summary-card .ant-card-body {
+  display: flex;
+  min-height: 160px;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dashboard-summary-value {
+  margin: 8px 0 0 !important;
+}
+
+.dashboard-section-card {
+  height: 100%;
+}
+
+.dashboard-list {
+  width: 100%;
+}
+
+.dashboard-list-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboard-list-row__content {
+  display: flex;
+  gap: 12px;
+}
+
+.dashboard-flow-negative .ant-table-cell {
+  background: rgba(167, 29, 49, 0.08) !important;
+}
+
 .page-state {
   display: flex;
   min-height: 240px;

@@ -1,7 +1,7 @@
 # Progress Log - Frontend
 
 ## Ultima fase concluida
-- Fase 5: recorrencia concluida com configuracao da serie dentro das telas financeiras existentes e acoes de geracao, pausa, encerramento e alteracao futura.
+- Fase 6: dashboard e fluxo de caixa concluidos com tela real, dados vindos da API e alternancia entre visao de caixa e visao economica.
 
 ## Decisoes locais
 - O bootstrap foi feito manualmente, sem template Vite gerado, para manter a estrutura exatamente alinhada ao workspace.
@@ -20,6 +20,9 @@
 - A fase 5 manteve a recorrencia dentro das telas de contas a pagar e contas a receber, evitando criar um modulo fora das rotas canonicamente previstas.
 - Os `types`, `services` HTTP e `module-config` financeiros passaram a refletir `Recorrencia`, inclusive os endpoints de alterar futuras, gerar ocorrencias, pausar e encerrar.
 - O formulario financeiro ganhou secao de recorrencia e card de acoes da serie, enquanto a validacao local passou a bloquear a combinacao de recorrencia com parcelamento.
+- A fase 6 substituiu o placeholder de `dashboard` por uma tela operacional real, consumindo `GET /dashboard/resumo` e `GET /dashboard/fluxo-caixa` com estados de loading, erro e retry.
+- O dashboard passou a consolidar cards, listas de contas vencidas/a vencer, movimentacoes recentes e tabela de fluxo diario sem criar uma rota extra fora do `/dashboard` canonico.
+- A formatacao de datas do dashboard foi feita manualmente a partir de strings `yyyy-MM-dd` para evitar deslocamentos por fuso horario em `Date` do navegador e nos testes.
 
 ## Pendencias nao criticas
 - configurar secrets reais de SonarQube/SonarCloud no CI para ativar o quality gate remoto.

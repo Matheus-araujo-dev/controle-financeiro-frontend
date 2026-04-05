@@ -3,6 +3,11 @@ import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '../store/auth-store';
 import { appRoutes } from './router';
 
+const dashboardApiMock = vi.hoisted(() => ({
+  obterResumo: vi.fn(),
+  obterFluxoCaixa: vi.fn()
+}));
+
 const apiClientMock = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
@@ -14,9 +19,30 @@ vi.mock('../services/http/api-client', () => ({
   apiClient: apiClientMock
 }));
 
+vi.mock('../services/http/dashboard-api', () => ({
+  dashboardApi: dashboardApiMock
+}));
+
 describe('appRoutes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dashboardApiMock.obterResumo.mockResolvedValue({
+      saldoAtual: 0,
+      totalAPagar: 0,
+      totalAReceber: 0,
+      saldoProjetado: 0,
+      riscoSaldoNegativo: false,
+      contasVencidas: [],
+      contasAVencer: [],
+      movimentacoesRecentes: []
+    });
+    dashboardApiMock.obterFluxoCaixa.mockResolvedValue({
+      visao: 'Caixa',
+      dataInicial: '2026-04-05',
+      dias: 15,
+      riscoSaldoNegativo: false,
+      itens: []
+    });
     apiClientMock.get.mockResolvedValue({
       data: {
         items: [],
@@ -44,8 +70,8 @@ describe('appRoutes', () => {
 
     expect(await screen.findByTestId('admin-shell')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
-    expect(screen.getByText('Estrutura inicial pronta')).toBeInTheDocument();
-  });
+    expect(screen.getByText('Dashboard executivo')).toBeInTheDocument();
+  }, 10000);
 
   it('renders the not found page for unknown routes', async () => {
     const router = createMemoryRouter(appRoutes, {
