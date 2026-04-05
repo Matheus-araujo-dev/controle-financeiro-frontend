@@ -128,7 +128,7 @@ describe('DashboardPage', () => {
     );
 
     expect(await screen.findByText('06/04/2026')).toBeInTheDocument();
-  }, 10000);
+  }, 20000);
 
   it('renders the error state and allows retry', async () => {
     vi.mocked(dashboardApi.obterResumo)

@@ -42,5 +42,9 @@ export const navigationItems = [
   {
     key: '/importacoes-whatsapp',
     label: 'Importacoes WhatsApp'
+  },
+  {
+    key: '/conciliacao',
+    label: 'Conciliacao'
   }
 ];

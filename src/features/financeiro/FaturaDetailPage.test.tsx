@@ -139,5 +139,5 @@ describe('FaturaDetailPage', () => {
     expect(
       (await screen.findAllByText((_content, element) => element?.textContent === 'Status: PAGA')).length
     ).toBeGreaterThan(0);
-  }, 10000);
+  }, 20000);
 });

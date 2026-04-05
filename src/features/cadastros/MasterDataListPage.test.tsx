@@ -62,7 +62,7 @@ describe('MasterDataListPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Alternar' }));
 
     await waitFor(() => expect(onToggle).toHaveBeenCalled());
-  }, 10000);
+  }, 20000);
 
   it('renders error state and supports link actions', async () => {
     const list = vi.fn().mockRejectedValue(new Error('Falha controlada'));

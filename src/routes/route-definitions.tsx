@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
 import { MasterDataFormPage } from '../features/cadastros/MasterDataFormPage';
 import { MasterDataListPage } from '../features/cadastros/MasterDataListPage';
+import { ConciliacaoPage } from '../features/conciliacao/ConciliacaoPage';
 import {
   cartoesModuleConfig,
   contasBancariasModuleConfig,
@@ -16,26 +17,7 @@ import { MovimentacoesPage } from '../features/financeiro/MovimentacoesPage';
 import { ImportacaoWhatsappDetailPage } from '../features/importacoes-whatsapp/ImportacaoWhatsappDetailPage';
 import { ImportacoesWhatsappPage } from '../features/importacoes-whatsapp/ImportacoesWhatsappPage';
 import { contasPagarModuleConfig, contasReceberModuleConfig } from '../features/financeiro/module-config';
-import { ModulePlaceholderPage } from '../pages/ModulePlaceholderPage';
-
-type PlaceholderRouteDefinition = {
-  path: string;
-  title: string;
-  summary: string;
-  phase: number;
-};
-
-const placeholderRoutes: PlaceholderRouteDefinition[] = [
-  { path: 'conciliacao', title: 'Conciliacao', summary: 'Modulo previsto para a fase 8.', phase: 8 }
-];
-
-export const placeholderRouteObjects: RouteObject[] = placeholderRoutes.map((route) => ({
-  path: route.path,
-  element: <ModulePlaceholderPage title={route.title} summary={route.summary} phase={route.phase} />,
-  handle: {
-    title: route.title
-  }
-}));
+export const placeholderRouteObjects: RouteObject[] = [];
 
 export const supportRegistryRouteObjects: RouteObject[] = [
   {
@@ -221,6 +203,13 @@ export const financialRouteObjects: RouteObject[] = [
     element: <ImportacaoWhatsappDetailPage />,
     handle: {
       title: 'Revisao da importacao'
+    }
+  },
+  {
+    path: 'conciliacao',
+    element: <ConciliacaoPage />,
+    handle: {
+      title: 'Conciliacao'
     }
   }
 ];

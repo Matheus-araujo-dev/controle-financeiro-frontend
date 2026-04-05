@@ -16,6 +16,11 @@ const importacoesWhatsappApiMock = vi.hoisted(() => ({
   rejeitarItem: vi.fn()
 }));
 
+const conciliacaoApiMock = vi.hoisted(() => ({
+  listar: vi.fn(),
+  confirmarVinculo: vi.fn()
+}));
+
 const apiClientMock = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
@@ -33,6 +38,10 @@ vi.mock('../services/http/dashboard-api', () => ({
 
 vi.mock('../services/http/importacoes-whatsapp-api', () => ({
   importacoesWhatsappApi: importacoesWhatsappApiMock
+}));
+
+vi.mock('../services/http/conciliacao-api', () => ({
+  conciliacaoApi: conciliacaoApiMock
 }));
 
 describe('appRoutes', () => {
@@ -56,6 +65,13 @@ describe('appRoutes', () => {
       itens: []
     });
     importacoesWhatsappApiMock.listar.mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 10,
+      totalItems: 0,
+      totalPages: 0
+    });
+    conciliacaoApiMock.listar.mockResolvedValue({
       items: [],
       page: 1,
       pageSize: 10,
@@ -137,5 +153,16 @@ describe('appRoutes', () => {
 
     expect(await screen.findByRole('heading', { level: 4, name: 'Faturas' })).toBeInTheDocument();
     expect(screen.getByText('Acompanhe a competencia dos cartoes, os itens agrupados e o pagamento das faturas.')).toBeInTheDocument();
+  });
+
+  it('renders the conciliacao route with the real phase 8 page', async () => {
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ['/conciliacao']
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByRole('heading', { level: 4, name: 'Conciliacao' })).toBeInTheDocument();
+    expect(screen.getByText('Associe manualmente itens de extrato importados com movimentacoes bancarias sugeridas pelo sistema.')).toBeInTheDocument();
   });
 });

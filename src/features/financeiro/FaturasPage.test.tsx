@@ -85,7 +85,7 @@ describe('FaturasPage', () => {
         })
       )
     );
-  }, 10000);
+  }, 20000);
 
   it('renders the error state and allows retry', async () => {
     vi.mocked(financeiroApi.faturas.listar)

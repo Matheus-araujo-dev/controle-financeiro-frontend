@@ -1,7 +1,7 @@
 # Progress Log - Frontend
 
 ## Ultima fase concluida
-- Fase 7: importacoes WhatsApp e OCR concluidas com listagem real, tela de revisao, acoes de confirmar/rejeitar/reprocessar e contratos alinhados ao backend.
+- Fase 8: conciliacao inicial concluida com rota real, listagem de itens de extrato, sugestoes de vinculo, confirmacao manual assistida e contratos alinhados ao backend.
 
 ## Decisoes locais
 - O bootstrap foi feito manualmente, sem template Vite gerado, para manter a estrutura exatamente alinhada ao workspace.
@@ -27,6 +27,11 @@
 - Os contratos novos do backend passaram a ser refletidos em `types/importacoes-whatsapp.ts` e no cliente HTTP dedicado `importacoes-whatsapp-api.ts`, evitando misturar a revisao de importacao com os modulos financeiros ja consolidados.
 - A tela de listagem passou a expor busca, status, confianca da extracao e pendencias de revisao, enquanto a tela de detalhe mostra texto bruto, metadados do arquivo, payload sugerido e acoes de confirmar, rejeitar e reprocessar.
 - O frontend desta fase trata confirmacao e rejeicao como revisao humana da sugestao, sem prometer efetivacao automatica de lancamento financeiro antes das fases seguintes.
+- A fase 8 substituiu o ultimo placeholder restante por uma pagina real de `conciliacao`, mantendo a navegacao administrativa consistente com as fases anteriores e sem criar rotas fora do fluxo canonico.
+- Os contratos do backend foram refletidos em `types/conciliacao.ts` e no cliente HTTP dedicado `conciliacao-api.ts`, desacoplando a conciliacao dos modulos de movimentacao e importacao.
+- A tela de conciliacao foi desenhada para operacao assistida: lista o item de extrato confirmado, mostra candidatas sugeridas e permite confirmar o vinculo diretamente pela grade, sem automatizar conciliacao em segundo plano.
+- O estado local da linha conciliada e a mensagem de ultima acao confirmada evitam roundtrip extra imediato sem perder compatibilidade com uma futura tela mais rica de conciliacao.
+- O quality gate local do frontend passou a considerar o custo atual da suite com Ant Design e coverage, com aumento explicito dos timeouts de testes mais pesados para reduzir flakiness sem afrouxar thresholds de cobertura.
 
 ## Pendencias nao criticas
 - configurar secrets reais de SonarQube/SonarCloud no CI para ativar o quality gate remoto.

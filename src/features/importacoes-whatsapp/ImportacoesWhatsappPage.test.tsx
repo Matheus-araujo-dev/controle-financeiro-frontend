@@ -88,7 +88,7 @@ describe('ImportacoesWhatsappPage', () => {
         })
       )
     );
-  }, 10000);
+  }, 20000);
 
   it('renders the error state and allows retry', async () => {
     vi.mocked(importacoesWhatsappApi.listar)

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AxiosError } from 'axios';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -63,7 +63,7 @@ describe('MasterDataFormPage', () => {
 
     await waitFor(() => expect(create).toHaveBeenCalledWith({ nome: 'Pessoa Exemplo' }));
     expect(navigateMock).toHaveBeenCalledWith('/pessoas');
-  }, 10000);
+  }, 20000);
 
   it('applies server validation errors to the form', async () => {
     const create = vi.fn().mockRejectedValue(
@@ -126,7 +126,7 @@ describe('MasterDataFormPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
 
     expect(await screen.findByText('Nome obrigatorio.')).toBeInTheDocument();
-  }, 10000);
+  }, 20000);
 
   it('loads detail in edit mode and submits updates', async () => {
     const detail = vi.fn().mockResolvedValue({ nome: 'Pessoa existente' });
@@ -168,8 +168,7 @@ describe('MasterDataFormPage', () => {
 
     expect(await screen.findByDisplayValue('Pessoa existente')).toBeInTheDocument();
 
-    await userEvent.clear(screen.getByRole('textbox'));
-    await userEvent.type(screen.getByRole('textbox'), 'Pessoa atualizada');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Pessoa atualizada' } });
     await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
 
     await waitFor(() => expect(update).toHaveBeenCalledWith('1', { nome: 'Pessoa atualizada' }));

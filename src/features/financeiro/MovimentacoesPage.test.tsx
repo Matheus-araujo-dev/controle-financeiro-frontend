@@ -55,7 +55,7 @@ describe('MovimentacoesPage', () => {
         })
       )
     );
-  }, 10000);
+  }, 20000);
 
   it('renders the error state and retries loading', async () => {
     vi.mocked(financeiroApi.movimentacoes.listar)

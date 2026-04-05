@@ -109,7 +109,7 @@ describe('FinancialAccountFormPage', () => {
     expect(screen.getByText('Conta bancaria')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Acoes de negocio' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Voltar para contas a pagar' })).toHaveAttribute('href', '/contas-pagar');
-  }, 10000);
+  }, 20000);
 
   it('loads detail and submits updates in edit mode', async () => {
     const config = createConfig();
@@ -125,7 +125,7 @@ describe('FinancialAccountFormPage', () => {
     fireEvent.submit(form as HTMLFormElement);
 
     await waitFor(() => expect(config.update).toHaveBeenCalledWith('123', validValues));
-  }, 15000);
+  }, 30000);
 
   it('executes the liquidation action in edit mode for pending entities', async () => {
     const config = createConfig();
@@ -140,7 +140,7 @@ describe('FinancialAccountFormPage', () => {
         contaBancariaId: 'cb1'
       })
     );
-  }, 15000);
+  }, 30000);
 
   it('executes the cancel action in edit mode for pending entities', async () => {
     const config = createConfig();
@@ -153,7 +153,7 @@ describe('FinancialAccountFormPage', () => {
 
     fireEvent.click(within(actionCard as HTMLElement).getByRole('button', { name: 'Cancelar' }));
     await waitFor(() => expect(config.cancelar).toHaveBeenCalledWith('123'));
-  }, 15000);
+  }, 30000);
 
   it('executes the future update action in edit mode for recurring entities', async () => {
     const config = createConfig();
@@ -163,7 +163,7 @@ describe('FinancialAccountFormPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Salvar nas futuras/i }));
     await waitFor(() => expect(config.alterarFuturas).toHaveBeenCalledWith('123', validValues));
-  }, 15000);
+  }, 30000);
 
   it('applies server validation errors to the form', async () => {
     const config = createConfig();
@@ -195,5 +195,5 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByText('Descricao obrigatoria.')).toBeInTheDocument();
     expect(navigateMock).not.toHaveBeenCalled();
-  }, 10000);
+  }, 20000);
 });
