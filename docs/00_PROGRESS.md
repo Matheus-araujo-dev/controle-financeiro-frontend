@@ -1,7 +1,7 @@
 # Progress Log - Frontend
 
 ## Ultima fase concluida
-- Fase 8: conciliacao inicial concluida com rota real, listagem de itens de extrato, sugestoes de vinculo, confirmacao manual assistida e contratos alinhados ao backend.
+- Fase 9: fechamento do MVP concluido com README atualizado, documentacao local minima, validacao final e consolidacao do quality gate local.
 
 ## Decisoes locais
 - O bootstrap foi feito manualmente, sem template Vite gerado, para manter a estrutura exatamente alinhada ao workspace.
@@ -32,6 +32,7 @@
 - A tela de conciliacao foi desenhada para operacao assistida: lista o item de extrato confirmado, mostra candidatas sugeridas e permite confirmar o vinculo diretamente pela grade, sem automatizar conciliacao em segundo plano.
 - O estado local da linha conciliada e a mensagem de ultima acao confirmada evitam roundtrip extra imediato sem perder compatibilidade com uma futura tela mais rica de conciliacao.
 - O quality gate local do frontend passou a considerar o custo atual da suite com Ant Design e coverage, com aumento explicito dos timeouts de testes mais pesados para reduzir flakiness sem afrouxar thresholds de cobertura.
+- A fase 9 nao adicionou regra de negocio; consolidou a documentacao operacional do MVP e deixou a validacao de build/test/coverage refletida no README e no documento de fechamento.
 
 ## Pendencias nao criticas
 - configurar secrets reais de SonarQube/SonarCloud no CI para ativar o quality gate remoto.
