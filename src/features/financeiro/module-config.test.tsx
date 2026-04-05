@@ -34,6 +34,10 @@ vi.mock('../../services/http/financeiro-api', () => ({
       obterPorId: vi.fn(),
       criar: vi.fn(),
       atualizar: vi.fn(),
+      alterarFuturas: vi.fn(),
+      gerarOcorrencias: vi.fn(),
+      pausarRecorrencia: vi.fn(),
+      encerrarRecorrencia: vi.fn(),
       liquidar: vi.fn(),
       cancelar: vi.fn()
     },
@@ -42,6 +46,10 @@ vi.mock('../../services/http/financeiro-api', () => ({
       obterPorId: vi.fn(),
       criar: vi.fn(),
       atualizar: vi.fn(),
+      alterarFuturas: vi.fn(),
+      gerarOcorrencias: vi.fn(),
+      pausarRecorrencia: vi.fn(),
+      encerrarRecorrencia: vi.fn(),
       liquidar: vi.fn(),
       cancelar: vi.fn()
     },
@@ -98,7 +106,18 @@ describe('financeiro module config', () => {
         observacao: null,
         statusCodigo: 'PENDENTE',
         statusNome: 'Pendente',
+        ehRecorrente: true,
         origem: 'Manual',
+        recorrencia: {
+          id: 'rec1',
+          tipoPeriodicidade: 'Mensal',
+          diaGeracaoMensal: 20,
+          dataInicio: '2026-04-20',
+          dataFim: null,
+          ativa: true,
+          permiteEdicaoOcorrenciaIndividual: true,
+          observacao: 'Contrato mensal'
+        },
         rateios: [
           {
             id: 'r1',
@@ -118,7 +137,10 @@ describe('financeiro module config', () => {
       cartaoId: '',
       contaBancariaId: '',
       observacao: '',
-      rateios: [{ contaGerencialId: 'cg1', valor: 100 }]
+      rateios: [{ contaGerencialId: 'cg1', valor: 100 }],
+      ehRecorrente: true,
+      recorrenciaDiaGeracaoMensal: 20,
+      recorrenciaDataInicio: '2026-04-20'
     });
   });
 
@@ -144,7 +166,15 @@ describe('financeiro module config', () => {
       quantidadeParcelas: 1,
       descricao: 'Despesa',
       observacao: '',
-      rateios: [{ contaGerencialId: 'cg1', valor: 100 }]
+      rateios: [{ contaGerencialId: 'cg1', valor: 100 }],
+      ehRecorrente: false,
+      recorrenciaTipoPeriodicidade: 'Mensal' as const,
+      recorrenciaDiaGeracaoMensal: 20,
+      recorrenciaDataInicio: '',
+      recorrenciaDataFim: '',
+      recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
+      recorrenciaObservacao: '',
+      recorrenciaGerarAteData: ''
     });
 
     await contasReceberModuleConfig.update('1', {
@@ -164,7 +194,15 @@ describe('financeiro module config', () => {
       quantidadeParcelas: 1,
       descricao: 'Receita',
       observacao: '',
-      rateios: [{ contaGerencialId: 'cg2', valor: 200 }]
+      rateios: [{ contaGerencialId: 'cg2', valor: 200 }],
+      ehRecorrente: false,
+      recorrenciaTipoPeriodicidade: 'Mensal' as const,
+      recorrenciaDiaGeracaoMensal: 25,
+      recorrenciaDataInicio: '',
+      recorrenciaDataFim: '',
+      recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
+      recorrenciaObservacao: '',
+      recorrenciaGerarAteData: ''
     });
 
     await contasPagarModuleConfig.liquidar?.('1', {

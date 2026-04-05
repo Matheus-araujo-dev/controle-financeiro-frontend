@@ -31,7 +31,15 @@ const validValues = {
   quantidadeParcelas: 1,
   descricao: 'Despesa de teste',
   observacao: 'Observacao inicial',
-  rateios: [{ contaGerencialId: 'cg1', valor: 95 }]
+  rateios: [{ contaGerencialId: 'cg1', valor: 95 }],
+  ehRecorrente: true,
+  recorrenciaTipoPeriodicidade: 'Mensal' as const,
+  recorrenciaDiaGeracaoMensal: 20,
+  recorrenciaDataInicio: '2026-04-20',
+  recorrenciaDataFim: '2026-08-20',
+  recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
+  recorrenciaObservacao: 'Contrato mensal',
+  recorrenciaGerarAteData: '2026-10-20'
 };
 
 function createConfig() {
@@ -55,6 +63,10 @@ function createConfig() {
     }),
     create: vi.fn().mockResolvedValue({ id: '1' }),
     update: vi.fn().mockResolvedValue({ id: '1' }),
+    alterarFuturas: vi.fn().mockResolvedValue({ id: '1' }),
+    gerarOcorrencias: vi.fn().mockResolvedValue({ id: '1' }),
+    pausarRecorrencia: vi.fn().mockResolvedValue({ id: '1' }),
+    encerrarRecorrencia: vi.fn().mockResolvedValue({ id: '1' }),
     liquidar: vi.fn().mockResolvedValue({ id: '1' }),
     cancelar: vi.fn().mockResolvedValue({ id: '1' }),
     toFormValues: vi.fn().mockReturnValue(validValues),
@@ -92,6 +104,7 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByText('Rateios')).toBeInTheDocument();
     await waitFor(() => expect(config.loadPessoaOptions).toHaveBeenCalled());
+    expect(screen.getByText('Recorrencia')).toBeInTheDocument();
     expect(screen.getByText('Cartao')).toBeInTheDocument();
     expect(screen.getByText('Conta bancaria')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Acoes de negocio' })).not.toBeInTheDocument();
@@ -104,6 +117,7 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByDisplayValue('Despesa de teste')).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'Acoes de negocio' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Acoes de recorrencia' })).toBeInTheDocument();
 
     const form = screen.getByRole('button', { name: 'Salvar' }).closest('form');
     expect(form).not.toBeNull();
@@ -139,6 +153,16 @@ describe('FinancialAccountFormPage', () => {
 
     fireEvent.click(within(actionCard as HTMLElement).getByRole('button', { name: 'Cancelar' }));
     await waitFor(() => expect(config.cancelar).toHaveBeenCalledWith('123'));
+  }, 15000);
+
+  it('executes the future update action in edit mode for recurring entities', async () => {
+    const config = createConfig();
+    renderWithRoute('/contas-pagar/123', '/contas-pagar/:id', config);
+
+    expect(await screen.findByRole('heading', { name: 'Acoes de recorrencia' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Salvar nas futuras/i }));
+    await waitFor(() => expect(config.alterarFuturas).toHaveBeenCalledWith('123', validValues));
   }, 15000);
 
   it('applies server validation errors to the form', async () => {

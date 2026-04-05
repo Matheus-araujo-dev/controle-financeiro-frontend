@@ -13,6 +13,7 @@ import type {
   ContaReceberPayload,
   ContaReceberResumo,
   LiquidacaoPayload,
+  RecorrenciaPayload,
   StatusContaCodigo
 } from '../../types/financeiro';
 
@@ -49,6 +50,14 @@ export type FinanceiroFormValues = {
   descricao: string;
   observacao: string;
   rateios: FinanceiroRateioFormValue[];
+  ehRecorrente: boolean;
+  recorrenciaTipoPeriodicidade: 'Mensal';
+  recorrenciaDiaGeracaoMensal: number;
+  recorrenciaDataInicio: string;
+  recorrenciaDataFim: string;
+  recorrenciaPermiteEdicaoOcorrenciaIndividual: boolean;
+  recorrenciaObservacao: string;
+  recorrenciaGerarAteData: string;
 };
 
 export type FinanceiroLiquidacaoFormValues = {
@@ -71,6 +80,10 @@ export type FinanceiroModuleConfig<TSummary, TDetail, TFilters> = {
   detail: (id: string) => Promise<TDetail>;
   create: (values: FinanceiroFormValues) => Promise<TDetail>;
   update: (id: string, values: FinanceiroFormValues) => Promise<TDetail>;
+  alterarFuturas?: (id: string, values: FinanceiroFormValues) => Promise<TDetail>;
+  gerarOcorrencias?: (id: string, values: { ateData: string }) => Promise<TDetail>;
+  pausarRecorrencia?: (id: string) => Promise<TDetail>;
+  encerrarRecorrencia?: (id: string, values: { dataFim: string }) => Promise<TDetail>;
   liquidar?: (id: string, values: FinanceiroLiquidacaoFormValues) => Promise<TDetail>;
   cancelar?: (id: string) => Promise<TDetail>;
   toFormValues: (detail: TDetail) => FinanceiroFormValues;
@@ -106,7 +119,15 @@ const defaultValues: FinanceiroFormValues = {
   quantidadeParcelas: 1,
   descricao: '',
   observacao: '',
-  rateios: [{ contaGerencialId: '', valor: 0 }]
+  rateios: [{ contaGerencialId: '', valor: 0 }],
+  ehRecorrente: false,
+  recorrenciaTipoPeriodicidade: 'Mensal',
+  recorrenciaDiaGeracaoMensal: 1,
+  recorrenciaDataInicio: '',
+  recorrenciaDataFim: '',
+  recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
+  recorrenciaObservacao: '',
+  recorrenciaGerarAteData: ''
 };
 
 function renderCurrency(value: number) {
@@ -135,6 +156,21 @@ function normalizeNullableId(value: string) {
 
 function normalizeNullableText(value: string) {
   return value.trim() === '' ? null : value.trim();
+}
+
+function buildRecorrenciaPayload(values: FinanceiroFormValues): RecorrenciaPayload | null {
+  if (!values.ehRecorrente) {
+    return null;
+  }
+
+  return {
+    tipoPeriodicidade: values.recorrenciaTipoPeriodicidade,
+    diaGeracaoMensal: values.recorrenciaDiaGeracaoMensal,
+    dataInicio: values.recorrenciaDataInicio,
+    dataFim: normalizeNullableText(values.recorrenciaDataFim),
+    permiteEdicaoOcorrenciaIndividual: values.recorrenciaPermiteEdicaoOcorrenciaIndividual,
+    observacao: normalizeNullableText(values.recorrenciaObservacao)
+  };
 }
 
 function roundCurrency(value: number) {
@@ -244,7 +280,8 @@ function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload
     rateios: values.rateios.map((item) => ({
       contaGerencialId: item.contaGerencialId,
       valor: item.valor
-    }))
+    })),
+    recorrencia: buildRecorrenciaPayload(values)
   };
 }
 
@@ -269,7 +306,8 @@ function buildContaReceberPayload(values: FinanceiroFormValues): ContaReceberPay
     rateios: values.rateios.map((item) => ({
       contaGerencialId: item.contaGerencialId,
       valor: item.valor
-    }))
+    })),
+    recorrencia: buildRecorrenciaPayload(values)
   };
 }
 
@@ -290,6 +328,15 @@ function buildToFormValues(detail: {
   rateios: Array<{ contaGerencialId: string; valor: number }>;
   pessoaId: string;
   responsavelId: string | null;
+  ehRecorrente: boolean;
+  recorrencia: {
+    tipoPeriodicidade: 'Mensal';
+    diaGeracaoMensal: number;
+    dataInicio: string;
+    dataFim: string | null;
+    permiteEdicaoOcorrenciaIndividual: boolean;
+    observacao: string | null;
+  } | null;
 }) {
   return {
     numeroDocumento: detail.numeroDocumento ?? '',
@@ -311,7 +358,15 @@ function buildToFormValues(detail: {
     rateios: detail.rateios.map((item) => ({
       contaGerencialId: item.contaGerencialId,
       valor: item.valor
-    }))
+    })),
+    ehRecorrente: detail.ehRecorrente,
+    recorrenciaTipoPeriodicidade: detail.recorrencia?.tipoPeriodicidade ?? 'Mensal',
+    recorrenciaDiaGeracaoMensal: detail.recorrencia?.diaGeracaoMensal ?? 1,
+    recorrenciaDataInicio: detail.recorrencia?.dataInicio ?? '',
+    recorrenciaDataFim: detail.recorrencia?.dataFim ?? '',
+    recorrenciaPermiteEdicaoOcorrenciaIndividual: detail.recorrencia?.permiteEdicaoOcorrenciaIndividual ?? true,
+    recorrenciaObservacao: detail.recorrencia?.observacao ?? '',
+    recorrenciaGerarAteData: detail.recorrencia?.dataFim ?? ''
   };
 }
 
@@ -343,6 +398,10 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
   detail: financeiroApi.contasPagar.obterPorId,
   create: (values) => financeiroApi.contasPagar.criar(buildContaPagarPayload(values)),
   update: (id, values) => financeiroApi.contasPagar.atualizar(id, buildContaPagarPayload(values)),
+  alterarFuturas: (id, values) => financeiroApi.contasPagar.alterarFuturas(id, buildContaPagarPayload(values)),
+  gerarOcorrencias: (id, values) => financeiroApi.contasPagar.gerarOcorrencias(id, values),
+  pausarRecorrencia: financeiroApi.contasPagar.pausarRecorrencia,
+  encerrarRecorrencia: (id, values) => financeiroApi.contasPagar.encerrarRecorrencia(id, values),
   liquidar: (id, values) =>
     financeiroApi.contasPagar.liquidar(id, {
       dataLiquidacao: values.dataLiquidacao,
@@ -366,7 +425,9 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
       dataLiquidacao: detail.dataLiquidacao,
       rateios: detail.rateios,
       pessoaId: detail.recebedorId,
-      responsavelId: detail.responsavelCompraId
+      responsavelId: detail.responsavelCompraId,
+      ehRecorrente: detail.ehRecorrente,
+      recorrencia: detail.recorrencia
     }),
     formaPagamentoId: detail.formaPagamentoId
   }),
@@ -405,6 +466,10 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
   detail: financeiroApi.contasReceber.obterPorId,
   create: (values) => financeiroApi.contasReceber.criar(buildContaReceberPayload(values)),
   update: (id, values) => financeiroApi.contasReceber.atualizar(id, buildContaReceberPayload(values)),
+  alterarFuturas: (id, values) => financeiroApi.contasReceber.alterarFuturas(id, buildContaReceberPayload(values)),
+  gerarOcorrencias: (id, values) => financeiroApi.contasReceber.gerarOcorrencias(id, values),
+  pausarRecorrencia: financeiroApi.contasReceber.pausarRecorrencia,
+  encerrarRecorrencia: (id, values) => financeiroApi.contasReceber.encerrarRecorrencia(id, values),
   liquidar: (id, values) =>
     financeiroApi.contasReceber.liquidar(id, {
       dataLiquidacao: values.dataLiquidacao,
@@ -428,7 +493,9 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
       dataLiquidacao: detail.dataLiquidacao,
       rateios: detail.rateios,
       pessoaId: detail.pagadorId,
-      responsavelId: detail.responsavelId
+      responsavelId: detail.responsavelId,
+      ehRecorrente: detail.ehRecorrente,
+      recorrencia: detail.recorrencia
     }),
     formaPagamentoId: detail.formaPagamentoId
   }),

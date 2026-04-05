@@ -24,7 +24,15 @@ export const financialAccountFormSchema = z
     quantidadeParcelas: z.number().int().min(1, 'Quantidade de parcelas invalida'),
     descricao: z.string().min(1, 'Descricao obrigatoria'),
     observacao: z.string(),
-    rateios: z.array(rateioSchema).min(1, 'Informe ao menos um rateio')
+    rateios: z.array(rateioSchema).min(1, 'Informe ao menos um rateio'),
+    ehRecorrente: z.boolean(),
+    recorrenciaTipoPeriodicidade: z.literal('Mensal'),
+    recorrenciaDiaGeracaoMensal: z.number().int().min(1).max(31),
+    recorrenciaDataInicio: z.string(),
+    recorrenciaDataFim: z.string(),
+    recorrenciaPermiteEdicaoOcorrenciaIndividual: z.boolean(),
+    recorrenciaObservacao: z.string(),
+    recorrenciaGerarAteData: z.string()
   })
   .superRefine((values, context) => {
     const valorLiquido = calculateValorLiquido(values);
@@ -36,5 +44,31 @@ export const financialAccountFormSchema = z
         path: ['rateios'],
         message: 'A soma dos rateios deve fechar exatamente o valor liquido.'
       });
+    }
+
+    if (values.ehRecorrente) {
+      if (values.quantidadeParcelas !== 1) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['quantidadeParcelas'],
+          message: 'Recorrencia nao pode ser combinada com parcelamento.'
+        });
+      }
+
+      if (values.recorrenciaDataInicio.trim() === '') {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['recorrenciaDataInicio'],
+          message: 'Informe a data de inicio da recorrencia.'
+        });
+      }
+
+      if (values.recorrenciaDataFim.trim() !== '' && values.recorrenciaDataFim < values.recorrenciaDataInicio) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['recorrenciaDataFim'],
+          message: 'Data fim deve ser maior ou igual a data de inicio.'
+        });
+      }
     }
   });

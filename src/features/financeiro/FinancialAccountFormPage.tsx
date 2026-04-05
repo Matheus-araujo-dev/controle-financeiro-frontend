@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Card, Form, Input, InputNumber, Select, Space, Typography } from 'antd';
+import { Button, Card, Checkbox, Form, Input, InputNumber, Select, Space, Typography } from 'antd';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AxiosError } from 'axios';
@@ -35,6 +35,7 @@ export function FinancialAccountFormPage({
 
   const {
     control,
+    getValues,
     handleSubmit,
     reset,
     setError,
@@ -58,6 +59,8 @@ export function FinancialAccountFormPage({
     () => resolveFormaPagamentoBehavior(watchedValues.formaPagamentoId, formaPagamentoOptions),
     [watchedValues.formaPagamentoId, formaPagamentoOptions]
   );
+  const exibeRecorrencia = watchedValues.ehRecorrente;
+  const exibeAcoesRecorrencia = Boolean(id && watchedValues.ehRecorrente);
 
   useEffect(() => {
     async function loadOptions() {
@@ -173,6 +176,82 @@ export function FinancialAccountFormPage({
     }
   }
 
+  async function alterarFuturas() {
+    if (!id || !config.alterarFuturas) {
+      return;
+    }
+
+    setActionLoading(true);
+    setErrorMessage(undefined);
+
+    try {
+      await config.alterarFuturas(id, getValues());
+      navigate(config.routeBase);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao alterar as ocorrencias futuras.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function gerarOcorrencias() {
+    if (!id || !config.gerarOcorrencias) {
+      return;
+    }
+
+    setActionLoading(true);
+    setErrorMessage(undefined);
+
+    try {
+      await config.gerarOcorrencias(id, {
+        ateData: getValues().recorrenciaGerarAteData
+      });
+      navigate(config.routeBase);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao gerar ocorrencias.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function pausarRecorrencia() {
+    if (!id || !config.pausarRecorrencia) {
+      return;
+    }
+
+    setActionLoading(true);
+    setErrorMessage(undefined);
+
+    try {
+      await config.pausarRecorrencia(id);
+      navigate(config.routeBase);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao pausar a recorrencia.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function encerrarRecorrencia() {
+    if (!id || !config.encerrarRecorrencia) {
+      return;
+    }
+
+    setActionLoading(true);
+    setErrorMessage(undefined);
+
+    try {
+      await config.encerrarRecorrencia(id, {
+        dataFim: getValues().recorrenciaDataFim
+      });
+      navigate(config.routeBase);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao encerrar a recorrencia.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   if (loading) {
     return <PageState state="loading" title="Carregando lancamento..." />;
   }
@@ -200,7 +279,7 @@ export function FinancialAccountFormPage({
           isSubmitting={isSubmitting}
           onCancel={() => navigate(config.routeBase)}
         >
-          <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Space orientation="vertical" size={16} style={{ width: '100%' }}>
             <Controller
               control={control}
               name="descricao"
@@ -268,7 +347,7 @@ export function FinancialAccountFormPage({
                     <InputNumber
                       min={1}
                       value={field.value}
-                      disabled={Boolean(id)}
+                      disabled={Boolean(id) || watchedValues.ehRecorrente}
                       onChange={(value) => field.onChange(value ?? 1)}
                     />
                   </Form.Item>
@@ -372,11 +451,113 @@ export function FinancialAccountFormPage({
               )}
             />
 
+            {!id ? (
+              <Controller
+                control={control}
+                name="ehRecorrente"
+                render={({ field }) => (
+                  <Form.Item>
+                    <Checkbox checked={field.value} onChange={(event) => field.onChange(event.target.checked)}>
+                      Criar como lancamento recorrente
+                    </Checkbox>
+                  </Form.Item>
+                )}
+              />
+            ) : null}
+
+            {exibeRecorrencia ? (
+              <Card>
+                <Space orientation="vertical" size={16} style={{ width: '100%' }}>
+                  <div>
+                    <Typography.Title level={5}>Recorrencia</Typography.Title>
+                    <Typography.Paragraph>Configure a serie mensal, preservando historico e permitindo gerar previsoes futuras.</Typography.Paragraph>
+                  </div>
+                  <Space wrap style={{ width: '100%' }}>
+                    <Controller
+                      control={control}
+                      name="recorrenciaTipoPeriodicidade"
+                      render={({ field }) => (
+                        <Form.Item label="Periodicidade">
+                          <Select
+                            value={field.value}
+                            options={[{ label: 'Mensal', value: 'Mensal' }]}
+                            onChange={(value) => field.onChange(value ?? 'Mensal')}
+                            style={{ width: 180 }}
+                          />
+                        </Form.Item>
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name="recorrenciaDiaGeracaoMensal"
+                      render={({ field }) => (
+                        <Form.Item
+                          label="Dia mensal"
+                          help={errors.recorrenciaDiaGeracaoMensal?.message}
+                          validateStatus={errors.recorrenciaDiaGeracaoMensal ? 'error' : undefined}
+                        >
+                          <InputNumber min={1} max={31} value={field.value} onChange={(value) => field.onChange(value ?? 1)} />
+                        </Form.Item>
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name="recorrenciaDataInicio"
+                      render={({ field }) => (
+                        <Form.Item
+                          label="Inicio"
+                          help={errors.recorrenciaDataInicio?.message}
+                          validateStatus={errors.recorrenciaDataInicio ? 'error' : undefined}
+                        >
+                          <Input type="date" {...field} value={field.value ?? ''} />
+                        </Form.Item>
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name="recorrenciaDataFim"
+                      render={({ field }) => (
+                        <Form.Item
+                          label="Fim"
+                          help={errors.recorrenciaDataFim?.message}
+                          validateStatus={errors.recorrenciaDataFim ? 'error' : undefined}
+                        >
+                          <Input type="date" {...field} value={field.value ?? ''} />
+                        </Form.Item>
+                      )}
+                    />
+                  </Space>
+
+                  <Controller
+                    control={control}
+                    name="recorrenciaPermiteEdicaoOcorrenciaIndividual"
+                    render={({ field }) => (
+                      <Form.Item>
+                        <Checkbox checked={field.value} onChange={(event) => field.onChange(event.target.checked)}>
+                          Permitir edicao pontual de ocorrencias
+                        </Checkbox>
+                      </Form.Item>
+                    )}
+                  />
+
+                  <Controller
+                    control={control}
+                    name="recorrenciaObservacao"
+                    render={({ field }) => (
+                      <Form.Item label="Observacao da recorrencia">
+                        <Input.TextArea {...field} value={field.value ?? ''} rows={2} />
+                      </Form.Item>
+                    )}
+                  />
+                </Space>
+              </Card>
+            ) : null}
+
             <div>
               <Typography.Title level={5}>Rateios</Typography.Title>
               <Typography.Paragraph>Total informado: {totalRateios.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Typography.Paragraph>
               {errors.rateios?.message ? <Typography.Text type="danger">{errors.rateios.message}</Typography.Text> : null}
-              <Space direction="vertical" size={8} style={{ width: '100%' }}>
+              <Space orientation="vertical" size={8} style={{ width: '100%' }}>
                 {fields.map((item, index) => (
                   <Space key={item.id} wrap align="start">
                     <Controller
@@ -419,7 +600,7 @@ export function FinancialAccountFormPage({
 
       {id && detailStatus === 'PENDENTE' ? (
         <Card>
-          <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Space orientation="vertical" size={16} style={{ width: '100%' }}>
             <div>
               <Typography.Title level={5}>Acoes de negocio</Typography.Title>
               <Typography.Paragraph>Liquidacao e cancelamento do lancamento atual.</Typography.Paragraph>
@@ -445,6 +626,40 @@ export function FinancialAccountFormPage({
               </Button>
               <Button danger loading={actionLoading} onClick={() => void cancelar()}>
                 Cancelar
+              </Button>
+            </Space>
+          </Space>
+        </Card>
+      ) : null}
+
+      {exibeAcoesRecorrencia ? (
+        <Card>
+          <Space orientation="vertical" size={16} style={{ width: '100%' }}>
+            <div>
+              <Typography.Title level={5}>Acoes de recorrencia</Typography.Title>
+              <Typography.Paragraph>Gere previsoes, pause a serie, encerre a recorrencia ou propague alteracoes para as proximas ocorrencias.</Typography.Paragraph>
+            </div>
+            <Space wrap>
+              <Controller
+                control={control}
+                name="recorrenciaGerarAteData"
+                render={({ field }) => (
+                  <Form.Item label="Gerar ate">
+                    <Input type="date" {...field} value={field.value ?? ''} />
+                  </Form.Item>
+                )}
+              />
+              <Button loading={actionLoading} onClick={() => void gerarOcorrencias()}>
+                Gerar ocorrencias
+              </Button>
+              <Button loading={actionLoading} onClick={() => void alterarFuturas()}>
+                Salvar nas futuras
+              </Button>
+              <Button loading={actionLoading} onClick={() => void pausarRecorrencia()}>
+                Pausar recorrencia
+              </Button>
+              <Button danger loading={actionLoading} onClick={() => void encerrarRecorrencia()}>
+                Encerrar recorrencia
               </Button>
             </Space>
           </Space>

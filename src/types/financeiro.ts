@@ -5,6 +5,7 @@ export type StatusContaCodigo = 'PENDENTE' | 'LIQUIDADA' | 'VENCIDA' | 'CANCELAD
 export type StatusFaturaCodigo = 'ABERTA' | 'PAGA';
 export type TipoMovimentacao = 'Entrada' | 'Saida';
 export type NaturezaMovimentacao = 'Prevista' | 'Realizada' | 'Economica';
+export type TipoPeriodicidadeRecorrencia = 'Mensal';
 
 export type ListQueryBase = {
   page: number;
@@ -26,6 +27,26 @@ export type RateioDetalhe = {
   percentual: number | null;
 };
 
+export type RecorrenciaDetalhe = {
+  id: string;
+  tipoPeriodicidade: TipoPeriodicidadeRecorrencia;
+  diaGeracaoMensal: number;
+  dataInicio: string;
+  dataFim: string | null;
+  ativa: boolean;
+  permiteEdicaoOcorrenciaIndividual: boolean;
+  observacao: string | null;
+};
+
+export type RecorrenciaPayload = {
+  tipoPeriodicidade: TipoPeriodicidadeRecorrencia;
+  diaGeracaoMensal: number;
+  dataInicio: string;
+  dataFim: string | null;
+  permiteEdicaoOcorrenciaIndividual: boolean;
+  observacao: string | null;
+};
+
 export type ContaPagarResumo = {
   id: string;
   numeroDocumento: string | null;
@@ -43,6 +64,7 @@ export type ContaPagarResumo = {
   quantidadeParcelas: number;
   numeroParcela: number;
   grupoParcelamentoId: string | null;
+  ehRecorrente: boolean;
 };
 
 export type ContaPagarDetalhe = {
@@ -75,7 +97,9 @@ export type ContaPagarDetalhe = {
   observacao: string | null;
   statusCodigo: StatusContaCodigo;
   statusNome: string;
+  ehRecorrente: boolean;
   origem: LancamentoOrigem;
+  recorrencia: RecorrenciaDetalhe | null;
   rateios: RateioDetalhe[];
   createdAtUtc: string;
   updatedAtUtc: string;
@@ -99,6 +123,7 @@ export type ContaPagarPayload = {
   descricao: string;
   observacao: string | null;
   rateios: RateioPayload[];
+  recorrencia: RecorrenciaPayload | null;
 };
 
 export type ContaPagarFilters = ListQueryBase & {
@@ -124,6 +149,7 @@ export type ContaReceberResumo = {
   quantidadeParcelas: number;
   numeroParcela: number;
   grupoParcelamentoId: string | null;
+  ehRecorrente: boolean;
 };
 
 export type ContaReceberDetalhe = {
@@ -156,7 +182,9 @@ export type ContaReceberDetalhe = {
   observacao: string | null;
   statusCodigo: StatusContaCodigo;
   statusNome: string;
+  ehRecorrente: boolean;
   origem: LancamentoOrigem;
+  recorrencia: RecorrenciaDetalhe | null;
   rateios: RateioDetalhe[];
   createdAtUtc: string;
   updatedAtUtc: string;
@@ -180,6 +208,7 @@ export type ContaReceberPayload = {
   descricao: string;
   observacao: string | null;
   rateios: RateioPayload[];
+  recorrencia: RecorrenciaPayload | null;
 };
 
 export type ContaReceberFilters = ListQueryBase & {
@@ -191,6 +220,14 @@ export type ContaReceberFilters = ListQueryBase & {
 export type LiquidacaoPayload = {
   dataLiquidacao: string;
   contaBancariaId: string;
+};
+
+export type GerarOcorrenciasPayload = {
+  ateData: string;
+};
+
+export type EncerrarRecorrenciaPayload = {
+  dataFim: string;
 };
 
 export type MovimentacaoResumo = {

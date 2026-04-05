@@ -8,9 +8,11 @@ import type {
   ContaReceberFilters,
   ContaReceberPayload,
   ContaReceberResumo,
+  EncerrarRecorrenciaPayload,
   FaturaDetalhe,
   FaturaFilters,
   FaturaResumo,
+  GerarOcorrenciasPayload,
   LiquidacaoPayload,
   MovimentacaoDetalhe,
   MovimentacaoFilters,
@@ -45,6 +47,11 @@ export const financeiroApi = {
     obterPorId: (id: string) => getById<ContaPagarDetalhe>(`/contas-pagar/${id}`),
     criar: (payload: ContaPagarPayload) => post<ContaPagarDetalhe>('/contas-pagar', payload),
     atualizar: (id: string, payload: ContaPagarPayload) => put<ContaPagarDetalhe>(`/contas-pagar/${id}`, payload),
+    alterarFuturas: (id: string, payload: ContaPagarPayload) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/alterar-futuras`, payload),
+    gerarOcorrencias: (id: string, payload: GerarOcorrenciasPayload) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/gerar-ocorrencias`, payload),
+    pausarRecorrencia: (id: string) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/pausar-recorrencia`),
+    encerrarRecorrencia: (id: string, payload: EncerrarRecorrenciaPayload) =>
+      post<ContaPagarDetalhe>(`/contas-pagar/${id}/encerrar-recorrencia`, payload),
     liquidar: (id: string, payload: LiquidacaoPayload) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/liquidar`, payload),
     cancelar: (id: string) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/cancelar`)
   },
@@ -53,6 +60,11 @@ export const financeiroApi = {
     obterPorId: (id: string) => getById<ContaReceberDetalhe>(`/contas-receber/${id}`),
     criar: (payload: ContaReceberPayload) => post<ContaReceberDetalhe>('/contas-receber', payload),
     atualizar: (id: string, payload: ContaReceberPayload) => put<ContaReceberDetalhe>(`/contas-receber/${id}`, payload),
+    alterarFuturas: (id: string, payload: ContaReceberPayload) => post<ContaReceberDetalhe>(`/contas-receber/${id}/alterar-futuras`, payload),
+    gerarOcorrencias: (id: string, payload: GerarOcorrenciasPayload) => post<ContaReceberDetalhe>(`/contas-receber/${id}/gerar-ocorrencias`, payload),
+    pausarRecorrencia: (id: string) => post<ContaReceberDetalhe>(`/contas-receber/${id}/pausar-recorrencia`),
+    encerrarRecorrencia: (id: string, payload: EncerrarRecorrenciaPayload) =>
+      post<ContaReceberDetalhe>(`/contas-receber/${id}/encerrar-recorrencia`, payload),
     liquidar: (id: string, payload: LiquidacaoPayload) => post<ContaReceberDetalhe>(`/contas-receber/${id}/liquidar`, payload),
     cancelar: (id: string) => post<ContaReceberDetalhe>(`/contas-receber/${id}/cancelar`)
   },

@@ -1,7 +1,7 @@
 # Progress Log - Frontend
 
 ## Ultima fase concluida
-- Fase 4: cartoes e faturas concluida com listagem de faturas, detalhe com itens agrupados e acao de pagamento.
+- Fase 5: recorrencia concluida com configuracao da serie dentro das telas financeiras existentes e acoes de geracao, pausa, encerramento e alteracao futura.
 
 ## Decisoes locais
 - O bootstrap foi feito manualmente, sem template Vite gerado, para manter a estrutura exatamente alinhada ao workspace.
@@ -17,6 +17,9 @@
 - A fase 4 substituiu o placeholder de `faturas` por telas reais de listagem e detalhe, refletindo os contratos de agrupamento, itens e pagamento vindos do backend.
 - O frontend passou a expor a rastreabilidade da fatura tambem nas movimentacoes, com `faturaCartaoId` incorporado aos tipos financeiros.
 - O fluxo de pagamento da fatura ficou isolado na tela de detalhe, com recarga do estado da propria fatura apos a acao para manter a coerencia da visao economica versus caixa.
+- A fase 5 manteve a recorrencia dentro das telas de contas a pagar e contas a receber, evitando criar um modulo fora das rotas canonicamente previstas.
+- Os `types`, `services` HTTP e `module-config` financeiros passaram a refletir `Recorrencia`, inclusive os endpoints de alterar futuras, gerar ocorrencias, pausar e encerrar.
+- O formulario financeiro ganhou secao de recorrencia e card de acoes da serie, enquanto a validacao local passou a bloquear a combinacao de recorrencia com parcelamento.
 
 ## Pendencias nao criticas
 - configurar secrets reais de SonarQube/SonarCloud no CI para ativar o quality gate remoto.

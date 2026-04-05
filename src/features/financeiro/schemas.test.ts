@@ -17,7 +17,15 @@ const validValues = {
   quantidadeParcelas: 1,
   descricao: 'Despesa mensal',
   observacao: '',
-  rateios: [{ contaGerencialId: 'cg1', valor: 95 }]
+  rateios: [{ contaGerencialId: 'cg1', valor: 95 }],
+  ehRecorrente: false,
+  recorrenciaTipoPeriodicidade: 'Mensal',
+  recorrenciaDiaGeracaoMensal: 20,
+  recorrenciaDataInicio: '',
+  recorrenciaDataFim: '',
+  recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
+  recorrenciaObservacao: '',
+  recorrenciaGerarAteData: ''
 };
 
 describe('financialAccountFormSchema', () => {
@@ -41,5 +49,16 @@ describe('financialAccountFormSchema', () => {
         rateios: []
       })
     ).toThrow('Informe ao menos um rateio');
+  });
+
+  it('rejects recorrencia combined with parcelamento', () => {
+    expect(() =>
+      financialAccountFormSchema.parse({
+        ...validValues,
+        ehRecorrente: true,
+        recorrenciaDataInicio: '2026-04-20',
+        quantidadeParcelas: 2
+      })
+    ).toThrow('Recorrencia nao pode ser combinada com parcelamento.');
   });
 });

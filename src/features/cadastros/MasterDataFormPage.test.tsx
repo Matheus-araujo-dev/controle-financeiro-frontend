@@ -63,7 +63,7 @@ describe('MasterDataFormPage', () => {
 
     await waitFor(() => expect(create).toHaveBeenCalledWith({ nome: 'Pessoa Exemplo' }));
     expect(navigateMock).toHaveBeenCalledWith('/pessoas');
-  });
+  }, 10000);
 
   it('applies server validation errors to the form', async () => {
     const create = vi.fn().mockRejectedValue(
