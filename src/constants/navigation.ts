@@ -38,5 +38,9 @@ export const navigationItems = [
   {
     key: '/faturas',
     label: 'Faturas'
+  },
+  {
+    key: '/importacoes-whatsapp',
+    label: 'Importacoes WhatsApp'
   }
 ];

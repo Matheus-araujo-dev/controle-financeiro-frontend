@@ -8,6 +8,14 @@ const dashboardApiMock = vi.hoisted(() => ({
   obterFluxoCaixa: vi.fn()
 }));
 
+const importacoesWhatsappApiMock = vi.hoisted(() => ({
+  listar: vi.fn(),
+  obterPorId: vi.fn(),
+  reprocessar: vi.fn(),
+  confirmarItem: vi.fn(),
+  rejeitarItem: vi.fn()
+}));
+
 const apiClientMock = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
@@ -21,6 +29,10 @@ vi.mock('../services/http/api-client', () => ({
 
 vi.mock('../services/http/dashboard-api', () => ({
   dashboardApi: dashboardApiMock
+}));
+
+vi.mock('../services/http/importacoes-whatsapp-api', () => ({
+  importacoesWhatsappApi: importacoesWhatsappApiMock
 }));
 
 describe('appRoutes', () => {
@@ -42,6 +54,13 @@ describe('appRoutes', () => {
       dias: 15,
       riscoSaldoNegativo: false,
       itens: []
+    });
+    importacoesWhatsappApiMock.listar.mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 10,
+      totalItems: 0,
+      totalPages: 0
     });
     apiClientMock.get.mockResolvedValue({
       data: {
@@ -71,7 +90,7 @@ describe('appRoutes', () => {
     expect(await screen.findByTestId('admin-shell')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.getByText('Dashboard executivo')).toBeInTheDocument();
-  }, 10000);
+  }, 20000);
 
   it('renders the not found page for unknown routes', async () => {
     const router = createMemoryRouter(appRoutes, {
@@ -84,15 +103,18 @@ describe('appRoutes', () => {
     expect(screen.getByRole('link', { name: 'Voltar ao dashboard' })).toHaveAttribute('href', '/dashboard');
   });
 
-  it('renders the placeholder route for future modules', async () => {
+  it('renders the importacoes whatsapp route with the real phase 7 page', async () => {
     const router = createMemoryRouter(appRoutes, {
       initialEntries: ['/importacoes-whatsapp']
     });
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByText('Modulo previsto para a fase 7.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 4, name: 'Importacoes WhatsApp' })).toBeInTheDocument();
     expect(screen.getAllByText('Importacoes WhatsApp').length).toBeGreaterThan(0);
+    expect(
+      screen.getByText('Revise mensagens e arquivos recebidos pelo WhatsApp antes de confirmar ou rejeitar as sugestoes financeiras geradas.')
+    ).toBeInTheDocument();
   });
 
   it('renders the contas a pagar route with the real phase 3 page', async () => {

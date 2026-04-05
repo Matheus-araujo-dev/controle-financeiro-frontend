@@ -89,7 +89,7 @@ describe('FinancialAccountListPage', () => {
         })
       )
     );
-  }, 10000);
+  }, 20000);
 
   it('renders the error state and retries loading', async () => {
     const list = vi

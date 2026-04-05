@@ -1,7 +1,7 @@
 # Progress Log - Frontend
 
 ## Ultima fase concluida
-- Fase 6: dashboard e fluxo de caixa concluidos com tela real, dados vindos da API e alternancia entre visao de caixa e visao economica.
+- Fase 7: importacoes WhatsApp e OCR concluidas com listagem real, tela de revisao, acoes de confirmar/rejeitar/reprocessar e contratos alinhados ao backend.
 
 ## Decisoes locais
 - O bootstrap foi feito manualmente, sem template Vite gerado, para manter a estrutura exatamente alinhada ao workspace.
@@ -23,6 +23,10 @@
 - A fase 6 substituiu o placeholder de `dashboard` por uma tela operacional real, consumindo `GET /dashboard/resumo` e `GET /dashboard/fluxo-caixa` com estados de loading, erro e retry.
 - O dashboard passou a consolidar cards, listas de contas vencidas/a vencer, movimentacoes recentes e tabela de fluxo diario sem criar uma rota extra fora do `/dashboard` canonico.
 - A formatacao de datas do dashboard foi feita manualmente a partir de strings `yyyy-MM-dd` para evitar deslocamentos por fuso horario em `Date` do navegador e nos testes.
+- A fase 7 substituiu os placeholders de `importacoes-whatsapp` por telas reais de listagem e detalhe, mantendo `conciliacao` como o unico placeholder restante para a fase 8.
+- Os contratos novos do backend passaram a ser refletidos em `types/importacoes-whatsapp.ts` e no cliente HTTP dedicado `importacoes-whatsapp-api.ts`, evitando misturar a revisao de importacao com os modulos financeiros ja consolidados.
+- A tela de listagem passou a expor busca, status, confianca da extracao e pendencias de revisao, enquanto a tela de detalhe mostra texto bruto, metadados do arquivo, payload sugerido e acoes de confirmar, rejeitar e reprocessar.
+- O frontend desta fase trata confirmacao e rejeicao como revisao humana da sugestao, sem prometer efetivacao automatica de lancamento financeiro antes das fases seguintes.
 
 ## Pendencias nao criticas
 - configurar secrets reais de SonarQube/SonarCloud no CI para ativar o quality gate remoto.

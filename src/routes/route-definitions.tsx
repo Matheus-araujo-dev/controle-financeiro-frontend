@@ -13,6 +13,8 @@ import { FinancialAccountListPage } from '../features/financeiro/FinancialAccoun
 import { FaturaDetailPage } from '../features/financeiro/FaturaDetailPage';
 import { FaturasPage } from '../features/financeiro/FaturasPage';
 import { MovimentacoesPage } from '../features/financeiro/MovimentacoesPage';
+import { ImportacaoWhatsappDetailPage } from '../features/importacoes-whatsapp/ImportacaoWhatsappDetailPage';
+import { ImportacoesWhatsappPage } from '../features/importacoes-whatsapp/ImportacoesWhatsappPage';
 import { contasPagarModuleConfig, contasReceberModuleConfig } from '../features/financeiro/module-config';
 import { ModulePlaceholderPage } from '../pages/ModulePlaceholderPage';
 
@@ -24,8 +26,6 @@ type PlaceholderRouteDefinition = {
 };
 
 const placeholderRoutes: PlaceholderRouteDefinition[] = [
-  { path: 'importacoes-whatsapp', title: 'Importacoes WhatsApp', summary: 'Modulo previsto para a fase 7.', phase: 7 },
-  { path: 'importacoes-whatsapp/:id', title: 'Detalhe da importacao', summary: 'Revisao prevista para a fase 7.', phase: 7 },
   { path: 'conciliacao', title: 'Conciliacao', summary: 'Modulo previsto para a fase 8.', phase: 8 }
 ];
 
@@ -207,6 +207,20 @@ export const financialRouteObjects: RouteObject[] = [
     element: <FaturaDetailPage />,
     handle: {
       title: 'Detalhe de fatura'
+    }
+  },
+  {
+    path: 'importacoes-whatsapp',
+    element: <ImportacoesWhatsappPage />,
+    handle: {
+      title: 'Importacoes WhatsApp'
+    }
+  },
+  {
+    path: 'importacoes-whatsapp/:id',
+    element: <ImportacaoWhatsappDetailPage />,
+    handle: {
+      title: 'Revisao da importacao'
     }
   }
 ];
