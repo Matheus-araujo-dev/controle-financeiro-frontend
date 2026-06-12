@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ff716c",
+                        "secondary-fixed": "#74fbbb",
+                        "primary": "#3fff8b",
+                        "inverse-on-surface": "#565555",
+                        "outline-variant": "#484847",
+                        "surface": "#0e0e0e",
+                        "on-secondary-fixed": "#00492f",
+                        "tertiary-fixed-dim": "#00cdec",
+                        "on-primary": "#005d2c",
+                        "surface-container-lowest": "#000000",
+                        "on-primary-fixed-variant": "#006832",
+                        "primary-fixed": "#3fff8b",
+                        "secondary-dim": "#65ecae",
+                        "on-surface-variant": "#adaaaa",
+                        "on-secondary-container": "#e1ffeb",
+                        "secondary-fixed-dim": "#65ecae",
+                        "primary-dim": "#24f07e",
+                        "inverse-primary": "#006e35",
+                        "on-primary-fixed": "#004820",
+                        "on-background": "#ffffff",
+                        "inverse-surface": "#fcf9f8",
+                        "surface-container-low": "#131313",
+                        "tertiary-fixed": "#00dcfd",
+                        "surface-container-highest": "#262626",
+                        "surface-container": "#1a1a1a",
+                        "tertiary": "#7ae6ff",
+                        "surface-bright": "#2c2c2c",
+                        "on-tertiary-container": "#004955",
+                        "surface-variant": "#262626",
+                        "primary-container": "#13ea79",
+                        "on-secondary-fixed-variant": "#006945",
+                        "on-error-container": "#ffa8a3",
+                        "secondary-container": "#006c47",
+                        "on-primary-container": "#004f24",
+                        "on-tertiary-fixed": "#00343d",
+                        "surface-container-high": "#20201f",
+                        "error-dim": "#d7383b",
+                        "error-container": "#9f0519",
+                        "primary-fixed-dim": "#24f07e",
+                        "on-secondary": "#005e3d",
+                        "on-error": "#490006",
+                        "on-tertiary-fixed-variant": "#005361",
+                        "secondary": "#74fbbb",
+                        "surface-tint": "#3fff8b",
+                        "tertiary-dim": "#00cdec",
+                        "tertiary-container": "#00dcfd",
+                        "on-tertiary": "#005360",
+                        "outline": "#767575",
+                        "surface-dim": "#0e0e0e",
+                        "background": "#0e0e0e",
+                        "on-surface": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0e0e0e;
+            color: #ffffff;
+        }
+        h1, h2, .balance-text {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#0e0e0e] shadow-[0_20px_40px_rgba(63,255,139,0.05)] border-b border-outline-variant/15">
+<div class="flex justify-between items-center px-6 h-16 w-full max-w-none">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-extrabold tracking-tighter text-[#3fff8b] font-['Plus_Jakarta_Sans']">Neon Ledger</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-[#adaaaa] hover:text-[#f5f5f5] font-['Plus_Jakarta_Sans'] font-bold tracking-tight active:scale-95 transition-transform" href="#">Dashboard</a>
+<a class="text-[#3fff8b] border-b-2 border-[#3fff8b] pb-1 font-['Plus_Jakarta_Sans'] font-bold tracking-tight active:scale-95 transition-transform" href="#">Planner</a>
+<a class="text-[#adaaaa] hover:text-[#f5f5f5] font-['Plus_Jakarta_Sans'] font-bold tracking-tight active:scale-95 transition-transform" href="#">Cards</a>
+<a class="text-[#adaaaa] hover:text-[#f5f5f5] font-['Plus_Jakarta_Sans'] font-bold tracking-tight active:scale-95 transition-transform" href="#">Accounts</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-[#262626] rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined text-[#adaaaa]">notifications</span>
+</button>
+<button class="p-2 hover:bg-[#262626] rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined text-[#adaaaa]">settings</span>
+</button>
+<img alt="User profile" class="w-8 h-8 rounded-full border-2 border-[#3fff8b]" data-alt="Professional portrait of a business executive with sharp features and thoughtful expression in dramatic high-contrast studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJ7RHCVyex_5zLt_c0E6IKl5d2clYjli9zm9joZ0_ODO8hbdKQeOc1lK9cqgiJjh8OK2Sjiw_A-Ccrw2KY1oJAcIK2lILfENY15d7AQ3sFRT0WLClW1D0qdbPXEXvmSAnDDPQ1P2jA2pwCJf7ltbGV5ExSbkfBe9Gw_Vjai4w8S5dIK8YipgS__aIEy0BiPn484wuN1CunqcfA2-qbO9OnOwBc4e_ByEyNS9bGhbKtwcGt7h02z-qrZjNU6wY62YZu1NRci3xBfqE7"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-20 md:pb-8 px-4 md:px-10 max-w-7xl mx-auto">
+<!-- Header & Summary Section -->
+<section class="mb-10">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h1 class="text-4xl font-extrabold tracking-tight text-on-surface mb-2">Extrato de Movimentações</h1>
+<p class="text-on-surface-variant text-sm font-label uppercase tracking-widest">Controle em Tempo Real</p>
+</div>
+<div class="grid grid-cols-2 gap-4 md:flex items-center">
+<div class="bg-surface-container border border-outline-variant/15 p-4 rounded-xl shadow-lg min-w-[200px]">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold mb-1">Saldo Total</p>
+<p class="text-2xl font-bold text-primary balance-text">R$ 42.850,00</p>
+</div>
+<div class="bg-surface-container border border-outline-variant/15 p-4 rounded-xl shadow-lg min-w-[200px]">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold mb-1">Previsto (Mês)</p>
+<p class="text-2xl font-bold text-on-surface balance-text">R$ 12.300,00</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Filters Section - Bento Style -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+<div class="md:col-span-1 bg-surface-container p-5 rounded-2xl flex flex-col justify-center border border-outline-variant/15">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-3">Período</label>
+<div class="relative">
+<select class="w-full bg-surface-container-highest border-none text-on-surface text-sm rounded-xl px-4 py-3 appearance-none focus:ring-1 focus:ring-primary/40">
+<option>Últimos 30 dias</option>
+<option>Este Mês</option>
+<option>Mês Passado</option>
+<option>Personalizado</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<div class="md:col-span-1 bg-surface-container p-5 rounded-2xl flex flex-col justify-center border border-outline-variant/15">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-3">Conta Bancária</label>
+<div class="relative">
+<select class="w-full bg-surface-container-highest border-none text-on-surface text-sm rounded-xl px-4 py-3 appearance-none focus:ring-1 focus:ring-primary/40">
+<option>Todas as Contas</option>
+<option>Nubank (Principal)</option>
+<option>Itaú Personnalité</option>
+<option>Binance Wallet</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">account_balance_wallet</span>
+</div>
+</div>
+<div class="md:col-span-1 bg-surface-container p-5 rounded-2xl flex flex-col justify-center border border-outline-variant/15">
+<label class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-3">Categoria</label>
+<div class="relative">
+<select class="w-full bg-surface-container-highest border-none text-on-surface text-sm rounded-xl px-4 py-3 appearance-none focus:ring-1 focus:ring-primary/40">
+<option>Todas as Categorias</option>
+<option>Alimentação</option>
+<option>Investimentos</option>
+<option>Assinaturas</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">category</span>
+</div>
+</div>
+<div class="md:col-span-1 flex items-center justify-center gap-4">
+<button class="bg-primary text-on-primary font-bold px-8 py-4 rounded-xl w-full hover:brightness-110 active:scale-95 transition-all shadow-[0_10px_20px_rgba(63,255,139,0.2)]">
+                    Filtrar
+                </button>
+</div>
+</section>
+<!-- Transaction Table Container -->
+<section class="bg-surface-container-low rounded-3xl overflow-hidden border border-outline-variant/15 shadow-2xl">
+<div class="p-6 border-b border-outline-variant/10 flex justify-between items-center">
+<h3 class="text-lg font-bold text-on-surface">Transações Recentes</h3>
+<div class="flex gap-2">
+<button class="bg-surface-container-highest p-2 rounded-lg hover:text-primary transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+<button class="bg-surface-container-highest p-2 rounded-lg hover:text-primary transition-colors">
+<span class="material-symbols-outlined">print</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-on-surface-variant text-[10px] uppercase tracking-widest font-bold">
+<th class="px-8 py-5">Data</th>
+<th class="px-6 py-5">Descrição</th>
+<th class="px-6 py-5">Categoria</th>
+<th class="px-6 py-5 text-center">Conta</th>
+<th class="px-6 py-5 text-right">Valor</th>
+<th class="px-8 py-5 text-right">Saldo Acumulado</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Transaction Row -->
+<tr class="hover:bg-surface-container-highest transition-colors group">
+<td class="px-8 py-6 text-sm text-on-surface-variant">15 Out, 2023</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center border border-outline-variant/15">
+<span class="material-symbols-outlined text-on-surface text-sm">shopping_cart</span>
+</div>
+<span class="font-medium text-on-surface">Supermercado Pão de Açúcar</span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="bg-surface-container-highest text-on-surface-variant text-[10px] px-3 py-1 rounded-full border border-outline-variant/20 uppercase font-bold">Alimentação</span>
+</td>
+<td class="px-6 py-6 text-center">
+<span class="text-sm font-medium text-on-surface-variant">Nubank</span>
+</td>
+<td class="px-6 py-6 text-right font-bold text-on-surface">- R$ 420,50</td>
+<td class="px-8 py-6 text-right font-semibold text-on-surface/80">R$ 42.850,00</td>
+</tr>
+<!-- Transaction Row (Positive) -->
+<tr class="hover:bg-surface-container-highest transition-colors group">
+<td class="px-8 py-6 text-sm text-on-surface-variant">14 Out, 2023</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<span class="font-medium text-on-surface">Salário Neon Tech S.A.</span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="bg-primary/20 text-primary text-[10px] px-3 py-1 rounded-full border border-primary/20 uppercase font-bold">Renda</span>
+</td>
+<td class="px-6 py-6 text-center">
+<span class="text-sm font-medium text-on-surface-variant">Itaú</span>
+</td>
+<td class="px-6 py-6 text-right font-bold text-primary">+ R$ 12.000,00</td>
+<td class="px-8 py-6 text-right font-semibold text-on-surface/80">R$ 43.270,50</td>
+</tr>
+<!-- Transaction Row -->
+<tr class="hover:bg-surface-container-highest transition-colors group">
+<td class="px-8 py-6 text-sm text-on-surface-variant">12 Out, 2023</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center border border-outline-variant/15">
+<span class="material-symbols-outlined text-on-surface text-sm">subscriptions</span>
+</div>
+<span class="font-medium text-on-surface">Netflix Premium</span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="bg-surface-container-highest text-on-surface-variant text-[10px] px-3 py-1 rounded-full border border-outline-variant/20 uppercase font-bold">Assinaturas</span>
+</td>
+<td class="px-6 py-6 text-center">
+<span class="text-sm font-medium text-on-surface-variant">Binance</span>
+</td>
+<td class="px-6 py-6 text-right font-bold text-on-surface">- R$ 55,90</td>
+<td class="px-8 py-6 text-right font-semibold text-on-surface/80">R$ 31.270,50</td>
+</tr>
+<!-- Transaction Row -->
+<tr class="hover:bg-surface-container-highest transition-colors group">
+<td class="px-8 py-6 text-sm text-on-surface-variant">10 Out, 2023</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center border border-outline-variant/15">
+<span class="material-symbols-outlined text-on-surface text-sm">electric_car</span>
+</div>
+<span class="font-medium text-on-surface">Uber Trip NYC</span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="bg-surface-container-highest text-on-surface-variant text-[10px] px-3 py-1 rounded-full border border-outline-variant/20 uppercase font-bold">Transporte</span>
+</td>
+<td class="px-6 py-6 text-center">
+<span class="text-sm font-medium text-on-surface-variant">Nubank</span>
+</td>
+<td class="px-6 py-6 text-right font-bold text-on-surface">- R$ 124,00</td>
+<td class="px-8 py-6 text-right font-semibold text-on-surface/80">R$ 31.326,40</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-8 py-6 bg-surface-container border-t border-outline-variant/10 flex items-center justify-between">
+<span class="text-sm text-on-surface-variant">Mostrando 1-10 de 124 transações</span>
+<div class="flex gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">arrow_back_ios</span>
+</button>
+<div class="flex gap-2">
+<span class="w-8 h-8 flex items-center justify-center bg-primary text-on-primary rounded-lg font-bold text-xs">1</span>
+<span class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-highest rounded-lg font-bold text-xs cursor-pointer">2</span>
+<span class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-highest rounded-lg font-bold text-xs cursor-pointer">3</span>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">arrow_forward_ios</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 bg-[#131313]/70 backdrop-blur-md border-t border-[#484847]/15 rounded-t-2xl px-4 pb-4 pt-2 flex justify-around items-center shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+<a class="flex flex-col items-center justify-center text-[#adaaaa] px-4 py-1 hover:bg-[#262626] transition-all" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-['Inter'] text-[10px] font-semibold">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#3fff8b] text-[#0e0e0e] rounded-xl px-4 py-1 scale-110 transition-all" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="font-['Inter'] text-[10px] font-semibold">Plan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#adaaaa] px-4 py-1 hover:bg-[#262626] transition-all" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-['Inter'] text-[10px] font-semibold">Cards</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#adaaaa] px-4 py-1 hover:bg-[#262626] transition-all" href="#">
+<span class="material-symbols-outlined">wallet</span>
+<span class="font-['Inter'] text-[10px] font-semibold">Bank</span>
+</a>
+</nav>
+</body></html>

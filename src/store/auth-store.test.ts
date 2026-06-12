@@ -3,9 +3,10 @@ import { useAuthStore } from './auth-store';
 describe('useAuthStore', () => {
   afterEach(() => {
     useAuthStore.setState({
-      mode: 'disabled',
+      mode: 'development',
       currentUser: null
     });
+    window.localStorage.clear();
   });
 
   it('stores the signed in user', () => {

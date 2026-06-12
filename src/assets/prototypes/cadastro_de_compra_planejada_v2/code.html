@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NeonLedger - Planejamento de Compra</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#006e35",
+                        "on-surface-variant": "#adaaaa",
+                        "on-primary-container": "#004f24",
+                        "secondary-dim": "#65ecae",
+                        "surface-container": "#1a1a1a",
+                        "on-background": "#ffffff",
+                        "outline-variant": "#484847",
+                        "error-container": "#9f0519",
+                        "tertiary-fixed-dim": "#00cdec",
+                        "on-tertiary-fixed-variant": "#005361",
+                        "inverse-on-surface": "#565555",
+                        "secondary-fixed-dim": "#65ecae",
+                        "on-secondary": "#005e3d",
+                        "tertiary-dim": "#00cdec",
+                        "secondary": "#74fbbb",
+                        "background": "#0e0e0e",
+                        "error": "#ff716c",
+                        "tertiary-fixed": "#00dcfd",
+                        "tertiary-container": "#00dcfd",
+                        "on-primary": "#005d2c",
+                        "primary-fixed-dim": "#24f07e",
+                        "on-tertiary-container": "#004955",
+                        "on-tertiary-fixed": "#00343d",
+                        "surface-container-highest": "#262626",
+                        "secondary-fixed": "#74fbbb",
+                        "on-secondary-fixed-variant": "#006945",
+                        "surface-dim": "#0e0e0e",
+                        "on-tertiary": "#005360",
+                        "primary-fixed": "#3fff8b",
+                        "on-error-container": "#ffa8a3",
+                        "surface-container-high": "#20201f",
+                        "on-primary-fixed-variant": "#006832",
+                        "outline": "#767575",
+                        "surface": "#0e0e0e",
+                        "on-primary-fixed": "#004820",
+                        "surface-bright": "#2c2c2c",
+                        "surface-container-low": "#131313",
+                        "surface-container-lowest": "#000000",
+                        "primary-dim": "#24f07e",
+                        "surface-tint": "#3fff8b",
+                        "primary-container": "#13ea79",
+                        "on-secondary-fixed": "#00492f",
+                        "secondary-container": "#006c47",
+                        "inverse-surface": "#fcf9f8",
+                        "on-surface": "#ffffff",
+                        "tertiary": "#7ae6ff",
+                        "on-secondary-container": "#e1ffeb",
+                        "on-error": "#490006",
+                        "error-dim": "#d7383b",
+                        "primary": "#3fff8b",
+                        "surface-variant": "#262626"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #0e0e0e;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            background: rgba(26, 26, 26, 0.7);
+            backdrop-filter: blur(12px);
+        }
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(63, 255, 139, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-surface selection:bg-primary selection:text-on-primary">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-8 py-4 bg-opacity-90 backdrop-blur-md bg-[#0e0e0e] shadow-[0_20px_50px_rgba(63,255,139,0.05)]">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black text-[#3fff8b] tracking-tighter">NeonLedger</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="font-['Plus_Jakarta_Sans'] font-bold text-lg text-[#adaaaa] hover:text-white transition-colors" href="#">Dashboard</a>
+<a class="font-['Plus_Jakarta_Sans'] font-bold text-lg text-[#adaaaa] hover:text-white transition-colors" href="#">Contas</a>
+<a class="font-['Plus_Jakarta_Sans'] font-bold text-lg text-[#adaaaa] hover:text-white transition-colors" href="#">Cartões</a>
+<a class="font-['Plus_Jakarta_Sans'] font-bold text-lg text-[#adaaaa] hover:text-white transition-colors" href="#">Conciliação</a>
+<a class="font-['Plus_Jakarta_Sans'] font-bold text-lg text-[#3fff8b] border-b-2 border-[#3fff8b] pb-1" href="#">Planejamento</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-[#adaaaa] hover:bg-[#262626] rounded-lg transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-[#adaaaa] hover:bg-[#262626] rounded-lg transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20">
+<img alt="Avatar do Usuário" class="w-full h-full object-cover" data-alt="professional male portrait for user profile avatar high end corporate style soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtZRD2-SSHyEmA1-cY0H4xAgFhdWHYAx8IeAlq0_om5GUr2XQScZMGNtMNxteflBdgFUCRwElnjz7i8PgcYQbWO8w9IYyy_pxiZG8wgYEGht5lmY3ut37weIO29Irkk59vfY8FCjWhSC6n2mrwzPZHA-RyqglME_Y-TMO9wjIGQ1-2MbDMujGJ8iD6rFDGhe9-rq7Q7ZbjCeBZbsACfueABZqZH33tHHwla63YWS6lhyGPCsqJtUXaZE0CnTjcRfiilVdlx2ZUZcJM"/>
+</div>
+</div>
+</header>
+<div class="flex pt-20 h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="hidden lg:flex flex-col h-full fixed left-0 py-8 bg-[#131313] w-64 space-y-4">
+<div class="px-6 mb-8">
+<h2 class="text-[#3fff8b] font-bold text-sm font-['Inter'] uppercase tracking-wider">Inteligência Financeira</h2>
+<p class="text-[#adaaaa] text-xs font-medium">Status: Em Dia</p>
+</div>
+<nav class="flex-1">
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Visão Geral</span>
+</a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Fluxo de Caixa</span>
+</a>
+<a class="bg-[#1a1a1a] text-[#3fff8b] shadow-[inset_0_0_10px_rgba(63,255,139,0.1)] border-r-4 border-[#3fff8b] py-3 px-6 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">credit_card</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Cartões de Crédito</span>
+</a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Bancos</span>
+</a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Lista de Compras</span>
+</a>
+</nav>
+<div class="px-6 mt-auto space-y-4">
+<button class="w-full bg-[#3fff8b] text-[#0e0e0e] font-bold py-3 rounded-xl hover:shadow-[0_0_20px_rgba(63,255,139,0.4)] transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest">
+<span class="material-symbols-outlined">add</span>
+                    Nova Transação
+                </button>
+<div class="pt-4 border-t border-outline-variant/15">
+<a class="text-[#adaaaa] py-2 flex items-center gap-3 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="text-xs uppercase tracking-wider">Ajuda</span>
+</a>
+<a class="text-[#adaaaa] py-2 flex items-center gap-3 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-xs uppercase tracking-wider">Sair</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 lg:ml-64 overflow-y-auto px-6 py-8 md:px-12 md:py-12 bg-surface">
+<!-- Breadcrumbs / Header -->
+<div class="mb-10">
+<div class="flex items-center gap-2 text-on-surface-variant text-xs uppercase tracking-widest font-bold mb-2">
+<span>Planejamento</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary neon-glow">Nova Compra Planejada</span>
+</div>
+<h1 class="text-4xl font-headline font-extrabold tracking-tight text-on-surface">Cadastro de Compra</h1>
+<p class="text-on-surface-variant max-w-2xl mt-2">Defina sua estratégia de aquisição e mantenha seu patrimônio sob controle com inteligência preditiva.</p>
+</div>
+<!-- Main Form Section -->
+<form class="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-24">
+<!-- Left Column: Vital Info -->
+<div class="lg:col-span-7 space-y-8">
+<!-- Basic Info Card -->
+<section class="bg-surface-container rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+<span class="material-symbols-outlined text-8xl">shopping_bag</span>
+</div>
+<div class="space-y-6 relative z-10">
+<div class="grid grid-cols-1 gap-6">
+<div class="space-y-2">
+<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest ml-1">Título da Compra</label>
+<input class="w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary/40 transition-all font-medium placeholder:text-outline/40" placeholder="Ex: Upgrade MacBook Pro M3" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest ml-1">Descrição Detalhada</label>
+<textarea class="w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary/40 transition-all font-medium placeholder:text-outline/40 resize-none" placeholder="Descreva os detalhes técnicos ou o motivo estratégico desta aquisição..." rows="3"></textarea>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest ml-1">Valor Estimado (R$)</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-bold">R$</span>
+<input class="w-full bg-surface-container-highest border-none rounded-xl pl-12 pr-4 py-3 text-primary font-headline font-bold text-xl focus:ring-2 focus:ring-primary/40 transition-all" placeholder="0.000,00" type="text"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest ml-1">Data Desejada</label>
+<div class="relative">
+<input class="w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary/40 transition-all font-medium [color-scheme:dark]" type="date"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Additional Details Card -->
+<section class="bg-surface-container rounded-3xl p-8 shadow-xl">
+<h3 class="text-lg font-headline font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span>
+                            Classificação Técnica
+                        </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest ml-1">Prioridade</label>
+<select class="w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary/40 transition-all font-medium appearance-none">
+<option>Baixa</option>
+<option selected="">Média (Padrão)</option>
+<option>Alta</option>
+<option>Crítica / Urgente</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest ml-1">Status do Planejamento</label>
+<select class="w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary/40 transition-all font-medium appearance-none">
+<option>Em Pesquisa</option>
+<option>Aguardando Saldo</option>
+<option>Em Análise</option>
+<option>Aprovado</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest ml-1">Conta Gerencial</label>
+<select class="w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary/40 transition-all font-medium appearance-none">
+<option>Investimentos e Equipamentos</option>
+<option>Lazer e Lifestyle</option>
+<option>Manutenção Residencial</option>
+<option>Educação e Cursos</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest ml-1">Responsável</label>
+<input class="w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary/40 transition-all font-medium placeholder:text-outline/40" placeholder="Nome do Gestor" type="text"/>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Settings & Meta -->
+<div class="lg:col-span-5 space-y-8">
+<!-- Strategy Card -->
+<section class="bg-surface-container-low rounded-3xl p-8 border border-outline-variant/10">
+<h3 class="text-sm font-label font-bold text-primary uppercase tracking-widest mb-6">Configurações de Fluxo</h3>
+<div class="space-y-6">
+<!-- Toggle Parcelável -->
+<div class="flex items-center justify-between p-4 bg-surface-container rounded-2xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">credit_score</span>
+<div>
+<p class="text-sm font-bold text-on-surface">Parcelável</p>
+<p class="text-[10px] text-on-surface-variant">Habilitar desdobramento de faturas</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest ml-1">Link de Referência</label>
+<div class="flex items-center bg-surface-container rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary/40 transition-all">
+<span class="pl-4 pr-2 text-on-surface-variant"><span class="material-symbols-outlined text-sm">link</span></span>
+<input class="w-full bg-transparent border-none px-2 py-3 text-on-surface text-sm focus:ring-0 font-medium placeholder:text-outline/40" placeholder="https://..." type="url"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest ml-1">Observações Internas</label>
+<textarea class="w-full bg-surface-container rounded-xl border-none px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary/40 transition-all text-sm font-medium placeholder:text-outline/40 resize-none" placeholder="Notas sobre cotações, variações de preço ou fornecedores sugeridos..." rows="4"></textarea>
+</div>
+</div>
+</section>
+<!-- Preview Card -->
+<section class="rounded-3xl p-8 bg-gradient-to-br from-primary/10 to-transparent border border-primary/20">
+<div class="flex items-center gap-4 mb-4">
+<div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined font-bold text-2xl">rocket_launch</span>
+</div>
+<div>
+<h4 class="font-headline font-bold text-white">Pronto para salvar?</h4>
+<p class="text-xs text-on-surface-variant">Confira os detalhes antes de processar.</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-6">
+<button class="w-full bg-primary text-on-primary font-black py-4 rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/20 uppercase tracking-tighter text-lg" type="submit">
+                                Confirmar Planejamento
+                            </button>
+<button class="w-full bg-surface-container-highest text-on-surface-variant font-bold py-3 rounded-2xl hover:text-white transition-all text-sm" type="button">
+                                Cancelar e Voltar
+                            </button>
+</div>
+</section>
+</div>
+</form>
+</main>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 lg:hidden bg-[#0e0e0e]/80 backdrop-blur-xl rounded-t-3xl border-t border-[#484847]/15 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2" href="#">
+<span class="material-symbols-outlined">south_west</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase">Pagar</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2" href="#">
+<span class="material-symbols-outlined">north_east</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase">Receber</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#3fff8b] text-[#0e0e0e] rounded-xl p-2 scale-110" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">menu</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase">Menu</span>
+</a>
+</nav>
+</body></html>

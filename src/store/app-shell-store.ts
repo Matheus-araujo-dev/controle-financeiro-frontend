@@ -13,3 +13,5 @@ export const useAppShellStore = create<AppShellState>((set) => ({
   setCollapsed: (collapsed) => set({ collapsed }),
   setPageTitle: (pageTitle) => set({ pageTitle })
 }));
+
+export const useSidebarCollapsed = () => useAppShellStore((state) => state.collapsed);

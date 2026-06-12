@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NeonLedger - Contas Gerenciais</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#006e35",
+                    "on-surface-variant": "#adaaaa",
+                    "on-primary-container": "#004f24",
+                    "secondary-dim": "#65ecae",
+                    "surface-container": "#1a1a1a",
+                    "on-background": "#ffffff",
+                    "outline-variant": "#484847",
+                    "error-container": "#9f0519",
+                    "tertiary-fixed-dim": "#00cdec",
+                    "on-tertiary-fixed-variant": "#005361",
+                    "inverse-on-surface": "#565555",
+                    "secondary-fixed-dim": "#65ecae",
+                    "on-secondary": "#005e3d",
+                    "tertiary-dim": "#00cdec",
+                    "secondary": "#74fbbb",
+                    "background": "#0e0e0e",
+                    "error": "#ff716c",
+                    "tertiary-fixed": "#00dcfd",
+                    "tertiary-container": "#00dcfd",
+                    "on-primary": "#005d2c",
+                    "primary-fixed-dim": "#24f07e",
+                    "on-tertiary-container": "#004955",
+                    "on-tertiary-fixed": "#00343d",
+                    "surface-container-highest": "#262626",
+                    "secondary-fixed": "#74fbbb",
+                    "on-secondary-fixed-variant": "#006945",
+                    "surface-dim": "#0e0e0e",
+                    "on-tertiary": "#005360",
+                    "primary-fixed": "#3fff8b",
+                    "on-error-container": "#ffa8a3",
+                    "surface-container-high": "#20201f",
+                    "on-primary-fixed-variant": "#006832",
+                    "outline": "#767575",
+                    "surface": "#0e0e0e",
+                    "on-primary-fixed": "#004820",
+                    "surface-bright": "#2c2c2c",
+                    "surface-container-low": "#131313",
+                    "surface-container-lowest": "#000000",
+                    "primary-dim": "#24f07e",
+                    "surface-tint": "#3fff8b",
+                    "primary-container": "#13ea79",
+                    "on-secondary-fixed": "#00492f",
+                    "secondary-container": "#006c47",
+                    "inverse-surface": "#fcf9f8",
+                    "on-surface": "#ffffff",
+                    "tertiary": "#7ae6ff",
+                    "on-secondary-container": "#e1ffeb",
+                    "on-error": "#490006",
+                    "error-dim": "#d7383b",
+                    "primary": "#3fff8b",
+                    "surface-variant": "#262626"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tree-line-vertical {
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(72, 72, 71, 0.2);
+        }
+        .tree-line-horizontal {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            width: 15px;
+            height: 1px;
+            background: rgba(72, 72, 71, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-8 py-4 bg-[#0e0e0e] bg-opacity-90 backdrop-blur-md shadow-[0_20px_50px_rgba(63,255,139,0.05)]">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black text-[#3fff8b] tracking-tighter">NeonLedger</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-[#adaaaa] hover:text-white transition-colors font-['Plus_Jakarta_Sans'] font-bold text-lg" href="#">Dashboard</a>
+<a class="text-[#3fff8b] border-b-2 border-[#3fff8b] pb-1 font-['Plus_Jakarta_Sans'] font-bold text-lg" href="#">Contas</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors font-['Plus_Jakarta_Sans'] font-bold text-lg" href="#">Cartões</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors font-['Plus_Jakarta_Sans'] font-bold text-lg" href="#">Conciliação</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors font-['Plus_Jakarta_Sans'] font-bold text-lg" href="#">Planejamento</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-[#262626] rounded-lg transition-all text-[#adaaaa] active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-[#262626] rounded-lg transition-all text-[#adaaaa] active:scale-95">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest border border-outline-variant/30 overflow-hidden">
+<img alt="Avatar do Usuário" class="w-full h-full object-cover" data-alt="close-up portrait of a professional man with a modern tech aesthetic, soft directional lighting on dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAezjw6y_8b1LhgSvQeUW39uEtnip0SDCm_zKzrSbJzBaEtI5PTHXkgUg3AUUH9hR8LnaSodgFCEB3dwGL8_FrZX5lmwtSxKhrxnrVIr_L36LMYz9syLEzWhxwILptFrORfL59Idns6c7yNbMT-dglFu-UtbWYGZf4hkhVJxZWXO20CxPwv-maY3SDnBv3-DN4C0msnOkBsNCIenasghwJvsY40xIrDF5UqZqNlwoa6BaXx4jbray5yqIMjr2myZzN3dISChRO3hCCk"/>
+</div>
+</div>
+</header>
+<!-- Sidebar Shell -->
+<aside class="hidden lg:flex flex-col h-full fixed left-0 py-8 w-64 bg-[#131313] mt-20 z-40">
+<div class="px-6 mb-8">
+<h2 class="text-[#3fff8b] font-bold text-sm uppercase tracking-wider font-['Inter']">Inteligência Financeira</h2>
+<p class="text-[10px] text-on-surface-variant uppercase mt-1">Status: Em Dia</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all font-['Inter'] text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">dashboard</span> Visão Geral
+            </a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all font-['Inter'] text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">payments</span> Fluxo de Caixa
+            </a>
+<a class="bg-[#1a1a1a] text-[#3fff8b] py-3 px-6 flex items-center gap-3 shadow-[inset_0_0_10px_rgba(63,255,139,0.1)] border-r-4 border-[#3fff8b] font-['Inter'] text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">account_balance</span> Bancos
+            </a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all font-['Inter'] text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">credit_card</span> Cartões de Crédito
+            </a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all font-['Inter'] text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">shopping_cart</span> Lista de Compras
+            </a>
+</nav>
+<div class="mt-auto px-6 space-y-4">
+<button class="w-full bg-[#3fff8b] text-[#005d2c] py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95">
+<span class="material-symbols-outlined">add_circle</span> Nova Transação
+            </button>
+<div class="pt-4 border-t border-outline-variant/10 space-y-1">
+<a class="text-[#adaaaa] py-2 flex items-center gap-3 hover:text-white transition-all text-xs uppercase tracking-widest font-medium" href="#">
+<span class="material-symbols-outlined text-sm">help</span> Ajuda
+                </a>
+<a class="text-[#adaaaa] py-2 flex items-center gap-3 hover:text-white transition-all text-xs uppercase tracking-widest font-medium" href="#">
+<span class="material-symbols-outlined text-sm">logout</span> Sair
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="lg:ml-64 pt-24 px-8 pb-32">
+<div class="max-w-7xl mx-auto">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+<div>
+<h1 class="text-4xl font-headline font-extrabold text-on-background tracking-tight mb-2">Contas Gerenciais</h1>
+<p class="text-on-surface-variant max-w-md">Gerencie a estrutura hierárquica do seu plano de contas com precisão analítica.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="bg-surface-container hover:bg-surface-container-highest text-on-surface px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">file_download</span> Exportar
+                    </button>
+<button class="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(63,255,139,0.2)] active:scale-95">
+<span class="material-symbols-outlined">add</span> Criar Nova Conta
+                    </button>
+</div>
+</div>
+<!-- Dashboard Style Metrics -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="bg-surface-container-low p-6 rounded-2xl">
+<span class="text-xs font-label uppercase tracking-widest text-on-surface-variant block mb-2">Total de Contas</span>
+<div class="text-3xl font-headline font-bold text-primary">142</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-2xl">
+<span class="text-xs font-label uppercase tracking-widest text-on-surface-variant block mb-2">Estrutura Ativa</span>
+<div class="text-3xl font-headline font-bold text-on-surface">94%</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-2xl">
+<span class="text-xs font-label uppercase tracking-widest text-on-surface-variant block mb-2">Responsáveis</span>
+<div class="text-3xl font-headline font-bold text-tertiary">12</div>
+</div>
+</div>
+<!-- Table Filters -->
+<div class="flex items-center justify-between mb-6 bg-surface-container p-4 rounded-2xl">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative flex-1 max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-highest border-none focus:ring-1 focus:ring-primary/40 rounded-xl pl-10 pr-4 py-2 text-sm text-on-surface" placeholder="Buscar por código ou descrição..." type="text"/>
+</div>
+<button class="bg-surface-container-highest text-on-surface px-4 py-2 rounded-xl text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">filter_alt</span> Filtros
+                    </button>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-label uppercase text-on-surface-variant mr-2">Visualização:</span>
+<button class="p-2 bg-primary/10 text-primary rounded-lg">
+<span class="material-symbols-outlined">account_tree</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-white">
+<span class="material-symbols-outlined">format_list_bulleted</span>
+</button>
+</div>
+</div>
+<!-- Tree Table Container -->
+<div class="bg-surface-container-low rounded-3xl overflow-hidden shadow-2xl">
+<div class="grid grid-cols-[1.5fr_2fr_1fr_1.5fr_1fr_1fr_100px] px-8 py-4 bg-transparent border-b border-outline-variant/10">
+<span class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Código &amp; Descrição</span>
+<span class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Conta Pai</span>
+<span class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Tipo</span>
+<span class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Responsável</span>
+<span class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Uso</span>
+<span class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Status</span>
+<span class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant text-right">Ações</span>
+</div>
+<!-- Tree View Content -->
+<div class="divide-y divide-outline-variant/5">
+<!-- Level 0: DESPESAS OPERACIONAIS -->
+<div class="group hover:bg-surface-container-highest transition-colors">
+<div class="grid grid-cols-[1.5fr_2fr_1fr_1.5fr_1fr_1fr_100px] items-center px-8 py-5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">expand_more</span>
+<div class="flex flex-col">
+<span class="text-xs text-on-surface-variant font-mono">3.01</span>
+<span class="font-headline font-bold text-on-surface">Despesas Operacionais</span>
+</div>
+</div>
+<span class="text-xs text-on-surface-variant">---</span>
+<span class="text-xs text-error font-semibold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-error"></span> Despesa</span>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container overflow-hidden">
+<img alt="Avatar Responsável" class="w-full h-full object-cover" data-alt="professional male executive in a sleek dark environment with cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeIk5p9k9SAjmHm8kMhruZ801wF45twDFy6ey-2pHwUfkzRbP5v1AptreQCHZZEENU94EdL8nH_2NEjPfoD0kkcTZN9BHdwt07tcsiAq0r7QqmTlDGu6USU8xDCH7-iqPHbOaTIxTy2zUG81KxwgKIm-W0qEHgVrDJAcwaa90-tppt1pi83WbsL6KSM6zDrzan1SV_6Xybsaswmz4Vg5QGTaLti-w873IqQnwWm7Gk_ykk7FOE8fiyyeIJAYE-GyPepHPJFifw5Tls"/>
+</div>
+<span class="text-xs text-on-surface">Diretoria Financeira</span>
+</div>
+<span class="text-xs font-medium text-on-surface">Sintética</span>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-full uppercase text-center w-fit">Ativo</span>
+<div class="flex justify-end gap-2">
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+</div>
+</div>
+<!-- Level 1: PESSOAL -->
+<div class="relative group hover:bg-surface-container-highest transition-colors">
+<div class="tree-line-vertical h-full ml-4"></div>
+<div class="grid grid-cols-[1.5fr_2fr_1fr_1.5fr_1fr_1fr_100px] items-center px-8 py-5">
+<div class="flex items-center gap-3 pl-8 relative">
+<div class="tree-line-horizontal -left-4"></div>
+<span class="material-symbols-outlined text-on-surface-variant text-xl">expand_more</span>
+<div class="flex flex-col">
+<span class="text-xs text-on-surface-variant font-mono">3.01.01</span>
+<span class="font-headline font-semibold text-on-surface">Gastos com Pessoal</span>
+</div>
+</div>
+<span class="text-xs text-on-surface-variant italic">3.01 - Despesas Operacionais</span>
+<span class="text-xs text-error font-semibold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-error"></span> Despesa</span>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container overflow-hidden border border-outline-variant/30">
+<img alt="Avatar Responsável" class="w-full h-full object-cover" data-alt="modern corporate woman portrait in minimal professional setting with sharp clean lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWX5o5xVQVu87rOaAI0yRcjmOjvntsp1OgE9fK_znNojGvuygjMqWj8YsD4TCR6de1Qe8n_6TlR2pWRh0mhUeTSueH066a9gkeOzZvxC2D9yQaeq5eYdRsp8NHR3MIBrF_5FkslB1_FdGAxtsoHRlNdscmuB5-W4OGXlwlnmkYeJ3rBek-GiOc6q_YvM3JZVOZEmEuJUiKw3-g6XGxXtj0gq6w2dD4j8BEYQLxD9U-yNtBG4SBnJx0AbpEPp2cLjXzFSx7H6TYcG3h"/>
+</div>
+<span class="text-xs text-on-surface">Gestão de RH</span>
+</div>
+<span class="text-xs font-medium text-on-surface">Sintética</span>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-full uppercase text-center w-fit">Ativo</span>
+<div class="flex justify-end gap-2">
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+</div>
+</div>
+<!-- Level 2: SALÁRIOS -->
+<div class="relative group hover:bg-surface-container-highest transition-colors">
+<div class="tree-line-vertical h-full ml-4"></div>
+<div class="grid grid-cols-[1.5fr_2fr_1fr_1.5fr_1fr_1fr_100px] items-center px-8 py-5 bg-surface-container-high/30">
+<div class="flex items-center gap-3 pl-16 relative">
+<div class="tree-line-vertical h-full -left-4"></div>
+<div class="tree-line-horizontal -left-4"></div>
+<span class="material-symbols-outlined text-outline text-xl">subdirectory_arrow_right</span>
+<div class="flex flex-col">
+<span class="text-xs text-on-surface-variant font-mono">3.01.01.001</span>
+<span class="font-headline text-on-surface">Salários e Ordenados</span>
+</div>
+</div>
+<span class="text-xs text-on-surface-variant italic">3.01.01 - Gastos com Pessoal</span>
+<span class="text-xs text-error font-semibold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-error"></span> Despesa</span>
+<div class="flex items-center gap-2">
+<span class="text-xs text-on-surface-variant">---</span>
+</div>
+<span class="text-xs font-medium text-primary">Analítica</span>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-full uppercase text-center w-fit">Ativo</span>
+<div class="flex justify-end gap-2">
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+</div>
+</div>
+<!-- Level 2: BENEFÍCIOS -->
+<div class="relative group hover:bg-surface-container-highest transition-colors">
+<div class="tree-line-vertical h-1/2 ml-4"></div>
+<div class="grid grid-cols-[1.5fr_2fr_1fr_1.5fr_1fr_1fr_100px] items-center px-8 py-5 bg-surface-container-high/30">
+<div class="flex items-center gap-3 pl-16 relative">
+<div class="tree-line-horizontal -left-4"></div>
+<span class="material-symbols-outlined text-outline text-xl">subdirectory_arrow_right</span>
+<div class="flex flex-col">
+<span class="text-xs text-on-surface-variant font-mono">3.01.01.002</span>
+<span class="font-headline text-on-surface">Benefícios (VR/VT/Saúde)</span>
+</div>
+</div>
+<span class="text-xs text-on-surface-variant italic">3.01.01 - Gastos com Pessoal</span>
+<span class="text-xs text-error font-semibold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-error"></span> Despesa</span>
+<div class="flex items-center gap-2">
+<span class="text-xs text-on-surface-variant">---</span>
+</div>
+<span class="text-xs font-medium text-primary">Analítica</span>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-full uppercase text-center w-fit">Ativo</span>
+<div class="flex justify-end gap-2">
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+</div>
+</div>
+<!-- Level 0: RECEITAS DE PRODUTOS -->
+<div class="group hover:bg-surface-container-highest transition-colors">
+<div class="grid grid-cols-[1.5fr_2fr_1fr_1.5fr_1fr_1fr_100px] items-center px-8 py-5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">expand_more</span>
+<div class="flex flex-col">
+<span class="text-xs text-on-surface-variant font-mono">1.01</span>
+<span class="font-headline font-bold text-on-surface">Receita de Produtos</span>
+</div>
+</div>
+<span class="text-xs text-on-surface-variant">---</span>
+<span class="text-xs text-primary font-semibold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Receita</span>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container overflow-hidden border border-outline-variant/30">
+<img alt="Avatar Responsável" class="w-full h-full object-cover" data-alt="focused entrepreneur in a high-tech office with neon accents and minimal architecture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkMiCOhSxQMW8YkLLHh1785uFedyjOC5tRt-ikensKrgGDJROs0BEOMZn0n6r7c2Dqu_EchehFmRie2eJg4I--IAU5Hq8MWqoYSfOjp01YP1edik383r4zadnAvZCZQASpFpWWNnTXOcLL_JvifHGysLn9gQRMki95lIKLKuN27OT43xrr0GoCsvD4H9lnTmrwE80IAExxSdnSJE3GWMC1f7LyB0iv4YiKO82KUJbhaY52MQ-qV-A9CI0-az59ArcFQN0ZXmb4iR-z"/>
+</div>
+<span class="text-xs text-on-surface">Gerência Comercial</span>
+</div>
+<span class="text-xs font-medium text-on-surface">Sintética</span>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-full uppercase text-center w-fit">Ativo</span>
+<div class="flex justify-end gap-2">
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+</div>
+</div>
+<!-- Level 1: VENDAS SOFTWARE -->
+<div class="relative group hover:bg-surface-container-highest transition-colors">
+<div class="tree-line-vertical h-1/2 ml-4"></div>
+<div class="grid grid-cols-[1.5fr_2fr_1fr_1.5fr_1fr_1fr_100px] items-center px-8 py-5">
+<div class="flex items-center gap-3 pl-8 relative">
+<div class="tree-line-horizontal -left-4"></div>
+<span class="material-symbols-outlined text-on-surface-variant text-xl">chevron_right</span>
+<div class="flex flex-col">
+<span class="text-xs text-on-surface-variant font-mono">1.01.01</span>
+<span class="font-headline font-semibold text-on-surface">Vendas de Software SaaS</span>
+</div>
+</div>
+<span class="text-xs text-on-surface-variant italic">1.01 - Receita de Produtos</span>
+<span class="text-xs text-primary font-semibold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Receita</span>
+<div class="flex items-center gap-2">
+<span class="text-xs text-on-surface-variant">---</span>
+</div>
+<span class="text-xs font-medium text-primary">Analítica</span>
+<span class="bg-surface-container-highest/50 text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-full uppercase text-center w-fit">Bloqueado</span>
+<div class="flex justify-end gap-2">
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-white transition-all"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Pagination-like -->
+<div class="bg-surface-container p-6 flex items-center justify-between">
+<span class="text-xs text-on-surface-variant">Mostrando <span class="text-on-surface font-bold">1-10</span> de <span class="text-on-surface font-bold">142</span> contas gerenciais</span>
+<div class="flex items-center gap-1">
+<button class="p-2 rounded-lg hover:bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined">first_page</span></button>
+<button class="p-2 rounded-lg hover:bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="w-8 h-8 rounded-lg bg-primary text-on-primary font-bold text-xs">1</button>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-highest text-on-surface-variant text-xs font-bold">2</button>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-highest text-on-surface-variant text-xs font-bold">3</button>
+<button class="p-2 rounded-lg hover:bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined">chevron_right</span></button>
+<button class="p-2 rounded-lg hover:bg-surface-container-highest text-on-surface-variant"><span class="material-symbols-outlined">last_page</span></button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Nav (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 lg:hidden bg-[#0e0e0e]/80 backdrop-blur-xl rounded-t-3xl border-t border-[#484847]/15 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2 font-['Inter'] text-[10px] font-bold uppercase" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+            Home
+        </a>
+<a class="flex flex-col items-center justify-center bg-[#3fff8b] text-[#0e0e0e] rounded-xl p-2 scale-110 font-['Inter'] text-[10px] font-bold uppercase" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+            Contas
+        </a>
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2 font-['Inter'] text-[10px] font-bold uppercase" href="#">
+<span class="material-symbols-outlined">south_west</span>
+            Pagar
+        </a>
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2 font-['Inter'] text-[10px] font-bold uppercase" href="#">
+<span class="material-symbols-outlined">menu</span>
+            Menu
+        </a>
+</nav>
+</body></html>

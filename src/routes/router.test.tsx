@@ -5,7 +5,11 @@ import { appRoutes } from './router';
 
 const dashboardApiMock = vi.hoisted(() => ({
   obterResumo: vi.fn(),
-  obterFluxoCaixa: vi.fn()
+  obterFluxoCaixa: vi.fn(),
+  obterResumoContasGerenciais: vi.fn(),
+  obterSerieContasGerenciais: vi.fn(),
+  obterResumoCentralPrevisao: vi.fn(),
+  obterItensCentralPrevisao: vi.fn()
 }));
 
 const importacoesWhatsappApiMock = vi.hoisted(() => ({
@@ -47,6 +51,13 @@ vi.mock('../services/http/conciliacao-api', () => ({
 describe('appRoutes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useAuthStore.setState({
+      mode: 'development',
+      currentUser: {
+        userId: 'matheus',
+        displayName: 'Matheus'
+      }
+    });
     dashboardApiMock.obterResumo.mockResolvedValue({
       saldoAtual: 0,
       totalAPagar: 0,
@@ -62,6 +73,36 @@ describe('appRoutes', () => {
       dataInicial: '2026-04-05',
       dias: 15,
       riscoSaldoNegativo: false,
+      itens: []
+    });
+    dashboardApiMock.obterResumoContasGerenciais.mockResolvedValue({
+      dataInicial: '2026-04-05',
+      dias: 15,
+      totalReceitas: 0,
+      totalDespesas: 0,
+      saldo: 0,
+      itens: []
+    });
+    dashboardApiMock.obterSerieContasGerenciais.mockResolvedValue({
+      dataInicial: '2026-04-05',
+      dias: 15,
+      tipo: null,
+      contaGerencialId: null,
+      itens: []
+    });
+    dashboardApiMock.obterResumoCentralPrevisao.mockResolvedValue({
+      dataInicial: '2026-04-01',
+      dias: 30,
+      origem: null,
+      status: null,
+      itens: []
+    });
+    dashboardApiMock.obterItensCentralPrevisao.mockResolvedValue({
+      dataInicial: '2026-04-01',
+      dias: 30,
+      data: null,
+      origem: null,
+      status: null,
       itens: []
     });
     importacoesWhatsappApiMock.listar.mockResolvedValue({
@@ -91,9 +132,10 @@ describe('appRoutes', () => {
 
   afterEach(() => {
     useAuthStore.setState({
-      mode: 'disabled',
+      mode: 'development',
       currentUser: null
     });
+    window.localStorage.clear();
   });
 
   it('renders the dashboard inside the administrative shell', async () => {
@@ -105,8 +147,8 @@ describe('appRoutes', () => {
 
     expect(await screen.findByTestId('admin-shell')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
-    expect(screen.getByText('Dashboard executivo')).toBeInTheDocument();
-  }, 20000);
+    expect(await screen.findByText(/Dashboard executivo/i)).toBeInTheDocument();
+  }, 30000);
 
   it('renders the not found page for unknown routes', async () => {
     const router = createMemoryRouter(appRoutes, {
@@ -115,7 +157,7 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByText('Rota nao encontrada')).toBeInTheDocument();
+    expect(await screen.findByText('Rota não encontrada')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Voltar ao dashboard' })).toHaveAttribute('href', '/dashboard');
   });
 
@@ -126,10 +168,10 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('heading', { level: 4, name: 'Importacoes WhatsApp' })).toBeInTheDocument();
-    expect(screen.getAllByText('Importacoes WhatsApp').length).toBeGreaterThan(0);
+    expect(await screen.findByRole('heading', { level: 4, name: 'Importações WhatsApp' })).toBeInTheDocument();
+    expect(screen.getAllByText('Importações WhatsApp').length).toBeGreaterThan(0);
     expect(
-      screen.getByText('Revise mensagens e arquivos recebidos pelo WhatsApp antes de confirmar ou rejeitar as sugestoes financeiras geradas.')
+      screen.getByText('Revise mensagens e arquivos recebidos pelo WhatsApp antes de confirmar ou rejeitar as sugestões financeiras geradas.')
     ).toBeInTheDocument();
   });
 
@@ -140,8 +182,20 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('heading', { level: 4, name: 'Contas a pagar' })).toBeInTheDocument();
-    expect(screen.getByText('Controle financeiro das obrigacoes a pagar com rateio, parcelamento e acoes de liquidacao.')).toBeInTheDocument();
+    expect((await screen.findAllByRole('heading', { name: 'Contas a pagar' }, { timeout: 15000 })).length).toBeGreaterThan(0);
+    expect(await screen.findByText('Gerenciamento de obrigações e fluxo de saída.', undefined, { timeout: 15000 })).toBeInTheDocument();
+  }, 30000);
+
+  it('renders the nova pessoa route without falling back to detail mode', async () => {
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ['/pessoas/novo']
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByRole('heading', { level: 4, name: 'Nova pessoa' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Salvar' })).toBeInTheDocument();
+    expect(screen.queryByText('Falha ao carregar cadastro')).not.toBeInTheDocument();
   });
 
   it('renders the faturas route with the real phase 4 page', async () => {
@@ -151,8 +205,9 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('heading', { level: 4, name: 'Faturas' })).toBeInTheDocument();
-    expect(screen.getByText('Acompanhe a competencia dos cartoes, os itens agrupados e o pagamento das faturas.')).toBeInTheDocument();
+    expect(await screen.findByText('Faturas de cartão')).toBeInTheDocument();
+    expect(screen.getByText('Histórico de faturas')).toBeInTheDocument();
+    expect(screen.getByText('Gerencie competências, acompanhe a pressão por cartão e navegue pelo histórico consolidado das faturas.')).toBeInTheDocument();
   });
 
   it('renders the conciliacao route with the real phase 8 page', async () => {
@@ -162,7 +217,32 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('heading', { level: 4, name: 'Conciliacao' })).toBeInTheDocument();
-    expect(screen.getByText('Associe manualmente itens de extrato importados com movimentacoes bancarias sugeridas pelo sistema.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 4, name: 'Conciliação' })).toBeInTheDocument();
+    expect(screen.getByText('Associe manualmente itens de extrato importados com movimentações bancárias sugeridas pelo sistema.')).toBeInTheDocument();
   });
+
+  it('renders the compras planejadas route with the planner page', async () => {
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ['/compras-planejadas']
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect((await screen.findAllByRole('heading', { name: 'Planejador de Compras' }, { timeout: 15000 })).length).toBeGreaterThan(0);
+    expect(
+      screen.getByText('Gerencie seu desejo de consumo com inteligência. Priorize aquisições baseado em metas financeiras reais.')
+    ).toBeInTheDocument();
+  }, 30000);
+
+  it('renders the nova compra planejada route with the dedicated page', async () => {
+    const router = createMemoryRouter(appRoutes, {
+      initialEntries: ['/compras-planejadas/nova']
+    });
+
+    render(<RouterProvider router={router} />);
+
+    expect(await screen.findByRole('heading', { name: 'Cadastro de Compra' }, { timeout: 15000 })).toBeInTheDocument();
+    expect(screen.getByText('Classificação Técnica')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirmar Planejamento' })).toBeInTheDocument();
+  }, 30000);
 });

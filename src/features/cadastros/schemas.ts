@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const requiredText = (label: string) =>
-  z.string().trim().min(1, `${label} e obrigatorio.`);
+  z.string().trim().min(1, `${label} é obrigatório.`);
 
 export const pessoaSchema = z.object({
   nome: requiredText('Nome'),
@@ -9,7 +9,36 @@ export const pessoaSchema = z.object({
   cpfCnpj: z.string().trim(),
   email: z.string().trim(),
   telefone: z.string().trim(),
-  observacao: z.string().trim()
+  observacao: z.string().trim(),
+  chavesPix: z
+    .array(
+      z.object({
+        tipo: z.enum(['CpfCnpj', 'Email', 'Telefone', 'Aleatoria']),
+        chave: requiredText('Chave Pix')
+      })
+    )
+    .superRefine((items, context) => {
+      const vistos = new Set<string>();
+
+      items.forEach((item, index) => {
+        const chaveNormalizada =
+          item.tipo === 'CpfCnpj' || item.tipo === 'Telefone'
+            ? item.chave.replace(/\D/g, '')
+            : item.chave.trim().toLowerCase();
+        const chaveComposta = `${item.tipo}:${chaveNormalizada}`;
+
+        if (vistos.has(chaveComposta)) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Chave Pix duplicada.',
+            path: [index, 'chave']
+          });
+          return;
+        }
+
+        vistos.add(chaveComposta);
+      });
+    })
 });
 
 export const formaPagamentoSchema = z.object({
@@ -28,13 +57,14 @@ export const contaBancariaSchema = z.object({
   tipoConta: z.string().trim(),
   saldoInicial: z.number(),
   dataSaldoInicial: requiredText('Data do saldo inicial'),
+  limiteCartoesCompartilhado: z.number().nullable(),
   ativo: z.boolean()
 });
 
 export const cartaoSchema = z.object({
   nome: requiredText('Nome'),
   bandeira: requiredText('Bandeira'),
-  numeroFinal: z.string().trim().regex(/^\d{4}$/, 'Numero final deve possuir 4 digitos.'),
+  numeroFinal: z.string().trim().regex(/^\d{4}$/, 'Número final deve possuir 4 dígitos.'),
   diaFechamentoFatura: z.number().int().min(1).max(31),
   diaVencimentoFatura: z.number().int().min(1).max(31),
   contaBancariaPagamentoPadraoId: z.string().trim(),
@@ -44,8 +74,10 @@ export const cartaoSchema = z.object({
 
 export const contaGerencialSchema = z.object({
   codigo: z.string().trim(),
-  descricao: requiredText('Descricao'),
+  descricao: requiredText('Descrição'),
   tipo: z.enum(['Receita', 'Despesa']),
   contaPaiId: z.string().trim(),
-  ativo: z.boolean()
+  responsavelPadraoId: z.string().trim(),
+  ativo: z.boolean(),
+  ehPadraoRecebimentoFaturaCartao: z.boolean()
 });

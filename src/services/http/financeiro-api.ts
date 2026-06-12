@@ -1,5 +1,7 @@
 import { apiClient } from './api-client';
+import { normalizeContaFilters, normalizeMovimentacaoFilters } from '../../shared/filters';
 import type {
+  ContaFinanceiraListSummary,
   ContaPagarDetalhe,
   ContaPagarFilters,
   ContaPagarPayload,
@@ -11,18 +13,24 @@ import type {
   EncerrarRecorrenciaPayload,
   FaturaDetalhe,
   FaturaFilters,
+  FaturaListSummary,
   FaturaResumo,
   GerarOcorrenciasPayload,
   LiquidacaoPayload,
   MovimentacaoDetalhe,
   MovimentacaoFilters,
+  MovimentacaoListSummary,
   MovimentacaoResumo,
   PagarFaturaPayload,
+  RecorrenciaDetalhe,
+  RecorrenciaFilters,
+  RecorrenciaListItem,
+  RecorrenciaListResponse,
   PagedFinanceiro
 } from '../../types/financeiro';
 
-async function getPaged<T>(url: string, params: Record<string, unknown>) {
-  const response = await apiClient.get<PagedFinanceiro<T>>(url, { params });
+async function getPaged<T, TSummary = unknown>(url: string, params: Record<string, unknown>) {
+  const response = await apiClient.get<PagedFinanceiro<T, TSummary>>(url, { params });
   return response.data;
 }
 
@@ -43,7 +51,8 @@ async function put<T>(url: string, payload: unknown) {
 
 export const financeiroApi = {
   contasPagar: {
-    listar: (params: ContaPagarFilters) => getPaged<ContaPagarResumo>('/contas-pagar', params),
+    listar: (params: ContaPagarFilters) =>
+      getPaged<ContaPagarResumo, ContaFinanceiraListSummary>('/contas-pagar', normalizeContaFilters(params)),
     obterPorId: (id: string) => getById<ContaPagarDetalhe>(`/contas-pagar/${id}`),
     criar: (payload: ContaPagarPayload) => post<ContaPagarDetalhe>('/contas-pagar', payload),
     atualizar: (id: string, payload: ContaPagarPayload) => put<ContaPagarDetalhe>(`/contas-pagar/${id}`, payload),
@@ -53,10 +62,12 @@ export const financeiroApi = {
     encerrarRecorrencia: (id: string, payload: EncerrarRecorrenciaPayload) =>
       post<ContaPagarDetalhe>(`/contas-pagar/${id}/encerrar-recorrencia`, payload),
     liquidar: (id: string, payload: LiquidacaoPayload) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/liquidar`, payload),
+    estornar: (id: string) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/estornar`),
     cancelar: (id: string) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/cancelar`)
   },
   contasReceber: {
-    listar: (params: ContaReceberFilters) => getPaged<ContaReceberResumo>('/contas-receber', params),
+    listar: (params: ContaReceberFilters) =>
+      getPaged<ContaReceberResumo, ContaFinanceiraListSummary>('/contas-receber', normalizeContaFilters(params)),
     obterPorId: (id: string) => getById<ContaReceberDetalhe>(`/contas-receber/${id}`),
     criar: (payload: ContaReceberPayload) => post<ContaReceberDetalhe>('/contas-receber', payload),
     atualizar: (id: string, payload: ContaReceberPayload) => put<ContaReceberDetalhe>(`/contas-receber/${id}`, payload),
@@ -66,15 +77,25 @@ export const financeiroApi = {
     encerrarRecorrencia: (id: string, payload: EncerrarRecorrenciaPayload) =>
       post<ContaReceberDetalhe>(`/contas-receber/${id}/encerrar-recorrencia`, payload),
     liquidar: (id: string, payload: LiquidacaoPayload) => post<ContaReceberDetalhe>(`/contas-receber/${id}/liquidar`, payload),
+    estornar: (id: string) => post<ContaReceberDetalhe>(`/contas-receber/${id}/estornar`),
     cancelar: (id: string) => post<ContaReceberDetalhe>(`/contas-receber/${id}/cancelar`)
   },
   movimentacoes: {
-    listar: (params: MovimentacaoFilters) => getPaged<MovimentacaoResumo>('/movimentacoes', params),
+    listar: (params: MovimentacaoFilters) =>
+      getPaged<MovimentacaoResumo, MovimentacaoListSummary>('/movimentacoes', normalizeMovimentacaoFilters(params)),
     obterPorId: (id: string) => getById<MovimentacaoDetalhe>(`/movimentacoes/${id}`)
   },
   faturas: {
-    listar: (params: FaturaFilters) => getPaged<FaturaResumo>('/faturas', params),
+    listar: (params: FaturaFilters) => getPaged<FaturaResumo, FaturaListSummary>('/faturas', params),
     obterPorId: (id: string) => getById<FaturaDetalhe>(`/faturas/${id}`),
-    pagar: (id: string, payload: PagarFaturaPayload) => post<FaturaDetalhe>(`/faturas/${id}/pagar`, payload)
+    pagar: (id: string, payload: PagarFaturaPayload) => post<FaturaDetalhe>(`/faturas/${id}/pagar`, payload),
+    estornar: (id: string) => post<FaturaDetalhe>(`/faturas/${id}/estornar`)
+  },
+  recorrencias: {
+    listar: (params: RecorrenciaFilters) =>
+      getPaged<RecorrenciaListItem>('/recorrencias', params),
+    listarAtivas: () => getById<RecorrenciaListResponse>('/recorrencias'),
+    encerrar: (tipoConta: 'ContaPagar' | 'ContaReceber', id: string) =>
+      post<void>(`/${tipoConta === 'ContaPagar' ? 'contas-pagar' : 'contas-receber'}/${id}/encerrar-recorrencia`, {})
   }
 };

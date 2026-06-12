@@ -10,9 +10,9 @@ function createAxiosError() {
     {
       data: {
         code: 'VALIDATION_ERROR',
-        message: 'Um ou mais campos sao invalidos.',
+        message: 'Um ou mais campos são inválidos.',
         errors: {
-          nome: ['Nome obrigatorio.']
+          nome: ['Nome obrigatório.']
         },
         traceId: 'trace-id'
       },
@@ -26,7 +26,7 @@ function createAxiosError() {
 
 describe('getApiErrorMessage', () => {
   it('returns the backend message when the API returns the standard contract', () => {
-    expect(getApiErrorMessage(createAxiosError())).toBe('Um ou mais campos sao invalidos.');
+    expect(getApiErrorMessage(createAxiosError())).toBe('Um ou mais campos são inválidos.');
   });
 
   it('returns the original error message for non-axios Error instances', () => {
@@ -34,14 +34,14 @@ describe('getApiErrorMessage', () => {
   });
 
   it('returns a safe fallback for non-axios errors', () => {
-    expect(getApiErrorMessage('boom')).toBe('Nao foi possivel concluir a solicitacao.');
+    expect(getApiErrorMessage('boom')).toBe('Não foi possível concluir a solicitação.');
   });
 });
 
 describe('getApiFieldErrors', () => {
   it('returns the field dictionary from the backend error contract', () => {
     expect(getApiFieldErrors(createAxiosError())).toEqual({
-      nome: ['Nome obrigatorio.']
+      nome: ['Nome obrigatório.']
     });
   });
 

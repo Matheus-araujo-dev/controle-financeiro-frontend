@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#006e35",
+                        "on-surface-variant": "#adaaaa",
+                        "on-primary-container": "#004f24",
+                        "secondary-dim": "#65ecae",
+                        "surface-container": "#1a1a1a",
+                        "on-background": "#ffffff",
+                        "outline-variant": "#484847",
+                        "error-container": "#9f0519",
+                        "tertiary-fixed-dim": "#00cdec",
+                        "on-tertiary-fixed-variant": "#005361",
+                        "inverse-on-surface": "#565555",
+                        "secondary-fixed-dim": "#65ecae",
+                        "on-secondary": "#005e3d",
+                        "tertiary-dim": "#00cdec",
+                        "secondary": "#74fbbb",
+                        "background": "#0e0e0e",
+                        "error": "#ff716c",
+                        "tertiary-fixed": "#00dcfd",
+                        "tertiary-container": "#00dcfd",
+                        "on-primary": "#005d2c",
+                        "primary-fixed-dim": "#24f07e",
+                        "on-tertiary-container": "#004955",
+                        "on-tertiary-fixed": "#00343d",
+                        "surface-container-highest": "#262626",
+                        "secondary-fixed": "#74fbbb",
+                        "on-secondary-fixed-variant": "#006945",
+                        "surface-dim": "#0e0e0e",
+                        "on-tertiary": "#005360",
+                        "primary-fixed": "#3fff8b",
+                        "on-error-container": "#ffa8a3",
+                        "surface-container-high": "#20201f",
+                        "on-primary-fixed-variant": "#006832",
+                        "outline": "#767575",
+                        "surface": "#0e0e0e",
+                        "on-primary-fixed": "#004820",
+                        "surface-bright": "#2c2c2c",
+                        "surface-container-low": "#131313",
+                        "surface-container-lowest": "#000000",
+                        "primary-dim": "#24f07e",
+                        "surface-tint": "#3fff8b",
+                        "primary-container": "#13ea79",
+                        "on-secondary-fixed": "#00492f",
+                        "secondary-container": "#006c47",
+                        "inverse-surface": "#fcf9f8",
+                        "on-surface": "#ffffff",
+                        "tertiary": "#7ae6ff",
+                        "on-secondary-container": "#e1ffeb",
+                        "on-error": "#490006",
+                        "error-dim": "#d7383b",
+                        "primary": "#3fff8b",
+                        "surface-variant": "#262626"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #0e0e0e;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(26, 26, 26, 0.7);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<!-- Top Navigation -->
+<nav class="fixed top-0 w-full z-50 flex items-center justify-between px-8 py-4 bg-[#0e0e0e] bg-opacity-90 backdrop-blur-md shadow-[0_20px_50px_rgba(63,255,139,0.05)]">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black text-[#3fff8b] tracking-tighter">NeonLedger</span>
+<div class="hidden md:flex items-center gap-6 font-['Plus_Jakarta_Sans'] font-bold text-lg">
+<a class="text-[#adaaaa] hover:text-white transition-colors" href="#">Dashboard</a>
+<a class="text-[#3fff8b] border-b-2 border-[#3fff8b] pb-1" href="#">Contas</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors" href="#">Cartões</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors" href="#">Conciliação</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors" href="#">Planejamento</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-[#262626] rounded-lg transition-all">
+<span class="material-symbols-outlined text-[#3fff8b]">notifications</span>
+</button>
+<button class="p-2 hover:bg-[#262626] rounded-lg transition-all">
+<span class="material-symbols-outlined text-[#3fff8b]">settings</span>
+</button>
+<img alt="Avatar do Usuário" class="w-10 h-10 rounded-full border-2 border-[#3fff8b]" data-alt="close-up portrait of a professional modern business person with neutral background, cinematic lighting, high resolution" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUeIEgHi4UF5B7yj-nLx2jSJnwizWOz7J4cpEERt6VKpOH8X0PcSYYU7Ys17kSrDhzyBTjtKBX5jd2WkeTTreEVqULyTVXrQquC3EHhKW5w1C7Nih6cq-gO_aJazHVDIqjacGfeKFHIfVq1CA4zf4jMFSpk7vtjndnZBXabkdf9ZEVJaM9JLJ1OupbU6sFOTh7vp5VJDxYv89noY_oTgZoQTjVGqp-5SbF7fGmwL43rZiZHX9qOD-xlZSi9vBDvrosUlGEeK0tuHOy"/>
+</div>
+</nav>
+<!-- Side Navigation (Web) -->
+<aside class="hidden lg:flex flex-col h-full fixed left-0 py-8 w-64 bg-[#131313] mt-20">
+<div class="px-6 mb-8">
+<h3 class="text-[#3fff8b] font-bold font-['Inter'] text-sm font-medium uppercase tracking-wider">Inteligência Financeira</h3>
+<p class="text-[#adaaaa] text-xs">Status: Em Dia</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span> Visão Geral
+            </a>
+<a class="bg-[#1a1a1a] text-[#3fff8b] shadow-[inset_0_0_10px_rgba(63,255,139,0.1)] border-r-4 border-[#3fff8b] py-3 px-6 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">payments</span> Cadastro de Pagamento
+            </a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">credit_card</span> Cartões de Crédito
+            </a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">account_balance</span> Bancos
+            </a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">shopping_cart</span> Lista de Compras
+            </a>
+</nav>
+<div class="px-6 mt-auto space-y-2">
+<a class="text-[#adaaaa] flex items-center gap-3 text-sm" href="#"><span class="material-symbols-outlined">help</span> Ajuda</a>
+<a class="text-[#adaaaa] flex items-center gap-3 text-sm" href="#"><span class="material-symbols-outlined">logout</span> Sair</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 pt-24 pb-32 px-4 md:px-8">
+<div class="max-w-5xl mx-auto">
+<!-- Header Section -->
+<header class="mb-10">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-[#3fff8b]">add_card</span>
+<span class="text-[#adaaaa] font-['Inter'] text-[0.6875rem] uppercase tracking-[0.05em] font-bold">Configurações de Entrada e Saída</span>
+</div>
+<h1 class="font-['Plus_Jakarta_Sans'] font-extrabold text-3xl md:text-4xl text-white tracking-tight">
+                    Cadastro de Formas de Pagamento
+                </h1>
+</header>
+<!-- Main Form Bento Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Form Main Panel -->
+<section class="lg:col-span-8 bg-[#1a1a1a] rounded-2xl p-8 shadow-[0_40px_80px_rgba(0,0,0,0.4)]">
+<form class="space-y-8">
+<!-- Name & Type Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block font-['Inter'] text-[0.6875rem] text-[#adaaaa] uppercase font-bold tracking-wider">Nome da Forma</label>
+<input class="w-full bg-[#262626] border-none rounded-xl py-4 px-5 text-white placeholder-[#484847] focus:ring-1 focus:ring-[#3fff8b]/40 transition-all font-medium" placeholder="Ex: Pix Recebimento" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block font-['Inter'] text-[0.6875rem] text-[#adaaaa] uppercase font-bold tracking-wider">Tipo de Pagamento</label>
+<select class="w-full bg-[#262626] border-none rounded-xl py-4 px-5 text-white focus:ring-1 focus:ring-[#3fff8b]/40 transition-all font-medium appearance-none">
+<option>Pix</option>
+<option>Boleto Bancário</option>
+<option>Cartão de Crédito</option>
+<option>Cartão de Débito</option>
+<option>Dinheiro</option>
+<option>Transferência</option>
+</select>
+</div>
+</div>
+<!-- Configuration Toggles -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+<!-- Toggle Card 1 -->
+<div class="bg-[#20201f] p-5 rounded-xl flex items-center justify-between group hover:bg-[#262626] transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#3fff8b]">credit_card</span>
+<div>
+<p class="text-white text-sm font-bold">É Cartão?</p>
+<p class="text-[#adaaaa] text-[10px]">Identificar como plástico</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-[#484847] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3fff8b]"></div>
+</label>
+</div>
+<!-- Toggle Card 2 -->
+<div class="bg-[#20201f] p-5 rounded-xl flex items-center justify-between group hover:bg-[#262626] transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#3fff8b]">bolt</span>
+<div>
+<p class="text-white text-sm font-bold">Baixa Auto</p>
+<p class="text-[#adaaaa] text-[10px]">Liquidação instantânea</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-[#484847] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3fff8b]"></div>
+</label>
+</div>
+<!-- Toggle Card 3 -->
+<div class="bg-[#20201f] p-5 rounded-xl flex items-center justify-between group hover:bg-[#262626] transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#3fff8b]">check_circle</span>
+<div>
+<p class="text-white text-sm font-bold">Status Ativo</p>
+<p class="text-[#adaaaa] text-[10px]">Disponível para uso</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-[#484847] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3fff8b]"></div>
+</label>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center justify-end gap-4 pt-6">
+<button class="px-8 py-3 rounded-xl border border-[#484847]/40 text-[#adaaaa] font-bold text-sm hover:bg-[#262626] hover:text-white transition-all" type="button">
+                                Cancelar
+                            </button>
+<button class="px-10 py-3 rounded-xl bg-gradient-to-br from-[#3fff8b] to-[#13ea79] text-[#005d2c] font-black text-sm shadow-[0_10px_30px_rgba(63,255,139,0.2)] hover:scale-[1.02] active:scale-95 transition-all" type="submit">
+                                SALVAR CONFIGURAÇÃO
+                            </button>
+</div>
+</form>
+</section>
+<!-- Info Sidebar Panel -->
+<section class="lg:col-span-4 space-y-6">
+<!-- Premium Glass Preview Card -->
+<div class="glass-panel p-6 rounded-2xl border border-[#484847]/15 relative overflow-hidden h-full">
+<div class="absolute -top-12 -right-12 w-48 h-48 bg-[#3fff8b] opacity-5 blur-[80px] rounded-full"></div>
+<h3 class="font-['Plus_Jakarta_Sans'] font-bold text-lg mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[#3fff8b]">lightbulb</span>
+                            Dica Inteligente
+                        </h3>
+<p class="text-[#adaaaa] text-sm leading-relaxed mb-6">
+                            Configurar a <strong class="text-white">Baixa Automática</strong> permite que o sistema identifique pagamentos instantâneos sem necessidade de intervenção manual no fluxo de caixa.
+                        </p>
+<div class="space-y-4">
+<div class="flex items-center gap-4 p-3 bg-[#131313] rounded-lg">
+<div class="w-10 h-10 rounded-full bg-[#262626] flex items-center justify-center">
+<span class="material-symbols-outlined text-[#3fff8b] text-xl">qr_code_2</span>
+</div>
+<div>
+<p class="text-xs font-bold uppercase tracking-tighter text-[#adaaaa]">Populares agora</p>
+<p class="text-sm font-medium">Pix instantâneo (98%)</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-3 bg-[#131313] rounded-lg">
+<div class="w-10 h-10 rounded-full bg-[#262626] flex items-center justify-center">
+<span class="material-symbols-outlined text-[#3fff8b] text-xl">shield</span>
+</div>
+<div>
+<p class="text-xs font-bold uppercase tracking-tighter text-[#adaaaa]">Segurança</p>
+<p class="text-sm font-medium">Criptografia Ponta-a-ponta</p>
+</div>
+</div>
+</div>
+<div class="mt-8">
+<img alt="Visual de Cartão" class="w-full rounded-xl opacity-60" data-alt="abstract digital neon rendering of a credit card floating in a dark digital space with green light rays" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKeRjH1KHblWoaCQrMnstMV7-bn82o1Q1_bEQLCLuakKh1Qau1H15RfjDifkTElv25241wLMIY7ZcfRHIKD9xOmNfz29lN9J_s6J7M-63LyCeCHo1xb-kMkoLpm7EY1AV8IxCnEpbZcWB_rNDyOijtNKjfBRZIJWUDVNtbR7q6oKea3nj3cLNPRxWHG-Y7qemRcZKYiTt2n0-0j9TLdzNd34s4h4BxNmrNk6SzHg7cVsXbt0D4-uKIzWmHRTmoEeeQvEks_AwuiQ1E"/>
+</div>
+</div>
+</section>
+</div>
+<!-- Recent Registrations Table (Editorial High Contrast) -->
+<section class="mt-12 overflow-hidden">
+<div class="flex items-center justify-between mb-6">
+<h2 class="font-['Plus_Jakarta_Sans'] font-bold text-xl">Formas Cadastradas Recentemente</h2>
+<button class="text-[#3fff8b] text-sm font-bold flex items-center gap-2 hover:opacity-80">
+                        Ver todas <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="bg-[#131313] rounded-2xl p-2">
+<table class="w-full text-left">
+<thead>
+<tr class="border-b border-[#484847]/15">
+<th class="px-6 py-4 font-['Inter'] text-[0.6875rem] text-[#adaaaa] uppercase font-bold tracking-wider">Nome</th>
+<th class="px-6 py-4 font-['Inter'] text-[0.6875rem] text-[#adaaaa] uppercase font-bold tracking-wider">Tipo</th>
+<th class="px-6 py-4 font-['Inter'] text-[0.6875rem] text-[#adaaaa] uppercase font-bold tracking-wider">Status</th>
+<th class="px-6 py-4 font-['Inter'] text-[0.6875rem] text-[#adaaaa] uppercase font-bold tracking-wider">Ações</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#484847]/5">
+<tr class="group hover:bg-[#262626] transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#3fff8b]/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#3fff8b] text-lg">account_balance_wallet</span>
+</div>
+<span class="font-bold text-white">Pix Clientes</span>
+</div>
+</td>
+<td class="px-6 py-5 text-[#adaaaa] text-sm">Pix</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full bg-[#3fff8b]/10 text-[#3fff8b] text-[10px] font-black uppercase">Ativo</span>
+</td>
+<td class="px-6 py-5">
+<button class="text-[#adaaaa] hover:text-[#3fff8b] transition-colors"><span class="material-symbols-outlined">edit</span></button>
+</td>
+</tr>
+<tr class="group hover:bg-[#262626] transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#3fff8b]/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#3fff8b] text-lg">credit_card</span>
+</div>
+<span class="font-bold text-white">Visa Crédito</span>
+</div>
+</td>
+<td class="px-6 py-5 text-[#adaaaa] text-sm">Cartão</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full bg-[#3fff8b]/10 text-[#3fff8b] text-[10px] font-black uppercase">Ativo</span>
+</td>
+<td class="px-6 py-5">
+<button class="text-[#adaaaa] hover:text-[#3fff8b] transition-colors"><span class="material-symbols-outlined">edit</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Navigation (Mobile) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 lg:hidden bg-[#0e0e0e]/80 backdrop-blur-xl rounded-t-3xl border-t border-[#484847]/15 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#3fff8b] text-[#0e0e0e] rounded-xl p-2 scale-110" href="#">
+<span class="material-symbols-outlined">south_west</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Pagar</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2" href="#">
+<span class="material-symbols-outlined">north_east</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Receber</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2" href="#">
+<span class="material-symbols-outlined">menu</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Menu</span>
+</a>
+</nav>
+</body></html>

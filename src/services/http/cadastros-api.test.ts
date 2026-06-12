@@ -29,7 +29,8 @@ describe('cadastrosApi', () => {
       cpfCnpj: '',
       email: '',
       telefone: '',
-      observacao: ''
+      observacao: '',
+      chavesPix: []
     });
     await cadastrosApi.pessoas.atualizar('1', {
       nome: 'Pessoa',
@@ -37,7 +38,8 @@ describe('cadastrosApi', () => {
       cpfCnpj: '',
       email: '',
       telefone: '',
-      observacao: ''
+      observacao: '',
+      chavesPix: []
     });
     await cadastrosApi.pessoas.ativar('1');
     await cadastrosApi.pessoas.inativar('1');
@@ -79,6 +81,7 @@ describe('cadastrosApi', () => {
       tipoConta: '',
       saldoInicial: 10,
       dataSaldoInicial: '2026-04-03',
+      limiteCartoesCompartilhado: null,
       ativo: true
     });
     await cadastrosApi.cartoes.criar({
@@ -96,6 +99,8 @@ describe('cadastrosApi', () => {
       descricao: 'Despesa',
       tipo: 'Despesa',
       contaPaiId: null,
+      responsavelPadraoId: null,
+      ehPadraoRecebimentoFaturaCartao: false,
       ativo: true
     });
     await cadastrosApi.formasPagamento.atualizar('1', {
@@ -113,6 +118,7 @@ describe('cadastrosApi', () => {
       tipoConta: '',
       saldoInicial: 10,
       dataSaldoInicial: '2026-04-03',
+      limiteCartoesCompartilhado: null,
       ativo: true
     });
     await cadastrosApi.cartoes.atualizar('1', {
@@ -130,6 +136,8 @@ describe('cadastrosApi', () => {
       descricao: 'Despesa',
       tipo: 'Despesa',
       contaPaiId: null,
+      responsavelPadraoId: null,
+      ehPadraoRecebimentoFaturaCartao: false,
       ativo: true
     });
 

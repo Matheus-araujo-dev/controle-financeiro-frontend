@@ -27,6 +27,8 @@ export const useNotificationStore = create<NotificationState>((set) => ({
   clear: () => set({ queue: [] })
 }));
 
+export const useNotificationCount = () => useNotificationStore((state) => state.queue.length);
+
 export function notify(level: AppNotificationLevel, title: string, description?: string) {
   useNotificationStore.getState().push({
     level,

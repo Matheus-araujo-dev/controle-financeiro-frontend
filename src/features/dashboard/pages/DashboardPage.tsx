@@ -1,89 +1,41 @@
-import { Alert, Button, Card, Col, Empty, Radio, Row, Select, Space, Table, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { DashboardKpiGrid } from '../components/DashboardKpiGrid';
+import { DashboardFaturasCartao } from '../components/DashboardFaturasCartao';
+import { DashboardCashPulse } from '../components/DashboardCashPulse';
+import { DashboardOperationalAgenda } from '../components/DashboardOperationalAgenda';
+import { DashboardTransactionList } from '../components/DashboardTransactionList';
 import { PageState } from '../../../components/states/PageState';
 import { dashboardApi } from '../../../services/http/dashboard-api';
+import { formatCurrencyBRL } from '../../../shared/currency';
 import type {
-  DashboardContaResumo,
   DashboardFluxoCaixa,
   DashboardFluxoCaixaVisao,
-  DashboardMovimentacaoResumo,
   DashboardResumo
 } from '../../../types/dashboard';
 
-const dayOptions = [
-  { label: '15 dias', value: 15 },
-  { label: '30 dias', value: 30 }
-];
-
 function formatCurrency(value: number) {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return formatCurrencyBRL(value);
 }
 
-function formatDate(value: string) {
-  const [year, month, day] = value.split('-').map(Number);
-  return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+function getCurrentReferenceMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function renderContaList(items: DashboardContaResumo[]) {
-  if (!items.length) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Nenhuma conta neste recorte." />;
+function formatReferenceMonth(value: string) {
+  const [year, month] = value.split('-').map(Number);
+  if (!year || !month) {
+    return value;
   }
 
-  return (
-    <Space orientation="vertical" size={12} className="dashboard-list">
-      {items.map((item) => (
-        <div key={item.id} className="dashboard-list-row">
-          <div className="dashboard-list-row__content">
-            <Tag color={item.tipoLancamento === 'ContaPagar' ? 'volcano' : 'cyan'}>
-              {item.tipoLancamento === 'ContaPagar' ? 'Pagar' : 'Receber'}
-            </Tag>
-            <div>
-              <Typography.Text strong>{item.descricao}</Typography.Text>
-              <div>
-                <Typography.Text type="secondary">
-                  {item.pessoaNome} · {formatDate(item.dataVencimento)} · {item.statusNome}
-                </Typography.Text>
-              </div>
-            </div>
-          </div>
-          <Typography.Text strong>{formatCurrency(item.valor)}</Typography.Text>
-        </div>
-      ))}
-    </Space>
-  );
-}
-
-function renderMovimentacoes(items: DashboardMovimentacaoResumo[]) {
-  if (!items.length) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sem movimentacoes recentes." />;
-  }
-
-  return (
-    <Space orientation="vertical" size={12} className="dashboard-list">
-      {items.map((item) => (
-        <div key={item.id} className="dashboard-list-row">
-          <div className="dashboard-list-row__content">
-            <Tag color={item.tipo === 'Entrada' ? 'green' : 'red'}>{item.tipo}</Tag>
-            <div>
-              <Typography.Text strong>{item.observacao ?? 'Movimentacao financeira'}</Typography.Text>
-              <div>
-                <Typography.Text type="secondary">
-                  {formatDate(item.dataMovimentacao)} · {item.natureza}
-                </Typography.Text>
-              </div>
-            </div>
-          </div>
-          <Typography.Text strong>{formatCurrency(item.valor)}</Typography.Text>
-        </div>
-      ))}
-    </Space>
-  );
+  return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(year, month - 1, 1));
 }
 
 export function DashboardPage() {
   const [summary, setSummary] = useState<DashboardResumo>();
   const [cashFlow, setCashFlow] = useState<DashboardFluxoCaixa>();
-  const [days, setDays] = useState<number>(15);
+  const [referenceMonth, setReferenceMonth] = useState<string>(getCurrentReferenceMonth());
   const [view, setView] = useState<DashboardFluxoCaixaVisao>('Caixa');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
@@ -93,8 +45,10 @@ export function DashboardPage() {
     setErrorMessage(undefined);
 
     try {
-      const summaryResponse = await dashboardApi.obterResumo({ diasProjetados: days });
-      const cashFlowResponse = await dashboardApi.obterFluxoCaixa({ dias: days, visao: view });
+      const [summaryResponse, cashFlowResponse] = await Promise.all([
+        dashboardApi.obterResumo({ mesReferencia: referenceMonth }),
+        dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth, visao: view })
+      ]);
 
       setSummary(summaryResponse);
       setCashFlow(cashFlowResponse);
@@ -107,183 +61,109 @@ export function DashboardPage() {
 
   useEffect(() => {
     void loadDashboard();
-  }, [days, view]);
+  }, [referenceMonth, view]);
 
   if (loading && !summary && !cashFlow) {
     return <PageState state="loading" title="Carregando dashboard" />;
   }
 
-  if (errorMessage && !summary && !cashFlow) {
-    return (
-      <Space orientation="vertical" size={16} style={{ width: '100%' }}>
-        <PageState
-          state="error"
-          title="Falha ao carregar dashboard"
-          subtitle={errorMessage}
-        />
-        <Button type="primary" onClick={() => void loadDashboard()}>
-          Tentar novamente
-        </Button>
-      </Space>
-    );
-  }
-
-  const metricCards = [
-    {
-      title: 'Saldo atual',
-      value: formatCurrency(summary?.saldoAtual ?? 0),
-      tag: <Tag color="blue">Caixa</Tag>
-    },
-    {
-      title: 'Total a pagar',
-      value: formatCurrency(summary?.totalAPagar ?? 0),
-      tag: <Tag color="volcano">Obrigacoes</Tag>
-    },
-    {
-      title: 'Total a receber',
-      value: formatCurrency(summary?.totalAReceber ?? 0),
-      tag: <Tag color="cyan">Entradas</Tag>
-    },
-    {
-      title: 'Saldo projetado',
-      value: formatCurrency(summary?.saldoProjetado ?? 0),
-      tag: (
-        <Tag color={summary?.saldoProjetado !== undefined && summary.saldoProjetado < 0 ? 'error' : 'success'}>
-          {summary?.saldoProjetado !== undefined && summary.saldoProjetado < 0 ? 'Pressao' : 'Estavel'}
-        </Tag>
-      )
-    }
-  ];
-
-  const flowColumns = [
-    {
-      title: 'Data',
-      dataIndex: 'data',
-      key: 'data',
-      render: (value: string) => formatDate(value)
-    },
-    {
-      title: 'Saldo inicial',
-      dataIndex: 'saldoInicial',
-      key: 'saldoInicial',
-      render: (value: number) => formatCurrency(Number(value))
-    },
-    {
-      title: 'Entradas',
-      dataIndex: 'entradasPrevistas',
-      key: 'entradasPrevistas',
-      render: (value: number) => formatCurrency(Number(value))
-    },
-    {
-      title: 'Saidas',
-      dataIndex: 'saidasPrevistas',
-      key: 'saidasPrevistas',
-      render: (value: number) => formatCurrency(Number(value))
-    },
-    {
-      title: 'Saldo final',
-      dataIndex: 'saldoFinalPrevisto',
-      key: 'saldoFinalPrevisto',
-      render: (value: number) => formatCurrency(Number(value))
-    }
-  ];
+  const totalContasVencidias = summary?.contasVencidas.length ?? 0;
+  const totalContasAPagarAVencer = summary?.contasAVencer.filter((item) => item.tipoLancamento === 'ContaPagar').length ?? 0;
 
   return (
-    <Space orientation="vertical" size={24} style={{ width: '100%' }}>
-      <Space align="baseline" style={{ width: '100%', justifyContent: 'space-between' }} wrap>
-        <div>
-          <Typography.Title level={4}>Dashboard executivo</Typography.Title>
-          <Typography.Paragraph>
-            Visao consolidada do caixa, das obrigacoes abertas e do risco projetado.
-          </Typography.Paragraph>
+    <>
+      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">
+              Dashboard Executivo
+            </h1>
+            <p className="text-on-surface-variant font-body mt-1">
+              Visão geral do ecossistema financeiro em {formatReferenceMonth(referenceMonth)}.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+             <div className="flex bg-surface-container-highest rounded-xl p-1 border border-outline-variant/10">
+                <button 
+                  onClick={() => setView('Caixa')}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${view === 'Caixa' ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:text-on-surface'}`}
+                >
+                  CAIXA
+                </button>
+                <button 
+                  onClick={() => setView('Economica')}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${view === 'Economica' ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:text-on-surface'}`}
+                >
+                  ECONÔMICA
+                </button>
+             </div>
+            
+            <input
+              type="month"
+              aria-label="Mês de referência do dashboard"
+              value={referenceMonth}
+              onChange={(event) => setReferenceMonth(event.target.value || getCurrentReferenceMonth())}
+              className="bg-surface-container-highest border border-outline-variant/15 rounded-xl px-4 py-2 text-sm font-semibold text-on-surface outline-none focus:border-primary/40 transition-all cursor-pointer"
+            />
+
+            <button className="bg-primary px-4 py-2 rounded-xl text-on-primary text-sm font-bold flex items-center gap-2 active:scale-95 transition-transform shadow-lg shadow-primary/10">
+              <span className="material-symbols-outlined text-sm">download</span>
+              Exportar
+            </button>
+          </div>
         </div>
-        <Space wrap>
-          <Radio.Group
-            optionType="button"
-            value={view}
-            onChange={(event) => setView(event.target.value as DashboardFluxoCaixaVisao)}
+
+        {errorMessage && (
+           <div className="bg-error-container/20 border border-error/20 p-4 rounded-2xl flex items-center gap-3 text-error animate-in fade-in slide-in-from-top-2">
+              <span className="material-symbols-outlined">warning</span>
+              <span className="text-sm font-medium">{errorMessage}</span>
+           </div>
+        )}
+
+        {/* Alerta de contas vencidas */}
+        {totalContasVencidias > 0 && (
+          <Link
+            to="/contas-pagar?status=VENCIDA"
+            className="bg-error/10 border border-error/30 p-4 rounded-2xl flex items-center justify-between gap-3 !text-error hover:bg-error/15 hover:!text-error transition-all animate-in fade-in slide-in-from-top-2"
           >
-            <Radio.Button value="Caixa">Visao de caixa</Radio.Button>
-            <Radio.Button value="Economica">Visao economica</Radio.Button>
-          </Radio.Group>
-          <Select
-            aria-label="Periodo do fluxo"
-            options={dayOptions}
-            value={days}
-            style={{ minWidth: 120 }}
-            onChange={(value) => setDays(value)}
-          />
-        </Space>
-      </Space>
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined">notification_important</span>
+              <span className="text-sm font-bold">
+                {totalContasVencidias} conta(s) vencida(s) somando{' '}
+                {formatCurrencyBRL(summary?.contasVencidas.reduce((total, item) => total + item.valor, 0) ?? 0)}
+              </span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider">Resolver agora →</span>
+          </Link>
+        )}
 
-      {errorMessage ? (
-        <Alert
-          type="warning"
-          title="Falha parcial ao atualizar o dashboard"
-          description={errorMessage}
-          showIcon
+        {/* KPI Grid */}
+        <DashboardKpiGrid
+          saldoAtual={summary?.saldoAtual ?? 0}
+          totalAPagar={summary?.totalAPagar ?? 0}
+          totalAReceber={summary?.totalAReceber ?? 0}
+          saldoProjetado={summary?.saldoProjetado ?? 0}
+          numContasPendentes={totalContasVencidias + totalContasAPagarAVencer}
         />
-      ) : null}
 
-      <Row gutter={[16, 16]}>
-        {metricCards.map((card) => (
-          <Col key={card.title} xs={24} md={12} xl={6}>
-            <Card className="dashboard-card dashboard-summary-card">
-              <Typography.Text type="secondary">{card.title}</Typography.Text>
-              <Typography.Title level={3} className="dashboard-summary-value">
-                {card.value}
-              </Typography.Title>
-              {card.tag}
-            </Card>
-          </Col>
-        ))}
-      </Row>
+        {/* Middle Section: Graph and Agenda */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           <DashboardCashPulse items={cashFlow?.itens ?? []} />
+           <DashboardOperationalAgenda items={summary?.contasAVencer ?? []} />
+        </div>
 
-      <Alert
-        type={summary?.riscoSaldoNegativo ? 'error' : 'success'}
-        title={summary?.riscoSaldoNegativo ? 'Risco de saldo negativo projetado' : 'Fluxo projetado sem saldo negativo'}
-        description={
-          summary?.riscoSaldoNegativo
-            ? 'O fluxo projetado entrou em faixa negativa dentro da janela selecionada.'
-            : 'Nenhum dia ficou negativo na janela atual.'
-        }
-        showIcon
-      />
-
-      <Row gutter={[16, 16]}>
-        <Col xs={24} xl={12}>
-          <Card title="Contas vencidas" className="dashboard-section-card">
-            {renderContaList(summary?.contasVencidas ?? [])}
-          </Card>
-        </Col>
-        <Col xs={24} xl={12}>
-          <Card title="Contas a vencer" className="dashboard-section-card">
-            {renderContaList(summary?.contasAVencer ?? [])}
-          </Card>
-        </Col>
-      </Row>
-
-      <Card title="Movimentacoes recentes" className="dashboard-section-card">
-        {renderMovimentacoes(summary?.movimentacoesRecentes ?? [])}
-      </Card>
-
-      <Card
-        title="Fluxo de caixa diario"
-        extra={<Typography.Text type="secondary">Visao atual: {cashFlow?.visao ?? view}</Typography.Text>}
-        className="dashboard-section-card"
-      >
-        <Table
-          size="small"
-          rowKey="data"
-          pagination={false}
-          loading={loading}
-          columns={flowColumns}
-          dataSource={cashFlow?.itens ?? []}
-          rowClassName={(record: { riscoSaldoNegativo: boolean }) =>
-            record.riscoSaldoNegativo ? 'dashboard-flow-negative' : ''
-          }
-        />
-      </Card>
-    </Space>
+        {/* Bottom Section: Faturas e Transações */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           <DashboardFaturasCartao />
+           <div className="lg:col-span-2">
+             <DashboardTransactionList
+                movimentacoes={summary?.movimentacoesRecentes ?? []}
+                onViewAll={() => {}}
+             />
+           </div>
+        </div>
+      </div>
+    </>
   );
 }

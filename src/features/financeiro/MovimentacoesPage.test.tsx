@@ -1,7 +1,19 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MovimentacoesPage } from './MovimentacoesPage';
+import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
+
+vi.mock('../../services/http/cadastros-api', () => ({
+  cadastrosApi: {
+    contasBancarias: {
+      listar: vi.fn()
+    },
+    pessoas: {
+      listar: vi.fn()
+    }
+  }
+}));
 
 vi.mock('../../services/http/financeiro-api', () => ({
   financeiroApi: {
@@ -15,9 +27,53 @@ vi.mock('../../services/http/financeiro-api', () => ({
 describe('MovimentacoesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(cadastrosApi.contasBancarias.listar).mockResolvedValue({
+      items: [
+        {
+          id: 'cb1',
+          nome: 'Conta principal',
+          banco: 'Banco Exemplo'
+        },
+        {
+          id: 'cb2',
+          nome: 'Conta reserva',
+          banco: 'Banco Exemplo'
+        }
+      ],
+      page: 1,
+      pageSize: 100,
+      totalItems: 2,
+      totalPages: 1
+    } as never);
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({
+      items: [
+        {
+          id: 'rp1',
+          nome: 'Michelle',
+          tipoPessoa: 'Fisica',
+          cpfCnpj: null,
+          email: null,
+          telefone: null,
+          ativo: true
+        },
+        {
+          id: 'rp2',
+          nome: 'Vilani',
+          tipoPessoa: 'Fisica',
+          cpfCnpj: null,
+          email: null,
+          telefone: null,
+          ativo: true
+        }
+      ],
+      page: 1,
+      pageSize: 100,
+      totalItems: 2,
+      totalPages: 1
+    } as never);
   });
 
-  it('loads data and applies search and select filters', async () => {
+  it('loads data, removes redundant summary items and applies search filters', async () => {
     vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue({
       items: [
         {
@@ -33,20 +89,34 @@ describe('MovimentacoesPage', () => {
           contaPagarId: null,
           contaReceberId: 'cr1',
           faturaCartaoId: null,
-          observacao: 'Recebimento do cliente'
+          observacao: 'Recebimento do cliente',
+          responsavelNome: 'Michelle'
         }
       ],
       page: 1,
       pageSize: 20,
       totalItems: 1,
-      totalPages: 1
+      totalPages: 1,
+      summary: {
+        totalRegistros: 1,
+        totalEntradas: 120,
+        totalSaidas: 0,
+        saldoLiquido: 120
+      }
     });
 
     render(<MovimentacoesPage />);
 
     expect(await screen.findByText('Recebimento do cliente')).toBeInTheDocument();
+    expect((await screen.findAllByText('20/04/2026')).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Conta principal')).toBeInTheDocument();
+    expect(screen.queryByText(/Registros filtrados/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Entradas')).toBeInTheDocument();
+    expect(screen.getByText('Saídas')).toBeInTheDocument();
+    expect(screen.getByText('Saldo Líquido')).toBeInTheDocument();
+    expect(screen.getAllByText('R$120,00').length).toBeGreaterThanOrEqual(1);
 
-    await userEvent.type(screen.getByPlaceholderText('Buscar por observacao'), 'cliente vip');
+    await userEvent.type(screen.getByPlaceholderText(/Filtrar por observa/i), 'cliente vip');
 
     await waitFor(() =>
       expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
@@ -55,7 +125,101 @@ describe('MovimentacoesPage', () => {
         })
       )
     );
-  }, 20000);
+  }, 40000);
+
+  it('filters movimentacoes by periodo', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 20,
+      totalItems: 0,
+      totalPages: 0,
+      summary: {
+        totalRegistros: 0,
+        totalEntradas: 0,
+        totalSaidas: 0,
+        saldoLiquido: 0
+      }
+    });
+
+    render(<MovimentacoesPage />);
+
+    fireEvent.change(screen.getByLabelText('Data inicial'), {
+      target: { value: '2026-04-01' }
+    });
+    fireEvent.change(screen.getByLabelText('Data final'), {
+      target: { value: '2026-04-30' }
+    });
+
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          dataInicial: '2026-04-01',
+          dataFinal: '2026-04-30'
+        })
+      )
+    );
+  });
+
+  it('filters movimentacoes by conta bancaria', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 20,
+      totalItems: 0,
+      totalPages: 0,
+      summary: {
+        totalRegistros: 0,
+        totalEntradas: 0,
+        totalSaidas: 0,
+        saldoLiquido: 0
+      }
+    });
+
+    render(<MovimentacoesPage />);
+
+    const selector = screen.getByLabelText(/Filtro de conta banc/i);
+    fireEvent.mouseDown(selector);
+    await userEvent.click(await screen.findByText('Conta principal - Banco Exemplo'));
+
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          contaBancariaIds: ['cb1']
+        })
+      )
+    );
+  });
+
+  it('filters movimentacoes by responsavel', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 20,
+      totalItems: 0,
+      totalPages: 0,
+      summary: {
+        totalRegistros: 0,
+        totalEntradas: 0,
+        totalSaidas: 0,
+        saldoLiquido: 0
+      }
+    });
+
+    render(<MovimentacoesPage />);
+
+    const selector = screen.getByLabelText(/Filtro de respons/i);
+    fireEvent.mouseDown(selector);
+    await userEvent.click(await screen.findByText('Michelle'));
+
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          responsavelIds: ['rp1']
+        })
+      )
+    );
+  });
 
   it('renders the error state and retries loading', async () => {
     vi.mocked(financeiroApi.movimentacoes.listar)
@@ -65,13 +229,19 @@ describe('MovimentacoesPage', () => {
         page: 1,
         pageSize: 20,
         totalItems: 0,
-        totalPages: 0
+        totalPages: 0,
+        summary: {
+          totalRegistros: 0,
+          totalEntradas: 0,
+          totalSaidas: 0,
+          saldoLiquido: 0
+        }
       });
 
     render(<MovimentacoesPage />);
 
     expect(await screen.findByText('Falha ao carregar dados')).toBeInTheDocument();
-    expect(screen.getByText('Falha ao buscar movimentacoes')).toBeInTheDocument();
+    expect(screen.getByText(/Falha ao buscar movimenta/i)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 

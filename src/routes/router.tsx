@@ -1,17 +1,22 @@
+import { lazy } from 'react';
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
-import { DashboardPage } from '../features/dashboard/pages/DashboardPage';
-import { AdminLayout } from '../layouts/AdminLayout';
-import { AccessDeniedPage } from '../pages/AccessDeniedPage';
-import { NotFoundPage } from './NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
-import { financialRouteObjects, placeholderRouteObjects, supportRegistryRouteObjects } from './route-definitions';
+import { financialRouteObjects, placeholderRouteObjects, supportRegistryRouteObjects, comprasPlanejadasRouteObjects } from './route-definitions';
+
+const DashboardPage = lazy(() => import('../features/dashboard/pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
+const NeonLedgerLayout = lazy(() => import('../layouts/NeonLedgerLayout').then(m => ({ default: m.NeonLedgerLayout })));
+const AccessDeniedPage = lazy(() => import('../pages/AccessDeniedPage').then(m => ({ default: m.AccessDeniedPage })));
+const LoginPage = lazy(() => import('../pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const FamiliaPage = lazy(() => import('../features/familia/FamiliaPage').then(m => ({ default: m.FamiliaPage })));
+const AceitarConvitePage = lazy(() => import('../features/familia/AceitarConvitePage').then(m => ({ default: m.AceitarConvitePage })));
+const NotFoundPage = lazy(() => import('./NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
 export const appRoutes: RouteObject[] = [
   {
     path: '/',
     element: (
       <ProtectedRoute>
-        <AdminLayout />
+        <NeonLedgerLayout />
       </ProtectedRoute>
     ),
     handle: {
@@ -29,10 +34,32 @@ export const appRoutes: RouteObject[] = [
           title: 'Dashboard'
         }
       },
+      {
+        path: 'familia',
+        element: <FamiliaPage />,
+        handle: {
+          title: 'Família'
+        }
+      },
+      {
+        path: 'compras-planejadas',
+        handle: {
+          title: 'Planejador de Compras'
+        },
+        children: comprasPlanejadasRouteObjects
+      },
       ...supportRegistryRouteObjects,
       ...financialRouteObjects,
       ...placeholderRouteObjects
     ]
+  },
+  {
+    path: '/convite/:token',
+    element: <AceitarConvitePage />
+  },
+  {
+    path: '/login',
+    element: <LoginPage />
   },
   {
     path: '/acesso-negado',

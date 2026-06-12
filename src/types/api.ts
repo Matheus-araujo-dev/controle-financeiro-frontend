@@ -5,10 +5,11 @@ export type ApiErrorResponse = {
   traceId: string;
 };
 
-export type PagedResult<T> = {
+export type PagedResult<T, TSummary = unknown> = {
   items: T[];
   page: number;
   pageSize: number;
   totalItems: number;
   totalPages: number;
+  summary?: TSummary;
 };

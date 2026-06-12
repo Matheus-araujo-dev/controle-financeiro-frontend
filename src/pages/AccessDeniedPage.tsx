@@ -6,7 +6,7 @@ export function AccessDeniedPage() {
     <Result
       status="403"
       title="Acesso negado"
-      subTitle="A protecao de rota ja esta preparada, mas a autenticacao ainda nao foi habilitada nesta fase."
+      subTitle="A proteção de rota já está preparada, mas a autenticação ainda não foi habilitada nesta fase."
       extra={
         <Button type="primary">
           <Link to="/dashboard">Voltar ao dashboard</Link>

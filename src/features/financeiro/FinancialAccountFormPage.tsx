@@ -1,674 +1,74 @@
-import { useEffect, useMemo, useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Card, Checkbox, Form, Input, InputNumber, Select, Space, Typography } from 'antd';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { AxiosError } from 'axios';
-import { EntityFormShell } from '../../components/forms/EntityFormShell';
+import { Controller } from 'react-hook-form';
+import { FileTextOutlined } from '@ant-design/icons';
+
 import { PageState } from '../../components/states/PageState';
-import { applyServerValidationErrors } from '../../services/forms/applyServerValidationErrors';
-import type { ApiErrorResponse } from '../../types/api';
-import type { FinanceiroModuleConfig, FinanceiroFormValues, FinanceiroLiquidacaoFormValues, FormaPagamentoOption, SelectOption } from './module-config';
-import { calculateValorLiquido, resolveFormaPagamentoBehavior } from './module-config';
-import { financialAccountFormSchema } from './schemas';
+import type { FinanceiroModuleConfig } from './module-config';
+import { GeneralInfoSection } from './financial-account-form/GeneralInfoSection';
+import { RecurrenceSection } from './financial-account-form/RecurrenceSection';
+import { RateioSection } from './financial-account-form/RateioSection';
+import { SummarySidebar } from './financial-account-form/SummarySidebar';
+import { nativeTextareaClass } from './financial-account-form/field-classes';
+import { useFinancialAccountForm } from './financial-account-form/useFinancialAccountForm';
 
 export function FinancialAccountFormPage({
   config
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: FinanceiroModuleConfig<any, any, any>;
 }) {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(Boolean(id));
-  const [errorMessage, setErrorMessage] = useState<string>();
-  const [pessoaOptions, setPessoaOptions] = useState<SelectOption[]>([]);
-  const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<FormaPagamentoOption[]>([]);
-  const [contaBancariaOptions, setContaBancariaOptions] = useState<SelectOption[]>([]);
-  const [cartaoOptions, setCartaoOptions] = useState<SelectOption[]>([]);
-  const [rateioOptions, setRateioOptions] = useState<SelectOption[]>([]);
-  const [detailStatus, setDetailStatus] = useState<string>();
-  const [actionValues, setActionValues] = useState<FinanceiroLiquidacaoFormValues>({
-    dataLiquidacao: '',
-    contaBancariaId: ''
-  });
-  const [actionLoading, setActionLoading] = useState(false);
+  const form = useFinancialAccountForm(config);
+  const { id, control, canEdit, loading, errorMessage, handleSubmit, onSubmit } = form;
 
-  const {
-    control,
-    getValues,
-    handleSubmit,
-    reset,
-    setError,
-    watch,
-    formState: { errors, isSubmitting, isValid }
-  } = useForm<FinanceiroFormValues>({
-    resolver: zodResolver(financialAccountFormSchema),
-    defaultValues: config.defaultValues,
-    mode: 'onChange'
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'rateios'
-  });
-
-  const watchedValues = watch();
-  const valorLiquido = calculateValorLiquido(watchedValues);
-  const totalRateios = watchedValues.rateios.reduce((total, item) => total + (Number(item.valor) || 0), 0);
-  const formaPagamentoBehavior = useMemo(
-    () => resolveFormaPagamentoBehavior(watchedValues.formaPagamentoId, formaPagamentoOptions),
-    [watchedValues.formaPagamentoId, formaPagamentoOptions]
-  );
-  const exibeRecorrencia = watchedValues.ehRecorrente;
-  const exibeAcoesRecorrencia = Boolean(id && watchedValues.ehRecorrente);
-
-  useEffect(() => {
-    async function loadOptions() {
-      const [pessoas, formas, contas, cartoes, rateios] = await Promise.all([
-        config.loadPessoaOptions(),
-        config.loadFormaPagamentoOptions(),
-        config.loadContaBancariaOptions(),
-        config.loadCartaoOptions(),
-        config.loadRateioOptions()
-      ]);
-
-      setPessoaOptions(pessoas);
-      setFormaPagamentoOptions(formas);
-      setContaBancariaOptions(contas);
-      setCartaoOptions(cartoes);
-      setRateioOptions(rateios);
-    }
-
-    void loadOptions();
-  }, [config]);
-
-  useEffect(() => {
-    const entityId = id;
-
-    if (!entityId) {
-      reset(config.defaultValues);
-      setDetailStatus(undefined);
-      return;
-    }
-
-    async function loadDetail(currentId: string) {
-      setLoading(true);
-      setErrorMessage(undefined);
-
-      try {
-        const detail = await config.detail(currentId);
-        reset(config.toFormValues(detail));
-        setDetailStatus(detail.statusCodigo);
-        setActionValues({
-          dataLiquidacao: detail.dataLiquidacao ?? detail.dataVencimento,
-          contaBancariaId: detail.contaBancariaId ?? ''
-        });
-      } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar o lancamento.');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void loadDetail(entityId);
-  }, [config, id, reset]);
-
-  async function onSubmit(values: FinanceiroFormValues) {
-    try {
-      if (id) {
-        await config.update(id, values);
-      } else {
-        await config.create(values);
-      }
-
-      navigate(config.routeBase);
-    } catch (error) {
-      const apiError = error as AxiosError<ApiErrorResponse>;
-      const validationErrors = apiError.response?.data?.errors;
-
-      if (validationErrors) {
-        applyServerValidationErrors(validationErrors, (field, message) =>
-          setError(field as keyof FinanceiroFormValues, {
-            type: 'server',
-            message
-          })
-        );
-        return;
-      }
-
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao salvar o lancamento.');
-    }
-  }
-
-  async function liquidar() {
-    if (!id || !config.liquidar) {
-      return;
-    }
-
-    setActionLoading(true);
-    setErrorMessage(undefined);
-
-    try {
-      await config.liquidar(id, actionValues);
-      navigate(config.routeBase);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao liquidar o lancamento.');
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function cancelar() {
-    if (!id || !config.cancelar) {
-      return;
-    }
-
-    setActionLoading(true);
-    setErrorMessage(undefined);
-
-    try {
-      await config.cancelar(id);
-      navigate(config.routeBase);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao cancelar o lancamento.');
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function alterarFuturas() {
-    if (!id || !config.alterarFuturas) {
-      return;
-    }
-
-    setActionLoading(true);
-    setErrorMessage(undefined);
-
-    try {
-      await config.alterarFuturas(id, getValues());
-      navigate(config.routeBase);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao alterar as ocorrencias futuras.');
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function gerarOcorrencias() {
-    if (!id || !config.gerarOcorrencias) {
-      return;
-    }
-
-    setActionLoading(true);
-    setErrorMessage(undefined);
-
-    try {
-      await config.gerarOcorrencias(id, {
-        ateData: getValues().recorrenciaGerarAteData
-      });
-      navigate(config.routeBase);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao gerar ocorrencias.');
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function pausarRecorrencia() {
-    if (!id || !config.pausarRecorrencia) {
-      return;
-    }
-
-    setActionLoading(true);
-    setErrorMessage(undefined);
-
-    try {
-      await config.pausarRecorrencia(id);
-      navigate(config.routeBase);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao pausar a recorrencia.');
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function encerrarRecorrencia() {
-    if (!id || !config.encerrarRecorrencia) {
-      return;
-    }
-
-    setActionLoading(true);
-    setErrorMessage(undefined);
-
-    try {
-      await config.encerrarRecorrencia(id, {
-        dataFim: getValues().recorrenciaDataFim
-      });
-      navigate(config.routeBase);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao encerrar a recorrencia.');
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  if (loading) {
-    return <PageState state="loading" title="Carregando lancamento..." />;
-  }
-
-  if (errorMessage && !id) {
-    return <PageState state="error" title="Falha ao carregar lancamento" subtitle={errorMessage} />;
-  }
+  if (loading) return <PageState state="loading" title="Carregando lançamento..." />;
+  if (errorMessage && !id) return <PageState state="error" title="Falha ao carregar lançamento" subtitle={errorMessage} />;
 
   return (
-    <Space orientation="vertical" size={24} style={{ width: '100%' }}>
-      <div>
-        <Typography.Title level={4}>
-          {id ? `Editar ${config.singularTitle.toLowerCase()}` : `Nova ${config.singularTitle.toLowerCase()}`}
-        </Typography.Title>
-        <Typography.Paragraph>{config.formDescription}</Typography.Paragraph>
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h2 className="text-on-surface-variant font-label text-xs uppercase tracking-[0.2em] mb-2">Operações Financeiras</h2>
+          <h1 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface">
+            {id && id !== 'novo' ? 'Editar' : 'Criar'}: <span className="text-primary">{config.singularTitle}</span>
+          </h1>
+        </div>
       </div>
 
-      {errorMessage ? <Typography.Text type="danger">{errorMessage}</Typography.Text> : null}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Main Information Column */}
+          <div className="lg:col-span-8 space-y-8">
+            <GeneralInfoSection form={form} personLabel={config.personLabel} />
+            <RecurrenceSection form={form} />
+            <RateioSection form={form} />
+          </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <EntityFormShell
-          title={config.singularTitle}
-          description={config.formDescription}
-          isValid={isValid}
-          isSubmitting={isSubmitting}
-          onCancel={() => navigate(config.routeBase)}
-        >
-          <Space orientation="vertical" size={16} style={{ width: '100%' }}>
-            <Controller
-              control={control}
-              name="descricao"
-              render={({ field }) => (
-                <Form.Item label="Descricao" help={errors.descricao?.message} validateStatus={errors.descricao ? 'error' : undefined}>
-                  <Input {...field} />
-                </Form.Item>
-              )}
-            />
+          {/* Sidebar / Actions Column */}
+          <SummarySidebar form={form} />
+        </div>
 
-            <Space wrap style={{ width: '100%' }}>
-              <Controller
-                control={control}
-                name="numeroDocumento"
-                render={({ field }) => (
-                  <Form.Item label="Numero documento" help={errors.numeroDocumento?.message}>
-                    <Input {...field} value={field.value ?? ''} style={{ width: 220 }} />
-                  </Form.Item>
-                )}
+        {/* Observation Block */}
+        <div className="bg-surface-container-low p-8 rounded-3xl border border-white/5 space-y-4">
+          <div className="flex items-center gap-3">
+            <FileTextOutlined className="text-on-surface-variant" />
+            <h3 className="text-sm font-bold uppercase tracking-widest">Observações Adicionais</h3>
+          </div>
+          <Controller
+            control={control}
+            name="observacao"
+            render={({ field: { value, ...rest } }) => (
+              <textarea
+                {...rest}
+                value={value ?? ''}
+                rows={4}
+                disabled={!canEdit}
+                placeholder="Notas sobre o lançamento, notas fiscais, motivo do parcelamento..."
+                className={nativeTextareaClass}
               />
-              <Controller
-                control={control}
-                name="pessoaId"
-                render={({ field }) => (
-                  <Form.Item label={config.personLabel} help={errors.pessoaId?.message} validateStatus={errors.pessoaId ? 'error' : undefined}>
-                    <Select value={field.value || undefined} options={pessoaOptions} onChange={(value) => field.onChange(value ?? '')} style={{ width: 240 }} />
-                  </Form.Item>
-                )}
-              />
-              <Controller
-                control={control}
-                name="responsavelId"
-                render={({ field }) => (
-                  <Form.Item label="Responsavel" help={errors.responsavelId?.message}>
-                    <Select value={field.value || undefined} options={pessoaOptions} onChange={(value) => field.onChange(value ?? '')} allowClear style={{ width: 220 }} />
-                  </Form.Item>
-                )}
-              />
-            </Space>
-
-            <Space wrap style={{ width: '100%' }}>
-              <Controller
-                control={control}
-                name="dataEmissao"
-                render={({ field }) => (
-                  <Form.Item label="Data emissao" help={errors.dataEmissao?.message} validateStatus={errors.dataEmissao ? 'error' : undefined}>
-                    <Input type="date" {...field} value={field.value ?? ''} />
-                  </Form.Item>
-                )}
-              />
-              <Controller
-                control={control}
-                name="dataVencimento"
-                render={({ field }) => (
-                  <Form.Item label="Data vencimento" help={errors.dataVencimento?.message} validateStatus={errors.dataVencimento ? 'error' : undefined}>
-                    <Input type="date" {...field} value={field.value ?? ''} />
-                  </Form.Item>
-                )}
-              />
-              <Controller
-                control={control}
-                name="quantidadeParcelas"
-                render={({ field }) => (
-                  <Form.Item label="Parcelas" help={errors.quantidadeParcelas?.message} validateStatus={errors.quantidadeParcelas ? 'error' : undefined}>
-                    <InputNumber
-                      min={1}
-                      value={field.value}
-                      disabled={Boolean(id) || watchedValues.ehRecorrente}
-                      onChange={(value) => field.onChange(value ?? 1)}
-                    />
-                  </Form.Item>
-                )}
-              />
-            </Space>
-
-            <Space wrap style={{ width: '100%' }}>
-              <Controller
-                control={control}
-                name="formaPagamentoId"
-                render={({ field }) => (
-                  <Form.Item label="Forma de pagamento" help={errors.formaPagamentoId?.message} validateStatus={errors.formaPagamentoId ? 'error' : undefined}>
-                    <Select value={field.value || undefined} options={formaPagamentoOptions} onChange={(value) => field.onChange(value ?? '')} style={{ width: 240 }} />
-                  </Form.Item>
-                )}
-              />
-              {formaPagamentoBehavior.ehCartao ? (
-                <Controller
-                  control={control}
-                  name="cartaoId"
-                  render={({ field }) => (
-                    <Form.Item label="Cartao" help={errors.cartaoId?.message}>
-                      <Select value={field.value || undefined} options={cartaoOptions} onChange={(value) => field.onChange(value ?? '')} allowClear style={{ width: 240 }} />
-                    </Form.Item>
-                  )}
-                />
-              ) : null}
-              {formaPagamentoBehavior.baixarAutomaticamente ? (
-                <>
-                  <Controller
-                    control={control}
-                    name="contaBancariaId"
-                    render={({ field }) => (
-                      <Form.Item label="Conta bancaria" help={errors.contaBancariaId?.message}>
-                        <Select value={field.value || undefined} options={contaBancariaOptions} onChange={(value) => field.onChange(value ?? '')} style={{ width: 240 }} />
-                      </Form.Item>
-                    )}
-                  />
-                  <Controller
-                    control={control}
-                    name="dataLiquidacao"
-                    render={({ field }) => (
-                      <Form.Item label="Data liquidacao" help={errors.dataLiquidacao?.message}>
-                        <Input type="date" {...field} value={field.value ?? ''} />
-                      </Form.Item>
-                    )}
-                  />
-                </>
-              ) : null}
-            </Space>
-
-            <Space wrap style={{ width: '100%' }}>
-              <Controller
-                control={control}
-                name="valorOriginal"
-                render={({ field }) => (
-                  <Form.Item label="Valor original">
-                    <InputNumber min={0} step={0.01} value={field.value} onChange={(value) => field.onChange(value ?? 0)} style={{ width: 160 }} />
-                  </Form.Item>
-                )}
-              />
-              <Controller
-                control={control}
-                name="valorDesconto"
-                render={({ field }) => (
-                  <Form.Item label="Desconto">
-                    <InputNumber min={0} step={0.01} value={field.value} onChange={(value) => field.onChange(value ?? 0)} style={{ width: 160 }} />
-                  </Form.Item>
-                )}
-              />
-              <Controller
-                control={control}
-                name="valorJuros"
-                render={({ field }) => (
-                  <Form.Item label="Juros">
-                    <InputNumber min={0} step={0.01} value={field.value} onChange={(value) => field.onChange(value ?? 0)} style={{ width: 160 }} />
-                  </Form.Item>
-                )}
-              />
-              <Controller
-                control={control}
-                name="valorMulta"
-                render={({ field }) => (
-                  <Form.Item label="Multa">
-                    <InputNumber min={0} step={0.01} value={field.value} onChange={(value) => field.onChange(value ?? 0)} style={{ width: 160 }} />
-                  </Form.Item>
-                )}
-              />
-            </Space>
-
-            <Typography.Text strong>Valor liquido: {valorLiquido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Typography.Text>
-
-            <Controller
-              control={control}
-              name="observacao"
-              render={({ field }) => (
-                <Form.Item label="Observacao">
-                  <Input.TextArea {...field} value={field.value ?? ''} rows={3} />
-                </Form.Item>
-              )}
-            />
-
-            {!id ? (
-              <Controller
-                control={control}
-                name="ehRecorrente"
-                render={({ field }) => (
-                  <Form.Item>
-                    <Checkbox checked={field.value} onChange={(event) => field.onChange(event.target.checked)}>
-                      Criar como lancamento recorrente
-                    </Checkbox>
-                  </Form.Item>
-                )}
-              />
-            ) : null}
-
-            {exibeRecorrencia ? (
-              <Card>
-                <Space orientation="vertical" size={16} style={{ width: '100%' }}>
-                  <div>
-                    <Typography.Title level={5}>Recorrencia</Typography.Title>
-                    <Typography.Paragraph>Configure a serie mensal, preservando historico e permitindo gerar previsoes futuras.</Typography.Paragraph>
-                  </div>
-                  <Space wrap style={{ width: '100%' }}>
-                    <Controller
-                      control={control}
-                      name="recorrenciaTipoPeriodicidade"
-                      render={({ field }) => (
-                        <Form.Item label="Periodicidade">
-                          <Select
-                            value={field.value}
-                            options={[{ label: 'Mensal', value: 'Mensal' }]}
-                            onChange={(value) => field.onChange(value ?? 'Mensal')}
-                            style={{ width: 180 }}
-                          />
-                        </Form.Item>
-                      )}
-                    />
-                    <Controller
-                      control={control}
-                      name="recorrenciaDiaGeracaoMensal"
-                      render={({ field }) => (
-                        <Form.Item
-                          label="Dia mensal"
-                          help={errors.recorrenciaDiaGeracaoMensal?.message}
-                          validateStatus={errors.recorrenciaDiaGeracaoMensal ? 'error' : undefined}
-                        >
-                          <InputNumber min={1} max={31} value={field.value} onChange={(value) => field.onChange(value ?? 1)} />
-                        </Form.Item>
-                      )}
-                    />
-                    <Controller
-                      control={control}
-                      name="recorrenciaDataInicio"
-                      render={({ field }) => (
-                        <Form.Item
-                          label="Inicio"
-                          help={errors.recorrenciaDataInicio?.message}
-                          validateStatus={errors.recorrenciaDataInicio ? 'error' : undefined}
-                        >
-                          <Input type="date" {...field} value={field.value ?? ''} />
-                        </Form.Item>
-                      )}
-                    />
-                    <Controller
-                      control={control}
-                      name="recorrenciaDataFim"
-                      render={({ field }) => (
-                        <Form.Item
-                          label="Fim"
-                          help={errors.recorrenciaDataFim?.message}
-                          validateStatus={errors.recorrenciaDataFim ? 'error' : undefined}
-                        >
-                          <Input type="date" {...field} value={field.value ?? ''} />
-                        </Form.Item>
-                      )}
-                    />
-                  </Space>
-
-                  <Controller
-                    control={control}
-                    name="recorrenciaPermiteEdicaoOcorrenciaIndividual"
-                    render={({ field }) => (
-                      <Form.Item>
-                        <Checkbox checked={field.value} onChange={(event) => field.onChange(event.target.checked)}>
-                          Permitir edicao pontual de ocorrencias
-                        </Checkbox>
-                      </Form.Item>
-                    )}
-                  />
-
-                  <Controller
-                    control={control}
-                    name="recorrenciaObservacao"
-                    render={({ field }) => (
-                      <Form.Item label="Observacao da recorrencia">
-                        <Input.TextArea {...field} value={field.value ?? ''} rows={2} />
-                      </Form.Item>
-                    )}
-                  />
-                </Space>
-              </Card>
-            ) : null}
-
-            <div>
-              <Typography.Title level={5}>Rateios</Typography.Title>
-              <Typography.Paragraph>Total informado: {totalRateios.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Typography.Paragraph>
-              {errors.rateios?.message ? <Typography.Text type="danger">{errors.rateios.message}</Typography.Text> : null}
-              <Space orientation="vertical" size={8} style={{ width: '100%' }}>
-                {fields.map((item, index) => (
-                  <Space key={item.id} wrap align="start">
-                    <Controller
-                      control={control}
-                      name={`rateios.${index}.contaGerencialId`}
-                      render={({ field }) => (
-                        <Form.Item
-                          label={`Conta gerencial ${index + 1}`}
-                          help={errors.rateios?.[index]?.contaGerencialId?.message}
-                          validateStatus={errors.rateios?.[index]?.contaGerencialId ? 'error' : undefined}
-                        >
-                          <Select value={field.value || undefined} options={rateioOptions} onChange={(value) => field.onChange(value ?? '')} style={{ width: 260 }} />
-                        </Form.Item>
-                      )}
-                    />
-                    <Controller
-                      control={control}
-                      name={`rateios.${index}.valor`}
-                      render={({ field }) => (
-                        <Form.Item
-                          label={`Valor ${index + 1}`}
-                          help={errors.rateios?.[index]?.valor?.message}
-                          validateStatus={errors.rateios?.[index]?.valor ? 'error' : undefined}
-                        >
-                          <InputNumber min={0} step={0.01} value={field.value} onChange={(value) => field.onChange(value ?? 0)} style={{ width: 160 }} />
-                        </Form.Item>
-                      )}
-                    />
-                    <Button danger disabled={fields.length === 1} onClick={() => remove(index)}>
-                      Remover
-                    </Button>
-                  </Space>
-                ))}
-                <Button onClick={() => append({ contaGerencialId: '', valor: 0 })}>Adicionar rateio</Button>
-              </Space>
-            </div>
-          </Space>
-        </EntityFormShell>
+            )}
+          />
+        </div>
       </form>
-
-      {id && detailStatus === 'PENDENTE' ? (
-        <Card>
-          <Space orientation="vertical" size={16} style={{ width: '100%' }}>
-            <div>
-              <Typography.Title level={5}>Acoes de negocio</Typography.Title>
-              <Typography.Paragraph>Liquidacao e cancelamento do lancamento atual.</Typography.Paragraph>
-            </div>
-            <Space wrap>
-              <Form.Item label="Data liquidacao">
-                <Input
-                  type="date"
-                  value={actionValues.dataLiquidacao}
-                  onChange={(event) => setActionValues((current) => ({ ...current, dataLiquidacao: event.target.value }))}
-                />
-              </Form.Item>
-              <Form.Item label="Conta bancaria">
-                <Select
-                  value={actionValues.contaBancariaId || undefined}
-                  options={contaBancariaOptions}
-                  onChange={(value) => setActionValues((current) => ({ ...current, contaBancariaId: value ?? '' }))}
-                  style={{ width: 240 }}
-                />
-              </Form.Item>
-              <Button type="primary" loading={actionLoading} onClick={() => void liquidar()}>
-                Liquidar
-              </Button>
-              <Button danger loading={actionLoading} onClick={() => void cancelar()}>
-                Cancelar
-              </Button>
-            </Space>
-          </Space>
-        </Card>
-      ) : null}
-
-      {exibeAcoesRecorrencia ? (
-        <Card>
-          <Space orientation="vertical" size={16} style={{ width: '100%' }}>
-            <div>
-              <Typography.Title level={5}>Acoes de recorrencia</Typography.Title>
-              <Typography.Paragraph>Gere previsoes, pause a serie, encerre a recorrencia ou propague alteracoes para as proximas ocorrencias.</Typography.Paragraph>
-            </div>
-            <Space wrap>
-              <Controller
-                control={control}
-                name="recorrenciaGerarAteData"
-                render={({ field }) => (
-                  <Form.Item label="Gerar ate">
-                    <Input type="date" {...field} value={field.value ?? ''} />
-                  </Form.Item>
-                )}
-              />
-              <Button loading={actionLoading} onClick={() => void gerarOcorrencias()}>
-                Gerar ocorrencias
-              </Button>
-              <Button loading={actionLoading} onClick={() => void alterarFuturas()}>
-                Salvar nas futuras
-              </Button>
-              <Button loading={actionLoading} onClick={() => void pausarRecorrencia()}>
-                Pausar recorrencia
-              </Button>
-              <Button danger loading={actionLoading} onClick={() => void encerrarRecorrencia()}>
-                Encerrar recorrencia
-              </Button>
-            </Space>
-          </Space>
-        </Card>
-      ) : null}
-
-      <Button>
-        <Link to={config.routeBase}>Voltar para {config.title.toLowerCase()}</Link>
-      </Button>
-    </Space>
+    </div>
   );
 }

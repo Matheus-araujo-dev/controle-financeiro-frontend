@@ -6,12 +6,18 @@ import { useAuthStore } from '../store/auth-store';
 describe('ProtectedRoute', () => {
   afterEach(() => {
     useAuthStore.setState({
-      mode: 'disabled',
+      mode: 'development',
       currentUser: null
     });
+    window.localStorage.clear();
   });
 
   it('renders children when auth is disabled', () => {
+    useAuthStore.setState({
+      mode: 'disabled',
+      currentUser: null
+    });
+
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <Routes>
@@ -19,7 +25,7 @@ describe('ProtectedRoute', () => {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <div>Conteudo protegido</div>
+                <div>Conteúdo protegido</div>
               </ProtectedRoute>
             }
           />
@@ -27,10 +33,10 @@ describe('ProtectedRoute', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Conteudo protegido')).toBeInTheDocument();
+    expect(screen.getByText('Conteúdo protegido')).toBeInTheDocument();
   });
 
-  it('redirects to access denied when auth is enabled without a session', async () => {
+  it('redirects to login when auth is enabled without a session', async () => {
     useAuthStore.setState({
       mode: 'development',
       currentUser: null
@@ -43,15 +49,15 @@ describe('ProtectedRoute', () => {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <div>Conteudo protegido</div>
+                <div>Conteúdo protegido</div>
               </ProtectedRoute>
             }
           />
-          <Route path="/acesso-negado" element={<div>Acesso negado</div>} />
+          <Route path="/login" element={<div>Tela de login</div>} />
         </Routes>
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Acesso negado')).toBeInTheDocument();
+    expect(await screen.findByText('Tela de login')).toBeInTheDocument();
   });
 });

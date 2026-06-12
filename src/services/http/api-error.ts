@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { ApiErrorResponse } from '../../types/api';
 
-const FALLBACK_MESSAGE = 'Nao foi possivel concluir a solicitacao.';
+const FALLBACK_MESSAGE = 'Não foi possível concluir a solicitação.';
 
 export function getApiErrorMessage(error: unknown): string {
   if (!axios.isAxiosError<ApiErrorResponse>(error)) {

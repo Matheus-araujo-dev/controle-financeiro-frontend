@@ -1,6 +1,7 @@
 import type { PagedResult } from './api';
 
 export type PessoaTipo = 'Fisica' | 'Juridica';
+export type PessoaChavePixTipo = 'CpfCnpj' | 'Email' | 'Telefone' | 'Aleatoria';
 export type FormaPagamentoTipo =
   | 'Dinheiro'
   | 'Pix'
@@ -27,8 +28,14 @@ export type PessoaResumo = {
   ativo: boolean;
 };
 
+export type PessoaChavePix = {
+  tipo: PessoaChavePixTipo;
+  chave: string;
+};
+
 export type PessoaDetalhe = PessoaResumo & {
   observacao: string | null;
+  chavesPix: PessoaChavePix[];
   createdAtUtc: string;
   updatedAtUtc: string;
 };
@@ -40,6 +47,7 @@ export type PessoaPayload = {
   email: string;
   telefone: string;
   observacao: string;
+  chavesPix: PessoaChavePix[];
 };
 
 export type PessoaFilters = ListQueryBase & {
@@ -79,6 +87,10 @@ export type ContaBancariaResumo = {
   tipoConta: string | null;
   saldoInicial: number;
   dataSaldoInicial: string;
+  saldoAtual: number;
+  limiteCartoesCompartilhado: number | null;
+  limiteCartoesComprometido: number;
+  limiteCartoesDisponivel: number | null;
   ativo: boolean;
 };
 
@@ -87,7 +99,17 @@ export type ContaBancariaDetalhe = ContaBancariaResumo & {
   updatedAtUtc: string;
 };
 
-export type ContaBancariaPayload = Omit<ContaBancariaResumo, 'id'>;
+export type ContaBancariaPayload = {
+  nome: string;
+  banco: string;
+  agencia: string;
+  numeroConta: string;
+  tipoConta: string;
+  saldoInicial: number;
+  dataSaldoInicial: string;
+  limiteCartoesCompartilhado: number | null;
+  ativo: boolean;
+};
 
 export type ContaBancariaFilters = ListQueryBase & {
   banco?: string;
@@ -103,6 +125,10 @@ export type CartaoResumo = {
   diaVencimentoFatura: number;
   contaBancariaPagamentoPadraoId: string | null;
   limiteCredito: number | null;
+  usaLimiteCompartilhado: boolean;
+  limiteEfetivo: number | null;
+  limiteComprometido: number;
+  limiteDisponivel: number | null;
   ativo: boolean;
 };
 
@@ -111,7 +137,16 @@ export type CartaoDetalhe = CartaoResumo & {
   updatedAtUtc: string;
 };
 
-export type CartaoPayload = Omit<CartaoResumo, 'id'>;
+export type CartaoPayload = {
+  nome: string;
+  bandeira: string;
+  numeroFinal: string;
+  diaFechamentoFatura: number;
+  diaVencimentoFatura: number;
+  contaBancariaPagamentoPadraoId: string | null;
+  limiteCredito: number | null;
+  ativo: boolean;
+};
 
 export type CartaoFilters = ListQueryBase & {
   bandeira?: string;
@@ -125,7 +160,11 @@ export type ContaGerencialResumo = {
   tipo: ContaGerencialTipo;
   contaPaiId: string | null;
   contaPaiDescricao: string | null;
+  responsavelPadraoId: string | null;
+  responsavelPadraoNome: string | null;
   ativo: boolean;
+  aceitaLancamentos: boolean;
+  ehPadraoRecebimentoFaturaCartao: boolean;
 };
 
 export type ContaGerencialDetalhe = ContaGerencialResumo & {
@@ -133,12 +172,18 @@ export type ContaGerencialDetalhe = ContaGerencialResumo & {
   updatedAtUtc: string;
 };
 
-export type ContaGerencialPayload = Omit<ContaGerencialResumo, 'id' | 'contaPaiDescricao'>;
+export type ContaGerencialPayload = Omit<
+  ContaGerencialResumo,
+  'id' | 'contaPaiDescricao' | 'responsavelPadraoNome' | 'aceitaLancamentos'
+>;
 
 export type ContaGerencialFilters = ListQueryBase & {
   tipo?: ContaGerencialTipo;
   contaPaiId?: string;
   ativo?: boolean;
+  aceitaLancamentos?: boolean;
+  sortBy?: string;
+  sortDirection?: 'Asc' | 'Desc';
 };
 
 export type PagedCadastro<T> = PagedResult<T>;

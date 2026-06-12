@@ -6,14 +6,14 @@ describe('applyServerValidationErrors', () => {
 
     applyServerValidationErrors(
       {
-        nome: ['Nome obrigatorio.', 'Nao deve aparecer.'],
-        email: ['Email invalido.']
+        nome: ['Nome obrigatório.', 'Não deve aparecer.'],
+        email: ['Email inválido.']
       },
       setFieldError
     );
 
-    expect(setFieldError).toHaveBeenNthCalledWith(1, 'nome', 'Nome obrigatorio.');
-    expect(setFieldError).toHaveBeenNthCalledWith(2, 'email', 'Email invalido.');
+    expect(setFieldError).toHaveBeenNthCalledWith(1, 'nome', 'Nome obrigatório.');
+    expect(setFieldError).toHaveBeenNthCalledWith(2, 'email', 'Email inválido.');
   });
 
   it('ignores fields without messages', () => {
@@ -34,11 +34,11 @@ describe('applyServerValidationErrors', () => {
 
     applyServerValidationErrors(
       {
-        Nome: ['Nome obrigatorio.']
+        Nome: ['Nome obrigatório.']
       },
       setFieldError
     );
 
-    expect(setFieldError).toHaveBeenCalledWith('nome', 'Nome obrigatorio.');
+    expect(setFieldError).toHaveBeenCalledWith('nome', 'Nome obrigatório.');
   });
 });

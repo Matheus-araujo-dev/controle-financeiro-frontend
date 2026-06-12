@@ -1,8 +1,9 @@
 import { useDeferredValue, useEffect, useState } from 'react';
-import { Button, Input, Select, Space, Typography } from 'antd';
+import { Input, Select, Space, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { Link } from 'react-router-dom';
+import { EyeOutlined } from '@ant-design/icons';
 import { AppDataTable } from '../../components/data/AppDataTable';
+import { IconActionButton } from '../../components/data/IconActionButton';
 import { importacoesWhatsappApi } from '../../services/http/importacoes-whatsapp-api';
 import type {
   ImportacaoWhatsappResumo,
@@ -12,7 +13,7 @@ import type {
 
 const defaultFilters: ImportacoesWhatsappFilters = {
   page: 1,
-  pageSize: 10,
+  pageSize: 20,
   search: '',
   statusCodigo: ''
 };
@@ -20,10 +21,10 @@ const defaultFilters: ImportacoesWhatsappFilters = {
 const statusOptions: Array<{ label: string; value: StatusImportacaoWhatsappCodigo }> = [
   { label: 'Recebido', value: 'RECEBIDO' },
   { label: 'Em processamento', value: 'EM_PROCESSAMENTO' },
-  { label: 'Pendente revisao', value: 'PENDENTE_REVISAO' },
+  { label: 'Pendente revisão', value: 'PENDENTE_REVISAO' },
   { label: 'Confirmado', value: 'CONFIRMADO' },
   { label: 'Rejeitado', value: 'REJEITADO' },
-  { label: 'Erro de extracao', value: 'ERRO_EXTRACAO' }
+  { label: 'Erro de extração', value: 'ERRO_EXTRACAO' }
 ];
 
 export function ImportacoesWhatsappPage() {
@@ -35,15 +36,19 @@ export function ImportacoesWhatsappPage() {
 
   const columns: TableColumnsType<ImportacaoWhatsappResumo> = [
     { title: 'Remetente', dataIndex: 'remetente', key: 'remetente' },
-    { title: 'Origem', dataIndex: 'tipoOrigemNome', key: 'tipoOrigemNome' },
     {
-      title: 'Conteudo',
+      title: 'Origem',
+      dataIndex: 'tipoOrigemNome',
+      key: 'tipoOrigemNome'
+    },
+    {
+      title: 'Conteúdo',
       key: 'conteudo',
-      render: (_value, record) => record.textoBruto ?? record.nomeArquivo ?? 'Sem conteudo textual'
+      render: (_value, record) => record.textoBruto ?? record.nomeArquivo ?? 'Sem conteúdo textual'
     },
     { title: 'Status', dataIndex: 'statusNome', key: 'statusNome' },
     {
-      title: 'Confianca',
+      title: 'Confiança',
       key: 'confiancaExtracao',
       render: (_value, record) => (record.confiancaExtracao === null ? '-' : `${Math.round(record.confiancaExtracao * 100)}%`)
     },
@@ -53,12 +58,11 @@ export function ImportacoesWhatsappPage() {
       render: (_value, record) => `${record.quantidadePendentes}/${record.quantidadeItens} pendentes`
     },
     {
-      title: 'Acoes',
+      title: 'Ações',
       key: 'acoes',
+      width: 88,
       render: (_value, record) => (
-        <Button size="small">
-          <Link to={`/importacoes-whatsapp/${record.id}`}>Revisar</Link>
-        </Button>
+        <IconActionButton label="Revisar" icon={<EyeOutlined />} href={`/importacoes-whatsapp/${record.id}`} />
       )
     }
   ];
@@ -70,7 +74,7 @@ export function ImportacoesWhatsappPage() {
     try {
       setData(await importacoesWhatsappApi.listar(deferredFilters));
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar importacoes.');
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar importações.');
     } finally {
       setLoading(false);
     }
@@ -83,9 +87,9 @@ export function ImportacoesWhatsappPage() {
   return (
     <Space orientation="vertical" size={24} style={{ width: '100%' }}>
       <div>
-        <Typography.Title level={4}>Importacoes WhatsApp</Typography.Title>
+        <Typography.Title level={4}>Importações WhatsApp</Typography.Title>
         <Typography.Paragraph>
-          Revise mensagens e arquivos recebidos pelo WhatsApp antes de confirmar ou rejeitar as sugestoes financeiras geradas.
+          Revise mensagens e arquivos recebidos pelo WhatsApp antes de confirmar ou rejeitar as sugestões financeiras geradas.
         </Typography.Paragraph>
       </div>
 
@@ -123,21 +127,24 @@ export function ImportacoesWhatsappPage() {
         rowKey="id"
         loading={loading}
         errorMessage={errorMessage}
-        emptyMessage="Nenhuma importacao encontrada."
+        emptyMessage="Nenhuma importação encontrada."
         onRetry={loadData}
         dataSource={data?.items ?? []}
         columns={columns}
+        onTableChange={(pagination, _f, sorter) => {
+          const s = Array.isArray(sorter) ? sorter[0] : sorter;
+          setFilters((current) => ({
+            ...current,
+            page: pagination.current ?? current.page,
+            pageSize: pagination.pageSize ?? current.pageSize,
+            sortBy: s?.field ?? undefined,
+            sortDirection: s?.order === 'ascend' ? 'Asc' : s?.order === 'descend' ? 'Desc' : undefined
+          }));
+        }}
         pagination={{
           current: data?.page ?? filters.page,
           pageSize: data?.pageSize ?? filters.pageSize,
-          total: data?.totalItems ?? 0,
-          showSizeChanger: true,
-          onChange: (page, pageSize) =>
-            setFilters((current) => ({
-              ...current,
-              page,
-              pageSize
-            }))
+          total: data?.totalItems ?? 0
         }}
       />
     </Space>

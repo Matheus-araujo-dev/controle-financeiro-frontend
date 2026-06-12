@@ -1,7 +1,9 @@
 import { useDeferredValue, useEffect, useState } from 'react';
 import { Button, Input, Select, Space, Tag, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
+import { LinkOutlined } from '@ant-design/icons';
 import { AppDataTable } from '../../components/data/AppDataTable';
+import { IconActionButton } from '../../components/data/IconActionButton';
 import { conciliacaoApi } from '../../services/http/conciliacao-api';
 import type {
   ConciliacaoFilters,
@@ -9,10 +11,11 @@ import type {
   ConciliacaoMovimentacaoCandidata,
   StatusConciliacaoCodigo
 } from '../../types/conciliacao';
+import { formatCurrencyBRL } from '../../shared/currency';
 
 const defaultFilters: ConciliacaoFilters = {
   page: 1,
-  pageSize: 10,
+  pageSize: 20,
   search: '',
   statusConciliacaoCodigo: ''
 };
@@ -40,7 +43,7 @@ export function ConciliacaoPage() {
       key: 'extrato',
       render: (_value, record) => (
         <Space orientation="vertical" size={4}>
-          <Typography.Text strong>{record.descricaoExtrato ?? 'Sem descricao identificada'}</Typography.Text>
+          <Typography.Text strong>{record.descricaoExtrato ?? 'Sem descrição identificada'}</Typography.Text>
           <Typography.Text type="secondary">
             {record.dataSugerida ?? 'Sem data'} | {formatarMoeda(record.valorSugerido)}
           </Typography.Text>
@@ -59,7 +62,7 @@ export function ConciliacaoPage() {
       key: 'candidatas',
       render: (_value, record) =>
         record.candidatas.length === 0 ? (
-          <Typography.Text type="secondary">Sem sugestoes pendentes.</Typography.Text>
+          <Typography.Text type="secondary">Sem sugestões pendentes.</Typography.Text>
         ) : (
           <Space orientation="vertical" size={4}>
             {record.candidatas.map((candidata) => (
@@ -71,28 +74,27 @@ export function ConciliacaoPage() {
         )
     },
     {
-      title: 'Vinculo',
+      title: 'Vínculo',
       key: 'vinculo',
       render: (_value, record) => record.movimentacaoConciliadaDescricao ?? '-'
     },
     {
-      title: 'Acoes',
+      title: 'Ações',
       key: 'acoes',
       render: (_value, record) =>
         record.statusConciliacaoCodigo === 'CONCILIADO' || record.candidatas.length === 0 ? (
-          <Typography.Text type="secondary">Sem acao pendente</Typography.Text>
+          <Typography.Text type="secondary">Sem ação pendente</Typography.Text>
         ) : (
           <Space orientation="vertical" size={8}>
             {record.candidatas.slice(0, 3).map((candidata) => (
-              <Button
+              <IconActionButton
                 key={candidata.movimentacaoFinanceiraId}
-                size="small"
+                label={`Conciliar ${candidata.observacao ?? candidata.tipo}`}
+                icon={<LinkOutlined />}
                 type="primary"
                 loading={loadingActionId === record.itemImportadoWhatsappId}
                 onClick={() => void handleConfirm(record, candidata)}
-              >
-                {`Conciliar ${candidata.observacao ?? candidata.tipo}`}
-              </Button>
+              />
             ))}
           </Space>
         )
@@ -106,7 +108,7 @@ export function ConciliacaoPage() {
     try {
       setData(await conciliacaoApi.listar(deferredFilters));
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar conciliacao.');
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar conciliação.');
     } finally {
       setLoading(false);
     }
@@ -120,7 +122,7 @@ export function ConciliacaoPage() {
     try {
       const conciliado = await conciliacaoApi.confirmarVinculo(item.itemImportadoWhatsappId, {
         movimentacaoFinanceiraId: candidata.movimentacaoFinanceiraId,
-        observacao: 'Conciliacao manual assistida via tela'
+        observacao: 'Conciliação manual assistida via tela'
       });
 
       setData((current) =>
@@ -133,9 +135,9 @@ export function ConciliacaoPage() {
             }
           : current
       );
-      setLastActionMessage(`Ultimo vinculo confirmado para o item ${conciliado.itemImportadoWhatsappId}.`);
+      setLastActionMessage(`Último vínculo confirmado para o item ${conciliado.itemImportadoWhatsappId}.`);
     } catch (error) {
-      setActionErrorMessage(error instanceof Error ? error.message : 'Falha ao confirmar vinculacao.');
+      setActionErrorMessage(error instanceof Error ? error.message : 'Falha ao confirmar vinculação.');
     } finally {
       setLoadingActionId(undefined);
     }
@@ -148,15 +150,15 @@ export function ConciliacaoPage() {
   return (
     <Space orientation="vertical" size={24} style={{ width: '100%' }}>
       <div>
-        <Typography.Title level={4}>Conciliacao</Typography.Title>
+        <Typography.Title level={4}>Conciliação</Typography.Title>
         <Typography.Paragraph>
-          Associe manualmente itens de extrato importados com movimentacoes bancarias sugeridas pelo sistema.
+          Associe manualmente itens de extrato importados com movimentações bancárias sugeridas pelo sistema.
         </Typography.Paragraph>
       </div>
 
       <Space wrap>
         <Input
-          placeholder="Buscar por remetente ou descricao do extrato"
+          placeholder="Buscar por remetente ou descrição do extrato"
           value={filters.search ?? ''}
           onChange={(event) =>
             setFilters((current) => ({
@@ -188,21 +190,25 @@ export function ConciliacaoPage() {
         rowKey="itemImportadoWhatsappId"
         loading={loading}
         errorMessage={errorMessage}
-        emptyMessage="Nenhum item de extrato pronto para conciliacao."
+        emptyMessage="Nenhum item de extrato pronto para conciliação."
         onRetry={loadData}
         dataSource={data?.items ?? []}
         columns={columns}
+        onTableChange={(pagination, _f, sorter) => {
+          const s = Array.isArray(sorter) ? sorter[0] : sorter;
+          setFilters((current) => ({
+            ...current,
+            page: pagination.current ?? current.page,
+            pageSize: pagination.pageSize ?? current.pageSize,
+            sortBy: s?.field ?? undefined,
+            sortDirection: s?.order === 'ascend' ? 'Asc' : (s?.order === 'descend' ? 'Desc' : undefined)
+          }));
+        }}
         pagination={{
           current: data?.page ?? filters.page,
           pageSize: data?.pageSize ?? filters.pageSize,
           total: data?.totalItems ?? 0,
-          showSizeChanger: true,
-          onChange: (page, pageSize) =>
-            setFilters((current) => ({
-              ...current,
-              page,
-              pageSize
-            }))
+          showSizeChanger: true
         }}
       />
     </Space>
@@ -214,10 +220,7 @@ function formatarMoeda(value: number | null) {
     return 'Sem valor';
   }
 
-  return Number(value).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  });
+  return formatCurrencyBRL(Number(value));
 }
 
 function formatarCandidata(candidata: ConciliacaoMovimentacaoCandidata) {

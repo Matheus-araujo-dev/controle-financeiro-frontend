@@ -19,12 +19,20 @@ describe('financeiroApi', () => {
     vi.mocked(apiClient.post).mockResolvedValue({ data: { id: '1' } } as never);
     vi.mocked(apiClient.put).mockResolvedValue({ data: { id: '1' } } as never);
 
-    await financeiroApi.contasPagar.listar({ page: 1, pageSize: 10, search: '' });
+    await financeiroApi.contasPagar.listar({
+      page: 1,
+      pageSize: 10,
+      search: '',
+      statusCodigo: ['PENDENTE', 'VENCIDA'],
+      dataInicial: '2026-04-01',
+      dataFinal: '2026-04-30'
+    });
     await financeiroApi.contasPagar.obterPorId('1');
     await financeiroApi.contasPagar.criar({
+      origemCompraPlanejadaId: null,
       numeroDocumento: '',
       dataEmissao: '2026-04-04',
-      responsavelCompraId: null,
+      responsavelCompraId: 'resp-1',
       recebedorId: 'p1',
       dataVencimento: '2026-04-20',
       formaPagamentoId: 'f1',
@@ -42,9 +50,10 @@ describe('financeiroApi', () => {
       recorrencia: null
     });
     await financeiroApi.contasPagar.atualizar('1', {
+      origemCompraPlanejadaId: null,
       numeroDocumento: '',
       dataEmissao: '2026-04-04',
-      responsavelCompraId: null,
+      responsavelCompraId: 'resp-1',
       recebedorId: 'p1',
       dataVencimento: '2026-04-20',
       formaPagamentoId: 'f1',
@@ -62,9 +71,10 @@ describe('financeiroApi', () => {
       recorrencia: null
     });
     await financeiroApi.contasPagar.alterarFuturas('1', {
+      origemCompraPlanejadaId: null,
       numeroDocumento: '',
       dataEmissao: '2026-04-04',
-      responsavelCompraId: null,
+      responsavelCompraId: 'resp-1',
       recebedorId: 'p1',
       dataVencimento: '2026-04-20',
       formaPagamentoId: 'f1',
@@ -81,7 +91,8 @@ describe('financeiroApi', () => {
       rateios: [{ contaGerencialId: 'cg1', valor: 100 }],
       recorrencia: {
         tipoPeriodicidade: 'Mensal',
-        diaGeracaoMensal: 20,
+        tipoDia: 'DiaFixo',
+        diaOrdemMensal: 20,
         dataInicio: '2026-04-20',
         dataFim: null,
         permiteEdicaoOcorrenciaIndividual: true,
@@ -94,12 +105,19 @@ describe('financeiroApi', () => {
     await financeiroApi.contasPagar.liquidar('1', { dataLiquidacao: '2026-04-05', contaBancariaId: 'cb1' });
     await financeiroApi.contasPagar.cancelar('1');
 
-    await financeiroApi.contasReceber.listar({ page: 1, pageSize: 10, search: '' });
+    await financeiroApi.contasReceber.listar({
+      page: 1,
+      pageSize: 10,
+      search: '',
+      statusCodigo: ['PENDENTE', 'VENCIDA'],
+      dataInicial: '2026-04-01',
+      dataFinal: '2026-04-30'
+    });
     await financeiroApi.contasReceber.obterPorId('1');
     await financeiroApi.contasReceber.criar({
       numeroDocumento: '',
       dataEmissao: '2026-04-04',
-      responsavelId: null,
+      responsavelId: 'resp-2',
       pagadorId: 'p2',
       dataVencimento: '2026-04-25',
       formaPagamentoId: 'f1',
@@ -119,7 +137,7 @@ describe('financeiroApi', () => {
     await financeiroApi.contasReceber.atualizar('1', {
       numeroDocumento: '',
       dataEmissao: '2026-04-04',
-      responsavelId: null,
+      responsavelId: 'resp-2',
       pagadorId: 'p2',
       dataVencimento: '2026-04-25',
       formaPagamentoId: 'f1',
@@ -139,7 +157,7 @@ describe('financeiroApi', () => {
     await financeiroApi.contasReceber.alterarFuturas('1', {
       numeroDocumento: '',
       dataEmissao: '2026-04-04',
-      responsavelId: null,
+      responsavelId: 'resp-2',
       pagadorId: 'p2',
       dataVencimento: '2026-04-25',
       formaPagamentoId: 'f1',
@@ -156,7 +174,8 @@ describe('financeiroApi', () => {
       rateios: [{ contaGerencialId: 'cg2', valor: 200 }],
       recorrencia: {
         tipoPeriodicidade: 'Mensal',
-        diaGeracaoMensal: 25,
+        tipoDia: 'DiaFixo',
+        diaOrdemMensal: 25,
         dataInicio: '2026-04-25',
         dataFim: null,
         permiteEdicaoOcorrenciaIndividual: true,
@@ -169,7 +188,13 @@ describe('financeiroApi', () => {
     await financeiroApi.contasReceber.liquidar('1', { dataLiquidacao: '2026-04-08', contaBancariaId: 'cb1' });
     await financeiroApi.contasReceber.cancelar('1');
 
-    await financeiroApi.movimentacoes.listar({ page: 1, pageSize: 20, search: 'receita' });
+    await financeiroApi.movimentacoes.listar({
+      page: 1,
+      pageSize: 20,
+      search: 'receita',
+      contaBancariaIds: ['cb1', 'cb2'],
+      responsavelIds: ['rp1', 'rp2']
+    });
     await financeiroApi.movimentacoes.obterPorId('m1');
 
     await financeiroApi.faturas.listar({ page: 1, pageSize: 10, search: 'abril', competencia: '2026-04' });
@@ -179,8 +204,18 @@ describe('financeiroApi', () => {
       contaBancariaPagamentoId: 'cb1',
       observacao: 'Pagamento integral'
     });
+    await financeiroApi.faturas.estornar('f1');
 
-    expect(apiClient.get).toHaveBeenCalledWith('/contas-pagar', { params: { page: 1, pageSize: 10, search: '' } });
+    expect(apiClient.get).toHaveBeenCalledWith('/contas-pagar', {
+      params: {
+        page: 1,
+        pageSize: 10,
+        search: '',
+        statusCodigo: 'PENDENTE,VENCIDA',
+        dataVencimentoInicial: '2026-04-01',
+        dataVencimentoFinal: '2026-04-30'
+      }
+    });
     expect(apiClient.get).toHaveBeenCalledWith('/contas-pagar/1');
     expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar', expect.any(Object));
     expect(apiClient.put).toHaveBeenCalledWith('/contas-pagar/1', expect.any(Object));
@@ -191,7 +226,16 @@ describe('financeiroApi', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/liquidar', { dataLiquidacao: '2026-04-05', contaBancariaId: 'cb1' });
     expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/cancelar', undefined);
 
-    expect(apiClient.get).toHaveBeenCalledWith('/contas-receber', { params: { page: 1, pageSize: 10, search: '' } });
+    expect(apiClient.get).toHaveBeenCalledWith('/contas-receber', {
+      params: {
+        page: 1,
+        pageSize: 10,
+        search: '',
+        statusCodigo: 'PENDENTE,VENCIDA',
+        dataVencimentoInicial: '2026-04-01',
+        dataVencimentoFinal: '2026-04-30'
+      }
+    });
     expect(apiClient.get).toHaveBeenCalledWith('/contas-receber/1');
     expect(apiClient.post).toHaveBeenCalledWith('/contas-receber', expect.any(Object));
     expect(apiClient.put).toHaveBeenCalledWith('/contas-receber/1', expect.any(Object));
@@ -202,7 +246,15 @@ describe('financeiroApi', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/contas-receber/1/liquidar', { dataLiquidacao: '2026-04-08', contaBancariaId: 'cb1' });
     expect(apiClient.post).toHaveBeenCalledWith('/contas-receber/1/cancelar', undefined);
 
-    expect(apiClient.get).toHaveBeenCalledWith('/movimentacoes', { params: { page: 1, pageSize: 20, search: 'receita' } });
+    expect(apiClient.get).toHaveBeenCalledWith('/movimentacoes', {
+      params: {
+        page: 1,
+        pageSize: 20,
+        search: 'receita',
+        contaBancariaIds: 'cb1,cb2',
+        responsavelIds: 'rp1,rp2'
+      }
+    });
     expect(apiClient.get).toHaveBeenCalledWith('/movimentacoes/m1');
 
     expect(apiClient.get).toHaveBeenCalledWith('/faturas', { params: { page: 1, pageSize: 10, search: 'abril', competencia: '2026-04' } });
@@ -212,5 +264,6 @@ describe('financeiroApi', () => {
       contaBancariaPagamentoId: 'cb1',
       observacao: 'Pagamento integral'
     });
+    expect(apiClient.post).toHaveBeenCalledWith('/faturas/f1/estornar', undefined);
   });
 });

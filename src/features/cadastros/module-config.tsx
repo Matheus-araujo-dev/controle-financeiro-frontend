@@ -1,7 +1,17 @@
 import type { ReactNode } from 'react';
 import { Button, Space, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
-import type { ZodTypeAny } from 'zod';
+import type { FieldValues } from 'react-hook-form';
+import type { ZodType, ZodTypeAny } from 'zod';
+import {
+  CheckCircleOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FileAddOutlined,
+  PauseCircleOutlined,
+  PlayCircleOutlined
+} from '@ant-design/icons';
+import type { SummaryCardItem } from '../../components/data/ListSummaryCards';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import type {
   CartaoDetalhe,
@@ -33,16 +43,23 @@ import {
   formaPagamentoSchema,
   pessoaSchema
 } from './schemas';
+import { applyCpfCnpjMask, type InputMaskKind } from './input-masks';
+import { formatCurrencyBRL } from '../../shared/currency';
+import { mapContaGerencialSelectOptionsWithData } from '../../shared/conta-gerencial';
 
 export type SelectOption = {
   label: string;
   value: string | boolean;
+  data?: Record<string, unknown>;
 };
 
 export type FormFieldConfig<TPayload> = {
   name: keyof TPayload & string;
   label: string;
   kind: 'text' | 'textarea' | 'select' | 'switch' | 'number' | 'date';
+  numberFormat?: 'currency';
+  mask?: InputMaskKind;
+  nullable?: boolean;
   options?: SelectOption[];
   loadOptions?: () => Promise<SelectOption[]>;
   placeholder?: string;
@@ -62,12 +79,20 @@ export type FilterFieldConfig<TFilters> = {
 export type RowAction<TSummary> = {
   key: string;
   label: string | ((record: TSummary) => string);
+  icon?: ReactNode | ((record: TSummary) => ReactNode);
   href?: (record: TSummary) => string;
   onClick?: (record: TSummary) => Promise<void>;
   danger?: boolean;
+  isVisible?: (record: TSummary) => boolean;
+  disabled?: (record: TSummary) => boolean;
 };
 
-export type MasterDataModuleConfig<TSummary, TDetail, TPayload, TFilters> = {
+export type MasterDataModuleConfig<
+  TSummary extends { id: string } = { id: string },
+  TDetail = unknown,
+  TPayload = Record<string, unknown>,
+  TFilters = Record<string, unknown>
+> = {
   key: string;
   title: string;
   singularTitle: string;
@@ -78,7 +103,7 @@ export type MasterDataModuleConfig<TSummary, TDetail, TPayload, TFilters> = {
   columns: TableColumnsType<TSummary>;
   filters: FilterFieldConfig<TFilters>[];
   fields: FormFieldConfig<TPayload>[];
-  schema: ZodTypeAny;
+  schema: ZodType<TPayload>;
   defaultFilters: TFilters;
   defaultValues: TPayload;
   list: (filters: TFilters) => Promise<PagedCadastro<TSummary>>;
@@ -87,6 +112,8 @@ export type MasterDataModuleConfig<TSummary, TDetail, TPayload, TFilters> = {
   update: (id: string, payload: TPayload) => Promise<TDetail>;
   toFormValues: (detail: TDetail) => TPayload;
   rowActions?: RowAction<TSummary>[];
+  actionsColumnWidth?: number;
+  buildSummaryItems?: (summary: unknown) => SummaryCardItem[];
 };
 
 const statusOptions: SelectOption[] = [
@@ -96,17 +123,17 @@ const statusOptions: SelectOption[] = [
 ];
 
 const pessoaTipoOptions: SelectOption[] = [
-  { label: 'Fisica', value: 'Fisica' },
-  { label: 'Juridica', value: 'Juridica' }
+  { label: 'Física', value: 'Fisica' },
+  { label: 'Jurídica', value: 'Juridica' }
 ];
 
 const formaPagamentoTipoOptions: SelectOption[] = [
   { label: 'Dinheiro', value: 'Dinheiro' },
   { label: 'Pix', value: 'Pix' },
   { label: 'Boleto', value: 'Boleto' },
-  { label: 'Transferencia', value: 'Transferencia' },
-  { label: 'Debito', value: 'Debito' },
-  { label: 'Credito', value: 'Credito' },
+  { label: 'Transferência', value: 'Transferencia' },
+  { label: 'Débito', value: 'Debito' },
+  { label: 'Crédito', value: 'Credito' },
   { label: 'Outro', value: 'Outro' }
 ];
 
@@ -120,7 +147,11 @@ function renderStatusTag(ativo: boolean) {
 }
 
 function renderBooleanTag(value: boolean, trueLabel: string, falseLabel: string) {
-  return <Tag color={value ? 'processing' : 'default'}>{value ? trueLabel : falseLabel}</Tag>;
+  return <Tag color={value ? 'success' : 'default'}>{value ? trueLabel : falseLabel}</Tag>;
+}
+
+function renderCurrency(value: number | null | undefined) {
+  return formatCurrencyBRL(value);
 }
 
 async function loadContaBancariaOptions() {
@@ -136,15 +167,27 @@ async function loadContaBancariaOptions() {
   }));
 }
 
-async function loadContaGerencialOptions() {
+async function loadContaGerencialOptions(filters?: Partial<ContaGerencialFilters>) {
   const response = await cadastrosApi.contasGerenciais.listar({
     page: 1,
     pageSize: 100,
-    search: ''
+    search: '',
+    ...filters
+  });
+
+  return mapContaGerencialSelectOptionsWithData(response.items);
+}
+
+async function loadPessoaOptions() {
+  const response = await cadastrosApi.pessoas.listar({
+    page: 1,
+    pageSize: 100,
+    search: '',
+    ativo: true
   });
 
   return response.items.map((item) => ({
-    label: item.codigo ? `${item.codigo} - ${item.descricao}` : item.descricao,
+    label: item.nome,
     value: item.id
   }));
 }
@@ -156,11 +199,11 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
   routeBase: '/pessoas',
   emptyMessage: 'Nenhuma pessoa cadastrada.',
   listDescription: 'Cadastros de pagadores, recebedores e contrapartes.',
-  formDescription: 'Use o cadastro para manter a base de pessoas consistente com o backend.',
+  formDescription: 'Use o cadastro para manter a base de pessoas consistente com o backend, incluindo uma ou mais chaves Pix.',
   columns: [
     { title: 'Nome', dataIndex: 'nome', key: 'nome' },
     { title: 'Tipo', dataIndex: 'tipoPessoa', key: 'tipoPessoa' },
-    { title: 'Documento', dataIndex: 'cpfCnpj', key: 'cpfCnpj', render: (value) => value ?? '-' },
+    { title: 'Documento', dataIndex: 'cpfCnpj', key: 'cpfCnpj', render: (value) => (value ? applyCpfCnpjMask(String(value)) : '-') },
     { title: 'Contato', dataIndex: 'email', key: 'email', render: (value) => value ?? '-' },
     { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
   ],
@@ -170,22 +213,23 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     { name: 'ativo', label: 'Status', kind: 'select', options: statusOptions }
   ],
   fields: [
-    { name: 'nome', label: 'Nome', kind: 'text', placeholder: 'Nome completo ou razao social' },
+    { name: 'nome', label: 'Nome', kind: 'text', placeholder: 'Nome completo ou razão social' },
     { name: 'tipoPessoa', label: 'Tipo', kind: 'select', options: pessoaTipoOptions },
-    { name: 'cpfCnpj', label: 'CPF/CNPJ', kind: 'text' },
+    { name: 'cpfCnpj', label: 'CPF/CNPJ', kind: 'text', mask: 'cpfCnpj' },
     { name: 'email', label: 'Email', kind: 'text' },
-    { name: 'telefone', label: 'Telefone', kind: 'text' },
-    { name: 'observacao', label: 'Observacao', kind: 'textarea' }
+    { name: 'telefone', label: 'Telefone', kind: 'text', mask: 'phone' },
+    { name: 'observacao', label: 'Observação', kind: 'textarea' }
   ],
   schema: pessoaSchema,
-  defaultFilters: { page: 1, pageSize: 10, search: '' },
+  defaultFilters: { page: 1, pageSize: 20, search: '' },
   defaultValues: {
     nome: '',
     tipoPessoa: 'Fisica',
     cpfCnpj: '',
     email: '',
     telefone: '',
-    observacao: ''
+    observacao: '',
+    chavesPix: []
   },
   list: cadastrosApi.pessoas.listar,
   detail: cadastrosApi.pessoas.obterPorId,
@@ -197,17 +241,20 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     cpfCnpj: detail.cpfCnpj ?? '',
     email: detail.email ?? '',
     telefone: detail.telefone ?? '',
-    observacao: detail.observacao ?? ''
+    observacao: detail.observacao ?? '',
+    chavesPix: detail.chavesPix ?? []
   }),
   rowActions: [
     {
       key: 'editar',
       label: 'Editar',
+      icon: <EditOutlined />,
       href: (record) => `/pessoas/${record.id}`
     },
     {
       key: 'toggle-status',
       label: (record) => (record.ativo ? 'Inativar' : 'Ativar'),
+      icon: (record) => (record.ativo ? <PauseCircleOutlined /> : <PlayCircleOutlined />),
       onClick: async (record) => {
         if (record.ativo) {
           await cadastrosApi.pessoas.inativar(record.id);
@@ -232,16 +279,16 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
   routeBase: '/formas-pagamento',
   emptyMessage: 'Nenhuma forma de pagamento cadastrada.',
   listDescription: 'Cadastros de meios de pagamento para uso operacional.',
-  formDescription: 'Configure cartao, baixa automatica e disponibilidade da forma de pagamento.',
+  formDescription: 'Configure cartão, baixa automática e disponibilidade da forma de pagamento.',
   columns: [
     { title: 'Nome', dataIndex: 'nome', key: 'nome' },
     { title: 'Tipo', dataIndex: 'tipo', key: 'tipo' },
-    { title: 'Cartao', dataIndex: 'ehCartao', key: 'ehCartao', render: (_, record) => renderBooleanTag(record.ehCartao, 'Sim', 'Nao') },
+    { title: 'Cartão', dataIndex: 'ehCartao', key: 'ehCartao', render: (_, record) => renderBooleanTag(record.ehCartao, 'Sim', 'Não') },
     {
-      title: 'Baixa automatica',
+      title: 'Baixa automática',
       dataIndex: 'baixarAutomaticamente',
       key: 'baixarAutomaticamente',
-      render: (_, record) => renderBooleanTag(record.baixarAutomaticamente, 'Sim', 'Nao')
+      render: (_, record) => renderBooleanTag(record.baixarAutomaticamente, 'Sim', 'Não')
     },
     { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
   ],
@@ -253,12 +300,12 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
   fields: [
     { name: 'nome', label: 'Nome', kind: 'text' },
     { name: 'tipo', label: 'Tipo', kind: 'select', options: formaPagamentoTipoOptions },
-    { name: 'ehCartao', label: 'Eh cartao', kind: 'switch' },
+    { name: 'ehCartao', label: 'É cartão', kind: 'switch' },
     { name: 'baixarAutomaticamente', label: 'Baixar automaticamente', kind: 'switch' },
     { name: 'ativo', label: 'Ativo', kind: 'switch' }
   ],
   schema: formaPagamentoSchema,
-  defaultFilters: { page: 1, pageSize: 10, search: '' },
+  defaultFilters: { page: 1, pageSize: 20, search: '' },
   defaultValues: {
     nome: '',
     tipo: 'Pix',
@@ -281,6 +328,7 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
     {
       key: 'editar',
       label: 'Editar',
+      icon: <EditOutlined />,
       href: (record) => `/formas-pagamento/${record.id}`
     }
   ]
@@ -293,12 +341,12 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
   ContaBancariaFilters
 > = {
   key: 'contas-bancarias',
-  title: 'Contas bancarias',
-  singularTitle: 'Conta bancaria',
+  title: 'Contas bancárias',
+  singularTitle: 'Conta bancária',
   routeBase: '/contas-bancarias',
-  emptyMessage: 'Nenhuma conta bancaria cadastrada.',
-  listDescription: 'Base de contas para saldo inicial, baixa automatica e pagamentos.',
-  formDescription: 'Cadastre dados bancarios e saldo inicial para preparar o fluxo de caixa.',
+  emptyMessage: 'Nenhuma conta bancária cadastrada.',
+  listDescription: 'Base de contas para saldo inicial, baixa automática e pagamentos.',
+  formDescription: 'Cadastre dados bancários e saldo inicial para preparar o fluxo de caixa.',
   columns: [
     { title: 'Nome', dataIndex: 'nome', key: 'nome' },
     { title: 'Banco', dataIndex: 'banco', key: 'banco' },
@@ -307,27 +355,40 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
       title: 'Saldo inicial',
       dataIndex: 'saldoInicial',
       key: 'saldoInicial',
-      render: (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+      render: (value) => renderCurrency(value as number | null | undefined)
+    },
+    {
+      title: 'Limite compartilhado',
+      dataIndex: 'limiteCartoesCompartilhado',
+      key: 'limiteCartoesCompartilhado',
+      render: (value) => renderCurrency(value as number | null | undefined)
+    },
+    {
+      title: 'Disponível',
+      dataIndex: 'limiteCartoesDisponivel',
+      key: 'limiteCartoesDisponivel',
+      render: (value) => renderCurrency(value as number | null | undefined)
     },
     { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
-    { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome, banco ou numero da conta' },
+    { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome, banco ou número da conta' },
     { name: 'banco', label: 'Banco', kind: 'text' },
     { name: 'ativo', label: 'Status', kind: 'select', options: statusOptions }
   ],
   fields: [
     { name: 'nome', label: 'Nome', kind: 'text' },
     { name: 'banco', label: 'Banco', kind: 'text' },
-    { name: 'agencia', label: 'Agencia', kind: 'text' },
-    { name: 'numeroConta', label: 'Numero da conta', kind: 'text' },
+    { name: 'agencia', label: 'Agência', kind: 'text' },
+    { name: 'numeroConta', label: 'Número da conta', kind: 'text' },
     { name: 'tipoConta', label: 'Tipo da conta', kind: 'text' },
-    { name: 'saldoInicial', label: 'Saldo inicial', kind: 'number', step: 0.01 },
+    { name: 'saldoInicial', label: 'Saldo inicial', kind: 'number', step: 0.01, numberFormat: 'currency' },
     { name: 'dataSaldoInicial', label: 'Data do saldo inicial', kind: 'date' },
+    { name: 'limiteCartoesCompartilhado', label: 'Limite compartilhado dos cartões', kind: 'number', step: 0.01, nullable: true, numberFormat: 'currency' },
     { name: 'ativo', label: 'Ativo', kind: 'switch' }
   ],
   schema: contaBancariaSchema,
-  defaultFilters: { page: 1, pageSize: 10, search: '' },
+  defaultFilters: { page: 1, pageSize: 20, search: '' },
   defaultValues: {
     nome: '',
     banco: '',
@@ -336,6 +397,7 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
     tipoConta: '',
     saldoInicial: 0,
     dataSaldoInicial: '',
+    limiteCartoesCompartilhado: null,
     ativo: true
   },
   list: cadastrosApi.contasBancarias.listar,
@@ -350,12 +412,14 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
     tipoConta: detail.tipoConta ?? '',
     saldoInicial: detail.saldoInicial,
     dataSaldoInicial: detail.dataSaldoInicial,
+    limiteCartoesCompartilhado: detail.limiteCartoesCompartilhado,
     ativo: detail.ativo
   }),
   rowActions: [
     {
       key: 'editar',
       label: 'Editar',
+      icon: <EditOutlined />,
       href: (record) => `/contas-bancarias/${record.id}`
     }
   ]
@@ -363,18 +427,36 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
 
 export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDetalhe, CartaoPayload, CartaoFilters> = {
   key: 'cartoes',
-  title: 'Cartoes',
-  singularTitle: 'Cartao',
+  title: 'Cartões',
+  singularTitle: 'Cartão',
   routeBase: '/cartoes',
-  emptyMessage: 'Nenhum cartao cadastrado.',
-  listDescription: 'Cadastre cartoes com fechamento, vencimento e conta padrao de pagamento.',
-  formDescription: 'Use os dados do cartao para preparar a fase de compras e faturas.',
+  emptyMessage: 'Nenhum cartão cadastrado.',
+  listDescription: 'Cadastre cartões com fechamento, vencimento e conta padrão de pagamento.',
+  formDescription: 'Use os dados do cartão para preparar a fase de compras e faturas.',
   columns: [
     { title: 'Nome', dataIndex: 'nome', key: 'nome' },
     { title: 'Bandeira', dataIndex: 'bandeira', key: 'bandeira' },
     { title: 'Final', dataIndex: 'numeroFinal', key: 'numeroFinal' },
     { title: 'Fechamento', dataIndex: 'diaFechamentoFatura', key: 'diaFechamentoFatura' },
     { title: 'Vencimento', dataIndex: 'diaVencimentoFatura', key: 'diaVencimentoFatura' },
+    {
+      title: 'Origem limite',
+      dataIndex: 'usaLimiteCompartilhado',
+      key: 'usaLimiteCompartilhado',
+      render: (_, record) => renderBooleanTag(record.usaLimiteCompartilhado, 'Compartilhado', 'Individual')
+    },
+    {
+      title: 'Limite efetivo',
+      dataIndex: 'limiteEfetivo',
+      key: 'limiteEfetivo',
+      render: (value) => renderCurrency(value as number | null | undefined)
+    },
+    {
+      title: 'Disponível',
+      dataIndex: 'limiteDisponivel',
+      key: 'limiteDisponivel',
+      render: (value) => renderCurrency(value as number | null | undefined)
+    },
     { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
@@ -385,20 +467,20 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
   fields: [
     { name: 'nome', label: 'Nome', kind: 'text' },
     { name: 'bandeira', label: 'Bandeira', kind: 'text' },
-    { name: 'numeroFinal', label: 'Numero final', kind: 'text' },
+    { name: 'numeroFinal', label: 'Número final', kind: 'text' },
     { name: 'diaFechamentoFatura', label: 'Dia de fechamento', kind: 'number', min: 1, max: 31, step: 1 },
     { name: 'diaVencimentoFatura', label: 'Dia de vencimento', kind: 'number', min: 1, max: 31, step: 1 },
     {
       name: 'contaBancariaPagamentoPadraoId',
-      label: 'Conta bancaria padrao',
+      label: 'Conta bancária padrão',
       kind: 'select',
       loadOptions: loadContaBancariaOptions
     },
-    { name: 'limiteCredito', label: 'Limite de credito', kind: 'number', step: 0.01 },
+    { name: 'limiteCredito', label: 'Limite individual/fallback', kind: 'number', step: 0.01, nullable: true, numberFormat: 'currency' },
     { name: 'ativo', label: 'Ativo', kind: 'switch' }
   ],
   schema: cartaoSchema,
-  defaultFilters: { page: 1, pageSize: 10, search: '' },
+  defaultFilters: { page: 1, pageSize: 20, search: '' },
   defaultValues: {
     nome: '',
     bandeira: '',
@@ -435,6 +517,7 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
     {
       key: 'editar',
       label: 'Editar',
+      icon: <EditOutlined />,
       href: (record) => `/cartoes/${record.id}`
     }
   ]
@@ -451,34 +534,51 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
   singularTitle: 'Conta gerencial',
   routeBase: '/contas-gerenciais',
   emptyMessage: 'Nenhuma conta gerencial cadastrada.',
-  listDescription: 'Cadastre a estrutura de receita e despesa para rateio e visao gerencial.',
-  formDescription: 'A hierarquia pai e filho ja esta preparada para os modulos financeiros seguintes.',
+  listDescription: 'Cadastre a estrutura de receita e despesa para rateio e visão gerencial.',
+  formDescription: 'Contas pai são estruturais; somente contas sem filhos podem receber lançamentos e planejamentos.',
   columns: [
-    { title: 'Codigo', dataIndex: 'codigo', key: 'codigo', render: (value) => value ?? '-' },
-    { title: 'Descricao', dataIndex: 'descricao', key: 'descricao' },
+    { title: 'Código', dataIndex: 'codigo', key: 'codigo', render: (value) => value ?? '-' },
+    { title: 'Descrição', dataIndex: 'descricao', key: 'descricao' },
     { title: 'Tipo', dataIndex: 'tipo', key: 'tipo' },
     { title: 'Conta pai', dataIndex: 'contaPaiDescricao', key: 'contaPaiDescricao', render: (value) => value ?? '-' },
+    { title: 'Responsável padrão', dataIndex: 'responsavelPadraoNome', key: 'responsavelPadraoNome', render: (value) => value ?? '-' },
+    {
+      title: 'Uso',
+      dataIndex: 'aceitaLancamentos',
+      key: 'aceitaLancamentos',
+      render: (_, record) => renderBooleanTag(record.aceitaLancamentos, 'Lançável', 'Estrutural')
+    },
+    {
+      title: 'Receb. fatura',
+      dataIndex: 'ehPadraoRecebimentoFaturaCartao',
+      key: 'ehPadraoRecebimentoFaturaCartao',
+      render: (_, record) => renderBooleanTag(record.ehPadraoRecebimentoFaturaCartao, 'Padrão', 'Não')
+    },
     { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
-    { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Codigo ou descricao' },
+    { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Código ou descrição' },
     { name: 'tipo', label: 'Tipo', kind: 'select', options: [{ label: 'Todos', value: '' }, ...contaGerencialTipoOptions] },
     { name: 'ativo', label: 'Status', kind: 'select', options: statusOptions }
   ],
   fields: [
-    { name: 'codigo', label: 'Codigo', kind: 'text' },
-    { name: 'descricao', label: 'Descricao', kind: 'text' },
-    { name: 'tipo', label: 'Tipo', kind: 'select', options: contaGerencialTipoOptions },
     { name: 'contaPaiId', label: 'Conta pai', kind: 'select', loadOptions: loadContaGerencialOptions },
+    { name: 'codigo', label: 'Código', kind: 'text' },
+    { name: 'descricao', label: 'Descrição', kind: 'text' },
+    { name: 'tipo', label: 'Tipo', kind: 'select', options: contaGerencialTipoOptions },
+    { name: 'responsavelPadraoId', label: 'Responsável padrão', kind: 'select', loadOptions: loadPessoaOptions },
+    { name: 'ehPadraoRecebimentoFaturaCartao', label: 'Padrão para recebimento de fatura', kind: 'switch' },
     { name: 'ativo', label: 'Ativo', kind: 'switch' }
   ],
   schema: contaGerencialSchema,
-  defaultFilters: { page: 1, pageSize: 10, search: '' },
+  defaultFilters: { page: 1, pageSize: 20, search: '', sortBy: 'codigo', sortDirection: 'Asc' },
   defaultValues: {
     codigo: '',
     descricao: '',
     tipo: 'Despesa',
     contaPaiId: '',
+    responsavelPadraoId: '',
+    ehPadraoRecebimentoFaturaCartao: false,
     ativo: true
   },
   list: cadastrosApi.contasGerenciais.listar,
@@ -486,31 +586,103 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
   create: (payload) =>
     cadastrosApi.contasGerenciais.criar({
       ...payload,
-      contaPaiId: payload.contaPaiId || null
+      contaPaiId: payload.contaPaiId || null,
+      responsavelPadraoId: payload.responsavelPadraoId || null
     }),
   update: (id, payload) =>
     cadastrosApi.contasGerenciais.atualizar(id, {
       ...payload,
-      contaPaiId: payload.contaPaiId || null
+      contaPaiId: payload.contaPaiId || null,
+      responsavelPadraoId: payload.responsavelPadraoId || null
     }),
   toFormValues: (detail) => ({
     codigo: detail.codigo ?? '',
     descricao: detail.descricao,
     tipo: detail.tipo,
     contaPaiId: detail.contaPaiId ?? '',
+    responsavelPadraoId: detail.responsavelPadraoId ?? '',
+    ehPadraoRecebimentoFaturaCartao: detail.ehPadraoRecebimentoFaturaCartao,
     ativo: detail.ativo
   }),
   rowActions: [
     {
       key: 'editar',
       label: 'Editar',
+      icon: <EditOutlined />,
       href: (record) => `/contas-gerenciais/${record.id}`
     }
   ]
 };
 
-export const futureModulePlaceholderActions: ReactNode[] = [
+contasGerenciaisModuleConfig.listDescription = 'Cadastre a estrutura de receita e despesa para rateio e visão gerencial.';
+contasGerenciaisModuleConfig.formDescription =
+  'Contas pai são estruturais; somente contas sem filhos podem receber lançamentos e planejamentos.';
+
+const contaGerencialCodigoColumn = contasGerenciaisModuleConfig.columns.find((column) => column.key === 'codigo');
+if (contaGerencialCodigoColumn) {
+  contaGerencialCodigoColumn.title = 'Código';
+}
+
+const contaGerencialDescricaoColumn = contasGerenciaisModuleConfig.columns.find((column) => column.key === 'descricao');
+if (contaGerencialDescricaoColumn) {
+  contaGerencialDescricaoColumn.title = 'Descrição';
+}
+
+const contaGerencialResponsavelColumn = contasGerenciaisModuleConfig.columns.find(
+  (column) => column.key === 'responsavelPadraoNome'
+);
+if (contaGerencialResponsavelColumn) {
+  contaGerencialResponsavelColumn.title = 'Responsável padrão';
+}
+
+const contaGerencialUsoColumn = contasGerenciaisModuleConfig.columns.find((column) => column.key === 'aceitaLancamentos');
+if (contaGerencialUsoColumn) {
+  contaGerencialUsoColumn.render = (_, record) => renderBooleanTag(record.aceitaLancamentos, 'Lançável', 'Estrutural');
+}
+
+const contaGerencialRecebimentoFaturaColumn = contasGerenciaisModuleConfig.columns.find(
+  (column) => column.key === 'ehPadraoRecebimentoFaturaCartao'
+);
+if (contaGerencialRecebimentoFaturaColumn) {
+  contaGerencialRecebimentoFaturaColumn.render = (_, record) =>
+    renderBooleanTag(record.ehPadraoRecebimentoFaturaCartao, 'Padrão', 'Não');
+}
+
+const contaGerencialSearchFilter = contasGerenciaisModuleConfig.filters.find((filter) => filter.name === 'search');
+if (contaGerencialSearchFilter) {
+  contaGerencialSearchFilter.placeholder = 'Código ou descrição';
+}
+
+const contaGerencialCodigoField = contasGerenciaisModuleConfig.fields.find((field) => field.name === 'codigo');
+if (contaGerencialCodigoField) {
+  contaGerencialCodigoField.label = 'Código';
+}
+
+const contaGerencialDescricaoField = contasGerenciaisModuleConfig.fields.find((field) => field.name === 'descricao');
+if (contaGerencialDescricaoField) {
+  contaGerencialDescricaoField.label = 'Descrição';
+}
+
+const contaGerencialResponsavelField = contasGerenciaisModuleConfig.fields.find(
+  (field) => field.name === 'responsavelPadraoId'
+);
+if (contaGerencialResponsavelField) {
+  contaGerencialResponsavelField.label = 'Responsável padrão';
+}
+
+const contaGerencialPadraoFaturaField = contasGerenciaisModuleConfig.fields.find(
+  (field) => field.name === 'ehPadraoRecebimentoFaturaCartao'
+);
+if (contaGerencialPadraoFaturaField) {
+  contaGerencialPadraoFaturaField.label = 'Padrão para recebimento de fatura';
+}
+
+
+export const getFutureModulePlaceholderActions = () => [
   <Button key="future" disabled>
     Fases futuras
   </Button>
 ];
+
+
+

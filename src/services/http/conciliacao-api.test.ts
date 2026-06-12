@@ -26,7 +26,7 @@ describe('conciliacaoApi', () => {
     await conciliacaoApi.confirmarVinculo('iw1', {
       movimentacaoFinanceiraId: 'm1',
       dataConciliacao: '2026-04-08',
-      observacao: 'Conciliacao manual'
+      observacao: 'Conciliação manual'
     });
 
     expect(apiClient.get).toHaveBeenCalledWith('/conciliacao', {
@@ -40,7 +40,7 @@ describe('conciliacaoApi', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/conciliacao/iw1/confirmar-vinculo', {
       movimentacaoFinanceiraId: 'm1',
       dataConciliacao: '2026-04-08',
-      observacao: 'Conciliacao manual'
+      observacao: 'Conciliação manual'
     });
   });
 });

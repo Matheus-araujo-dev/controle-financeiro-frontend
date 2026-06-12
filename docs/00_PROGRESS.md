@@ -33,6 +33,63 @@
 - O estado local da linha conciliada e a mensagem de ultima acao confirmada evitam roundtrip extra imediato sem perder compatibilidade com uma futura tela mais rica de conciliacao.
 - O quality gate local do frontend passou a considerar o custo atual da suite com Ant Design e coverage, com aumento explicito dos timeouts de testes mais pesados para reduzir flakiness sem afrouxar thresholds de cobertura.
 - A fase 9 nao adicionou regra de negocio; consolidou a documentacao operacional do MVP e deixou a validacao de build/test/coverage refletida no README e no documento de fechamento.
+- Como extensao pos-MVP aprovada localmente, `Contas bancarias` passaram a expor no frontend o limite compartilhado de cartoes e o saldo disponivel agregado, enquanto `Cartoes` passaram a mostrar origem do limite, limite efetivo e disponibilidade calculada.
+- O formulario generico de cadastros deixou de inferir nulabilidade numerica apenas por nome de campo e passou a respeitar configuracao explicita, o que habilitou o novo fluxo do planejador de compras sem regressao nos campos de limite.
+- O modulo `Planejador de compras` foi adicionado como CRUD navegavel em `/compras-planejadas`, reaproveitando o shell generico de listagem e formulario com contrato HTTP proprio.
+- Os contratos de `Contas gerenciais` passaram a refletir `aceitaLancamentos`, e os seletores operacionais de rateio e do planejador agora filtram apenas contas lancaveis.
+- A listagem de `Contas gerenciais` passou a explicitar visualmente o papel da conta como `Estrutural` ou `Lancavel`, facilitando a montagem do plano de contas sem uso indevido de conta pai.
+- O dashboard passou a incluir analise por conta gerencial no proprio `/dashboard`, com filtros por tipo e conta, tabela de resultado e serie diaria consumindo os novos contratos do backend.
+- O dashboard gerencial agora permite drill-down no proprio `/dashboard`, com acao explicita de detalhamento e tabela de composicao dos lancamentos da conta selecionada.
+- O `Planejador de compras` passou a expor `Link` no formulario e a refletir o novo campo nos contratos de listagem e detalhe.
+- Os seletores operacionais de `ContaGerencial` passaram a filtrar por tipo de conta (`Despesa` em compras planejadas e contas a pagar; `Receita` em contas a receber) e a operar com autocomplete.
+- Os campos monetarios operacionais passaram a usar formatacao compartilhada `R$1.000,00` em formularios e listagens relevantes, com parser comum para preservar payload numerico no submit.
+- A tela de detalhe de `Importacoes WhatsApp` passou a resumir o payload sugerido por item, com paginacao e visualizacao do JSON bruto apenas sob demanda, em vez de despejar o payload completo diretamente na grade.
+- A revisao de `Importacoes WhatsApp` passou a operar por item, com classificacao de `CompraCartao` por `ContaGerencial` de despesa, selecao de `Responsavel`, checkbox `Gerar conta a receber?` e reaproveitamento de historico como pre-preenchimento.
+- O cadastro de `Contas gerenciais` passou a expor o marcador de conta padrao para recebimento de fatura, refletindo o novo contrato do backend sem criar rota separada.
+- A revisao de `CompraCartao` passou a permitir nome amigavel editavel do lancamento, preservando o resumo operacional e melhorando a identificacao das compras importadas na propria tela.
+- O historico confirmado agora pode pre-preencher tambem nome amigavel e checkbox de recorrencia mensal, reduzindo retrabalho em faturas futuras com o mesmo estabelecimento.
+- A tela de detalhe de `Importacoes WhatsApp` passou a exigir `ContaGerencial` e `Responsavel` em `CompraCartao`, exibindo claramente quando o item esta `PREVISTO` ou `NAO_PREVISTO`.
+- A tela de detalhe de `Importacoes WhatsApp` passou a operar com aprovacao explicita da importacao inteira, exibindo `Aprovar importacao` quando nao ha mais itens sugeridos e `Reabrir importacao` quando a revisao ja foi travada.
+- Enquanto a importacao estiver aberta, itens confirmados ou rejeitados continuam editaveis no mesmo grid; depois da aprovacao, toda a revisao fica somente leitura ate a reabertura.
+- A interface de importacao deixou de tratar `ItemExtrato` como etapa de conciliacao posterior; a aprovacao da importacao passou a ser o encerramento do fluxo operacional desses itens.
+- O dashboard trocou o recorte principal por dias por um filtro de mes de referencia, permitindo navegar por meses futuros e visualizar a projecao completa baseada em recorrencias, parcelas e compras em cartao previstas.
+- O drill-down gerencial e as consultas de resumo e fluxo passaram a reutilizar o mesmo `MesReferencia`, mantendo o dashboard coerente em leituras futuras sem abrir novas rotas.
+- O dashboard ganhou uma central de previsao no proprio `/dashboard`, com filtros por origem e status, resumo diario e drill-down dos itens previstos, realizados e substituidos.
+- A central de previsao explica a origem de cada item (`Recorrencia`, `Parcela`, `CompraRecorrenteImportada`, `CompraPlanejada` e `ContaFuturaGerada`) sem abrir rota nova fora do dashboard.
+- A listagem de `ComprasPlanejadas` passou a permitir gerar uma `ContaPagar` com pre-preenchimento do formulario via query string, ou navegar para a conta ja criada quando a compra ja foi convertida.
+- O formulario financeiro passou a suportar prefill de origem de `CompraPlanejada`, exibindo alerta contextual quando a conta a pagar foi aberta a partir do planejador.
+- O `/dashboard` foi redesenhado com um hero executivo, cards mais legiveis, graficos visuais de fluxo diario, sinais clicaveis na central de previsao e um mapa gerencial com barras por conta.
+- O redesign manteve os mesmos contratos do backend e o mesmo fluxo de drill-down, priorizando leitura rapida e exploracao visual sem abrir novas rotas ou criar dependencia de biblioteca de grafico externa.
+- O dashboard recebeu uma segunda camada de redesign visual com `Pulso do saldo`, radar de previsao por status/origem e composicao gerencial em formato de donut, aumentando a densidade de leitura sem alterar a API.
+- A central de previsao do dashboard deixou de incluir `CompraPlanejada` enquanto a compra permanecer apenas no planejador, evitando inflar o previsto antes da conversao em lancamento real.
+- A tela de `Recorrencias` passou a exibir `descricao`, `valor`, `recebedor/pagador` e `responsavel`, consumindo o novo contrato enriquecido da API e corrigindo os textos operacionais da propria pagina.
+- O dashboard passou a refletir corretamente o status `Realizado` na central de previsao: contas recorrentes ou parceladas materializadas, mas ainda pendentes, agora aparecem como `Substituido`, mantendo `Realizado` restrito ao que foi efetivamente liquidado/recebido.
+- A listagem financeira passou a trocar `Editar` por `Estornar` quando o lancamento estiver `LIQUIDADA`, reduzindo erro operacional e alinhando a grade ao comportamento ja existente na tela de detalhe.
+- As tags de status financeiro passaram a diferenciar melhor `PENDENTE/PARCIAL` e `LIQUIDADA`, usando alerta ambar para pendencia e mantendo verde para liquidacao, sem recorrer a azul.
+
+- As telas de `Contas a pagar`, `Contas a receber`, `Movimentacoes`, `Planejador de compras` e `Recorrencias` passaram a exibir totalizadores acima da grade usando o `summary` filtrado retornado pela API.
+- O formulario de `Pessoas` passou a permitir cadastrar varias `ChavesPix`, com repeticao de linhas, tipo da chave e validacao de duplicidade antes do envio para a API.
+- O frontend passou a refletir `ChavesPix` no contrato de pessoas, nos schemas de formulario e no cliente HTTP, mantendo create, update e detalhe coerentes com o backend.
+- O cadastro de `Contas gerenciais` passou a expor `Responsável padrão`, e a revisão de importação agora pode pre-preencher o campo `Responsável` a partir da conta gerencial escolhida sem travar ajuste manual.
+- A tela de `Recorrências` passou a ter filtros locais por busca, natureza (`Receita`/`Despesa`) e tipo de dia, e os totalizadores agora são calculados sobre o recorte filtrado com separação entre receitas e despesas.
+- O `/dashboard` foi reorganizado em camadas mais claras (`executivo`, `caixa`, `agenda prevista` e `leitura gerencial`), removendo cards redundantes e consolidando a operacao em um painel com abas.
+- O redesign do dashboard passou a evitar azul na leitura visual, trocando a paleta por verde, ambar, magenta e vermelho, e reforcando a hierarquia com cards, faixas de resumo e blocos de drill-down mais legiveis.
+- No `/dashboard`, a leitura do mes atual deixou de exibir valores de recorrencia na central de previsao; recorrencias ficam restritas aos meses futuros, reduzindo ruido operacional no acompanhamento do mes corrente.
+- O `Planejador de compras` passou a expor a acao `Realizar compra`, substituindo o atalho manual de gerar conta a pagar sem contexto de pagamento.
+- A nova tela de realizacao orienta o operador por forma de pagamento, exibindo apenas `Cartao`, `Conta bancaria`, `Parcelas` e `Vencimento` quando o fluxo escolhido realmente precisa desses campos.
+- Na realizacao com cartao, o frontend antecipa a competencia e o vencimento projetado de cada parcela conforme o fechamento e o vencimento do cartao selecionado.
+- Na realizacao com baixa automatica, a tela deixa explicito que sera gerada movimentacao financeira imediata; em formas sem baixa automatica, deixa explicito que sera criada uma conta a pagar pendente.
+- A tela de revisao de importacao ganhou mais area util para `Resumo` e `Classificacao`, com paginacao padrao de 20 itens e foco maior na triagem operacional sem depender de scroll horizontal prematuro.
+- A revisao passou a distinguir visualmente sugestoes vindas de `Historico` e `Sugestao automatica`, aproveitando a predicao do backend para pre-preencher conta gerencial e responsavel quando houver correspondencia heuristica segura.
+- O shell visual do frontend foi alinhado com os prototipos de `src/assets/prototypes`, aproximando sidebar, cabecalho, cards e containers do sistema `Neon Ledger` sem trocar a estrutura funcional existente.
+- Os componentes compartilhados de listagem e formulario (`MasterDataListPage`, `EntityFormShell`, `ListSummaryCards` e `AppDataTable`) passaram a usar um padrao visual unico, com filtros mais claros, cards de resumo mais expressivos e tabelas mais densas.
+- A revisao de importacao recebeu adaptacao adicional do prototipo proprio, com mais largura real para `Resumo` e `Classificacao`, compactacao das colunas `Tipo` e `Status` e tabela base mais larga para reduzir perda de contexto horizontal.
+- A tela de revisao de importacao passou a expor uma acao dedicada de `Completar fechamento da fatura` para imports de cartao ja aprovados, reaproveitando recebedor, responsavel pelo pagamento e cartoes vinculados sem exigir reabertura.
+- Esse fluxo fecha a ponte operacional entre revisao aprovada e modulos financeiros: depois da materializacao, a navegacao passa a refletir `Faturas` e `ContaPagar` de fatura em vez de deixar a importacao isolada.
+- O frontend ganhou fluxo de login local em modo `development`, com tela dedicada, sessao persistida e envio automatico do header `X-Debug-User` em todas as chamadas da API protegida.
+- A tela de `Faturas` passou a abrir com filtros mais completos, incluindo faixa de vencimento, faixa de fechamento, cartao, competencia e status, com ordenacao funcional por `Cartao`.
+- A listagem de `Faturas` ganhou totalizadores por cartao e por competencia do mes acima da grade, aproveitando o `summary` agregado retornado pelo backend.
+- O fluxo visual de fechamento da importacao do Bradesco foi reexecutado apos a correcao de competencia, e a navegacao de `Faturas` passou a refletir somente a competencia atual da importacao e as futuras parcelas/recorrencias projetadas.
 
 ## Pendencias nao criticas
 - configurar secrets reais de SonarQube/SonarCloud no CI para ativar o quality gate remoto.

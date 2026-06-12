@@ -17,6 +17,18 @@ export type TipoSugestaoImportacaoWhatsappCodigo =
   | 'ITEM_EXTRATO';
 export type StatusItemImportadoWhatsappCodigo = 'SUGERIDO' | 'CONFIRMADO' | 'REJEITADO';
 
+export type PredicaoClassificacaoImportacaoWhatsapp = {
+  contaGerencialId: string | null;
+  contaGerencialDescricao: string | null;
+  responsavelId: string | null;
+  responsavelNome: string | null;
+  descricaoAjustada: string | null;
+  gerarContaReceber: boolean;
+  marcarComoRecorrente: boolean;
+  quantidadeOcorrencias: number;
+  confiancaHistorico: number;
+};
+
 export type ImportacoesWhatsappFilters = {
   page: number;
   pageSize: number;
@@ -49,9 +61,20 @@ export type ItemImportadoWhatsapp = {
   payloadSugeridoJson: string;
   statusCodigo: StatusItemImportadoWhatsappCodigo;
   statusNome: string;
+  descricaoAjustada: string | null;
+  marcarComoRecorrente: boolean;
+  contaGerencialId: string | null;
+  contaGerencialDescricao: string | null;
+  responsavelId: string | null;
+  responsavelNome: string | null;
+  contaReceberId: string | null;
+  movimentacaoFinanceiraId: string | null;
+  statusPrevisaoCodigo: 'PREVISTO' | 'NAO_PREVISTO' | null;
+  statusPrevisaoNome: string | null;
   observacao: string | null;
   confirmadoEmUtc: string | null;
   rejeitadoEmUtc: string | null;
+  predicao: PredicaoClassificacaoImportacaoWhatsapp | null;
 };
 
 export type ImportacaoWhatsappDetalhe = Omit<ImportacaoWhatsappResumo, 'quantidadeItens' | 'quantidadePendentes'> & {
@@ -59,11 +82,24 @@ export type ImportacaoWhatsappDetalhe = Omit<ImportacaoWhatsappResumo, 'quantida
   mensagemErro: string | null;
   confirmadoEmUtc: string | null;
   rejeitadoEmUtc: string | null;
+  possuiGeracaoFinanceira?: boolean;
   itens: ItemImportadoWhatsapp[];
 };
 
 export type RevisarItemImportadoPayload = {
   observacao: string | null;
+  descricaoAjustada: string | null;
+  contaGerencialId: string | null;
+  responsavelId: string | null;
+  dataVencimentoContaReceber: string | null;
+  gerarContaReceber: boolean;
+  marcarComoRecorrente: boolean;
+};
+
+export type AprovarImportacaoWhatsappPayload = {
+  recebedorFaturaId: string | null;
+  responsavelPagamentoFaturaId: string | null;
+  cartaoIds: string[];
 };
 
 export type PagedImportacoesWhatsapp<T> = PagedResult<T>;

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cadastro de Cartão | NeonLedger</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#006e35",
+                        "on-surface-variant": "#adaaaa",
+                        "on-primary-container": "#004f24",
+                        "secondary-dim": "#65ecae",
+                        "surface-container": "#1a1a1a",
+                        "on-background": "#ffffff",
+                        "outline-variant": "#484847",
+                        "error-container": "#9f0519",
+                        "tertiary-fixed-dim": "#00cdec",
+                        "on-tertiary-fixed-variant": "#005361",
+                        "inverse-on-surface": "#565555",
+                        "secondary-fixed-dim": "#65ecae",
+                        "on-secondary": "#005e3d",
+                        "tertiary-dim": "#00cdec",
+                        "secondary": "#74fbbb",
+                        "background": "#0e0e0e",
+                        "error": "#ff716c",
+                        "tertiary-fixed": "#00dcfd",
+                        "tertiary-container": "#00dcfd",
+                        "on-primary": "#005d2c",
+                        "primary-fixed-dim": "#24f07e",
+                        "on-tertiary-container": "#004955",
+                        "on-tertiary-fixed": "#00343d",
+                        "surface-container-highest": "#262626",
+                        "secondary-fixed": "#74fbbb",
+                        "on-secondary-fixed-variant": "#006945",
+                        "surface-dim": "#0e0e0e",
+                        "on-tertiary": "#005360",
+                        "primary-fixed": "#3fff8b",
+                        "on-error-container": "#ffa8a3",
+                        "surface-container-high": "#20201f",
+                        "on-primary-fixed-variant": "#006832",
+                        "outline": "#767575",
+                        "surface": "#0e0e0e",
+                        "on-primary-fixed": "#004820",
+                        "surface-bright": "#2c2c2c",
+                        "surface-container-low": "#131313",
+                        "surface-container-lowest": "#000000",
+                        "primary-dim": "#24f07e",
+                        "surface-tint": "#3fff8b",
+                        "primary-container": "#13ea79",
+                        "on-secondary-fixed": "#00492f",
+                        "secondary-container": "#006c47",
+                        "inverse-surface": "#fcf9f8",
+                        "on-surface": "#ffffff",
+                        "tertiary": "#7ae6ff",
+                        "on-secondary-container": "#e1ffeb",
+                        "on-error": "#490006",
+                        "error-dim": "#d7383b",
+                        "primary": "#3fff8b",
+                        "surface-variant": "#262626"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(26, 26, 26, 0.7);
+            backdrop-filter: blur(12px);
+        }
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(63, 255, 139, 0.3);
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: rgba(63, 255, 139, 0.4) !important;
+            box-shadow: 0 0 0 1px rgba(63, 255, 139, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary selection:text-on-primary">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 flex items-center justify-between px-8 py-4 bg-[#0e0e0e] bg-opacity-90 backdrop-blur-md shadow-[0_20px_50px_rgba(63,255,139,0.05)]">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black text-[#3fff8b] tracking-tighter">NeonLedger</span>
+<div class="hidden md:flex items-center gap-6 font-['Plus_Jakarta_Sans'] font-bold text-lg">
+<a class="text-[#adaaaa] hover:text-white transition-colors" href="#">Dashboard</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors" href="#">Contas</a>
+<a class="text-[#3fff8b] border-b-2 border-[#3fff8b] pb-1" href="#">Cartões</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors" href="#">Conciliação</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors" href="#">Planejamento</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-[#262626] rounded-lg transition-all text-[#3fff8b] scale-95 active:duration-150">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-[#262626] rounded-lg transition-all text-[#3fff8b] scale-95 active:duration-150">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-outline-variant/20">
+<img alt="Avatar do Usuário" class="w-full h-full object-cover" data-alt="Professional studio portrait of a executive user with soft directional lighting and dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGne4CIVZ5mbtzuSkYuofnIh4jCBMB42t5bAkubnEJ3yeWM-rKjHzS2KGLt7r-8ri3wYT-UkZTL2scl0KAoxZMmUAp2D9CvnCnzGd6K52w2uO2YrcCbiDESm5Dhjbb2PsDhaWUY9_tqDGfrNP3qFq6Ebt-j1p9NgtL6OqctoY8FXkgm9Jeg4Cdxe16dKiPn7lHvBKbwdVeEcziolYmn34WT6sF_SMRChGeKgjHOceQppOa10xHlunfC-xNFX17T2PMb55kT7u0Qtb-"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="hidden lg:flex flex-col h-full fixed left-0 py-8 bg-[#131313] w-64 z-40">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3 mb-1">
+<span class="material-symbols-outlined text-[#3fff8b]">bolt</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider text-[#3fff8b] font-bold">Inteligência Financeira</span>
+</div>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest px-8">Status: Em Dia</p>
+</div>
+<div class="flex-1 space-y-1">
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Visão Geral</span>
+</a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Fluxo de Caixa</span>
+</a>
+<a class="bg-[#1a1a1a] text-[#3fff8b] shadow-[inset_0_0_10px_rgba(63,255,139,0.1)] border-r-4 border-[#3fff8b] py-3 px-6 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">credit_card</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Cartões de Crédito</span>
+</a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Bancos</span>
+</a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Lista de Compras</span>
+</a>
+</div>
+<div class="px-6 mt-auto space-y-4">
+<button class="w-full bg-primary text-on-primary font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined">add</span>
+                Nova Transação
+            </button>
+<div class="pt-4 border-t border-outline-variant/10">
+<a class="text-[#adaaaa] py-2 flex items-center gap-3 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Ajuda</span>
+</a>
+<a class="text-[#adaaaa] py-2 flex items-center gap-3 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-['Inter'] text-sm font-medium uppercase tracking-wider">Sair</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="lg:ml-64 pt-24 pb-32 px-4 md:px-8 lg:px-12 min-h-screen">
+<div class="max-w-5xl mx-auto">
+<!-- Header Section -->
+<header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<nav class="flex items-center gap-2 text-on-surface-variant text-xs mb-2 uppercase tracking-widest font-bold">
+<span>Finanças</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span>Cartões</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary">Novo Cartão</span>
+</nav>
+<h1 class="font-headline font-extrabold text-4xl md:text-5xl tracking-tight text-on-surface">
+                        Adicionar <span class="text-primary">Cartão</span>
+</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-6 py-2 rounded-xl bg-surface-container border border-outline-variant/20 text-on-surface-variant font-bold text-sm hover:bg-surface-container-highest transition-all">
+                        CANCELAR
+                    </button>
+<button class="px-8 py-2 rounded-xl bg-gradient-to-br from-primary to-secondary-container text-on-primary font-black text-sm shadow-[0_0_20px_rgba(63,255,139,0.2)] hover:scale-105 transition-all">
+                        SALVAR CARTÃO
+                    </button>
+</div>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Visual Card Preview -->
+<div class="lg:col-span-5 space-y-6">
+<div class="relative aspect-[1.586/1] w-full rounded-2xl bg-gradient-to-br from-surface-container-high to-surface-container-lowest border border-outline-variant/30 p-8 flex flex-col justify-between overflow-hidden shadow-2xl group">
+<!-- Abstract Texture -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-[80px] group-hover:bg-primary/20 transition-all duration-700"></div>
+<div class="flex justify-between items-start z-10">
+<div class="flex flex-col">
+<span class="font-headline font-bold text-lg text-primary tracking-tight">NeonLedger Platinum</span>
+<span class="text-[10px] text-on-surface-variant uppercase tracking-widest">Digital Asset Card</span>
+</div>
+<span class="material-symbols-outlined text-4xl text-on-surface-variant/50">contactless</span>
+</div>
+<div class="z-10">
+<div class="flex gap-4 mb-4">
+<div class="w-12 h-8 rounded bg-gradient-to-r from-primary/40 to-primary/10 border border-primary/20"></div>
+</div>
+<div class="flex items-center gap-4">
+<span class="font-headline text-2xl tracking-[0.2em] text-on-surface/90">••••</span>
+<span class="font-headline text-2xl tracking-[0.2em] text-on-surface/90">••••</span>
+<span class="font-headline text-2xl tracking-[0.2em] text-on-surface/90">••••</span>
+<span class="font-headline text-2xl tracking-[0.2em] text-on-surface" id="preview-final">4242</span>
+</div>
+</div>
+<div class="flex justify-between items-end z-10">
+<div>
+<p class="text-[8px] text-on-surface-variant uppercase tracking-widest mb-1">Titular do Cartão</p>
+<p class="font-headline font-bold text-sm text-on-surface uppercase" id="preview-name">SEU NOME AQUI</p>
+</div>
+<div class="text-right">
+<p class="text-[8px] text-on-surface-variant uppercase tracking-widest mb-1">Bandeira</p>
+<p class="font-headline font-bold text-sm text-primary" id="preview-brand">MASTERCARD</p>
+</div>
+</div>
+</div>
+<!-- Status Active Card -->
+<div class="p-6 rounded-2xl bg-surface-container-low border border-outline-variant/15 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">verified_user</span>
+</div>
+<div>
+<h3 class="font-bold text-on-surface">Status do Cartão</h3>
+<p class="text-xs text-on-surface-variant">Defina se este cartão está pronto para uso.</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-14 h-7 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-on-surface-variant peer-checked:after:bg-on-primary after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+<span class="ms-3 text-xs font-bold text-primary uppercase">Ativo</span>
+</label>
+</div>
+</div>
+<!-- Form Section -->
+<div class="lg:col-span-7">
+<div class="bg-surface-container-low rounded-3xl p-8 border border-outline-variant/10 shadow-xl">
+<form class="space-y-6">
+<!-- Basic Info Group -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Nome do Cartão</label>
+<input class="bg-surface-container border-none text-on-surface rounded-xl px-4 py-3 placeholder:text-on-surface-variant/30 font-medium" placeholder="Ex: Nubank Principal" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Bandeira</label>
+<select class="bg-surface-container border-none text-on-surface rounded-xl px-4 py-3 font-medium appearance-none">
+<option>Mastercard</option>
+<option>Visa</option>
+<option>Elo</option>
+<option>American Express</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Número Final</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 font-bold tracking-widest">••••</span>
+<input class="w-full bg-surface-container border-none text-on-surface rounded-xl pl-16 pr-4 py-3 placeholder:text-on-surface-variant/30 font-medium" maxlength="4" placeholder="4242" type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Conta Bancária Padrão</label>
+<select class="bg-surface-container border-none text-on-surface rounded-xl px-4 py-3 font-medium">
+<option>Nubank - 1234-5</option>
+<option>Itaú Personnalité</option>
+<option>Inter Bank</option>
+</select>
+</div>
+</div>
+<!-- Limits and Dates -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Fechamento</label>
+<input class="bg-surface-container border-none text-on-surface rounded-xl px-4 py-3 placeholder:text-on-surface-variant/30 font-medium" max="31" min="1" placeholder="05" type="number"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Vencimento</label>
+<input class="bg-surface-container border-none text-on-surface rounded-xl px-4 py-3 placeholder:text-on-surface-variant/30 font-medium" max="31" min="1" placeholder="12" type="number"/>
+</div>
+<div class="flex flex-col md:col-span-1 gap-2">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Limite Individual</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-bold">R$</span>
+<input class="w-full bg-surface-container border-none text-on-surface rounded-xl pl-12 pr-4 py-3 placeholder:text-on-surface-variant/30 font-medium" placeholder="5.000,00" type="text"/>
+</div>
+</div>
+</div>
+<!-- Pro Tip Section -->
+<div class="mt-4 p-5 rounded-2xl bg-primary/5 border border-primary/10 flex gap-4">
+<span class="material-symbols-outlined text-primary">lightbulb</span>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+<strong class="text-primary">Dica:</strong> Vincular uma conta bancária padrão ajuda o NeonLedger a automatizar a conciliação do pagamento da fatura no final do mês.
+                                </p>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 lg:hidden bg-[#0e0e0e]/80 backdrop-blur-xl rounded-t-3xl border-t border-[#484847]/15 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2 active:bg-[#262626]" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2 active:bg-[#262626]" href="#">
+<span class="material-symbols-outlined">south_west</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Pagar</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#3fff8b] text-[#0e0e0e] rounded-xl p-2 scale-110 shadow-lg animate-pulse-subtle" href="#">
+<span class="material-symbols-outlined">credit_card</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Cartões</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#adaaaa] p-2 active:bg-[#262626]" href="#">
+<span class="material-symbols-outlined">menu</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Menu</span>
+</a>
+</nav>
+</body></html>

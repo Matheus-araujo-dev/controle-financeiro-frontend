@@ -5,8 +5,8 @@ export function NotFoundPage() {
   return (
     <Result
       status="404"
-      title="Rota nao encontrada"
-      subTitle="A base administrativa ja esta pronta, mas esta pagina ainda nao existe."
+      title="Rota não encontrada"
+      subTitle="A base administrativa já está pronta, mas esta página ainda não existe."
       extra={
         <Button type="primary">
           <Link to="/dashboard">Voltar ao dashboard</Link>

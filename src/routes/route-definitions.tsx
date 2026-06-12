@@ -1,22 +1,29 @@
+import { lazy } from 'react';
 import type { RouteObject } from 'react-router-dom';
-import { MasterDataFormPage } from '../features/cadastros/MasterDataFormPage';
-import { MasterDataListPage } from '../features/cadastros/MasterDataListPage';
-import { ConciliacaoPage } from '../features/conciliacao/ConciliacaoPage';
-import {
-  cartoesModuleConfig,
-  contasBancariasModuleConfig,
-  contasGerenciaisModuleConfig,
-  formasPagamentoModuleConfig,
-  pessoasModuleConfig
-} from '../features/cadastros/module-config';
-import { FinancialAccountFormPage } from '../features/financeiro/FinancialAccountFormPage';
-import { FinancialAccountListPage } from '../features/financeiro/FinancialAccountListPage';
-import { FaturaDetailPage } from '../features/financeiro/FaturaDetailPage';
-import { FaturasPage } from '../features/financeiro/FaturasPage';
-import { MovimentacoesPage } from '../features/financeiro/MovimentacoesPage';
-import { ImportacaoWhatsappDetailPage } from '../features/importacoes-whatsapp/ImportacaoWhatsappDetailPage';
-import { ImportacoesWhatsappPage } from '../features/importacoes-whatsapp/ImportacoesWhatsappPage';
+import { formasPagamentoModuleConfig, pessoasModuleConfig } from '../features/cadastros/module-config';
 import { contasPagarModuleConfig, contasReceberModuleConfig } from '../features/financeiro/module-config';
+
+const MasterDataFormPage = lazy(() => import('../features/cadastros/MasterDataFormPage').then((m) => ({ default: m.MasterDataFormPage })));
+const MasterDataListPage = lazy(() => import('../features/cadastros/MasterDataListPage').then((m) => ({ default: m.MasterDataListPage })));
+const ContasBancariasFormPage = lazy(() => import('../features/cadastros/ContasBancariasFormPage').then((m) => ({ default: m.ContasBancariasFormPage })));
+const ContasBancariasListPage = lazy(() => import('../features/cadastros/ContasBancariasListPage').then((m) => ({ default: m.ContasBancariasListPage })));
+const CartoesFormPage = lazy(() => import('../features/cadastros/CartoesFormPage').then((m) => ({ default: m.CartoesFormPage })));
+const CartoesListPage = lazy(() => import('../features/cadastros/CartoesListPage').then((m) => ({ default: m.CartoesListPage })));
+const ContasGerenciaisFormPage = lazy(() => import('../features/cadastros/ContasGerenciaisFormPage').then((m) => ({ default: m.ContasGerenciaisFormPage })));
+const ContasGerenciaisListPage = lazy(() => import('../features/cadastros/ContasGerenciaisListPage').then((m) => ({ default: m.ContasGerenciaisListPage })));
+const ComprasPlanejadasListPage = lazy(() => import('../features/compras-planejadas/ComprasPlanejadasListPage').then((m) => ({ default: m.ComprasPlanejadasListPage })));
+const NovaCompraPlanejadaPage = lazy(() => import('../features/compras-planejadas/NovaCompraPlanejadaPage').then((m) => ({ default: m.NovaCompraPlanejadaPage })));
+const RealizarCompraPlanejadaPage = lazy(() => import('../features/compras-planejadas/RealizarCompraPlanejadaPage').then((m) => ({ default: m.RealizarCompraPlanejadaPage })));
+const ConciliacaoPage = lazy(() => import('../features/conciliacao/ConciliacaoPage').then((m) => ({ default: m.ConciliacaoPage })));
+const FinancialAccountFormPage = lazy(() => import('../features/financeiro/FinancialAccountFormPage').then((m) => ({ default: m.FinancialAccountFormPage })));
+const FinancialAccountListPage = lazy(() => import('../features/financeiro/FinancialAccountListPage').then((m) => ({ default: m.FinancialAccountListPage })));
+const FaturaDetailPage = lazy(() => import('../features/financeiro/FaturaDetailPage').then((m) => ({ default: m.FaturaDetailPage })));
+const FaturasPage = lazy(() => import('../features/financeiro/FaturasPage').then((m) => ({ default: m.FaturasPage })));
+const MovimentacoesPage = lazy(() => import('../features/financeiro/MovimentacoesPage').then((m) => ({ default: m.MovimentacoesPage })));
+const ImportacaoWhatsappDetailPage = lazy(() => import('../features/importacoes-whatsapp/ImportacaoWhatsappDetailPage').then((m) => ({ default: m.ImportacaoWhatsappDetailPage })));
+const ImportacoesWhatsappPage = lazy(() => import('../features/importacoes-whatsapp/ImportacoesWhatsappPage').then((m) => ({ default: m.ImportacoesWhatsappPage })));
+const RecurrenceListPage = lazy(() => import('../features/financeiro/RecurrenceListPage'));
+
 export const placeholderRouteObjects: RouteObject[] = [];
 
 export const supportRegistryRouteObjects: RouteObject[] = [
@@ -28,7 +35,7 @@ export const supportRegistryRouteObjects: RouteObject[] = [
     }
   },
   {
-    path: 'pessoas/nova',
+    path: 'pessoas/novo',
     element: <MasterDataFormPage config={pessoasModuleConfig} />,
     handle: {
       title: 'Nova pessoa'
@@ -64,65 +71,96 @@ export const supportRegistryRouteObjects: RouteObject[] = [
   },
   {
     path: 'contas-bancarias',
-    element: <MasterDataListPage config={contasBancariasModuleConfig} />,
+    element: <ContasBancariasListPage />,
     handle: {
       title: 'Contas bancarias'
     }
   },
   {
     path: 'contas-bancarias/novo',
-    element: <MasterDataFormPage config={contasBancariasModuleConfig} />,
+    element: <ContasBancariasFormPage />,
     handle: {
       title: 'Nova conta bancaria'
     }
   },
   {
     path: 'contas-bancarias/:id',
-    element: <MasterDataFormPage config={contasBancariasModuleConfig} />,
+    element: <ContasBancariasFormPage />,
     handle: {
       title: 'Detalhe de conta bancaria'
     }
   },
   {
     path: 'cartoes',
-    element: <MasterDataListPage config={cartoesModuleConfig} />,
+    element: <CartoesListPage />,
     handle: {
       title: 'Cartoes'
     }
   },
   {
     path: 'cartoes/novo',
-    element: <MasterDataFormPage config={cartoesModuleConfig} />,
+    element: <CartoesFormPage />,
     handle: {
       title: 'Novo cartao'
     }
   },
   {
     path: 'cartoes/:id',
-    element: <MasterDataFormPage config={cartoesModuleConfig} />,
+    element: <CartoesFormPage />,
     handle: {
       title: 'Detalhe de cartao'
     }
   },
   {
     path: 'contas-gerenciais',
-    element: <MasterDataListPage config={contasGerenciaisModuleConfig} />,
+    element: <ContasGerenciaisListPage />,
     handle: {
       title: 'Contas gerenciais'
     }
   },
   {
     path: 'contas-gerenciais/novo',
-    element: <MasterDataFormPage config={contasGerenciaisModuleConfig} />,
+    element: <ContasGerenciaisFormPage />,
     handle: {
       title: 'Nova conta gerencial'
     }
   },
   {
     path: 'contas-gerenciais/:id',
-    element: <MasterDataFormPage config={contasGerenciaisModuleConfig} />,
+    element: <ContasGerenciaisFormPage />,
     handle: {
       title: 'Detalhe de conta gerencial'
+    }
+  }
+];
+
+export const comprasPlanejadasRouteObjects: RouteObject[] = [
+  {
+    index: true,
+    element: <ComprasPlanejadasListPage />,
+    handle: {
+      title: 'Planejador de compras'
+    }
+  },
+  {
+    path: 'nova',
+    element: <NovaCompraPlanejadaPage />,
+    handle: {
+      title: 'Nova compra planejada'
+    }
+  },
+  {
+    path: ':id',
+    element: <NovaCompraPlanejadaPage />,
+    handle: {
+      title: 'Detalhe de compra planejada'
+    }
+  },
+  {
+    path: ':id/realizar',
+    element: <RealizarCompraPlanejadaPage />,
+    handle: {
+      title: 'Realizar compra planejada'
     }
   }
 ];
@@ -210,6 +248,13 @@ export const financialRouteObjects: RouteObject[] = [
     element: <ConciliacaoPage />,
     handle: {
       title: 'Conciliacao'
+    }
+  },
+  {
+    path: 'recorrencias',
+    element: <RecurrenceListPage />,
+    handle: {
+      title: 'Gestao de recorrencias'
     }
   }
 ];

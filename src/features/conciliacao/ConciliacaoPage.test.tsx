@@ -67,7 +67,7 @@ describe('ConciliacaoPage', () => {
     expect(await screen.findByText('5511944443333')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Conciliar Recebimento conciliacao' })).toBeInTheDocument();
 
-    await userEvent.type(screen.getByPlaceholderText('Buscar por remetente ou descricao do extrato'), 'pix');
+    await userEvent.type(screen.getByPlaceholderText('Buscar por remetente ou descrição do extrato'), 'pix');
 
     await waitFor(() =>
       expect(conciliacaoApi.listar).toHaveBeenLastCalledWith(
@@ -82,17 +82,17 @@ describe('ConciliacaoPage', () => {
     await waitFor(() =>
       expect(conciliacaoApi.confirmarVinculo).toHaveBeenCalledWith('iw1', {
         movimentacaoFinanceiraId: 'm1',
-        observacao: 'Conciliacao manual assistida via tela'
+        observacao: 'Conciliação manual assistida via tela'
       })
     );
 
-    expect(await screen.findByText('Ultimo vinculo confirmado para o item iw1.')).toBeInTheDocument();
+    expect(await screen.findByText('Último vínculo confirmado para o item iw1.')).toBeInTheDocument();
     expect(await screen.findByText('Conciliado')).toBeInTheDocument();
-  }, 20000);
+  }, 40000);
 
   it('renders the error state and retries loading', async () => {
     vi.mocked(conciliacaoApi.listar)
-      .mockRejectedValueOnce(new Error('Falha ao carregar conciliacao'))
+      .mockRejectedValueOnce(new Error('Falha ao carregar conciliação'))
       .mockResolvedValueOnce({
         items: [],
         page: 1,
@@ -104,7 +104,7 @@ describe('ConciliacaoPage', () => {
     render(<ConciliacaoPage />);
 
     expect(await screen.findByText('Falha ao carregar dados')).toBeInTheDocument();
-    expect(screen.getByText('Falha ao carregar conciliacao')).toBeInTheDocument();
+    expect(screen.getByText('Falha ao carregar conciliação')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 

@@ -1,13 +1,19 @@
 import { Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
+import type { SummaryCardItem } from '../../components/data/ListSummaryCards';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
+import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
+import { formatCurrencyBRL } from '../../shared/currency';
+import { formatDateBR, toMonthInputValue } from '../../shared/date';
+import { mapContaGerencialSelectOptions } from '../../shared/conta-gerencial';
 import type { ContaGerencialTipo } from '../../types/cadastros';
 import type {
   ContaPagarDetalhe,
   ContaPagarFilters,
   ContaPagarPayload,
   ContaPagarResumo,
+  ContaFinanceiraListSummary,
   ContaReceberDetalhe,
   ContaReceberFilters,
   ContaReceberPayload,
@@ -16,6 +22,16 @@ import type {
   RecorrenciaPayload,
   StatusContaCodigo
 } from '../../types/financeiro';
+
+export type StatusCodigoConta = StatusContaCodigo;
+
+export type FinanceiroResumo = {
+  totalRegistros: number;
+  valorTotal: number;
+  totalPendente?: number;
+  totalVencendoHoje?: number;
+  totalLiquidado?: number;
+};
 
 export type SelectOption = {
   label: string;
@@ -33,6 +49,7 @@ export type FinanceiroRateioFormValue = {
 };
 
 export type FinanceiroFormValues = {
+  origemCompraPlanejadaId: string;
   numeroDocumento: string;
   pessoaId: string;
   responsavelId: string;
@@ -52,7 +69,8 @@ export type FinanceiroFormValues = {
   rateios: FinanceiroRateioFormValue[];
   ehRecorrente: boolean;
   recorrenciaTipoPeriodicidade: 'Mensal';
-  recorrenciaDiaGeracaoMensal: number;
+  recorrenciaTipoDia: 'DiaFixo' | 'DiaUtil';
+  recorrenciaDiaOrdemMensal: number;
   recorrenciaDataInicio: string;
   recorrenciaDataFim: string;
   recorrenciaPermiteEdicaoOcorrenciaIndividual: boolean;
@@ -76,7 +94,14 @@ export type FinanceiroModuleConfig<TSummary, TDetail, TFilters> = {
   columns: TableColumnsType<TSummary>;
   defaultFilters: TFilters;
   defaultValues: FinanceiroFormValues;
-  list: (filters: TFilters) => Promise<{ items: TSummary[]; page: number; pageSize: number; totalItems: number; totalPages: number }>;
+  list: (filters: TFilters) => Promise<{
+    items: TSummary[];
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+    summary?: unknown;
+  }>;
   detail: (id: string) => Promise<TDetail>;
   create: (values: FinanceiroFormValues) => Promise<TDetail>;
   update: (id: string, values: FinanceiroFormValues) => Promise<TDetail>;
@@ -85,6 +110,7 @@ export type FinanceiroModuleConfig<TSummary, TDetail, TFilters> = {
   pausarRecorrencia?: (id: string) => Promise<TDetail>;
   encerrarRecorrencia?: (id: string, values: { dataFim: string }) => Promise<TDetail>;
   liquidar?: (id: string, values: FinanceiroLiquidacaoFormValues) => Promise<TDetail>;
+  estornar?: (id: string) => Promise<TDetail>;
   cancelar?: (id: string) => Promise<TDetail>;
   toFormValues: (detail: TDetail) => FinanceiroFormValues;
   loadPessoaOptions: () => Promise<SelectOption[]>;
@@ -92,6 +118,8 @@ export type FinanceiroModuleConfig<TSummary, TDetail, TFilters> = {
   loadContaBancariaOptions: () => Promise<SelectOption[]>;
   loadCartaoOptions: () => Promise<SelectOption[]>;
   loadRateioOptions: () => Promise<SelectOption[]>;
+  resolveCreateDefaults?: (searchParams: URLSearchParams) => Promise<Partial<FinanceiroFormValues> | null>;
+  buildSummaryItems?: (summary: FinanceiroResumo) => SummaryCardItem[];
 };
 
 const statusOptions: Array<SelectOption & { code?: StatusContaCodigo }> = [
@@ -102,7 +130,10 @@ const statusOptions: Array<SelectOption & { code?: StatusContaCodigo }> = [
   { label: 'Vencidas', value: 'VENCIDA', code: 'VENCIDA' }
 ];
 
+const statusFilterOptions = statusOptions.filter((item) => item.value);
+
 const defaultValues: FinanceiroFormValues = {
+  origemCompraPlanejadaId: '',
   numeroDocumento: '',
   pessoaId: '',
   responsavelId: '',
@@ -122,7 +153,8 @@ const defaultValues: FinanceiroFormValues = {
   rateios: [{ contaGerencialId: '', valor: 0 }],
   ehRecorrente: false,
   recorrenciaTipoPeriodicidade: 'Mensal',
-  recorrenciaDiaGeracaoMensal: 1,
+  recorrenciaTipoDia: 'DiaFixo',
+  recorrenciaDiaOrdemMensal: 1,
   recorrenciaDataInicio: '',
   recorrenciaDataFim: '',
   recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
@@ -130,24 +162,38 @@ const defaultValues: FinanceiroFormValues = {
   recorrenciaGerarAteData: ''
 };
 
-function renderCurrency(value: number) {
-  return value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  });
-}
-
-function renderStatusTag(statusCodigo: StatusContaCodigo) {
-  const color =
-    statusCodigo === 'LIQUIDADA'
-      ? 'success'
-      : statusCodigo === 'CANCELADA'
-        ? 'default'
-        : statusCodigo === 'VENCIDA'
-          ? 'error'
-          : 'processing';
-
-  return <Tag color={color}>{statusCodigo}</Tag>;
+function buildContaFinanceiraSummaryItems(summary: FinanceiroResumo): SummaryCardItem[] {
+  return [
+    {
+      key: 'registros',
+      label: 'Registros filtrados',
+      value: (summary.totalRegistros ?? 0).toString()
+    },
+    {
+      key: 'total-pendente',
+      label: 'Total Pendente',
+      value: formatCurrencyBRL(summary.totalPendente ?? 0),
+      tone: (summary.totalPendente ?? 0) > 0 ? 'warning' : 'neutral'
+    },
+    {
+        key: 'total-hoje',
+        label: 'Vencendo Hoje',
+        value: formatCurrencyBRL(summary.totalVencendoHoje ?? 0),
+        tone: (summary.totalVencendoHoje ?? 0) > 0 ? 'danger' : 'neutral'
+    },
+    {
+        key: 'total-liquidado',
+        label: 'Total Liquidado',
+        value: formatCurrencyBRL(summary.totalLiquidado ?? 0),
+        tone: 'success'
+    },
+    {
+      key: 'valor-total',
+      label: 'Valor total filtrado',
+      value: formatCurrencyBRL(summary.valorTotal ?? 0),
+      tone: (summary.valorTotal ?? 0) > 0 ? 'warning' : 'neutral'
+    }
+  ];
 }
 
 function normalizeNullableId(value: string) {
@@ -158,6 +204,29 @@ function normalizeNullableText(value: string) {
   return value.trim() === '' ? null : value.trim();
 }
 
+function resolveRecorrenciaDateForMonth(values: FinanceiroFormValues, monthReference: string) {
+  const match = /^(\d{4})-(\d{2})$/.exec(monthReference.trim());
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+
+  if (!year || !month) {
+    return null;
+  }
+
+  if (values.recorrenciaTipoDia === 'DiaUtil') {
+    return `${match[1]}-${match[2]}-01`;
+  }
+
+  const lastDay = new Date(year, month, 0).getDate();
+  const day = String(Math.min(values.recorrenciaDiaOrdemMensal, lastDay)).padStart(2, '0');
+  return `${match[1]}-${match[2]}-${day}`;
+}
+
 function buildRecorrenciaPayload(values: FinanceiroFormValues): RecorrenciaPayload | null {
   if (!values.ehRecorrente) {
     return null;
@@ -165,9 +234,10 @@ function buildRecorrenciaPayload(values: FinanceiroFormValues): RecorrenciaPaylo
 
   return {
     tipoPeriodicidade: values.recorrenciaTipoPeriodicidade,
-    diaGeracaoMensal: values.recorrenciaDiaGeracaoMensal,
-    dataInicio: values.recorrenciaDataInicio,
-    dataFim: normalizeNullableText(values.recorrenciaDataFim),
+    tipoDia: values.recorrenciaTipoDia,
+    diaOrdemMensal: values.recorrenciaDiaOrdemMensal,
+    dataInicio: normalizeNullableText(values.recorrenciaDataInicio),
+    dataFim: values.recorrenciaDataFim.trim() === '' ? null : resolveRecorrenciaDateForMonth(values, values.recorrenciaDataFim),
     permiteEdicaoOcorrenciaIndividual: values.recorrenciaPermiteEdicaoOcorrenciaIndividual,
     observacao: normalizeNullableText(values.recorrenciaObservacao)
   };
@@ -187,6 +257,14 @@ export function resolveFormaPagamentoBehavior(formaPagamentoId: string, options:
     ehCartao: option?.ehCartao ?? false,
     baixarAutomaticamente: option?.baixarAutomaticamente ?? false
   };
+}
+
+export function resolveStatusTone(statusCodigo: StatusContaCodigo) {
+  if (statusCodigo === 'LIQUIDADA') return 'positive';
+  if (statusCodigo === 'CANCELADA') return 'neutral';
+  if (statusCodigo === 'EM_FATURA') return 'neutral';
+  if (statusCodigo === 'VENCIDA') return 'negative';
+  return 'warning';
 }
 
 async function loadPessoaOptions() {
@@ -250,20 +328,19 @@ async function loadRateioOptions(tipo: ContaGerencialTipo) {
     pageSize: 100,
     search: '',
     tipo,
-    ativo: true
+    ativo: true,
+    aceitaLancamentos: true
   });
 
-  return response.items.map((item) => ({
-    label: item.codigo ? `${item.codigo} - ${item.descricao}` : item.descricao,
-    value: item.id
-  }));
+  return mapContaGerencialSelectOptions(response.items.filter((item) => item.aceitaLancamentos));
 }
 
 function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload {
   return {
+    origemCompraPlanejadaId: normalizeNullableId(values.origemCompraPlanejadaId),
     numeroDocumento: normalizeNullableText(values.numeroDocumento),
     dataEmissao: values.dataEmissao,
-    responsavelCompraId: normalizeNullableId(values.responsavelId),
+    responsavelCompraId: values.responsavelId,
     recebedorId: values.pessoaId,
     dataVencimento: values.dataVencimento,
     formaPagamentoId: values.formaPagamentoId,
@@ -289,7 +366,7 @@ function buildContaReceberPayload(values: FinanceiroFormValues): ContaReceberPay
   return {
     numeroDocumento: normalizeNullableText(values.numeroDocumento),
     dataEmissao: values.dataEmissao,
-    responsavelId: normalizeNullableId(values.responsavelId),
+    responsavelId: values.responsavelId,
     pagadorId: values.pessoaId,
     dataVencimento: values.dataVencimento,
     formaPagamentoId: values.formaPagamentoId,
@@ -331,7 +408,8 @@ function buildToFormValues(detail: {
   ehRecorrente: boolean;
   recorrencia: {
     tipoPeriodicidade: 'Mensal';
-    diaGeracaoMensal: number;
+    tipoDia: 'DiaFixo' | 'DiaUtil';
+    diaOrdemMensal: number;
     dataInicio: string;
     dataFim: string | null;
     permiteEdicaoOcorrenciaIndividual: boolean;
@@ -339,6 +417,7 @@ function buildToFormValues(detail: {
   } | null;
 }) {
   return {
+    origemCompraPlanejadaId: '',
     numeroDocumento: detail.numeroDocumento ?? '',
     pessoaId: detail.pessoaId,
     responsavelId: detail.responsavelId ?? '',
@@ -361,9 +440,10 @@ function buildToFormValues(detail: {
     })),
     ehRecorrente: detail.ehRecorrente,
     recorrenciaTipoPeriodicidade: detail.recorrencia?.tipoPeriodicidade ?? 'Mensal',
-    recorrenciaDiaGeracaoMensal: detail.recorrencia?.diaGeracaoMensal ?? 1,
+    recorrenciaTipoDia: detail.recorrencia?.tipoDia ?? 'DiaFixo',
+    recorrenciaDiaOrdemMensal: detail.recorrencia?.diaOrdemMensal ?? 1,
     recorrenciaDataInicio: detail.recorrencia?.dataInicio ?? '',
-    recorrenciaDataFim: detail.recorrencia?.dataFim ?? '',
+    recorrenciaDataFim: toMonthInputValue(detail.recorrencia?.dataFim),
     recorrenciaPermiteEdicaoOcorrenciaIndividual: detail.recorrencia?.permiteEdicaoOcorrenciaIndividual ?? true,
     recorrenciaObservacao: detail.recorrencia?.observacao ?? '',
     recorrenciaGerarAteData: detail.recorrencia?.dataFim ?? ''
@@ -376,22 +456,22 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
   singularTitle: 'Conta a pagar',
   routeBase: '/contas-pagar',
   personLabel: 'Recebedor',
-  listDescription: 'Controle financeiro das obrigacoes a pagar com rateio, parcelamento e acoes de liquidacao.',
-  formDescription: 'Cadastre despesas e obrigacoes financeiras mantendo rateio e parcelamento coerentes com o backend.',
+  listDescription: 'Controle financeiro das obrigações a pagar com rateio, parcelamento e ações de liquidação.',
+  formDescription: 'Cadastre despesas e obrigações financeiras mantendo rateio e parcelamento coerentes com o backend.',
   columns: [
-    { title: 'Descricao', dataIndex: 'descricao', key: 'descricao' },
+    { title: 'Descrição', dataIndex: 'descricao', key: 'descricao' },
     { title: 'Recebedor', dataIndex: 'recebedorNome', key: 'recebedorNome' },
-    { title: 'Vencimento', dataIndex: 'dataVencimento', key: 'dataVencimento' },
+    { title: 'Vencimento', dataIndex: 'dataVencimento', key: 'dataVencimento', render: (value) => formatDateBR(String(value)) },
     { title: 'Forma', dataIndex: 'formaPagamentoNome', key: 'formaPagamentoNome' },
-    { title: 'Valor', dataIndex: 'valorLiquido', key: 'valorLiquido', render: (value) => renderCurrency(value as number) },
-    { title: 'Status', dataIndex: 'statusCodigo', key: 'statusCodigo', render: (value) => renderStatusTag(value as StatusContaCodigo) },
+    { title: 'Valor', dataIndex: 'valorLiquido', key: 'valorLiquido', render: (value) => formatCurrencyBRL(value as number) },
+    { title: 'Status', dataIndex: 'statusCodigo', key: 'statusCodigo' },
     { title: 'Parcela', key: 'parcela', render: (_value, record) => `${record.numeroParcela}/${record.quantidadeParcelas}` }
   ],
   defaultFilters: {
     page: 1,
-    pageSize: 10,
+    pageSize: 20,
     search: '',
-    statusCodigo: undefined
+    statusCodigo: ['PENDENTE', 'VENCIDA']
   },
   defaultValues,
   list: financeiroApi.contasPagar.listar,
@@ -407,6 +487,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
       dataLiquidacao: values.dataLiquidacao,
       contaBancariaId: values.contaBancariaId
     }),
+  estornar: financeiroApi.contasPagar.estornar,
   cancelar: financeiroApi.contasPagar.cancelar,
   toFormValues: (detail) => ({
     ...buildToFormValues({
@@ -429,13 +510,42 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
       ehRecorrente: detail.ehRecorrente,
       recorrencia: detail.recorrencia
     }),
+    origemCompraPlanejadaId: detail.origemCompraPlanejadaId ?? '',
     formaPagamentoId: detail.formaPagamentoId
   }),
   loadPessoaOptions,
   loadFormaPagamentoOptions,
   loadContaBancariaOptions,
   loadCartaoOptions,
-  loadRateioOptions: () => loadRateioOptions('Despesa')
+  loadRateioOptions: () => loadRateioOptions('Despesa'),
+  resolveCreateDefaults: async (searchParams) => {
+    const origemCompraPlanejadaId = searchParams.get('origemCompraPlanejadaId');
+    if (!origemCompraPlanejadaId) {
+      return null;
+    }
+
+    const compraPlanejada = await comprasPlanejadasApi.obterPorId(origemCompraPlanejadaId);
+
+    return {
+      origemCompraPlanejadaId,
+      descricao: compraPlanejada.titulo,
+      observacao: compraPlanejada.link
+        ? `Origem: compra planejada\n${compraPlanejada.link}`
+        : 'Origem: compra planejada',
+      valorOriginal: compraPlanejada.valorEstimado,
+      quantidadeParcelas: compraPlanejada.quantidadeParcelasDesejada ?? 1,
+      responsavelId: compraPlanejada.responsavelId,
+      dataEmissao: compraPlanejada.dataDesejada ?? '',
+      dataVencimento: compraPlanejada.dataDesejada ?? '',
+      rateios: [
+        {
+          contaGerencialId: compraPlanejada.contaGerencialId,
+          valor: compraPlanejada.valorEstimado
+        }
+      ]
+    };
+  },
+  buildSummaryItems: (summary) => buildContaFinanceiraSummaryItems(summary as ContaFinanceiraListSummary)
 };
 
 export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResumo, ContaReceberDetalhe, ContaReceberFilters> = {
@@ -445,21 +555,21 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
   routeBase: '/contas-receber',
   personLabel: 'Pagador',
   listDescription: 'Controle das entradas previstas e recebimentos efetivos com suporte a rateio e parcelamento.',
-  formDescription: 'Cadastre receitas mantendo os contratos e a composicao de rateio coerentes com o backend.',
+  formDescription: 'Cadastre receitas mantendo os contratos e a composição de rateio coerentes com o backend.',
   columns: [
-    { title: 'Descricao', dataIndex: 'descricao', key: 'descricao' },
+    { title: 'Descrição', dataIndex: 'descricao', key: 'descricao' },
     { title: 'Pagador', dataIndex: 'pagadorNome', key: 'pagadorNome' },
-    { title: 'Vencimento', dataIndex: 'dataVencimento', key: 'dataVencimento' },
+    { title: 'Vencimento', dataIndex: 'dataVencimento', key: 'dataVencimento', render: (value) => formatDateBR(String(value)) },
     { title: 'Forma', dataIndex: 'formaPagamentoNome', key: 'formaPagamentoNome' },
-    { title: 'Valor', dataIndex: 'valorLiquido', key: 'valorLiquido', render: (value) => renderCurrency(value as number) },
-    { title: 'Status', dataIndex: 'statusCodigo', key: 'statusCodigo', render: (value) => renderStatusTag(value as StatusContaCodigo) },
+    { title: 'Valor', dataIndex: 'valorLiquido', key: 'valorLiquido', render: (value) => formatCurrencyBRL(value as number) },
+    { title: 'Status', dataIndex: 'statusCodigo', key: 'statusCodigo' },
     { title: 'Parcela', key: 'parcela', render: (_value, record) => `${record.numeroParcela}/${record.quantidadeParcelas}` }
   ],
   defaultFilters: {
     page: 1,
-    pageSize: 10,
+    pageSize: 20,
     search: '',
-    statusCodigo: undefined
+    statusCodigo: ['PENDENTE', 'VENCIDA']
   },
   defaultValues,
   list: financeiroApi.contasReceber.listar,
@@ -475,6 +585,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
       dataLiquidacao: values.dataLiquidacao,
       contaBancariaId: values.contaBancariaId
     }),
+  estornar: financeiroApi.contasReceber.estornar,
   cancelar: financeiroApi.contasReceber.cancelar,
   toFormValues: (detail) => ({
     ...buildToFormValues({
@@ -503,7 +614,8 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
   loadFormaPagamentoOptions,
   loadContaBancariaOptions,
   loadCartaoOptions,
-  loadRateioOptions: () => loadRateioOptions('Receita')
+  loadRateioOptions: () => loadRateioOptions('Receita'),
+  buildSummaryItems: (summary) => buildContaFinanceiraSummaryItems(summary as ContaFinanceiraListSummary)
 };
 
-export { statusOptions };
+export { statusFilterOptions, statusOptions };

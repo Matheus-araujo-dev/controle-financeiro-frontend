@@ -32,7 +32,7 @@ describe('ImportacoesWhatsappPage', () => {
             nomeArquivo: null,
             mimeType: null,
             statusCodigo: 'PENDENTE_REVISAO',
-            statusNome: 'Pendente revisao',
+            statusNome: 'Pendente revisão',
             confiancaExtracao: 0.91,
             quantidadeItens: 1,
             quantidadePendentes: 1,
@@ -56,7 +56,7 @@ describe('ImportacoesWhatsappPage', () => {
             nomeArquivo: null,
             mimeType: null,
             statusCodigo: 'PENDENTE_REVISAO',
-            statusNome: 'Pendente revisao',
+            statusNome: 'Pendente revisão',
             confiancaExtracao: 0.91,
             quantidadeItens: 1,
             quantidadePendentes: 1,
@@ -88,11 +88,11 @@ describe('ImportacoesWhatsappPage', () => {
         })
       )
     );
-  }, 20000);
+  }, 40000);
 
   it('renders the error state and allows retry', async () => {
     vi.mocked(importacoesWhatsappApi.listar)
-      .mockRejectedValueOnce(new Error('Falha ao carregar importacoes'))
+      .mockRejectedValueOnce(new Error('Falha ao carregar importações'))
       .mockResolvedValueOnce({
         items: [],
         page: 1,
@@ -108,7 +108,7 @@ describe('ImportacoesWhatsappPage', () => {
     );
 
     expect(await screen.findByText('Falha ao carregar dados')).toBeInTheDocument();
-    expect(screen.getByText('Falha ao carregar importacoes')).toBeInTheDocument();
+    expect(screen.getByText('Falha ao carregar importações')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 

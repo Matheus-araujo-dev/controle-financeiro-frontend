@@ -10,6 +10,7 @@ Construir um frontend administrativo consistente com os contratos da API, com fo
 - testes para hooks, utils e fluxos críticos
 - cobertura desde o bootstrap
 - quality gate respeitado
+- tipos são gerados automaticamente via `npm run generate:types` a partir do Swagger do backend
 
 ## Prioridades
 1. compatibilidade com a API
@@ -17,3 +18,7 @@ Construir um frontend administrativo consistente com os contratos da API, com fo
 3. robustez de formulário
 4. previsibilidade dos estados de tela
 5. testabilidade
+
+## Workflow de tipos
+
+Execute `npm run generate:types` após modificar DTOs no backend. Tipos gerados ficam em `src/types/generated/`. Mantenha em `src/types/` apenas tipos não-gerados (utils, hooks, constantes).

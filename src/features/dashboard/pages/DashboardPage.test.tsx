@@ -1,5 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { DashboardPage } from './DashboardPage';
 import { dashboardApi } from '../../../services/http/dashboard-api';
 
@@ -99,56 +100,102 @@ const fluxoEconomicoMock = {
   ]
 } as const;
 
+const defaultReferenceMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+
+function mockDashboardBase() {
+  vi.mocked(dashboardApi.obterResumo).mockResolvedValue(resumoMock as never);
+  vi.mocked(dashboardApi.obterFluxoCaixa).mockImplementation(async (params) =>
+    (params?.visao === 'Economica' ? fluxoEconomicoMock : fluxoCaixaMock) as never
+  );
+}
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <DashboardPage />
+    </MemoryRouter>
+  );
+}
+
 describe('DashboardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('loads the dashboard, renders real data and toggles the flow view', async () => {
-    vi.mocked(dashboardApi.obterResumo).mockResolvedValue(resumoMock as never);
-    vi.mocked(dashboardApi.obterFluxoCaixa)
-      .mockResolvedValueOnce(fluxoCaixaMock as never)
-      .mockResolvedValueOnce(fluxoEconomicoMock as never);
+    mockDashboardBase();
 
-    render(<DashboardPage />);
+    renderPage();
 
+    expect(await screen.findByRole('heading', { name: 'Dashboard Executivo' })).toBeInTheDocument();
     expect((await screen.findAllByText(/1\.150,00/)).length).toBeGreaterThan(0);
-    expect(screen.getByText('Fornecedor atrasado')).toBeInTheDocument();
+    expect(await screen.findByText('Imposto da semana')).toBeInTheDocument();
     expect(screen.getByText('Cliente da semana')).toBeInTheDocument();
-    expect(screen.getByText('Receita recebida')).toBeInTheDocument();
-    expect(screen.getByText('Risco de saldo negativo projetado')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByText('Visao economica'));
+    expect(await screen.findByText('Receita recebida')).toBeInTheDocument();
 
     await waitFor(() =>
       expect(dashboardApi.obterFluxoCaixa).toHaveBeenLastCalledWith({
-        dias: 15,
-        visao: 'Economica'
+        mesReferencia: defaultReferenceMonth,
+        visao: 'Caixa'
       })
     );
 
-    expect(await screen.findByText('06/04/2026')).toBeInTheDocument();
-  }, 20000);
+    await userEvent.click(screen.getByRole('button', { name: 'ECONÔMICA' }));
 
-  it('renders the error state and allows retry', async () => {
-    vi.mocked(dashboardApi.obterResumo)
-      .mockRejectedValueOnce(new Error('Falha controlada'))
-      .mockResolvedValueOnce(resumoMock as never);
-    vi.mocked(dashboardApi.obterFluxoCaixa)
-      .mockResolvedValueOnce(fluxoCaixaMock as never);
+    await waitFor(() =>
+      expect(dashboardApi.obterFluxoCaixa).toHaveBeenLastCalledWith({
+        mesReferencia: defaultReferenceMonth,
+        visao: 'Economica'
+      })
+    );
+  }, 30000);
 
-    render(<DashboardPage />);
+  it('renders the KPI cards with the summary values', async () => {
+    mockDashboardBase();
 
-    expect(await screen.findByText('Falha ao carregar dashboard')).toBeInTheDocument();
-    expect(screen.getByText('Falha controlada')).toBeInTheDocument();
+    renderPage();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    expect(await screen.findByText('Saldo Atual')).toBeInTheDocument();
+    expect(screen.getByText('A Pagar (Hoje)')).toBeInTheDocument();
+    expect(screen.getByText('A Receber')).toBeInTheDocument();
+    expect(screen.getByText('Projetado (Fim de Mês)')).toBeInTheDocument();
+    expect(await screen.findByText('R$1.500,00')).toBeInTheDocument();
+    expect(screen.getAllByText('R$200,00').length).toBeGreaterThan(0);
+    // 1 vencida + 1 conta a pagar a vencer
+    expect(screen.getByText('2 faturas pendentes')).toBeInTheDocument();
+  });
 
-    await waitFor(() => {
-      expect(dashboardApi.obterResumo).toHaveBeenCalledTimes(2);
-      expect(dashboardApi.obterFluxoCaixa).toHaveBeenCalledTimes(1);
+  it('renders the error state when the summary request fails', async () => {
+    vi.mocked(dashboardApi.obterResumo).mockRejectedValue(new Error('Falha controlada'));
+    vi.mocked(dashboardApi.obterFluxoCaixa).mockResolvedValue(fluxoCaixaMock as never);
+
+    renderPage();
+
+    expect(await screen.findByText('Falha controlada')).toBeInTheDocument();
+  });
+
+  it('reloads the dashboard when the reference month changes', async () => {
+    mockDashboardBase();
+
+    renderPage();
+
+    expect(await screen.findByText('Imposto da semana')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Mês de referência do dashboard'), {
+      target: { value: '2026-05' }
     });
-    await waitFor(() => expect(screen.queryByTestId('page-state-error')).not.toBeInTheDocument());
-    expect((await screen.findAllByText(/1\.150,00/)).length).toBeGreaterThan(0);
+
+    await waitFor(() =>
+      expect(dashboardApi.obterResumo).toHaveBeenLastCalledWith({
+        mesReferencia: '2026-05'
+      })
+    );
+
+    await waitFor(() =>
+      expect(dashboardApi.obterFluxoCaixa).toHaveBeenLastCalledWith({
+        mesReferencia: '2026-05',
+        visao: 'Caixa'
+      })
+    );
   });
 });

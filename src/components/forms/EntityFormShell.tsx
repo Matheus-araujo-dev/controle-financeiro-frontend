@@ -8,6 +8,8 @@ type EntityFormShellProps = PropsWithChildren<{
   cancelLabel?: string;
   isValid: boolean;
   isSubmitting?: boolean;
+  showSubmit?: boolean;
+  showCancel?: boolean;
   onCancel?: () => void;
 }>;
 
@@ -19,23 +21,27 @@ export function EntityFormShell({
   cancelLabel = 'Cancelar',
   isValid,
   isSubmitting = false,
+  showSubmit = true,
+  showCancel = true,
   onCancel
 }: EntityFormShellProps) {
   return (
-    <Card>
-      <Space orientation="vertical" size={16} style={{ width: '100%' }}>
-        <div>
+    <Card className="entity-form-shell">
+      <Space orientation="vertical" size={24} style={{ width: '100%' }}>
+        <div className="entity-form-shell__header">
           <Typography.Title level={4}>{title}</Typography.Title>
           <Typography.Paragraph>{description}</Typography.Paragraph>
         </div>
 
-        <div>{children}</div>
+        <div className="entity-form-shell__body">{children}</div>
 
-        <Space>
-          {onCancel ? <Button onClick={onCancel}>{cancelLabel}</Button> : null}
-          <Button type="primary" htmlType="submit" disabled={!isValid} loading={isSubmitting}>
-            {submitLabel}
-          </Button>
+        <Space className="entity-form-shell__footer">
+          {showCancel && onCancel ? <Button onClick={onCancel}>{cancelLabel}</Button> : null}
+          {showSubmit ? (
+            <Button type="primary" htmlType="submit" disabled={!isValid} loading={isSubmitting}>
+              {submitLabel}
+            </Button>
+          ) : null}
         </Space>
       </Space>
     </Card>

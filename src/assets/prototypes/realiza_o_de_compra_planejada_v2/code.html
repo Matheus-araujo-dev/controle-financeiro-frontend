@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NeonLedger - Realização de Compra Planejada</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#006e35",
+                        "on-surface-variant": "#adaaaa",
+                        "on-primary-container": "#004f24",
+                        "secondary-dim": "#65ecae",
+                        "surface-container": "#1a1a1a",
+                        "on-background": "#ffffff",
+                        "outline-variant": "#484847",
+                        "error-container": "#9f0519",
+                        "tertiary-fixed-dim": "#00cdec",
+                        "on-tertiary-fixed-variant": "#005361",
+                        "inverse-on-surface": "#565555",
+                        "secondary-fixed-dim": "#65ecae",
+                        "on-secondary": "#005e3d",
+                        "tertiary-dim": "#00cdec",
+                        "secondary": "#74fbbb",
+                        "background": "#0e0e0e",
+                        "error": "#ff716c",
+                        "tertiary-fixed": "#00dcfd",
+                        "tertiary-container": "#00dcfd",
+                        "on-primary": "#005d2c",
+                        "primary-fixed-dim": "#24f07e",
+                        "on-tertiary-container": "#004955",
+                        "on-tertiary-fixed": "#00343d",
+                        "surface-container-highest": "#262626",
+                        "secondary-fixed": "#74fbbb",
+                        "on-secondary-fixed-variant": "#006945",
+                        "surface-dim": "#0e0e0e",
+                        "on-tertiary": "#005360",
+                        "primary-fixed": "#3fff8b",
+                        "on-error-container": "#ffa8a3",
+                        "surface-container-high": "#20201f",
+                        "on-primary-fixed-variant": "#006832",
+                        "outline": "#767575",
+                        "surface": "#0e0e0e",
+                        "on-primary-fixed": "#004820",
+                        "surface-bright": "#2c2c2c",
+                        "surface-container-low": "#131313",
+                        "surface-container-lowest": "#000000",
+                        "primary-dim": "#24f07e",
+                        "surface-tint": "#3fff8b",
+                        "primary-container": "#13ea79",
+                        "on-secondary-fixed": "#00492f",
+                        "secondary-container": "#006c47",
+                        "inverse-surface": "#fcf9f8",
+                        "on-surface": "#ffffff",
+                        "tertiary": "#7ae6ff",
+                        "on-secondary-container": "#e1ffeb",
+                        "on-error": "#490006",
+                        "error-dim": "#d7383b",
+                        "primary": "#3fff8b",
+                        "surface-variant": "#262626"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0e0e0e;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(26, 26, 26, 0.7);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 flex items-center justify-between px-8 py-4 bg-[#0e0e0e] bg-opacity-90 backdrop-blur-md shadow-[0_20px_50px_rgba(63,255,139,0.05)]">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black text-[#3fff8b] tracking-tighter">NeonLedger</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-[#adaaaa] hover:text-white transition-colors font-body text-sm font-medium" href="#">Dashboard</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors font-body text-sm font-medium" href="#">Contas</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors font-body text-sm font-medium" href="#">Cartões</a>
+<a class="text-[#adaaaa] hover:text-white transition-colors font-body text-sm font-medium" href="#">Conciliação</a>
+<a class="text-[#3fff8b] border-b-2 border-[#3fff8b] pb-1 font-body text-sm font-medium" href="#">Planejamento</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-[#adaaaa] hover:bg-[#262626] rounded-lg transition-all scale-95 active:duration-150">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-[#adaaaa] hover:bg-[#262626] rounded-lg transition-all scale-95 active:duration-150">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container border border-outline-variant/15">
+<img alt="Avatar do Usuário" data-alt="Professional studio headshot of a person with friendly expression against a dark neutral background, high-end commercial photography style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuByteQ10aOf_ZmYf1iSMeZ0vvbf27LTie3LIY0lmIzaBiu4hPnqXPlRipPbwo2uVl3AmfQQd37S5OTu1VvmLV_aDnieVpP-0LmKOb4U685Bw1sys8Npr4hVnhj7vXpWNEZJQKBIELHlXEaMsbT_1yZc5Va23Af5sgABociOaJz4sZ-ecM-Uqo7vhVH-KDW3a22SaWPdkfiDbSJ3YXE6MgbXn6_2jlMcAMMlOJaCFwe37GdqvORevICi2rvzVWcXbcdKAFQX8str6GNj"/>
+</div>
+</div>
+</nav>
+<!-- Side Navigation Bar (Web) -->
+<aside class="hidden lg:flex flex-col h-full fixed left-0 py-8 bg-[#131313] w-64 space-y-4 pt-24 z-40">
+<div class="px-6 mb-4">
+<h3 class="text-[#3fff8b] font-bold font-headline text-xs uppercase tracking-widest opacity-70">Inteligência Financeira</h3>
+<p class="text-[#adaaaa] text-[10px] font-medium uppercase mt-1">Status: Em Dia</p>
+</div>
+<nav class="flex-1">
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all font-['Inter'] text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">dashboard</span> Visão Geral
+            </a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all font-['Inter'] text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">payments</span> Fluxo de Caixa
+            </a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all font-['Inter'] text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">credit_card</span> Cartões de Crédito
+            </a>
+<a class="text-[#adaaaa] py-3 px-6 flex items-center gap-3 hover:bg-[#262626] hover:text-white transition-all font-['Inter'] text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">account_balance</span> Bancos
+            </a>
+<a class="bg-[#1a1a1a] text-[#3fff8b] shadow-[inset_0_0_10px_rgba(63,255,139,0.1)] border-r-4 border-[#3fff8b] py-3 px-6 flex items-center gap-3 font-['Inter'] text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">shopping_cart</span> Lista de Compras
+            </a>
+</nav>
+<div class="px-6 pt-4 border-t border-outline-variant/10">
+<button class="w-full bg-[#3fff8b] text-[#004820] font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:brightness-110 transition-all scale-95 active:duration-150">
+<span class="material-symbols-outlined">add_circle</span> Nova Transação
+            </button>
+</div>
+<div class="px-6 mt-auto">
+<a class="text-[#adaaaa] py-2 flex items-center gap-3 hover:text-white transition-all text-xs font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">help</span> Ajuda
+            </a>
+<a class="text-[#adaaaa] py-2 flex items-center gap-3 hover:text-white transition-all text-xs font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">logout</span> Sair
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:pl-64 pt-24 pb-24 min-h-screen px-4 md:px-8">
+<div class="max-w-5xl mx-auto">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+<div>
+<h1 class="font-headline font-extrabold text-4xl text-on-background tracking-tighter">Realizar Compra</h1>
+<p class="text-on-surface-variant font-body text-lg mt-2">Converta sua intenção de compra em um registro financeiro real.</p>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant/15">
+<div class="bg-primary/10 p-3 rounded-full">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+<div>
+<span class="block text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">Item Planejado</span>
+<span class="block font-headline font-bold text-xl text-primary">Upgrade Workstation</span>
+</div>
+</div>
+</div>
+<!-- Main Layout Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Purchase Form -->
+<div class="lg:col-span-2 space-y-8">
+<div class="bg-surface-container rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+<!-- Decorative glow -->
+<div class="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
+<form class="space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Data da Compra -->
+<div class="space-y-2">
+<label class="font-label font-bold text-[11px] uppercase tracking-widest text-on-surface-variant ml-1">Data da Compra</label>
+<div class="relative">
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface focus:ring-1 focus:ring-primary/40 focus:bg-surface-container-high transition-all appearance-none" type="date" value="2023-10-27"/>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">calendar_today</span>
+</div>
+</div>
+<!-- Forma de Pagamento -->
+<div class="space-y-2">
+<label class="font-label font-bold text-[11px] uppercase tracking-widest text-on-surface-variant ml-1">Forma de Pagamento</label>
+<div class="relative">
+<select class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface focus:ring-1 focus:ring-primary/40 focus:bg-surface-container-high transition-all appearance-none">
+<option>Cartão de Crédito Neon (9928)</option>
+<option>Pix / Transferência</option>
+<option>Boleto Bancário</option>
+<option>Dinheiro em Espécie</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Recebedor / Loja -->
+<div class="space-y-2">
+<label class="font-label font-bold text-[11px] uppercase tracking-widest text-on-surface-variant ml-1">Recebedor / Estabelecimento</label>
+<div class="relative">
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-12 text-on-surface focus:ring-1 focus:ring-primary/40 focus:bg-surface-container-high transition-all" placeholder="Ex: Apple Store, Amazon, Kabum..." type="text"/>
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">storefront</span>
+</div>
+</div>
+<!-- Descrição Financeira -->
+<div class="space-y-2">
+<label class="font-label font-bold text-[11px] uppercase tracking-widest text-on-surface-variant ml-1">Descrição Financeira</label>
+<textarea class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface focus:ring-1 focus:ring-primary/40 focus:bg-surface-container-high transition-all resize-none" placeholder="Detalhes sobre a compra para controle futuro..." rows="3"></textarea>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Número do Documento -->
+<div class="space-y-2">
+<label class="font-label font-bold text-[11px] uppercase tracking-widest text-on-surface-variant ml-1">Número do Documento / NF-e</label>
+<div class="relative">
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-12 text-on-surface focus:ring-1 focus:ring-primary/40 focus:bg-surface-container-high transition-all" placeholder="Ex: 002.391.12" type="text"/>
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">receipt</span>
+</div>
+</div>
+<!-- Valor Efetivado -->
+<div class="space-y-2">
+<label class="font-label font-bold text-[11px] uppercase tracking-widest text-on-surface-variant ml-1">Valor Final Efetivado</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-primary">R$</span>
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-5 text-on-surface font-headline font-bold text-xl focus:ring-1 focus:ring-primary/40 focus:bg-surface-container-high transition-all" type="text" value="12.450,00"/>
+</div>
+</div>
+</div>
+</form>
+</div>
+<!-- Visual Feedback Card -->
+<div class="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10 flex items-center gap-4">
+<div class="w-12 h-12 bg-primary/20 flex items-center justify-center rounded-full">
+<span class="material-symbols-outlined text-primary">info</span>
+</div>
+<p class="text-sm text-on-surface-variant font-medium leading-relaxed">
+                            Ao finalizar, esta intenção será removida da sua <span class="text-white font-bold">Lista de Compras</span> e adicionada como uma saída no seu <span class="text-white font-bold">Fluxo de Caixa</span>.
+                        </p>
+</div>
+</div>
+<!-- Secondary Column / Summary -->
+<div class="space-y-8">
+<!-- Summary Card -->
+<div class="bg-surface-container rounded-3xl p-6 shadow-xl border border-outline-variant/15">
+<h3 class="font-headline font-bold text-lg mb-4">Resumo da Intenção</h3>
+<div class="space-y-4">
+<div class="flex justify-between items-center py-3 border-b border-outline-variant/10">
+<span class="text-on-surface-variant text-sm font-medium">Meta Original</span>
+<span class="text-on-surface font-bold">R$ 13.000,00</span>
+</div>
+<div class="flex justify-between items-center py-3 border-b border-outline-variant/10">
+<span class="text-on-surface-variant text-sm font-medium">Economia</span>
+<span class="text-primary font-bold">R$ 550,00</span>
+</div>
+<div class="flex justify-between items-center py-3">
+<span class="text-on-surface-variant text-sm font-medium">Variação</span>
+<span class="bg-primary/10 text-primary text-[10px] px-2 py-1 rounded-full font-black uppercase">- 4.2%</span>
+</div>
+</div>
+<div class="mt-8">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold py-4 rounded-xl shadow-[0_10px_20px_rgba(63,255,139,0.2)] hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">check_circle</span>
+                                CONFIRMAR COMPRA
+                            </button>
+<button class="w-full mt-3 text-on-surface-variant font-bold py-3 hover:text-white transition-all text-sm uppercase tracking-widest">
+                                CANCELAR
+                            </button>
+</div>
+</div>
+<!-- Category Insight -->
+<div class="bg-[#1a1a1a]/40 backdrop-blur-xl rounded-3xl overflow-hidden shadow-lg border border-outline-variant/10">
+<div class="h-32 w-full overflow-hidden">
+<img alt="Modern tech workspace" class="w-full h-full object-cover" data-alt="Ultra-modern desk setup with glowing keyboard, sleek monitor, and dark aesthetic with subtle green ambient lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLCZ_yfhmChe_E6F6rPz0XMGCnusyg__W-QkJ3XLPfdbZzDu0rxBQeAYKE_Be8ezbbeXYxyh31jGdTMc7uu7m2tQKMw9S-xh9CGIO4dAQXa7UZC32FoDPj60DQTQberCYXhlSbXHTkse4KZdtLfml8unB0ArPQYEMKu8901HSID7sqEstVoItejQfkqgRLePZErp-AKJ_sXeKdo0TeFOTHrZKYbWM6hYqLcGuQENz1w-q-7MagsI1y6jtOG8yHhyY5rWGcsqYLEt25"/>
+</div>
+<div class="p-6">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-sm">analytics</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary">Insight de Categoria</span>
+</div>
+<p class="text-sm text-on-surface-variant">Esta compra representa <span class="text-white font-bold">12%</span> do seu orçamento anual de <span class="text-white font-bold">Tecnologia</span>. Você ainda possui R$ 4.500,00 reservados para este ano.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile) -->
+<footer class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 lg:hidden bg-[#0e0e0e]/80 backdrop-blur-xl rounded-t-3xl border-t border-[#484847]/15 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+<button class="flex flex-col items-center justify-center text-[#adaaaa] p-2 active:bg-[#262626] transition-all">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-[#3fff8b] text-[#0e0e0e] rounded-xl p-2 scale-110 active:duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shopping_cart</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Compras</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#adaaaa] p-2 active:bg-[#262626] transition-all">
+<span class="material-symbols-outlined">north_east</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Receber</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#adaaaa] p-2 active:bg-[#262626] transition-all">
+<span class="material-symbols-outlined">menu</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase mt-1">Menu</span>
+</button>
+</footer>
+</body></html>

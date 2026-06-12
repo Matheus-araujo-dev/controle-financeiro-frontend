@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { TableColumnsType } from 'antd';
 import { AppDataTable } from './AppDataTable';
@@ -75,5 +75,27 @@ describe('AppDataTable', () => {
 
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByText('Registro base')).toBeInTheDocument();
+  });
+
+  it('sorts rows locally when clicking the column header', async () => {
+    const user = userEvent.setup();
+
+    const { container } = render(
+      <AppDataTable<Row>
+        columns={columns}
+        dataSource={[
+          { id: '2', name: 'Zulu' },
+          { id: '1', name: 'Alpha' }
+        ]}
+        rowKey="id"
+      />
+    );
+
+    await user.click(screen.getByText('Nome'));
+    await waitFor(() => {
+      const cells = Array.from(container.querySelectorAll('.ant-table-row .ant-table-cell'));
+      expect(cells[0]).toHaveTextContent('Alpha');
+      expect(cells[1]).toHaveTextContent('Zulu');
+    });
   });
 });

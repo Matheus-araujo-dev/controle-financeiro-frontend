@@ -1,4 +1,14 @@
 import type {
+  DashboardCentralPrevisaoItens,
+  DashboardCentralPrevisaoItensFilters,
+  DashboardCentralPrevisaoResumo,
+  DashboardCentralPrevisaoResumoFilters,
+  DashboardContaGerencialLancamentos,
+  DashboardContaGerencialLancamentosFilters,
+  DashboardContaGerencialResumo,
+  DashboardContaGerencialResumoFilters,
+  DashboardContaGerencialSerie,
+  DashboardContaGerencialSerieFilters,
   DashboardFluxoCaixa,
   DashboardFluxoCaixaFilters,
   DashboardResumo,
@@ -13,6 +23,36 @@ export const dashboardApi = {
   },
   async obterFluxoCaixa(params: DashboardFluxoCaixaFilters = {}) {
     const response = await apiClient.get<DashboardFluxoCaixa>('/dashboard/fluxo-caixa', { params });
+    return response.data;
+  },
+  async obterResumoContasGerenciais(params: DashboardContaGerencialResumoFilters = {}) {
+    const response = await apiClient.get<DashboardContaGerencialResumo>('/dashboard/contas-gerenciais/resumo', {
+      params
+    });
+    return response.data;
+  },
+  async obterSerieContasGerenciais(params: DashboardContaGerencialSerieFilters = {}) {
+    const response = await apiClient.get<DashboardContaGerencialSerie>('/dashboard/contas-gerenciais/serie', {
+      params
+    });
+    return response.data;
+  },
+  async obterLancamentosContaGerencial(params: DashboardContaGerencialLancamentosFilters) {
+    const response = await apiClient.get<DashboardContaGerencialLancamentos>('/dashboard/contas-gerenciais/lancamentos', {
+      params
+    });
+    return response.data;
+  },
+  async obterResumoCentralPrevisao(params: DashboardCentralPrevisaoResumoFilters = {}) {
+    const response = await apiClient.get<DashboardCentralPrevisaoResumo>('/dashboard/central-previsao/resumo', {
+      params
+    });
+    return response.data;
+  },
+  async obterItensCentralPrevisao(params: DashboardCentralPrevisaoItensFilters = {}) {
+    const response = await apiClient.get<DashboardCentralPrevisaoItens>('/dashboard/central-previsao/itens', {
+      params
+    });
     return response.data;
   }
 };
