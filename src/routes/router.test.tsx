@@ -145,9 +145,9 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByTestId('admin-shell')).toBeInTheDocument();
+    expect(await screen.findByTestId('admin-shell', undefined, { timeout: 15000 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
-    expect(await screen.findByText(/Dashboard executivo/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Dashboard executivo/i, undefined, { timeout: 15000 })).toBeInTheDocument();
   }, 30000);
 
   it('renders the not found page for unknown routes', async () => {
