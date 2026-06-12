@@ -7,12 +7,14 @@ import { DashboardOperationalAgenda } from '../components/DashboardOperationalAg
 import { DashboardTransactionList } from '../components/DashboardTransactionList';
 import { PageState } from '../../../components/states/PageState';
 import { dashboardApi } from '../../../services/http/dashboard-api';
+import { orcamentosApi } from '../../../services/http/orcamentos-api';
 import { formatCurrencyBRL } from '../../../shared/currency';
 import type {
   DashboardFluxoCaixa,
   DashboardFluxoCaixaVisao,
   DashboardResumo
 } from '../../../types/dashboard';
+import type { OrcamentoItem } from '../../../types/orcamento';
 
 function formatCurrency(value: number) {
   return formatCurrencyBRL(value);
@@ -39,6 +41,7 @@ export function DashboardPage() {
   const [view, setView] = useState<DashboardFluxoCaixaVisao>('Caixa');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
+  const [categoriasEstouradas, setCategoriasEstouradas] = useState<OrcamentoItem[]>([]);
 
   async function loadDashboard() {
     setLoading(true);
@@ -62,6 +65,28 @@ export function DashboardPage() {
   useEffect(() => {
     void loadDashboard();
   }, [referenceMonth, view]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // Alerta de orçamento sempre olha o mês corrente, independente do mês exibido.
+    orcamentosApi
+      .obterPorCompetencia(getCurrentReferenceMonth())
+      .then((orcamento) => {
+        if (!cancelled) {
+          setCategoriasEstouradas(orcamento.itens.filter((item) => item.estourado));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCategoriasEstouradas([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (loading && !summary && !cashFlow) {
     return <PageState state="loading" title="Carregando dashboard" />;
@@ -119,6 +144,23 @@ export function DashboardPage() {
               <span className="material-symbols-outlined">warning</span>
               <span className="text-sm font-medium">{errorMessage}</span>
            </div>
+        )}
+
+        {/* Alerta de estouro de orçamento no mês corrente */}
+        {categoriasEstouradas.length > 0 && (
+          <Link
+            to="/orcamento"
+            className="bg-error/10 border border-error/30 p-4 rounded-2xl flex items-center justify-between gap-3 !text-error hover:bg-error/15 hover:!text-error transition-all animate-in fade-in slide-in-from-top-2"
+          >
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined">savings</span>
+              <span className="text-sm font-bold">
+                {categoriasEstouradas.length} categoria(s) estourou(aram) a meta de orçamento deste mês:{' '}
+                {categoriasEstouradas.map((item) => item.contaGerencialDescricao).join(', ')}
+              </span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider">Ver orçamento →</span>
+          </Link>
         )}
 
         {/* Alerta de contas vencidas */}

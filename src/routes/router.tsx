@@ -9,6 +9,7 @@ const AccessDeniedPage = lazy(() => import('../pages/AccessDeniedPage').then(m =
 const LoginPage = lazy(() => import('../pages/LoginPage').then(m => ({ default: m.LoginPage })));
 const FamiliaPage = lazy(() => import('../features/familia/FamiliaPage').then(m => ({ default: m.FamiliaPage })));
 const RelatoriosPage = lazy(() => import('../features/relatorios/RelatoriosPage').then(m => ({ default: m.RelatoriosPage })));
+const OrcamentoPage = lazy(() => import('../features/orcamento/pages/OrcamentoPage').then(m => ({ default: m.OrcamentoPage })));
 const AceitarConvitePage = lazy(() => import('../features/familia/AceitarConvitePage').then(m => ({ default: m.AceitarConvitePage })));
 const NotFoundPage = lazy(() => import('./NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
@@ -33,6 +34,13 @@ export const appRoutes: RouteObject[] = [
         element: <DashboardPage />,
         handle: {
           title: 'Dashboard'
+        }
+      },
+      {
+        path: 'orcamento',
+        element: <OrcamentoPage />,
+        handle: {
+          title: 'Orçamento'
         }
       },
       {

@@ -12,6 +12,7 @@ type RouteHandle = {
 
 const navIcons: Record<string, string> = {
   '/dashboard': 'dashboard',
+  '/orcamento': 'savings',
   '/relatorios': 'monitoring',
   '/contas-pagar': 'arrow_upward',
   '/contas-receber': 'arrow_downward',
