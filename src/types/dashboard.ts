@@ -208,3 +208,27 @@ export type DashboardCentralPrevisaoItens = {
   status: DashboardCentralPrevisaoStatus | null;
   itens: DashboardCentralPrevisaoItem[];
 };
+
+export type DashboardResponsavelFilters = {
+  mesReferencia?: string;
+  dataInicial?: string;
+  dias?: number;
+};
+
+export type DashboardResponsavelItem = {
+  responsavelId: string | null;
+  responsavelNome: string;
+  totalDespesas: number;
+  totalDespesasCartao: number;
+  totalReceitas: number;
+  saldoLiquido: number;
+  quantidadeLancamentos: number;
+};
+
+export type DashboardResponsavelResumo = {
+  dataInicial: string;
+  dias: number;
+  totalDespesas: number;
+  totalReceitas: number;
+  itens: DashboardResponsavelItem[];
+};

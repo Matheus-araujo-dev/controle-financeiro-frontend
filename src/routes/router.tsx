@@ -8,6 +8,7 @@ const NeonLedgerLayout = lazy(() => import('../layouts/NeonLedgerLayout').then(m
 const AccessDeniedPage = lazy(() => import('../pages/AccessDeniedPage').then(m => ({ default: m.AccessDeniedPage })));
 const LoginPage = lazy(() => import('../pages/LoginPage').then(m => ({ default: m.LoginPage })));
 const FamiliaPage = lazy(() => import('../features/familia/FamiliaPage').then(m => ({ default: m.FamiliaPage })));
+const RelatoriosPage = lazy(() => import('../features/relatorios/RelatoriosPage').then(m => ({ default: m.RelatoriosPage })));
 const AceitarConvitePage = lazy(() => import('../features/familia/AceitarConvitePage').then(m => ({ default: m.AceitarConvitePage })));
 const NotFoundPage = lazy(() => import('./NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
@@ -32,6 +33,13 @@ export const appRoutes: RouteObject[] = [
         element: <DashboardPage />,
         handle: {
           title: 'Dashboard'
+        }
+      },
+      {
+        path: 'relatorios',
+        element: <RelatoriosPage />,
+        handle: {
+          title: 'Relatórios'
         }
       },
       {

@@ -15,7 +15,8 @@ export const navigationStructure: NavGroup[] = [
     key: 'geral',
     label: 'Geral',
     items: [
-      { key: '/dashboard', label: 'Dashboard' }
+      { key: '/dashboard', label: 'Dashboard' },
+      { key: '/relatorios', label: 'Relatórios' }
     ]
   },
   {

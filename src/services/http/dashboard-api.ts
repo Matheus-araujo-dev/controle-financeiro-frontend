@@ -12,7 +12,9 @@ import type {
   DashboardFluxoCaixa,
   DashboardFluxoCaixaFilters,
   DashboardResumo,
-  DashboardResumoFilters
+  DashboardResumoFilters,
+  DashboardResponsavelFilters,
+  DashboardResponsavelResumo
 } from '../../types/dashboard';
 import { apiClient } from './api-client';
 
@@ -41,6 +43,10 @@ export const dashboardApi = {
     const response = await apiClient.get<DashboardContaGerencialLancamentos>('/dashboard/contas-gerenciais/lancamentos', {
       params
     });
+    return response.data;
+  },
+  async obterResumoPorResponsaveis(params: DashboardResponsavelFilters = {}) {
+    const response = await apiClient.get<DashboardResponsavelResumo>('/dashboard/responsaveis/resumo', { params });
     return response.data;
   },
   async obterResumoCentralPrevisao(params: DashboardCentralPrevisaoResumoFilters = {}) {
