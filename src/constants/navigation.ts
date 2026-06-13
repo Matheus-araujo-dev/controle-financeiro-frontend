@@ -46,6 +46,14 @@ export const navigationStructure: NavGroup[] = [
     ]
   },
   {
+    key: 'agente',
+    label: 'Agente IA',
+    items: [
+      { key: '/agente/chat', label: 'Chat financeiro' },
+      { key: '/agente/whatsapp', label: 'Vínculo WhatsApp' }
+    ]
+  },
+  {
     key: 'conta',
     label: 'Conta',
     items: [

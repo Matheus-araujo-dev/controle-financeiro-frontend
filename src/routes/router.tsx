@@ -12,6 +12,8 @@ const RelatoriosPage = lazy(() => import('../features/relatorios/RelatoriosPage'
 const OrcamentoPage = lazy(() => import('../features/orcamento/pages/OrcamentoPage').then(m => ({ default: m.OrcamentoPage })));
 const AceitarConvitePage = lazy(() => import('../features/familia/AceitarConvitePage').then(m => ({ default: m.AceitarConvitePage })));
 const NotFoundPage = lazy(() => import('./NotFoundPage').then(m => ({ default: m.NotFoundPage })));
+const AgenteChatPage = lazy(() => import('../features/agente/AgenteChatPage').then(m => ({ default: m.AgenteChatPage })));
+const WhatsappVinculoPage = lazy(() => import('../features/agente/WhatsappVinculoPage').then(m => ({ default: m.WhatsappVinculoPage })));
 
 export const appRoutes: RouteObject[] = [
   {
@@ -63,6 +65,16 @@ export const appRoutes: RouteObject[] = [
           title: 'Planejador de Compras'
         },
         children: comprasPlanejadasRouteObjects
+      },
+      {
+        path: 'agente/chat',
+        element: <AgenteChatPage />,
+        handle: { title: 'Chat financeiro' }
+      },
+      {
+        path: 'agente/whatsapp',
+        element: <WhatsappVinculoPage />,
+        handle: { title: 'Vínculo WhatsApp' }
       },
       ...supportRegistryRouteObjects,
       ...financialRouteObjects,

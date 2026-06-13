@@ -27,7 +27,9 @@ const navIcons: Record<string, string> = {
   '/cartoes': 'credit_card',
   '/contas-gerenciais': 'account_tree',
   '/compras-planejadas': 'shopping_cart',
-  '/familia': 'diversity_3'
+  '/familia': 'diversity_3',
+  '/agente/chat': 'smart_toy',
+  '/agente/whatsapp': 'phone_iphone'
 };
 
 const sideItemBase =
