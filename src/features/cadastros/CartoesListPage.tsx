@@ -225,7 +225,7 @@ export function CartoesListPage() {
       <section className="overflow-hidden rounded-[36px] border border-white/6 bg-[radial-gradient(circle_at_top_right,rgba(63,255,139,0.12),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0))] px-8 py-8 sm:px-10 xl:px-12 2xl:px-14 2xl:py-11">
         <div className="flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-5xl">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary/80">Inteligência financeira</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary/80">Cadastros</p>
             <h1 className="mt-3 text-4xl font-black tracking-tight text-on-surface sm:text-5xl">Gestão de Cartões</h1>
             <p className="mt-3 max-w-4xl text-sm leading-6 text-on-surface-variant sm:text-base">
               Visualize e gerencie limites, fechamento e vencimento dos seus cartões em tempo real, com leitura rápida do

@@ -90,6 +90,11 @@
 - A tela de `Faturas` passou a abrir com filtros mais completos, incluindo faixa de vencimento, faixa de fechamento, cartao, competencia e status, com ordenacao funcional por `Cartao`.
 - A listagem de `Faturas` ganhou totalizadores por cartao e por competencia do mes acima da grade, aproveitando o `summary` agregado retornado pelo backend.
 - O fluxo visual de fechamento da importacao do Bradesco foi reexecutado apos a correcao de competencia, e a navegacao de `Faturas` passou a refletir somente a competencia atual da importacao e as futuras parcelas/recorrencias projetadas.
+- O build TypeScript voltou a passar apos ajustar o `ref` do `Input.TextArea` do Ant Design e padronizar chamadas ao `notify`.
+- O quick-add de `Conta gerencial` passou a enviar ids opcionais como `null`, evitando payload invalido para `Guid?` no backend.
+- A tela de importacao de fatura passou a exigir uma `Conta gerencial padrao` de despesa e enviar `contaGerencialPadraoId` na confirmacao, mantendo rateio e dashboard gerencial coerentes.
+- O teste de recorrencia foi alinhado ao contrato atual do formulario mensal (`yyyy-MM`) e foi adicionada cobertura para a normalizacao do quick-add.
+- As dependencias vulneraveis do frontend foram atualizadas pelo `npm audit fix`, zerando o `npm audit --audit-level=moderate`.
 
 ## Pendencias nao criticas
 - configurar secrets reais de SonarQube/SonarCloud no CI para ativar o quality gate remoto.

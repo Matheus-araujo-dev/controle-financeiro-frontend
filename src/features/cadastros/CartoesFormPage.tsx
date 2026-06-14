@@ -178,7 +178,7 @@ export function CartoesFormPage() {
     <div className="flex w-full min-w-0 flex-col gap-8 px-1 2xl:px-4">
       <section className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary/80">Cadastro de credito</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary/80">Cadastros</p>
           <div className="space-y-2">
             <h1 className="text-4xl font-black tracking-tight text-on-surface sm:text-5xl">
               {id ? 'Atualizar cartao' : 'Adicionar cartao'}

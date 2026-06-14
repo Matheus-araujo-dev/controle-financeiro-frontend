@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Form, Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Controller, useFieldArray, useForm, useWatch, type Control, type FieldErrors } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AxiosError } from 'axios';
@@ -340,12 +340,13 @@ export function MasterDataFormPage({
   }
 
   return (
-    <Space orientation="vertical" size={24} style={{ width: '100%' }}>
+    <div className="max-w-5xl mx-auto space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div>
-        <Typography.Title level={4}>
-          {id ? `Editar ${config.singularTitle.toLowerCase()}` : `Nova ${config.singularTitle.toLowerCase()}`}
-        </Typography.Title>
-        <Typography.Paragraph>{config.formDescription}</Typography.Paragraph>
+        <h2 className="text-on-surface-variant font-label text-xs uppercase tracking-[0.2em] mb-2">Cadastros</h2>
+        <h1 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface">
+          {id ? 'Editar' : 'Criar'}: <span className="text-primary">{config.singularTitle}</span>
+        </h1>
+        <p className="text-on-surface-variant font-medium mt-2">{config.formDescription}</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -354,6 +355,7 @@ export function MasterDataFormPage({
           description={config.formDescription}
           isValid={isValid}
           isSubmitting={isSubmitting}
+          showHeader={false}
           onCancel={() => navigate(config.routeBase)}
         >
           <Space orientation="vertical" size={16} style={{ width: '100%' }}>
@@ -455,9 +457,12 @@ export function MasterDataFormPage({
         </EntityFormShell>
       </form>
 
-      <Button>
-        <Link to={config.routeBase}>Voltar para {config.title.toLowerCase()}</Link>
-      </Button>
-    </Space>
+      <Link
+        to={config.routeBase}
+        className="inline-flex items-center gap-2 text-sm font-bold text-on-surface-variant hover:text-primary transition-colors no-underline"
+      >
+        <ArrowLeftOutlined /> Voltar para {config.title.toLowerCase()}
+      </Link>
+    </div>
   );
 }

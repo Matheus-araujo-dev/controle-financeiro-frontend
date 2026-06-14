@@ -149,6 +149,22 @@ export function ContasGerenciaisListPage() {
   const [data, setData] = useState<Awaited<ReturnType<typeof cadastrosApi.contasGerenciais.listar>>>();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
+  const [seeding, setSeeding] = useState(false);
+  const [seedMessage, setSeedMessage] = useState<string>();
+
+  async function handleSeedPlanoInicial() {
+    setSeeding(true);
+    setSeedMessage(undefined);
+    try {
+      const result = await cadastrosApi.contasGerenciais.seedPlanoInicial();
+      setSeedMessage(`Plano importado com sucesso! ${result.contasCriadas} contas criadas.`);
+      await loadData();
+    } catch {
+      setSeedMessage('Falha ao importar plano inicial. Tente novamente.');
+    } finally {
+      setSeeding(false);
+    }
+  }
 
   async function loadData() {
     setLoading(true);
@@ -199,6 +215,7 @@ export function ContasGerenciaisListPage() {
       <section className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-3">
           <div className="space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary/80">Cadastros</p>
             <h1 className="text-4xl font-black tracking-tight text-on-surface sm:text-5xl">Contas Gerenciais</h1>
             <p className="max-w-3xl text-sm leading-6 text-on-surface-variant sm:text-base">
               Gerencie a estrutura hierarquica do seu plano de contas com leitura rapida, visao em arvore e acesso direto a
@@ -216,6 +233,14 @@ export function ContasGerenciaisListPage() {
             <DownloadOutlined />
             Exportar
           </button>
+          <button
+            type="button"
+            disabled={seeding}
+            onClick={() => void handleSeedPlanoInicial()}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-primary/30 px-5 py-3 text-sm font-bold text-primary transition hover:bg-primary/10 disabled:opacity-50 disabled:pointer-events-none"
+          >
+            {seeding ? 'Importando...' : 'Importar plano inicial'}
+          </button>
           <Link
             to={`${contasGerenciaisModuleConfig.routeBase}/novo`}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-black text-[#062412] shadow-[0_18px_40px_rgba(63,255,139,0.18)] transition hover:scale-[1.02]"
@@ -225,6 +250,12 @@ export function ContasGerenciaisListPage() {
           </Link>
         </div>
       </section>
+
+      {seedMessage && (
+        <p className={`text-sm font-semibold ${seedMessage.startsWith('Falha') ? 'text-[#ff8a7a]' : 'text-primary'}`}>
+          {seedMessage}
+        </p>
+      )}
 
       <section className="grid w-full gap-5 md:grid-cols-2 xl:grid-cols-3">
         <article className="rounded-[28px] border border-white/6 bg-surface-container-low px-7 py-6">
@@ -399,7 +430,7 @@ export function ContasGerenciaisListPage() {
 
               {items.length === 0 ? (
                 <div className="px-8 py-16">
-                  <PageState state="empty" title="Nenhuma conta gerencial encontrada" subtitle="Ajuste os filtros ou crie uma nova conta para iniciar a estrutura." />
+                  <PageState state="empty" title="Nenhuma conta gerencial encontrada" subtitle="Ajuste os filtros ou use 'Importar plano inicial' para criar a estrutura completa." />
                 </div>
               ) : (
                 <div className="divide-y divide-white/5">

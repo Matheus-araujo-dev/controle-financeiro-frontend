@@ -207,6 +207,7 @@ export function ContasBancariasListPage() {
       <section className="flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-3">
           <div className="space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary/80">Cadastros</p>
             <h1 className="text-4xl font-black tracking-tight text-on-surface sm:text-5xl">Contas Bancarias</h1>
             <p className="max-w-4xl text-sm leading-6 text-on-surface-variant sm:text-base">
               Gerencie suas conexoes bancarias e acompanhe saldo inicial, limite compartilhado e disponibilidade operacional

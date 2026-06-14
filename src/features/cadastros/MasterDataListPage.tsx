@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useState } from 'react';
-import { Button, Input, Select, Space, Typography } from 'antd';
+import { Input, Select, Space } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   CheckCircleOutlined,
@@ -7,9 +7,10 @@ import {
   EyeOutlined,
   FileAddOutlined,
   PauseCircleOutlined,
-  PlayCircleOutlined
+  PlayCircleOutlined,
+  PlusOutlined
 } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AppDataTable } from '../../components/data/AppDataTable';
 import { IconActionButton } from '../../components/data/IconActionButton';
 import { ListSummaryCards } from '../../components/data/ListSummaryCards';
@@ -129,6 +130,7 @@ export function MasterDataListPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: MasterDataModuleConfig<any, any, any, any>;
 }) {
+  const navigate = useNavigate();
   const [filtersState, setFiltersState] = useState<KeyedValue<Record<string, unknown>>>({
     configKey: config.key,
     value: config.defaultFilters
@@ -183,65 +185,80 @@ export function MasterDataListPage({
   );
 
   return (
-    <Space orientation="vertical" size={24} style={{ width: '100%' }} className="master-data-list-page">
-      <div className="master-data-list-page__header">
-        <div className="master-data-list-page__copy">
-          <Typography.Title level={4}>{config.title}</Typography.Title>
-          <Typography.Paragraph>{config.listDescription}</Typography.Paragraph>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        <div>
+          <h2 className="text-on-surface-variant font-label text-xs uppercase tracking-[0.2em] mb-2">Cadastros</h2>
+          <h1 className="text-4xl md:text-5xl font-headline font-extrabold tracking-tighter text-white mb-2 neon-glow">
+            {config.title}
+          </h1>
+          <p className="text-on-surface-variant font-medium">{config.listDescription}</p>
         </div>
-        <Button type="primary" size="large" className="master-data-list-page__cta">
-          <Link to={`${config.routeBase}/novo`}>Nova {config.singularTitle.toLowerCase()}</Link>
-        </Button>
+        <button
+          type="button"
+          onClick={() => navigate(`${config.routeBase}/novo`)}
+          className="bg-primary hover:bg-primary-container text-on-primary font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-[0_4px_20px_rgba(63,255,139,0.2)] self-start md:self-auto"
+        >
+          <PlusOutlined aria-hidden className="text-lg" />
+          Nova {config.singularTitle.toLowerCase()}
+        </button>
       </div>
 
-      <div className="master-data-list-page__filters">
-        {config.filters.map((filter) =>
-          filter.kind === 'text' ? (
-            <Input
-              key={filter.name}
-              placeholder={filter.placeholder ?? filter.label}
-              value={String((filters as Record<string, unknown>)[filter.name] ?? '')}
-              onChange={(event) =>
-                setFiltersState({
-                  configKey: config.key,
-                  value: {
-                    ...filters,
-                    page: 1,
-                    [filter.name]: event.target.value
+      {/* Filters */}
+      {config.filters.length > 0 ? (
+        <div className="bg-surface-container-low p-5 rounded-3xl border border-white/5 flex flex-wrap items-end gap-4">
+          {config.filters.map((filter) => (
+            <div key={filter.name} className="space-y-2">
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant px-1">
+                {filter.label}
+              </label>
+              {filter.kind === 'text' ? (
+                <Input
+                  placeholder={filter.placeholder ?? filter.label}
+                  value={String((filters as Record<string, unknown>)[filter.name] ?? '')}
+                  onChange={(event) =>
+                    setFiltersState({
+                      configKey: config.key,
+                      value: {
+                        ...filters,
+                        page: 1,
+                        [filter.name]: event.target.value
+                      }
+                    })
                   }
-                })
-              }
-              style={{ width: 240 }}
-            />
-          ) : (
-            <Select
-              key={filter.name}
-              placeholder={filter.label}
-              options={filter.options as SelectOption[]}
-              value={
-                typeof (filters as Record<string, unknown>)[filter.name] === 'boolean'
-                  ? String((filters as Record<string, unknown>)[filter.name])
-                  : ((filters as Record<string, unknown>)[filter.name] as string | undefined)
-              }
-              onChange={(value) =>
-                setFiltersState({
-                  configKey: config.key,
-                  value: {
-                    ...filters,
-                    page: 1,
-                    [filter.name]: normalizeSelectValue(value)
+                  style={{ width: 240 }}
+                />
+              ) : (
+                <Select
+                  placeholder={filter.label}
+                  options={filter.options as SelectOption[]}
+                  value={
+                    typeof (filters as Record<string, unknown>)[filter.name] === 'boolean'
+                      ? String((filters as Record<string, unknown>)[filter.name])
+                      : ((filters as Record<string, unknown>)[filter.name] as string | undefined)
                   }
-                })
-              }
-              style={{ minWidth: 180 }}
-            />
-          )
-        )}
-      </div>
+                  onChange={(value) =>
+                    setFiltersState({
+                      configKey: config.key,
+                      value: {
+                        ...filters,
+                        page: 1,
+                        [filter.name]: normalizeSelectValue(value)
+                      }
+                    })
+                  }
+                  style={{ minWidth: 180 }}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {config.buildSummaryItems && data?.summary ? <ListSummaryCards items={config.buildSummaryItems(data.summary)} /> : null}
 
-      <div className="master-data-list-page__table">
+      <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-white/5">
         <AppDataTable
           columns={columns}
           dataSource={data?.items ?? []}
@@ -271,6 +288,6 @@ export function MasterDataListPage({
           }}
         />
       </div>
-    </Space>
+    </div>
   );
 }

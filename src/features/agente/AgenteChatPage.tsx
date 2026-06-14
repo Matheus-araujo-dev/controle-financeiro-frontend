@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Input, Spin, Typography } from 'antd';
+import type { TextAreaRef } from 'antd/es/input/TextArea';
 import { SendOutlined, RobotOutlined, UserOutlined, ClearOutlined } from '@ant-design/icons';
 import { agenteApi, type AgentePerguntarResponse } from '../../services/http/agente-api';
 import { getApiErrorMessage } from '../../services/http/api-error';
@@ -19,7 +20,7 @@ export function AgenteChatPage() {
   const [conversaId, setConversaId] = useState<string | undefined>();
   const [erro, setErro] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<TextAreaRef>(null);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });

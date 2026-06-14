@@ -82,6 +82,7 @@ export const cadastrosApi = {
     obterPorId: (id: string) => getById<ContaGerencialDetalhe>(`/contas-gerenciais/${id}`),
     criar: (payload: ContaGerencialPayload) => post<ContaGerencialDetalhe>('/contas-gerenciais', payload),
     atualizar: (id: string, payload: ContaGerencialPayload) =>
-      put<ContaGerencialDetalhe>(`/contas-gerenciais/${id}`, payload)
+      put<ContaGerencialDetalhe>(`/contas-gerenciais/${id}`, payload),
+    seedPlanoInicial: () => post<{ contasCriadas: number }>('/contas-gerenciais/seed-plano-inicial', {})
   }
 };

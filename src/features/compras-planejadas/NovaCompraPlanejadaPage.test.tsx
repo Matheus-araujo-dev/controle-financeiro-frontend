@@ -35,9 +35,9 @@ vi.mock('../../services/http/compras-planejadas-api', () => ({
 
 function renderPage() {
   return render(
-    <MemoryRouter initialEntries={['/compras-planejadas/nova']}>
+    <MemoryRouter initialEntries={['/compras-planejadas/novo']}>
       <Routes>
-        <Route path="/compras-planejadas/nova" element={<NovaCompraPlanejadaPage />} />
+        <Route path="/compras-planejadas/novo" element={<NovaCompraPlanejadaPage />} />
       </Routes>
     </MemoryRouter>
   );

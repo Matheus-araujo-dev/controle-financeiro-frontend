@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -13,6 +13,9 @@ import { compraPlanejadaSchema } from './schemas';
 import { mapContaGerencialSelectOptions } from '../../shared/conta-gerencial';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
+import { SelectWithQuickAdd } from '../../components/forms/SelectWithQuickAdd';
+import { QuickAddContaGerencialModal } from '../cadastros/quick-add/QuickAddContaGerencialModal';
+import { QuickAddPessoaModal } from '../cadastros/quick-add/QuickAddPessoaModal';
 
 interface SelectOption {
   label: string;
@@ -55,10 +58,14 @@ export function NovaCompraPlanejadaPage() {
   const [contaGerencialOptions, setContaGerencialOptions] = useState<SelectOption[]>([]);
   const [responsavelOptions, setResponsavelOptions] = useState<SelectOption[]>([]);
 
+  const [contaGerencialModalOpen, setContaGerencialModalOpen] = useState(false);
+  const [responsavelModalOpen, setResponsavelModalOpen] = useState(false);
+
   const {
     control,
     handleSubmit,
     setError,
+    setValue,
     formState: { errors, isSubmitting, isValid }
   } = useForm<CompraPlanejadaPayload>({
     resolver: zodResolver(compraPlanejadaSchema),
@@ -68,6 +75,20 @@ export function NovaCompraPlanejadaPage() {
 
   const watchedValues = useWatch({ control });
   const parcelavel = Boolean(watchedValues.parcelavel);
+
+  const reloadContaGerencialOptions = useCallback(async () => {
+    const response = await cadastrosApi.contasGerenciais.listar({
+      page: 1, pageSize: 100, search: '', tipo: 'Despesa', aceitaLancamentos: true
+    });
+    setContaGerencialOptions(
+      mapContaGerencialSelectOptions(response.items.filter((item) => item.aceitaLancamentos))
+    );
+  }, []);
+
+  const reloadResponsavelOptions = useCallback(async () => {
+    const response = await cadastrosApi.pessoas.listar({ page: 1, pageSize: 100, search: '', ativo: true });
+    setResponsavelOptions(response.items.map((item) => ({ label: item.nome, value: item.id })));
+  }, []);
 
   useEffect(() => {
     async function loadOptions() {
@@ -349,11 +370,12 @@ export function NovaCompraPlanejadaPage() {
                     control={control}
                     name="contaGerencialId"
                     render={({ field }) => (
-                      <select
+                      <SelectWithQuickAdd
                         aria-label="Conta Gerencial"
                         className="w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary/40 transition-all font-medium appearance-none outline-none cursor-pointer"
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
+                        onAddNew={() => setContaGerencialModalOpen(true)}
                       >
                         <option value="">Selecione...</option>
                         {contaGerencialOptions.map((opt) => (
@@ -361,7 +383,7 @@ export function NovaCompraPlanejadaPage() {
                             {opt.label}
                           </option>
                         ))}
-                      </select>
+                      </SelectWithQuickAdd>
                     )}
                   />
                   {errors.contaGerencialId && <p className="text-error text-xs ml-1 font-bold">{errors.contaGerencialId.message}</p>}
@@ -376,11 +398,12 @@ export function NovaCompraPlanejadaPage() {
                     control={control}
                     name="responsavelId"
                     render={({ field }) => (
-                      <select
+                      <SelectWithQuickAdd
                         aria-label="Responsável"
                         className="w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary/40 transition-all font-medium appearance-none outline-none cursor-pointer"
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
+                        onAddNew={() => setResponsavelModalOpen(true)}
                       >
                         <option value="">Selecione...</option>
                         {responsavelOptions.map((opt) => (
@@ -388,7 +411,7 @@ export function NovaCompraPlanejadaPage() {
                             {opt.label}
                           </option>
                         ))}
-                      </select>
+                      </SelectWithQuickAdd>
                     )}
                   />
                   {errors.responsavelId && <p className="text-error text-xs ml-1 font-bold">{errors.responsavelId.message}</p>}
@@ -567,6 +590,22 @@ export function NovaCompraPlanejadaPage() {
           </div>
         </form>
       </div>
+
+      <QuickAddContaGerencialModal
+        open={contaGerencialModalOpen}
+        onClose={() => setContaGerencialModalOpen(false)}
+        defaultTipo="Despesa"
+        onSuccess={(newId) => {
+          void reloadContaGerencialOptions().then(() => setValue('contaGerencialId', newId));
+        }}
+      />
+      <QuickAddPessoaModal
+        open={responsavelModalOpen}
+        onClose={() => setResponsavelModalOpen(false)}
+        onSuccess={(newId) => {
+          void reloadResponsavelOptions().then(() => setValue('responsavelId', newId));
+        }}
+      />
     </>
   );
 }

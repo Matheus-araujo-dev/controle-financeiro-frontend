@@ -251,7 +251,7 @@ export function ComprasPlanejadasListPage() {
             <p className="text-on-surface-variant mt-2 font-body">Deseja adicionar um novo item à sua wishlist financeira?</p>
           </div>
           <Link
-            to="/compras-planejadas/nova"
+            to="/compras-planejadas/novo"
             className="relative z-10 px-8 py-4 bg-primary text-on-primary font-black rounded-2xl flex items-center gap-3 hover:shadow-[0_0_30px_rgba(63,255,139,0.3)] transition-all transform active:scale-95 no-underline whitespace-nowrap"
           >
             <span className="material-symbols-outlined">add_circle</span> NOVO ITEM DE COMPRA

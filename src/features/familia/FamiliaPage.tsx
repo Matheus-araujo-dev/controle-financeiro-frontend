@@ -134,6 +134,13 @@ export function FamiliaPage() {
 
   return (
     <Space direction="vertical" orientation="vertical" size={24} style={{ width: '100%' }}>
+      <div>
+        <h2 className="text-on-surface-variant font-label text-xs uppercase tracking-[0.2em] mb-2">Conta</h2>
+        <h1 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface">
+          Minha <span className="text-primary">Família</span>
+        </h1>
+        <p className="mt-2 text-on-surface-variant font-medium">Gerencie membros, papéis e convites da sua família.</p>
+      </div>
       <Card loading={loading} title="Minha família">
         {familia ? (
           <Space direction="vertical" orientation="vertical" size={16} style={{ width: '100%' }}>

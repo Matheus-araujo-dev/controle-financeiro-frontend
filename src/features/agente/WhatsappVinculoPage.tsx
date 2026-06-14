@@ -50,7 +50,7 @@ export function WhatsappVinculoPage() {
     try {
       const res = await agenteApi.registrarWhatsapp({ telefone: values.telefone });
       setStatus(res);
-      notify.success('WhatsApp vinculado com sucesso.');
+      notify('success', 'WhatsApp vinculado com sucesso.');
     } catch (err) {
       setErro(getApiErrorMessage(err));
     } finally {
@@ -65,7 +65,7 @@ export function WhatsappVinculoPage() {
       await agenteApi.desativarWhatsapp();
       setStatus({ telefone: null, ativo: false, verificadoEm: null });
       form.resetFields();
-      notify.success('WhatsApp desvinculado.');
+      notify('success', 'WhatsApp desvinculado.');
     } catch (err) {
       setErro(getApiErrorMessage(err));
     } finally {
@@ -79,9 +79,9 @@ export function WhatsappVinculoPage() {
       const res = await agenteApi.salvarAlertasWhatsapp(values);
       setAlertas(res);
       formAlertas.setFieldsValue(res);
-      notify.success('Configurações de alertas salvas.');
+      notify('success', 'Configurações de alertas salvas.');
     } catch (err) {
-      notify.error(getApiErrorMessage(err));
+      notify('error', getApiErrorMessage(err));
     } finally {
       setSalvandoAlertas(false);
     }
@@ -96,19 +96,18 @@ export function WhatsappVinculoPage() {
   }
 
   return (
-    <div className="p-6 max-w-lg space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* ── Vínculo ───────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2">
-        <MobileOutlined className="text-primary text-2xl" />
-        <Title level={4} className="!mb-0 !text-on-surface">
-          Vínculo WhatsApp
-        </Title>
+      <div>
+        <h2 className="text-on-surface-variant font-label text-xs uppercase tracking-[0.2em] mb-2">Agente IA</h2>
+        <h1 className="flex items-center gap-3 text-4xl font-headline font-extrabold tracking-tight text-on-surface">
+          <MobileOutlined className="text-primary" /> Vínculo <span className="text-primary">WhatsApp</span>
+        </h1>
+        <p className="mt-2 text-on-surface-variant font-medium">
+          Registre seu número de WhatsApp para usar o assistente financeiro diretamente no app. Mensagens enviadas para o
+          número configurado serão respondidas pelo agente.
+        </p>
       </div>
-
-      <Paragraph className="text-on-surface-variant !mb-0">
-        Registre seu número de WhatsApp para usar o assistente financeiro diretamente no app.
-        Mensagens enviadas para o número configurado serão respondidas pelo agente.
-      </Paragraph>
 
       {status?.ativo && status.telefone && (
         <Card className="bg-surface-container border-outline-variant" size="small">
