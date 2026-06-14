@@ -193,7 +193,7 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('heading', { level: 4, name: 'Nova pessoa' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Criar: Pessoa' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Salvar' })).toBeInTheDocument();
     expect(screen.queryByText('Falha ao carregar cadastro')).not.toBeInTheDocument();
   });
@@ -236,7 +236,7 @@ describe('appRoutes', () => {
 
   it('renders the nova compra planejada route with the dedicated page', async () => {
     const router = createMemoryRouter(appRoutes, {
-      initialEntries: ['/compras-planejadas/nova']
+      initialEntries: ['/compras-planejadas/novo']
     });
 
     render(<RouterProvider router={router} />);

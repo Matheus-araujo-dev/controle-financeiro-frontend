@@ -1,34 +1,64 @@
+import { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { CreditCardOutlined, InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
+import { CreditCardOutlined, FileTextOutlined, InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
 
 import { formatMonthYearBR } from '../../../shared/date';
 import { buildCardInvoiceLink } from './card-invoice';
-import { errorTextClass, fieldLabelClass, nativeDateFieldClass, nativeFieldWithPaddingClass } from './field-classes';
+import { errorTextClass, fieldLabelClass, nativeFieldWithPaddingClass } from './field-classes';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
+import { SelectWithQuickAdd } from '../../../components/forms/SelectWithQuickAdd';
+import { QuickAddPessoaModal } from '../../cadastros/quick-add/QuickAddPessoaModal';
+import { QuickAddContaGerencialModal } from '../../cadastros/quick-add/QuickAddContaGerencialModal';
 
 type GeneralInfoSectionProps = {
   form: FinancialAccountFormApi;
   personLabel: string;
 };
 
+type PessoaTarget = 'pessoaId' | 'responsavelId' | null;
+
 export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProps) {
   const {
-    id,
     control,
     errors,
     canEdit,
-    watchedValues,
     origemCompraPlanejadaId,
     cardInvoicePreview,
-    pessoaOptions
+    pessoaOptions,
+    rateioOptions,
+    setValue,
+    reloadPessoaOptions,
+    reloadRateioOptions
   } = form;
+
+  const [pessoaModalTarget, setPessoaModalTarget] = useState<PessoaTarget>(null);
+  const [contaGerencialModalOpen, setContaGerencialModalOpen] = useState(false);
+
+  function handlePessoaSuccess(newId: string) {
+    const target = pessoaModalTarget; // capture before modal closes and resets state
+    void reloadPessoaOptions().then(() => {
+      if (target) setValue(target, newId);
+    });
+  }
+
+  function handleContaGerencialSuccess(newId: string) {
+    void reloadRateioOptions().then(() => {
+      setValue('rateios.0.contaGerencialId', newId);
+    });
+  }
 
   return (
     <div className="bg-surface-container-low p-8 rounded-3xl border border-white/5 space-y-8">
       <div className="flex items-center gap-3">
-        <span className="w-1.5 h-6 bg-primary rounded-full"></span>
-        <h3 className="text-xl font-headline font-bold">Informações do Título</h3>
+        <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <FileTextOutlined />
+        </span>
+        <div>
+          <h3 className="text-lg font-headline font-bold leading-tight">Informações do Título</h3>
+          <p className="text-xs text-on-surface-variant">O que é este lançamento e a quem se refere</p>
+        </div>
+        <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Passo 1</span>
       </div>
 
       {origemCompraPlanejadaId && (
@@ -84,6 +114,33 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
           />
         </div>
 
+        {/* Managerial account (category) */}
+        <div className="md:col-span-2 space-y-2">
+          <label className={fieldLabelClass}>Categoria · conta gerencial</label>
+          <Controller
+            control={control}
+            name="rateios.0.contaGerencialId"
+            render={({ field }) => (
+              <SelectWithQuickAdd
+                {...field}
+                disabled={!canEdit}
+                className={nativeFieldWithPaddingClass}
+                onAddNew={canEdit ? () => setContaGerencialModalOpen(true) : undefined}
+              >
+                <option value="">Selecionar categoria...</option>
+                {rateioOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </SelectWithQuickAdd>
+            )}
+          />
+          <p className="text-[11px] text-on-surface-variant/70 ml-1">
+            Para dividir entre várias contas, use o rateio por centro de custo abaixo.
+          </p>
+        </div>
+
         {/* Person */}
         <div className="space-y-2">
           <label className={fieldLabelClass}>{personLabel}</label>
@@ -92,10 +149,15 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
             name="pessoaId"
             render={({ field }) => (
               <div className="space-y-1">
-                <select {...field} disabled={!canEdit} className={nativeFieldWithPaddingClass}>
+                <SelectWithQuickAdd
+                  {...field}
+                  disabled={!canEdit}
+                  className={nativeFieldWithPaddingClass}
+                  onAddNew={canEdit ? () => setPessoaModalTarget('pessoaId') : undefined}
+                >
                   <option value="">Selecionar...</option>
                   {pessoaOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+                </SelectWithQuickAdd>
                 {errors.pessoaId && <span className={errorTextClass}>{errors.pessoaId.message}</span>}
               </div>
             )}
@@ -110,10 +172,15 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
             name="responsavelId"
             render={({ field }) => (
               <div className="space-y-1">
-                <select {...field} disabled={!canEdit} className={nativeFieldWithPaddingClass}>
+                <SelectWithQuickAdd
+                  {...field}
+                  disabled={!canEdit}
+                  className={nativeFieldWithPaddingClass}
+                  onAddNew={canEdit ? () => setPessoaModalTarget('responsavelId') : undefined}
+                >
                   <option value="">Selecionar...</option>
                   {pessoaOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
+                </SelectWithQuickAdd>
                 {errors.responsavelId && <span className={errorTextClass}>{errors.responsavelId.message}</span>}
               </div>
             )}
@@ -121,7 +188,7 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
         </div>
 
         {/* Document Number */}
-        <div className="space-y-2">
+        <div className="md:col-span-2 space-y-2">
           <label className={fieldLabelClass}>Nº Documento</label>
           <Controller
             control={control}
@@ -137,52 +204,18 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
             )}
           />
         </div>
-
-        {/* Installments */}
-        <div className="space-y-2">
-          <label className={fieldLabelClass}>Parcelas</label>
-          <Controller
-            control={control}
-            name="quantidadeParcelas"
-            render={({ field }) => (
-              <input
-                type="number"
-                min={1}
-                {...field}
-                disabled={Boolean(id) || watchedValues.ehRecorrente || !canEdit}
-                className={nativeFieldWithPaddingClass}
-              />
-            )}
-          />
-          {errors.quantidadeParcelas && <span className={errorTextClass}>{errors.quantidadeParcelas.message}</span>}
-        </div>
-
-        {/* Emission Date */}
-        <div className="space-y-2">
-          <label className={fieldLabelClass}>Data Emissão</label>
-          <Controller
-            control={control}
-            name="dataEmissao"
-            render={({ field }) => (
-              <input type="date" {...field} disabled={!canEdit} className={nativeDateFieldClass} />
-            )}
-          />
-          {errors.dataEmissao && <span className={errorTextClass}>{errors.dataEmissao.message}</span>}
-        </div>
-
-        {/* Due Date */}
-        <div className="space-y-2">
-          <label className={fieldLabelClass}>Data Vencimento</label>
-          <Controller
-            control={control}
-            name="dataVencimento"
-            render={({ field }) => (
-              <input type="date" {...field} disabled={!canEdit} className={nativeDateFieldClass} />
-            )}
-          />
-          {errors.dataVencimento && <span className={errorTextClass}>{errors.dataVencimento.message}</span>}
-        </div>
       </div>
+
+      <QuickAddPessoaModal
+        open={pessoaModalTarget !== null}
+        onClose={() => setPessoaModalTarget(null)}
+        onSuccess={handlePessoaSuccess}
+      />
+      <QuickAddContaGerencialModal
+        open={contaGerencialModalOpen}
+        onClose={() => setContaGerencialModalOpen(false)}
+        onSuccess={handleContaGerencialSuccess}
+      />
     </div>
   );
 }

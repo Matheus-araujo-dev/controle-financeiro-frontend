@@ -1,30 +1,45 @@
+import { useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { DeleteOutlined, PieChartOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusCircleOutlined } from '@ant-design/icons';
 
 import { formatCurrencyBRL } from '../../../shared/currency';
 import { CurrencyInput } from '../../../shared/CurrencyInput';
 import { nativeCompactFieldClass } from './field-classes';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
+import { SelectWithQuickAdd } from '../../../components/forms/SelectWithQuickAdd';
+import { QuickAddContaGerencialModal } from '../../cadastros/quick-add/QuickAddContaGerencialModal';
 
 type RateioSectionProps = {
   form: FinancialAccountFormApi;
 };
 
 export function RateioSection({ form }: RateioSectionProps) {
-  const { control, canEdit, fields, append, remove, rateioOptions, totalRateios, valorLiquido } = form;
+  const { control, canEdit, fields, append, remove, rateioOptions, totalRateios, valorLiquido, setValue, reloadRateioOptions } = form;
+
+  const [contaGerencialModalIndex, setContaGerencialModalIndex] = useState<number | null>(null);
+  const singleRow = fields.length === 1;
+
+  function handleContaGerencialSuccess(newId: string) {
+    const index = contaGerencialModalIndex;
+    void reloadRateioOptions().then(() => {
+      if (index !== null) setValue(`rateios.${index}.contaGerencialId`, newId);
+    });
+  }
 
   return (
-    <div className="bg-surface-container-low p-8 rounded-3xl border border-white/5 space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <PieChartOutlined className="text-primary text-xl" />
-          <h3 className="text-xl font-headline font-bold">Rateio por Centro de Custo</h3>
-        </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-on-surface-variant max-w-md">
+          {singleRow
+            ? 'Com uma única conta, o valor acompanha automaticamente o total do lançamento. Adicione linhas para dividir entre centros de custo.'
+            : 'Distribua o valor líquido entre as contas gerenciais desejadas.'}
+        </p>
         <button
           type="button"
           onClick={() => append({ contaGerencialId: '', valor: 0 })}
           disabled={!canEdit}
           className="text-primary hover:text-primary-container transition-colors disabled:opacity-50"
+          title="Adicionar conta ao rateio"
         >
           <PlusCircleOutlined className="text-2xl" />
         </button>
@@ -39,10 +54,15 @@ export function RateioSection({ form }: RateioSectionProps) {
                 control={control}
                 name={`rateios.${index}.contaGerencialId`}
                 render={({ field: rField }) => (
-                  <select {...rField} disabled={!canEdit} className={nativeCompactFieldClass}>
+                  <SelectWithQuickAdd
+                    {...rField}
+                    disabled={!canEdit}
+                    className={nativeCompactFieldClass}
+                    onAddNew={canEdit ? () => setContaGerencialModalIndex(index) : undefined}
+                  >
                     <option value="">Selecionar...</option>
                     {rateioOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                  </select>
+                  </SelectWithQuickAdd>
                 )}
               />
             </div>
@@ -55,7 +75,7 @@ export function RateioSection({ form }: RateioSectionProps) {
                   <CurrencyInput
                     value={rField.value}
                     onChange={(val) => rField.onChange(val ?? 0)}
-                    disabled={!canEdit}
+                    disabled={!canEdit || singleRow}
                     className="w-full bg-surface-container-highest border-none rounded-2xl px-4 py-3 text-white text-sm font-headline"
                   />
                 )}
@@ -80,6 +100,12 @@ export function RateioSection({ form }: RateioSectionProps) {
           {formatCurrencyBRL(totalRateios)}
         </span>
       </div>
+
+      <QuickAddContaGerencialModal
+        open={contaGerencialModalIndex !== null}
+        onClose={() => setContaGerencialModalIndex(null)}
+        onSuccess={handleContaGerencialSuccess}
+      />
     </div>
   );
 }

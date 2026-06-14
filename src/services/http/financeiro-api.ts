@@ -29,6 +29,43 @@ import type {
   PagedFinanceiro
 } from '../../types/financeiro';
 
+// ── Tipos de importação de fatura ────────────────────────────────────────────
+
+export interface ImportacaoFaturaItemPreview {
+  dataTransacao: string;
+  descricao: string;
+  valor: number;
+  jaImportado: boolean;
+  chaveImportacao: string;
+}
+
+export interface ImportacaoFaturaPreview {
+  itens: ImportacaoFaturaItemPreview[];
+  valorTotal: number;
+  totalItens: number;
+  avisoFormato: string | null;
+}
+
+export interface ConfirmarImportacaoPayload {
+  cartaoId: string;
+  formaPagamentoId: string;
+  recebedorPadraoId: string;
+  contaGerencialPadraoId: string;
+  itens: Array<{
+    dataTransacao: string;
+    descricao: string;
+    valor: number;
+    chaveImportacao: string;
+  }>;
+}
+
+export interface ConfirmarImportacaoResponse {
+  contasCriadas: number;
+  contasDuplicadas: number;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function getPaged<T, TSummary = unknown>(url: string, params: Record<string, unknown>) {
   const response = await apiClient.get<PagedFinanceiro<T, TSummary>>(url, { params });
   return response.data;
@@ -89,7 +126,20 @@ export const financeiroApi = {
     listar: (params: FaturaFilters) => getPaged<FaturaResumo, FaturaListSummary>('/faturas', params),
     obterPorId: (id: string) => getById<FaturaDetalhe>(`/faturas/${id}`),
     pagar: (id: string, payload: PagarFaturaPayload) => post<FaturaDetalhe>(`/faturas/${id}/pagar`, payload),
-    estornar: (id: string) => post<FaturaDetalhe>(`/faturas/${id}/estornar`)
+    estornar: (id: string) => post<FaturaDetalhe>(`/faturas/${id}/estornar`),
+    importar: {
+      preview: async (cartaoId: string, arquivo: File): Promise<ImportacaoFaturaPreview> => {
+        const form = new FormData();
+        form.append('arquivo', arquivo);
+        const { data } = await apiClient.post<ImportacaoFaturaPreview>(
+          `/faturas/importar/preview?cartaoId=${cartaoId}`,
+          form,
+          { headers: { 'Content-Type': 'multipart/form-data' } });
+        return data;
+      },
+      confirmar: (payload: ConfirmarImportacaoPayload): Promise<ConfirmarImportacaoResponse> =>
+        post<ConfirmarImportacaoResponse>('/faturas/importar/confirmar', payload),
+    },
   },
   recorrencias: {
     listar: (params: RecorrenciaFilters) =>

@@ -103,7 +103,7 @@ describe('FinancialAccountFormPage', () => {
 
   it('renders create mode with the expected financial sections', async () => {
     const config = createConfig();
-    renderWithRoute('/contas-pagar/nova', '/contas-pagar/nova', config);
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
 
     expect(await screen.findByText('Operações Financeiras')).toBeInTheDocument();
     await waitFor(() => expect(config.loadPessoaOptions).toHaveBeenCalled());
@@ -123,7 +123,7 @@ describe('FinancialAccountFormPage', () => {
       descricao: 'Notebook planejado'
     });
 
-    renderWithRoute('/contas-pagar/nova?origemCompraPlanejadaId=compra-1', '/contas-pagar/nova', config);
+    renderWithRoute('/contas-pagar/novo?origemCompraPlanejadaId=compra-1', '/contas-pagar/novo', config);
 
     expect(await screen.findByDisplayValue('Notebook planejado')).toBeInTheDocument();
     expect(screen.getByText(/Lançamento derivado de compra planejada/i)).toBeInTheDocument();
@@ -162,7 +162,7 @@ describe('FinancialAccountFormPage', () => {
       dataVencimentoFaturaCartao: '2026-05-20'
     });
 
-    renderWithRoute('/contas-pagar/nova', '/contas-pagar/nova', config);
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
 
     expect(await screen.findByText('Rateio por Centro de Custo')).toBeInTheDocument();
 
@@ -226,7 +226,7 @@ describe('FinancialAccountFormPage', () => {
       })
     );
 
-    renderWithRoute('/contas-pagar/nova', '/contas-pagar/nova', config);
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
 
     expect(await screen.findByText('Rateio por Centro de Custo')).toBeInTheDocument();
 

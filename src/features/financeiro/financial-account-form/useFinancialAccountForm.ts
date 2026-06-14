@@ -109,6 +109,14 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     setValue('quantidadeParcelas', 1, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
   }, [setValue, watchedValues.ehRecorrente, watchedValues.quantidadeParcelas]);
 
+  // With a single rateio line, its value always equals the net amount, so keep it in sync automatically.
+  useEffect(() => {
+    if (watchedValues.rateios.length !== 1) return;
+    const current = Number(watchedValues.rateios[0]?.valor) || 0;
+    if (Math.abs(current - valorLiquido) < 0.005) return;
+    setValue('rateios.0.valor', valorLiquido, { shouldValidate: true, shouldDirty: true });
+  }, [setValue, valorLiquido, watchedValues.rateios]);
+
   useEffect(() => {
     async function loadOptions() {
       const [pessoas, formas, contas, cartoes, rateios] = await Promise.all([
@@ -238,6 +246,31 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     }
   }, [id, config, reset]);
 
+  const reloadPessoaOptions = useCallback(async () => {
+    const options = await config.loadPessoaOptions();
+    setPessoaOptions(options);
+  }, [config]);
+
+  const reloadFormaPagamentoOptions = useCallback(async () => {
+    const options = await config.loadFormaPagamentoOptions();
+    setFormaPagamentoOptions(options);
+  }, [config]);
+
+  const reloadContaBancariaOptions = useCallback(async () => {
+    const options = await config.loadContaBancariaOptions();
+    setContaBancariaOptions(options);
+  }, [config]);
+
+  const reloadCartaoOptions = useCallback(async () => {
+    const options = await config.loadCartaoOptions();
+    setCartaoOptions(options);
+  }, [config]);
+
+  const reloadRateioOptions = useCallback(async () => {
+    const options = await config.loadRateioOptions();
+    setRateioOptions(options);
+  }, [config]);
+
   return {
     id,
     control,
@@ -267,10 +300,16 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     contaBancariaOptions,
     cartaoOptions,
     rateioOptions,
+    setValue,
     onCancel,
     onSubmit,
     cancelar,
-    estornar
+    estornar,
+    reloadPessoaOptions,
+    reloadFormaPagamentoOptions,
+    reloadContaBancariaOptions,
+    reloadCartaoOptions,
+    reloadRateioOptions
   };
 }
 

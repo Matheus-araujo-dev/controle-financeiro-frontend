@@ -2,6 +2,8 @@ export type NavItem = {
   key: string;
   label: string;
   icon?: string;
+  // Rotas adicionais que devem destacar este item no menu (ex.: abas que mudam a URL).
+  aliases?: string[];
 };
 
 export type NavGroup = {
@@ -24,11 +26,10 @@ export const navigationStructure: NavGroup[] = [
     key: 'lancamentos',
     label: 'Lançamentos',
     items: [
-      { key: '/contas-pagar', label: 'Contas a pagar' },
-      { key: '/contas-receber', label: 'Contas a receber' },
+      { key: '/movimentacoes', label: 'Movimentações', aliases: ['/contas-pagar', '/contas-receber'] },
       { key: '/recorrencias', label: 'Recorrências' },
-      { key: '/movimentacoes', label: 'Movimentações' },
       { key: '/faturas', label: 'Faturas' },
+      { key: '/faturas/importar', label: 'Importar fatura CSV' },
       { key: '/importacoes-whatsapp', label: 'Importações WhatsApp' },
       { key: '/conciliacao', label: 'Conciliação' }
     ]

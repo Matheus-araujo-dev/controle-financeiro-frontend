@@ -95,7 +95,7 @@ function normalizeMultiSelectSelection(values: string[], options: FilterOption[]
   return sanitizedValues.length ? sanitizedValues : undefined;
 }
 
-export function MovimentacoesPage() {
+export function MovimentacoesPage({ embedded = false }: { embedded?: boolean } = {}) {
   // Link "ver extrato" das contas bancárias abre a página já filtrada pela conta.
   const contaBancariaInicial = new URLSearchParams(window.location.search).get('contaBancariaId');
 
@@ -198,30 +198,32 @@ export function MovimentacoesPage() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header & Metrics Section */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-        <div>
-          <h2 className="text-on-surface-variant font-label text-xs uppercase tracking-[0.2em] mb-2">Controle em Tempo Real</h2>
-          <h1 className="text-4xl md:text-5xl font-headline font-extrabold tracking-tighter text-white mb-2 neon-glow">
-            Extrato de Movimentações
-          </h1>
-        </div>
+      <div className={`flex flex-col lg:flex-row lg:items-end gap-6 ${embedded ? 'lg:justify-end' : 'justify-between'}`}>
+        {!embedded && (
+          <div>
+            <h2 className="text-on-surface-variant font-label text-xs uppercase tracking-[0.2em] mb-2">Controle em Tempo Real</h2>
+            <h1 className="text-4xl md:text-5xl font-headline font-extrabold tracking-tighter text-white mb-2 neon-glow">
+              Extrato de Movimentações
+            </h1>
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-4">
-          <div className="bg-surface-container p-4 rounded-2xl border border-white/5 min-w-[160px]">
+          <div className="bg-surface-container p-5 rounded-3xl border border-white/5 min-w-[160px]">
             <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest block mb-1">Entradas</span>
             <div className="flex items-center gap-2">
               <ArrowDownOutlined className="text-primary text-sm" />
               <span className="text-white text-xl font-headline font-extrabold">{formatCurrencyBRL(resumo.totalEntradas)}</span>
             </div>
           </div>
-          <div className="bg-surface-container p-4 rounded-2xl border border-white/5 min-w-[160px]">
+          <div className="bg-surface-container p-5 rounded-3xl border border-white/5 min-w-[160px]">
             <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest block mb-1">Saídas</span>
             <div className="flex items-center gap-2">
               <ArrowUpOutlined className="text-error text-sm" />
               <span className="text-white text-xl font-headline font-extrabold">{formatCurrencyBRL(resumo.totalSaidas)}</span>
             </div>
           </div>
-          <div className="bg-surface-container-highest p-4 rounded-2xl border border-primary/20 min-w-[180px] shadow-[0_8px_32px_rgba(63,255,139,0.1)]">
+          <div className="bg-surface-container-highest p-5 rounded-3xl border border-primary/20 min-w-[180px] shadow-[0_8px_32px_rgba(63,255,139,0.1)]">
             <span className="text-primary text-[10px] font-bold uppercase tracking-widest block mb-1">Saldo Líquido</span>
             <span className="text-primary text-2xl font-headline font-extrabold">{formatCurrencyBRL(resumo.saldoLiquido)}</span>
           </div>

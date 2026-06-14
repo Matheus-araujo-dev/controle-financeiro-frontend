@@ -1,15 +1,21 @@
+import { useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { CheckCircleOutlined, DollarCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, DollarCircleOutlined, SafetyOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
 
 import { formatCurrencyBRL } from '../../../shared/currency';
-import { CurrencyInput } from '../../../shared/CurrencyInput';
-import { nativeCompactFieldClass, nativeDateFieldClass } from './field-classes';
+import { nativeDateFieldClass, fieldLabelClass } from './field-classes';
+import { SelectWithQuickAdd } from '../../../components/forms/SelectWithQuickAdd';
+import { QuickAddFormaPagamentoModal } from '../../cadastros/quick-add/QuickAddFormaPagamentoModal';
+import { QuickAddCartaoModal } from '../../cadastros/quick-add/QuickAddCartaoModal';
+import { QuickAddContaBancariaModal } from '../../cadastros/quick-add/QuickAddContaBancariaModal';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
 
 type SummarySidebarProps = {
   form: FinancialAccountFormApi;
 };
+
+type QuickAddTarget = 'forma' | 'cartao' | 'conta' | null;
 
 export function SummarySidebar({ form }: SummarySidebarProps) {
   const {
@@ -19,130 +25,109 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     isSubmitting,
     isValid,
     valorLiquido,
+    watchedValues,
     formaPagamentoBehavior,
     formaPagamentoOptions,
     cartaoOptions,
     contaBancariaOptions,
     detailStatus,
     errorMessage,
+    setValue,
     onCancel,
     cancelar,
-    estornar
+    estornar,
+    reloadFormaPagamentoOptions,
+    reloadCartaoOptions,
+    reloadContaBancariaOptions
   } = form;
+
+  const [quickAdd, setQuickAdd] = useState<QuickAddTarget>(null);
+
+  const valorOriginal = Number(watchedValues.valorOriginal) || 0;
+  const valorDesconto = Number(watchedValues.valorDesconto) || 0;
+  const valorJurosMulta = (Number(watchedValues.valorJuros) || 0) + (Number(watchedValues.valorMulta) || 0);
+
+  function handleFormaSuccess(newId: string) {
+    void reloadFormaPagamentoOptions().then(() => setValue('formaPagamentoId', newId));
+  }
+
+  function handleCartaoSuccess(newId: string) {
+    void reloadCartaoOptions().then(() => setValue('cartaoId', newId));
+  }
+
+  function handleContaSuccess(newId: string) {
+    void reloadContaBancariaOptions().then(() => setValue('contaBancariaId', newId));
+  }
 
   return (
     <div className="lg:col-span-4 space-y-6">
-      <div className="bg-surface-container sticky top-24 p-8 rounded-3xl border border-white/10 shadow-2xl space-y-8 overflow-hidden">
+      <div className="bg-surface-container sticky top-24 p-8 rounded-3xl border border-white/10 shadow-2xl space-y-7 overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
 
-        <div className="space-y-6 relative">
+        <div className="relative space-y-7">
           <h3 className="font-headline font-extrabold flex items-center gap-2 text-lg">
-            <DollarCircleOutlined className="text-primary" /> Resumo Financeiro
+            <DollarCircleOutlined className="text-primary" /> Resumo
           </h3>
 
-          <div className="space-y-4">
-            <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-              <span>Valor Original</span>
-              <span className="text-white">
-                <Controller
-                  control={control}
-                  name="valorOriginal"
-                  render={({ field }) => (
-                    <CurrencyInput
-                      value={field.value}
-                      onChange={(val) => field.onChange(val ?? 0)}
-                      disabled={!canEdit}
-                      className="bg-transparent border-none text-right focus:ring-0 p-0 font-headline font-bold text-white w-24"
-                    />
-                  )}
-                />
-              </span>
-            </div>
+          {/* Computed net value (read-only) */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-1">Valor Líquido</p>
+            <p className="text-4xl font-headline font-black text-primary neon-glow">{formatCurrencyBRL(valorLiquido)}</p>
+          </div>
 
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Descontos</span>
-              <Controller
-                control={control}
-                name="valorDesconto"
-                render={({ field }) => (
-                  <CurrencyInput
-                    value={field.value}
-                    onChange={(val) => field.onChange(val ?? 0)}
-                    disabled={!canEdit}
-                    className="bg-transparent border-none text-right focus:ring-0 p-0 font-headline text-error w-24"
-                  />
-                )}
-              />
+          {/* Breakdown (read-only) */}
+          <div className="space-y-3 border-t border-white/10 pt-5">
+            <div className="flex justify-between text-sm">
+              <span className="text-on-surface-variant">Valor original</span>
+              <span className="text-white font-headline">{formatCurrencyBRL(valorOriginal)}</span>
             </div>
-
-            <div className="space-y-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Juros / Multa</span>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-white/6 bg-surface-container-highest/70 px-3 py-3">
-                  <span className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Juros</span>
-                  <Controller
-                    control={control}
-                    name="valorJuros"
-                    render={({ field }) => (
-                      <CurrencyInput
-                        value={field.value}
-                        onChange={(val) => field.onChange(val ?? 0)}
-                        disabled={!canEdit}
-                        className="financial-summary-inline-input bg-transparent border-none text-left focus:ring-0 p-0 font-headline w-full"
-                      />
-                    )}
-                  />
-                </div>
-                <div className="rounded-2xl border border-white/6 bg-surface-container-highest/70 px-3 py-3">
-                  <span className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Multa</span>
-                  <Controller
-                    control={control}
-                    name="valorMulta"
-                    render={({ field }) => (
-                      <CurrencyInput
-                        value={field.value}
-                        onChange={(val) => field.onChange(val ?? 0)}
-                        disabled={!canEdit}
-                        className="financial-summary-inline-input bg-transparent border-none text-left focus:ring-0 p-0 font-headline w-full"
-                      />
-                    )}
-                  />
-                </div>
-              </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-on-surface-variant">Desconto</span>
+              <span className="text-error font-headline">− {formatCurrencyBRL(valorDesconto)}</span>
             </div>
-
-            <div className="pt-6 border-t border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-2">Valor Líquido Final</p>
-              <p className="text-4xl font-headline font-black text-primary neon-glow">{formatCurrencyBRL(valorLiquido)}</p>
+            <div className="flex justify-between text-sm">
+              <span className="text-on-surface-variant">Juros / multa</span>
+              <span className="text-white font-headline">+ {formatCurrencyBRL(valorJurosMulta)}</span>
             </div>
           </div>
 
-          <div className="space-y-4 pt-4">
+          {/* Payment method + dependents */}
+          <div className="space-y-4 pt-2">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase text-on-surface-variant block ml-1">Forma de Pagamento</label>
+              <label className={fieldLabelClass}>Forma de Pagamento</label>
               <Controller
                 control={control}
                 name="formaPagamentoId"
                 render={({ field }) => (
-                  <select {...field} disabled={!canEdit} className={nativeCompactFieldClass}>
+                  <SelectWithQuickAdd
+                    {...field}
+                    disabled={!canEdit}
+                    className="financial-native-field w-full rounded-2xl px-4 py-3 text-sm text-white"
+                    onAddNew={canEdit ? () => setQuickAdd('forma') : undefined}
+                  >
                     <option value="">Selecionar...</option>
                     {formaPagamentoOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                  </select>
+                  </SelectWithQuickAdd>
                 )}
               />
             </div>
 
             {formaPagamentoBehavior.ehCartao && (
               <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                <label className="text-[10px] font-bold uppercase text-on-surface-variant block ml-1">Cartão de Crédito</label>
+                <label className={fieldLabelClass}>Cartão de Crédito</label>
                 <Controller
                   control={control}
                   name="cartaoId"
                   render={({ field }) => (
-                    <select {...field} disabled={!canEdit} className={nativeCompactFieldClass}>
+                    <SelectWithQuickAdd
+                      {...field}
+                      disabled={!canEdit}
+                      className="financial-native-field w-full rounded-2xl px-4 py-3 text-sm text-white"
+                      onAddNew={canEdit ? () => setQuickAdd('cartao') : undefined}
+                    >
                       <option value="">Selecionar cartão...</option>
                       {cartaoOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                    </select>
+                    </SelectWithQuickAdd>
                   )}
                 />
               </div>
@@ -151,20 +136,25 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
             {formaPagamentoBehavior.baixarAutomaticamente && (
               <div className="space-y-4 animate-in slide-in-from-top-2 duration-300 bg-white/5 p-4 rounded-2xl border border-white/5">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase text-on-surface-variant block ml-1">Conta para Baixa</label>
+                  <label className={fieldLabelClass}>Conta para Baixa</label>
                   <Controller
                     control={control}
                     name="contaBancariaId"
                     render={({ field }) => (
-                      <select {...field} disabled={!canEdit} className={nativeCompactFieldClass}>
+                      <SelectWithQuickAdd
+                        {...field}
+                        disabled={!canEdit}
+                        className="financial-native-field w-full rounded-2xl px-4 py-3 text-sm text-white"
+                        onAddNew={canEdit ? () => setQuickAdd('conta') : undefined}
+                      >
                         <option value="">Selecionar conta...</option>
                         {contaBancariaOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                      </select>
+                      </SelectWithQuickAdd>
                     )}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase text-on-surface-variant block ml-1">Data Liquidação</label>
+                  <label className={fieldLabelClass}>Data Liquidação</label>
                   <Controller
                     control={control}
                     name="dataLiquidacao"
@@ -177,13 +167,13 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
             )}
           </div>
 
-          <div className="space-y-4 pt-6">
+          <div className="space-y-4 pt-2">
             <button
               type="submit"
               disabled={isSubmitting || !isValid}
               className="w-full py-4 bg-primary text-on-primary rounded-2xl font-headline font-extrabold text-lg shadow-[0_10px_30px_rgba(63,255,139,0.2)] active:scale-95 transition-all disabled:opacity-50 disabled:active:scale-100"
             >
-              {id ? 'Atualizar Lançamento' : 'Confirmar Lançamento'}
+              {id && id !== 'novo' ? 'Atualizar Lançamento' : 'Confirmar Lançamento'}
             </button>
             <button
               type="button"
@@ -199,6 +189,11 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
               {errorMessage}
             </div>
           )}
+
+          <div className="flex items-start gap-2 rounded-2xl bg-white/[0.03] px-4 py-3 text-[11px] text-on-surface-variant">
+            <SafetyOutlined className="mt-0.5 text-primary" />
+            <span>O valor líquido é calculado automaticamente a partir dos valores informados no Passo 2.</span>
+          </div>
         </div>
       </div>
 
@@ -245,6 +240,22 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
           </button>
         </div>
       )}
+
+      <QuickAddFormaPagamentoModal
+        open={quickAdd === 'forma'}
+        onClose={() => setQuickAdd(null)}
+        onSuccess={handleFormaSuccess}
+      />
+      <QuickAddCartaoModal
+        open={quickAdd === 'cartao'}
+        onClose={() => setQuickAdd(null)}
+        onSuccess={handleCartaoSuccess}
+      />
+      <QuickAddContaBancariaModal
+        open={quickAdd === 'conta'}
+        onClose={() => setQuickAdd(null)}
+        onSuccess={handleContaSuccess}
+      />
     </div>
   );
 }

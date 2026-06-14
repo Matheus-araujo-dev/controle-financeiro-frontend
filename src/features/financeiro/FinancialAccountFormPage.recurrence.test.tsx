@@ -74,9 +74,9 @@ function renderPage() {
   const config = createConfig();
 
   render(
-    <MemoryRouter initialEntries={['/contas-pagar/nova']}>
+    <MemoryRouter initialEntries={['/contas-pagar/novo']}>
       <Routes>
-        <Route path="/contas-pagar/nova" element={<FinancialAccountFormPage config={config as never} />} />
+        <Route path="/contas-pagar/novo" element={<FinancialAccountFormPage config={config as never} />} />
       </Routes>
     </MemoryRouter>
   );
@@ -88,7 +88,7 @@ describe('FinancialAccountFormPage recurrence fixes', () => {
   it('renders the recurrence fields and normalizes installments to one', async () => {
     renderPage();
 
-    expect(await screen.findByDisplayValue('2026-05-10')).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('2026-05')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Contrato mensal')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Permitido' })).toBeInTheDocument();
     expect(screen.getByText('Início da série')).toBeInTheDocument();

@@ -66,7 +66,13 @@ export function RecurrenceSection({ form }: RecurrenceSectionProps) {
                 control={control}
                 name="recorrenciaDataInicio"
                 render={({ field }) => (
-                  <input type="date" {...field} disabled={!canEdit} className={nativeDateFieldClass} />
+                  <input
+                    type="month"
+                    {...field}
+                    value={toMonthInputValue(field.value)}
+                    disabled={!canEdit}
+                    className={nativeMonthFieldClass}
+                  />
                 )}
               />
               {errors.recorrenciaDataInicio && <span className={errorTextClass}>{errors.recorrenciaDataInicio.message}</span>}
@@ -77,7 +83,15 @@ export function RecurrenceSection({ form }: RecurrenceSectionProps) {
                 control={control}
                 name="recorrenciaDiaOrdemMensal"
                 render={({ field }) => (
-                  <input type="number" min={1} max={31} {...field} disabled={!canEdit} className={nativeCompactFieldClass} />
+                  <input
+                    type="number"
+                    min={1}
+                    max={31}
+                    {...field}
+                    onChange={e => field.onChange(Number(e.target.value))}
+                    disabled={!canEdit}
+                    className={nativeCompactFieldClass}
+                  />
                 )}
               />
               {errors.recorrenciaDiaOrdemMensal && <span className={errorTextClass}>{errors.recorrenciaDiaOrdemMensal.message}</span>}

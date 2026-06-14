@@ -59,11 +59,15 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
   const selectedKey = useMemo(() => {
     const currentPath = location.pathname;
 
+    // Cada item pode casar pela própria key ou por aliases (ex.: abas de Movimentações que mudam a URL).
+    const candidates = navigationItems
+      .flatMap((item) => [item.key, ...(item.aliases ?? [])].map((prefix) => ({ key: item.key, prefix })))
+      .sort((left, right) => right.prefix.length - left.prefix.length);
+
     return (
-      navigationItems
-        .map((item) => item.key)
-        .sort((left, right) => right.length - left.length)
-        .find((key) => currentPath === key || currentPath.startsWith(`${key}/`)) ?? '/dashboard'
+      candidates.find(
+        ({ prefix }) => currentPath === prefix || currentPath.startsWith(`${prefix}/`)
+      )?.key ?? '/dashboard'
     );
   }, [location.pathname]);
 

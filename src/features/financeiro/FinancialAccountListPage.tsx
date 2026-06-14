@@ -22,10 +22,12 @@ import { resolveStatusTone, statusFilterOptions } from './module-config';
 import { Modal, Tooltip } from 'antd';
 
 export function FinancialAccountListPage({
-  config
+  config,
+  embedded = false
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: FinanceiroModuleConfig<any, any, any>;
+  embedded?: boolean;
 }) {
   const navigate = useNavigate();
   // Permite links diretos já filtrados (ex.: alerta de vencidas no dashboard).
@@ -116,15 +118,17 @@ export function FinancialAccountListPage({
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 className="text-4xl md:text-5xl font-headline font-extrabold tracking-tighter text-white mb-2 neon-glow">
-            {config.title}
-          </h1>
-          <p className="text-on-surface-variant font-medium">
-            {isPagar ? 'Gerenciamento de obrigações e fluxo de saída.' : 'Gerenciamento de recebíveis e fluxo de entrada.'}
-          </p>
-        </div>
+      <div className={`flex flex-col md:flex-row md:items-end gap-6 ${embedded ? 'md:justify-end' : 'justify-between'}`}>
+        {!embedded && (
+          <div>
+            <h1 className="text-4xl md:text-5xl font-headline font-extrabold tracking-tighter text-white mb-2 neon-glow">
+              {config.title}
+            </h1>
+            <p className="text-on-surface-variant font-medium">
+              {isPagar ? 'Gerenciamento de obrigações e fluxo de saída.' : 'Gerenciamento de recebíveis e fluxo de entrada.'}
+            </p>
+          </div>
+        )}
         <button
           onClick={onCreate}
           className="bg-primary hover:bg-primary-container text-on-primary font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-[0_4px_20px_rgba(63,255,139,0.2)]"
@@ -134,65 +138,60 @@ export function FinancialAccountListPage({
         </button>
       </div>
 
-      {/* Bento Summary Cards */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-surface-container p-6 rounded-[1.5rem] border border-white/5 relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all"></div>
-          <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest block mb-2">Total Pendente</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-primary text-3xl font-headline font-extrabold">
-              {formatCurrencyBRL(resumo?.totalPendente ?? 0)}
+        <div className="bg-surface-container rounded-3xl border border-white/5 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <ClockCircleOutlined />
             </span>
+            <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">Total Pendente</span>
           </div>
-          <div className="mt-4 flex items-center gap-2 text-on-surface-variant text-xs font-semibold">
-            <ClockCircleOutlined className="text-sm" />
-            <span>Baseado nos filtros aplicados</span>
-          </div>
+          <p className="text-3xl font-headline font-extrabold text-primary">{formatCurrencyBRL(resumo?.totalPendente ?? 0)}</p>
+          <p className="mt-2 text-xs text-on-surface-variant">Baseado nos filtros aplicados</p>
         </div>
 
-        <div className="bg-surface-container p-6 rounded-[1.5rem] border border-white/5 group">
-          <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest block mb-2">
-            {isPagar ? 'Vencendo Hoje' : 'Recebendo Hoje'}
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-white text-3xl font-headline font-extrabold">
-              {formatCurrencyBRL(totalVencendoHoje)}
+        <div className="bg-surface-container rounded-3xl border border-white/5 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <span className={`flex h-9 w-9 items-center justify-center rounded-2xl ${hasAlertaHoje ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'}`}>
+              <CalendarOutlined />
             </span>
+            <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">
+              {isPagar ? 'Vencendo Hoje' : 'Recebendo Hoje'}
+            </span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-headline font-extrabold text-white">{formatCurrencyBRL(totalVencendoHoje)}</p>
             {hasAlertaHoje && (
-              <span className="text-on-surface-variant text-sm font-medium">
-                {`/ ${data?.totalItems ?? 0} contas`}
-              </span>
+              <span className="text-on-surface-variant text-sm font-medium">{`/ ${data?.totalItems ?? 0} contas`}</span>
             )}
           </div>
-          <div className="mt-4 flex gap-2">
+          <div className="mt-3">
             {hasAlertaHoje ? (
-              <span className="bg-error/20 text-error px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter">
-                Crítico
-              </span>
+              <span className="bg-error/15 text-error px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-tighter">Crítico</span>
             ) : (
-              <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter">
-                Normal
-              </span>
+              <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-tighter">Normal</span>
             )}
           </div>
         </div>
 
-        <div className="bg-surface-container p-6 rounded-[1.5rem] border border-primary/20 group">
-          <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest block mb-2">Total Liquidado</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-white text-3xl font-headline font-extrabold">
-              {formatCurrencyBRL(resumo?.totalLiquidado ?? 0)}
+        <div className="bg-surface-container rounded-3xl border border-white/5 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <CheckCircleOutlined />
             </span>
+            <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">Total Liquidado</span>
           </div>
-          <div className="mt-4 flex items-center gap-2 text-primary text-xs font-semibold">
+          <p className="text-3xl font-headline font-extrabold text-white">{formatCurrencyBRL(resumo?.totalLiquidado ?? 0)}</p>
+          <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-on-surface-variant">
             {hasAlertaHoje ? (
               <>
-                <WarningOutlined className="text-sm" />
+                <WarningOutlined className="text-sm text-error" />
                 <span>Atenção requerida</span>
               </>
             ) : (
               <>
-                <CheckCircleOutlined className="text-sm" />
+                <CheckCircleOutlined className="text-sm text-primary" />
                 <span>Fluxo de caixa saudável</span>
               </>
             )}
@@ -201,13 +200,15 @@ export function FinancialAccountListPage({
       </div>
 
       {/* Filters Section */}
-      <div className="bg-surface-container-low p-4 rounded-2xl flex flex-wrap items-center gap-4 border border-white/5">
-        <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-2 rounded-xl border border-white/5 min-w-[180px]">
-          <CalendarOutlined className="text-on-surface-variant text-sm" />
-          <select
-            className="bg-transparent border-none text-xs font-bold uppercase tracking-wider focus:ring-0 text-white w-full"
-            value={filters.dataInicial ?? ''}
-            onChange={(e) => {
+      <div className="bg-surface-container-low p-5 rounded-3xl border border-white/5 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,220px)_minmax(0,220px)_1fr]">
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant px-1">Vencimento</label>
+          <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-2.5 rounded-2xl border border-white/5">
+            <CalendarOutlined className="text-on-surface-variant text-sm" />
+            <select
+              className="bg-transparent border-none text-sm font-medium focus:ring-0 text-white w-full"
+              value={filters.dataInicial ?? ''}
+              onChange={(e) => {
               const value = e.target.value;
               let dataInicial: string | undefined;
               let dataFinal: string | undefined;
@@ -240,41 +241,44 @@ export function FinancialAccountListPage({
             <option value="proximos30">Próximos 30 dias</option>
             <option value="esteMes">Este Mês</option>
           </select>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-2 rounded-xl border border-white/5 min-w-[180px]">
-          <FilterOutlined className="text-on-surface-variant text-sm" />
-          <select
-            className="bg-transparent border-none text-xs font-bold uppercase tracking-wider focus:ring-0 text-white w-full"
-            value={filters.statusCodigo?.[0] ?? ''}
-            onChange={(e) => setFilters((prev) => ({ 
-              ...prev, 
-              statusCodigo: e.target.value ? [e.target.value as StatusCodigoConta] : [], 
-              page: 1 
-            }))}
-          >
-            <option value="">Status: Todos</option>
-            <option value="PENDENTE">Pendente</option>
-            <option value="EM_FATURA">Em fatura</option>
-            <option value="LIQUIDADA">Liquidada</option>
-            <option value="VENCIDA">Vencida</option>
-            <option value="CANCELADA">Cancelada</option>
-          </select>
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant px-1">Status</label>
+          <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-2.5 rounded-2xl border border-white/5">
+            <FilterOutlined className="text-on-surface-variant text-sm" />
+            <select
+              className="bg-transparent border-none text-sm font-medium focus:ring-0 text-white w-full"
+              value={filters.statusCodigo?.[0] ?? ''}
+              onChange={(e) => setFilters((prev) => ({
+                ...prev,
+                statusCodigo: e.target.value ? [e.target.value as StatusCodigoConta] : [],
+                page: 1
+              }))}
+            >
+              <option value="">Status: Todos</option>
+              <option value="PENDENTE">Pendente</option>
+              <option value="EM_FATURA">Em fatura</option>
+              <option value="LIQUIDADA">Liquidada</option>
+              <option value="VENCIDA">Vencida</option>
+              <option value="CANCELADA">Cancelada</option>
+            </select>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-2 rounded-xl border border-white/5 flex-1 min-w-[240px]">
-          <SearchOutlined className="text-on-surface-variant text-sm" />
-          <input
-            className="bg-transparent border-none text-xs font-bold uppercase tracking-wider focus:ring-0 text-white w-full placeholder:text-on-surface-variant"
-            placeholder={`BUSCAR POR ${config.personLabel.toUpperCase()}...`}
-            value={filters.search}
-            onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))}
-          />
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant px-1">Buscar</label>
+          <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-2.5 rounded-2xl border border-white/5">
+            <SearchOutlined className="text-on-surface-variant text-sm" />
+            <input
+              className="bg-transparent border-none text-sm font-medium focus:ring-0 text-white w-full placeholder:text-on-surface-variant"
+              placeholder={`BUSCAR POR ${config.personLabel.toUpperCase()}...`}
+              value={filters.search}
+              onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))}
+            />
+          </div>
         </div>
-
-        <button className="bg-surface-container-highest hover:bg-surface-variant text-on-surface-variant p-2 rounded-xl transition-all">
-          <FilterOutlined />
-        </button>
       </div>
 
       {/* Main Table Section */}

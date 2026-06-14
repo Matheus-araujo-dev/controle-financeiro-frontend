@@ -148,7 +148,7 @@ describe('financeiro module config', () => {
       ehRecorrente: true,
       recorrenciaTipoDia: 'DiaFixo',
       recorrenciaDiaOrdemMensal: 20,
-      recorrenciaDataInicio: '2026-04-20',
+      recorrenciaDataInicio: '2026-04',
       recorrenciaDataFim: ''
     });
 

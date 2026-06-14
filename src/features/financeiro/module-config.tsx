@@ -236,7 +236,7 @@ function buildRecorrenciaPayload(values: FinanceiroFormValues): RecorrenciaPaylo
     tipoPeriodicidade: values.recorrenciaTipoPeriodicidade,
     tipoDia: values.recorrenciaTipoDia,
     diaOrdemMensal: values.recorrenciaDiaOrdemMensal,
-    dataInicio: normalizeNullableText(values.recorrenciaDataInicio),
+    dataInicio: values.recorrenciaDataInicio.trim() === '' ? null : resolveRecorrenciaDateForMonth(values, values.recorrenciaDataInicio),
     dataFim: values.recorrenciaDataFim.trim() === '' ? null : resolveRecorrenciaDateForMonth(values, values.recorrenciaDataFim),
     permiteEdicaoOcorrenciaIndividual: values.recorrenciaPermiteEdicaoOcorrenciaIndividual,
     observacao: normalizeNullableText(values.recorrenciaObservacao)
@@ -442,7 +442,7 @@ function buildToFormValues(detail: {
     recorrenciaTipoPeriodicidade: detail.recorrencia?.tipoPeriodicidade ?? 'Mensal',
     recorrenciaTipoDia: detail.recorrencia?.tipoDia ?? 'DiaFixo',
     recorrenciaDiaOrdemMensal: detail.recorrencia?.diaOrdemMensal ?? 1,
-    recorrenciaDataInicio: detail.recorrencia?.dataInicio ?? '',
+    recorrenciaDataInicio: toMonthInputValue(detail.recorrencia?.dataInicio) ?? '',
     recorrenciaDataFim: toMonthInputValue(detail.recorrencia?.dataFim),
     recorrenciaPermiteEdicaoOcorrenciaIndividual: detail.recorrencia?.permiteEdicaoOcorrenciaIndividual ?? true,
     recorrenciaObservacao: detail.recorrencia?.observacao ?? '',

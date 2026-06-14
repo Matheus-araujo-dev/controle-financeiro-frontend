@@ -16,13 +16,13 @@ const NovaCompraPlanejadaPage = lazy(() => import('../features/compras-planejada
 const RealizarCompraPlanejadaPage = lazy(() => import('../features/compras-planejadas/RealizarCompraPlanejadaPage').then((m) => ({ default: m.RealizarCompraPlanejadaPage })));
 const ConciliacaoPage = lazy(() => import('../features/conciliacao/ConciliacaoPage').then((m) => ({ default: m.ConciliacaoPage })));
 const FinancialAccountFormPage = lazy(() => import('../features/financeiro/FinancialAccountFormPage').then((m) => ({ default: m.FinancialAccountFormPage })));
-const FinancialAccountListPage = lazy(() => import('../features/financeiro/FinancialAccountListPage').then((m) => ({ default: m.FinancialAccountListPage })));
 const FaturaDetailPage = lazy(() => import('../features/financeiro/FaturaDetailPage').then((m) => ({ default: m.FaturaDetailPage })));
 const FaturasPage = lazy(() => import('../features/financeiro/FaturasPage').then((m) => ({ default: m.FaturasPage })));
-const MovimentacoesPage = lazy(() => import('../features/financeiro/MovimentacoesPage').then((m) => ({ default: m.MovimentacoesPage })));
+const MovimentacoesWorkspacePage = lazy(() => import('../features/financeiro/MovimentacoesWorkspacePage').then((m) => ({ default: m.MovimentacoesWorkspacePage })));
 const ImportacaoWhatsappDetailPage = lazy(() => import('../features/importacoes-whatsapp/ImportacaoWhatsappDetailPage').then((m) => ({ default: m.ImportacaoWhatsappDetailPage })));
 const ImportacoesWhatsappPage = lazy(() => import('../features/importacoes-whatsapp/ImportacoesWhatsappPage').then((m) => ({ default: m.ImportacoesWhatsappPage })));
 const RecurrenceListPage = lazy(() => import('../features/financeiro/RecurrenceListPage'));
+const ImportarFaturaPage = lazy(() => import('../features/financeiro/ImportarFaturaPage').then((m) => ({ default: m.ImportarFaturaPage })));
 
 export const placeholderRouteObjects: RouteObject[] = [];
 
@@ -143,7 +143,7 @@ export const comprasPlanejadasRouteObjects: RouteObject[] = [
     }
   },
   {
-    path: 'nova',
+    path: 'novo',
     element: <NovaCompraPlanejadaPage />,
     handle: {
       title: 'Nova compra planejada'
@@ -168,13 +168,13 @@ export const comprasPlanejadasRouteObjects: RouteObject[] = [
 export const financialRouteObjects: RouteObject[] = [
   {
     path: 'contas-pagar',
-    element: <FinancialAccountListPage config={contasPagarModuleConfig} />,
+    element: <MovimentacoesWorkspacePage initialTab="pagar" />,
     handle: {
       title: 'Contas a pagar'
     }
   },
   {
-    path: 'contas-pagar/nova',
+    path: 'contas-pagar/novo',
     element: <FinancialAccountFormPage config={contasPagarModuleConfig} />,
     handle: {
       title: 'Nova conta a pagar'
@@ -189,13 +189,13 @@ export const financialRouteObjects: RouteObject[] = [
   },
   {
     path: 'contas-receber',
-    element: <FinancialAccountListPage config={contasReceberModuleConfig} />,
+    element: <MovimentacoesWorkspacePage initialTab="receber" />,
     handle: {
       title: 'Contas a receber'
     }
   },
   {
-    path: 'contas-receber/nova',
+    path: 'contas-receber/novo',
     element: <FinancialAccountFormPage config={contasReceberModuleConfig} />,
     handle: {
       title: 'Nova conta a receber'
@@ -210,7 +210,7 @@ export const financialRouteObjects: RouteObject[] = [
   },
   {
     path: 'movimentacoes',
-    element: <MovimentacoesPage />,
+    element: <MovimentacoesWorkspacePage initialTab="extrato" />,
     handle: {
       title: 'Movimentacoes'
     }
@@ -227,6 +227,13 @@ export const financialRouteObjects: RouteObject[] = [
     element: <FaturaDetailPage />,
     handle: {
       title: 'Detalhe de fatura'
+    }
+  },
+  {
+    path: 'faturas/importar',
+    element: <ImportarFaturaPage />,
+    handle: {
+      title: 'Importar fatura'
     }
   },
   {
