@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Controller } from 'react-hook-form';
+import { useEffect, useRef, useState } from 'react';
+import { Controller, useWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { CreditCardOutlined, FileTextOutlined, InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
+import { CreditCardOutlined, FileTextOutlined, InfoCircleOutlined, RobotOutlined, SearchOutlined } from '@ant-design/icons';
+import { agenteApi } from '../../../services/http/agente-api';
 
 import { formatMonthYearBR } from '../../../shared/date';
 import { buildCardInvoiceLink } from './card-invoice';
@@ -34,6 +35,26 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
 
   const [pessoaModalTarget, setPessoaModalTarget] = useState<PessoaTarget>(null);
   const [contaGerencialModalOpen, setContaGerencialModalOpen] = useState(false);
+  const [aiSugestao, setAiSugestao] = useState<{ id: string; descricao: string; confianca: number } | null>(null);
+  const aiDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const descricaoWatched = useWatch({ control, name: 'descricao' });
+  const categoriaAtual = useWatch({ control, name: 'rateios.0.contaGerencialId' });
+
+  useEffect(() => {
+    if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current);
+    setAiSugestao(null);
+    if (!descricaoWatched || descricaoWatched.length < 4 || !canEdit) return;
+    aiDebounceRef.current = setTimeout(() => {
+      agenteApi.categorizar([descricaoWatched]).then((resp) => {
+        const item = resp.itens[0];
+        if (item?.contaGerencialId && item.confianca >= 0.65) {
+          setAiSugestao({ id: item.contaGerencialId, descricao: item.contaGerencialDescricao ?? '', confianca: item.confianca });
+        }
+      }).catch(() => { /* silencioso */ });
+    }, 800);
+    return () => { if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current); };
+  }, [descricaoWatched, canEdit]);
 
   function handlePessoaSuccess(newId: string) {
     const target = pessoaModalTarget; // capture before modal closes and resets state
@@ -136,6 +157,22 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
               </SelectWithQuickAdd>
             )}
           />
+          {aiSugestao && !categoriaAtual && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/8 border border-primary/20 animate-in fade-in duration-300">
+              <RobotOutlined className="text-primary text-xs" />
+              <span className="text-xs text-primary font-medium flex-1">
+                IA sugere: <strong>{aiSugestao.descricao}</strong>
+                <span className="ml-1 opacity-60">({Math.round(aiSugestao.confianca * 100)}%)</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => { setValue('rateios.0.contaGerencialId', aiSugestao.id); setAiSugestao(null); }}
+                className="text-[11px] font-bold text-primary bg-primary/15 hover:bg-primary/25 px-2 py-0.5 rounded-lg transition-colors"
+              >
+                Usar
+              </button>
+            </div>
+          )}
           <p className="text-[11px] text-on-surface-variant/70 ml-1">
             Para dividir entre várias contas, use o rateio por centro de custo abaixo.
           </p>

@@ -5,6 +5,7 @@ import { DashboardFaturasCartao } from '../components/DashboardFaturasCartao';
 import { DashboardCashPulse } from '../components/DashboardCashPulse';
 import { DashboardOperationalAgenda } from '../components/DashboardOperationalAgenda';
 import { DashboardTransactionList } from '../components/DashboardTransactionList';
+import { DashboardAiInsights } from '../components/DashboardAiInsights';
 import { PageState } from '../../../components/states/PageState';
 import { dashboardApi } from '../../../services/http/dashboard-api';
 import { orcamentosApi } from '../../../services/http/orcamentos-api';
@@ -205,6 +206,9 @@ export function DashboardPage() {
              />
            </div>
         </div>
+
+        {/* AI Insights */}
+        <DashboardAiInsights mesReferencia={referenceMonth} />
       </div>
     </>
   );

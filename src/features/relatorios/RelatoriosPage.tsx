@@ -1,8 +1,34 @@
 import { useEffect, useState } from 'react';
+import * as XLSX from 'xlsx';
 import { dashboardApi } from '../../services/http/dashboard-api';
 import type { DashboardResponsavelResumo } from '../../types/dashboard';
 import { PageState } from '../../components/states/PageState';
 import { formatCurrencyBRL } from '../../shared/currency';
+
+function exportarExcel(data: DashboardResponsavelResumo, mesReferencia: string) {
+  const linhas = data.itens.map(item => ({
+    Responsável: item.responsavelNome,
+    Despesas: item.totalDespesas,
+    'Despesas Cartão': item.totalDespesasCartao,
+    Receitas: item.totalReceitas,
+    Lançamentos: item.quantidadeLancamentos,
+  }));
+  linhas.push({
+    Responsável: 'TOTAL',
+    Despesas: data.totalDespesas,
+    'Despesas Cartão': data.itens.reduce((s, i) => s + i.totalDespesasCartao, 0),
+    Receitas: data.totalReceitas,
+    Lançamentos: data.itens.reduce((s, i) => s + i.quantidadeLancamentos, 0),
+  });
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
+  XLSX.writeFile(wb, `relatorio-responsaveis-${mesReferencia}.xlsx`);
+}
+
+function exportarPdf() {
+  window.print();
+}
 
 function getCurrentReferenceMonth() {
   const now = new Date();
@@ -50,13 +76,35 @@ export function RelatoriosPage() {
             Quem movimentou o financeiro da família no período — incluindo compras no cartão.
           </p>
         </div>
-        <input
-          type="month"
-          aria-label="Mês de referência do relatório"
-          value={referenceMonth}
-          onChange={(event) => setReferenceMonth(event.target.value || getCurrentReferenceMonth())}
-          className="bg-surface-container-highest border border-outline-variant/15 rounded-xl px-4 py-2 text-sm font-semibold text-on-surface outline-none focus:border-primary/40 transition-all cursor-pointer"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="month"
+            aria-label="Mês de referência do relatório"
+            value={referenceMonth}
+            onChange={(event) => setReferenceMonth(event.target.value || getCurrentReferenceMonth())}
+            className="bg-surface-container-highest border border-outline-variant/15 rounded-xl px-4 py-2 text-sm font-semibold text-on-surface outline-none focus:border-primary/40 transition-all cursor-pointer"
+          />
+          {data && (
+            <>
+              <button
+                onClick={() => exportarExcel(data, referenceMonth)}
+                className="flex items-center gap-1.5 bg-surface-container-highest border border-outline-variant/15 rounded-xl px-3 py-2 text-xs font-bold text-on-surface hover:bg-surface-container transition-colors"
+                title="Exportar Excel"
+              >
+                <span className="material-symbols-outlined text-sm">table_view</span>
+                Excel
+              </button>
+              <button
+                onClick={exportarPdf}
+                className="flex items-center gap-1.5 bg-surface-container-highest border border-outline-variant/15 rounded-xl px-3 py-2 text-xs font-bold text-on-surface hover:bg-surface-container transition-colors"
+                title="Exportar PDF (imprimir)"
+              >
+                <span className="material-symbols-outlined text-sm">picture_as_pdf</span>
+                PDF
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {errorMessage ? (

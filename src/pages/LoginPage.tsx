@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Form, Input, Space, Spin, Typography } from 'antd';
+import { Alert, Button, Form, Input, Spin } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore, useAuthMode, useCurrentUser } from '../store/auth-store';
@@ -112,50 +112,63 @@ export function LoginPage() {
       userId: values.userId.trim(),
       displayName: values.displayName.trim()
     });
-
     navigate(from, { replace: true });
   };
 
   return (
-    <div className="login-page">
-      <Card className="login-page__card" variant="outlined">
-        <Space direction="vertical" orientation="vertical" size={20} style={{ width: '100%' }}>
-          <div>
-            <Typography.Text className="login-page__eyebrow">
-              {googleEnabled ? 'Acesso' : 'Acesso local'}
-            </Typography.Text>
-            <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
-              Entrar no Controle Financeiro
-            </Typography.Title>
-            <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              {googleEnabled
-                ? 'Entre com a sua conta Google para acessar as finanças da sua família.'
-                : 'No ambiente local, a autenticação usa o header de desenvolvimento da API. Informe o usuário que deseja assumir nesta sessão.'}
-            </Typography.Paragraph>
-          </div>
+    <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Glow de fundo */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px]" />
+      </div>
 
+      <div className="relative z-10 w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {/* Header neon */}
+        <div className="text-center mb-8">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary mb-3">
+            Controle Financeiro
+          </p>
+          <h1 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface mb-3">
+            Bem-vindo{' '}
+            <span className="text-primary" style={{ textShadow: '0 0 30px rgba(63,255,139,0.4)' }}>
+              de volta
+            </span>
+          </h1>
+          <p className="text-on-surface-variant text-sm">
+            {googleEnabled
+              ? 'Entre com sua conta Google para acessar as finanças da família.'
+              : 'Ambiente local — informe o usuário para assumir nesta sessão.'}
+          </p>
+        </div>
+
+        {/* Card de login */}
+        <div className="bg-surface-container-low border border-white/5 rounded-3xl p-8 space-y-6">
           {googleEnabled ? (
-            <Space direction="vertical" orientation="vertical" size={12} style={{ width: '100%', alignItems: 'center' }}>
+            <div className="flex flex-col items-center gap-4">
               {!googleClientId ? (
                 <Alert
                   type="error"
                   showIcon
                   message="Google Client ID não configurado"
                   description="Defina VITE_GOOGLE_CLIENT_ID no ambiente do frontend."
+                  className="w-full"
                 />
               ) : null}
               <Spin spinning={googleLoading || (!scriptReady && !!googleClientId)}>
                 <div ref={buttonRef} />
               </Spin>
-            </Space>
+              <p className="text-[11px] text-on-surface-variant text-center">
+                Ao entrar, você concorda com os termos de uso da plataforma.
+              </p>
+            </div>
           ) : (
             <>
               {mode === 'jwt' ? (
                 <Alert
                   type="warning"
                   showIcon
-                  message="Modo JWT/Auth0 ativo"
-                  description="O frontend foi aberto em modo JWT. Nesta sessão local, use o modo development para autenticar pelo header de desenvolvimento."
+                  message="Modo JWT ativo"
+                  description="Use o modo development para autenticar localmente."
                 />
               ) : null}
 
@@ -188,18 +201,19 @@ export function LoginPage() {
                 </Form.Item>
 
                 <Form.Item style={{ marginBottom: 0 }}>
-                  <Space>
-                    <Button type="primary" htmlType="submit">
-                      Entrar
-                    </Button>
-                    <Typography.Text type="secondary">Destino após login: {from}</Typography.Text>
-                  </Space>
+                  <Button type="primary" htmlType="submit" block size="large">
+                    Entrar
+                  </Button>
                 </Form.Item>
               </Form>
             </>
           )}
-        </Space>
-      </Card>
+        </div>
+
+        <p className="text-center text-[11px] text-on-surface-variant mt-6">
+          Controle Financeiro Familiar — dados seguros e privados
+        </p>
+      </div>
     </div>
   );
 }

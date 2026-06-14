@@ -28,6 +28,28 @@ export interface WhatsappAlertasResponse {
   receberLimiteResponsavel: boolean;
 }
 
+export interface AgenteInsight {
+  tipo: 'ALERTA' | 'POSITIVO' | 'DICA' | 'INFO';
+  mensagem: string;
+  valor?: string;
+}
+
+export interface AgenteInsightsResponse {
+  insights: AgenteInsight[];
+  tokensUsados: number;
+}
+
+export interface AgenteCategorizacaoItem {
+  descricao: string;
+  contaGerencialId: string | null;
+  contaGerencialDescricao: string | null;
+  confianca: number;
+}
+
+export interface AgenteCategorizarResponse {
+  itens: AgenteCategorizacaoItem[];
+}
+
 export const agenteApi = {
   perguntar: async (request: AgentePerguntarRequest): Promise<AgentePerguntarResponse> => {
     const { data } = await apiClient.post<AgentePerguntarResponse>('/agente/perguntar', request);
@@ -55,6 +77,16 @@ export const agenteApi = {
 
   salvarAlertasWhatsapp: async (request: WhatsappAlertasResponse): Promise<WhatsappAlertasResponse> => {
     const { data } = await apiClient.put<WhatsappAlertasResponse>('/perfil/whatsapp/alertas', request);
+    return data;
+  },
+
+  obterInsights: async (mesReferencia: string): Promise<AgenteInsightsResponse> => {
+    const { data } = await apiClient.post<AgenteInsightsResponse>('/agente/insights', { mesReferencia });
+    return data;
+  },
+
+  categorizar: async (descricoes: string[]): Promise<AgenteCategorizarResponse> => {
+    const { data } = await apiClient.post<AgenteCategorizarResponse>('/agente/categorizar', { descricoes });
     return data;
   },
 };

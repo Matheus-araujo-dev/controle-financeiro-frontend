@@ -8,21 +8,28 @@ import {
   Spin,
   Table,
   Tag,
-  Typography,
-  Upload,
+  Tooltip,
   message,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { InboxOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { InboxOutlined, CheckCircleOutlined, RobotOutlined } from '@ant-design/icons';
+import { Upload } from 'antd';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import type { ImportacaoFaturaItemPreview } from '../../services/http/financeiro-api';
+import { agenteApi } from '../../services/http/agente-api';
 import type { CartaoResumo, ContaGerencialResumo, FormaPagamentoResumo, PessoaResumo } from '../../types/cadastros';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
 
-const { Title, Text } = Typography;
 const { Dragger } = Upload;
+
+interface ItemCategoria {
+  contaGerencialId: string | null;
+  contaGerencialDescricao: string | null;
+  confianca: number;
+  fonte: 'ia' | 'usuario';
+}
 
 export function ImportarFaturaPage() {
   const [cartoes, setCartoes] = useState<CartaoResumo[]>([]);
@@ -39,6 +46,8 @@ export function ImportarFaturaPage() {
   const [preview, setPreview] = useState<ImportacaoFaturaItemPreview[] | null>(null);
   const [avisoFormato, setAvisoFormato] = useState<string | null>(null);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [categorizacoes, setCategorizacoes] = useState<Record<string, ItemCategoria>>({});
+  const [loadingCategorizacao, setLoadingCategorizacao] = useState(false);
 
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingConfirmar, setLoadingConfirmar] = useState(false);
@@ -53,12 +62,7 @@ export function ImportarFaturaPage() {
       cadastrosApi.formasPagamento.listar({ page: 1, pageSize: 100, ehCartao: true, ativo: true }),
       cadastrosApi.pessoas.listar({ page: 1, pageSize: 200, ativo: true }),
       cadastrosApi.contasGerenciais.listar({
-        page: 1,
-        pageSize: 200,
-        search: '',
-        tipo: 'Despesa',
-        ativo: true,
-        aceitaLancamentos: true
+        page: 1, pageSize: 200, search: '', tipo: 'Despesa', ativo: true, aceitaLancamentos: true
       }),
     ]).then(([c, fp, p, cg]) => {
       setCartoes(c.items ?? []);
@@ -72,44 +76,59 @@ export function ImportarFaturaPage() {
 
   async function handleUpload(file: File) {
     if (!cartaoId) {
-      msgApi.warning('Selecione o cartão antes de fazer o upload.');
+      void msgApi.warning('Selecione o cartão antes de fazer o upload.');
       return false;
     }
     setArquivo(file);
     setPreview(null);
     setResultado(null);
     setSelecionados(new Set());
+    setCategorizacoes({});
     setLoadingPreview(true);
 
     try {
       const resp = await financeiroApi.faturas.importar.preview(cartaoId, file);
       setPreview(resp.itens);
       setAvisoFormato(resp.avisoFormato);
-
-      // Pré-seleciona apenas os itens não duplicados
-      const novos = new Set(
-        resp.itens.filter(i => !i.jaImportado).map(i => i.chaveImportacao)
-      );
+      const novos = new Set(resp.itens.filter(i => !i.jaImportado).map(i => i.chaveImportacao));
       setSelecionados(novos);
-
       setTimeout(() => tableRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+
+      // Categorização IA em background
+      const descricoes = resp.itens.filter(i => !i.jaImportado).map(i => i.descricao);
+      if (descricoes.length > 0) {
+        setLoadingCategorizacao(true);
+        agenteApi.categorizar(descricoes).then((catResp) => {
+          const map: Record<string, ItemCategoria> = {};
+          resp.itens.filter(i => !i.jaImportado).forEach((item, idx) => {
+            const cat = catResp.itens[idx];
+            if (cat?.contaGerencialId) {
+              map[item.chaveImportacao] = {
+                contaGerencialId: cat.contaGerencialId,
+                contaGerencialDescricao: cat.contaGerencialDescricao,
+                confianca: cat.confianca,
+                fonte: 'ia'
+              };
+            }
+          });
+          setCategorizacoes(map);
+        }).catch(() => { /* sem categorização IA */ }).finally(() => setLoadingCategorizacao(false));
+      }
     } catch {
-      msgApi.error('Erro ao processar o arquivo. Verifique se é um CSV válido.');
+      void msgApi.error('Erro ao processar o arquivo.');
     } finally {
       setLoadingPreview(false);
     }
-    return false; // impede upload automático do Ant Design
+    return false;
   }
 
   async function handleConfirmar() {
     if (!cartaoId || !formaPagamentoId || !recebedorPadraoId || !contaGerencialPadraoId || !preview) return;
-
     const itensSelecionados = preview.filter(i => selecionados.has(i.chaveImportacao));
     if (itensSelecionados.length === 0) {
-      msgApi.warning('Selecione ao menos um item para importar.');
+      void msgApi.warning('Selecione ao menos um item para importar.');
       return;
     }
-
     setLoadingConfirmar(true);
     try {
       const resp = await financeiroApi.faturas.importar.confirmar({
@@ -122,23 +141,23 @@ export function ImportarFaturaPage() {
           descricao: i.descricao,
           valor: i.valor,
           chaveImportacao: i.chaveImportacao,
+          contaGerencialId: categorizacoes[i.chaveImportacao]?.contaGerencialId ?? undefined,
         })),
       });
       setResultado({ criadas: resp.contasCriadas, duplicadas: resp.contasDuplicadas });
       setPreview(null);
       setArquivo(null);
       setSelecionados(new Set());
+      setCategorizacoes({});
     } catch {
-      msgApi.error('Erro ao confirmar a importação.');
+      void msgApi.error('Erro ao confirmar a importação.');
     } finally {
       setLoadingConfirmar(false);
     }
   }
 
   const itensSelecionadosCount = selecionados.size;
-  const totalSelecionado = preview
-    ?.filter(i => selecionados.has(i.chaveImportacao))
-    .reduce((s, i) => s + i.valor, 0) ?? 0;
+  const totalSelecionado = preview?.filter(i => selecionados.has(i.chaveImportacao)).reduce((s, i) => s + i.valor, 0) ?? 0;
 
   const columns: TableColumnsType<ImportacaoFaturaItemPreview> = [
     {
@@ -158,161 +177,189 @@ export function ImportarFaturaPage() {
         />
       ),
     },
+    { title: 'Data', dataIndex: 'dataTransacao', width: 100, render: v => formatDateBR(v) },
+    { title: 'Descrição', dataIndex: 'descricao', ellipsis: true },
+    { title: 'Valor', dataIndex: 'valor', width: 120, align: 'right', render: v => formatCurrencyBRL(v) },
     {
-      title: 'Data',
-      dataIndex: 'dataTransacao',
-      width: 110,
-      render: v => formatDateBR(v),
-    },
-    {
-      title: 'Descrição',
-      dataIndex: 'descricao',
-      ellipsis: true,
-    },
-    {
-      title: 'Valor',
-      dataIndex: 'valor',
-      width: 130,
-      align: 'right',
-      render: v => formatCurrencyBRL(v),
+      title: () => (
+        <span className="flex items-center gap-1">
+          Categoria
+          {loadingCategorizacao ? <Spin size="small" /> : <RobotOutlined style={{ opacity: 0.5 }} />}
+        </span>
+      ),
+      key: 'categoria',
+      width: 200,
+      render: (_, row) => {
+        if (row.jaImportado) return null;
+        const cat = categorizacoes[row.chaveImportacao];
+        return (
+          <div className="flex flex-col gap-1">
+            {cat && (
+              <Tooltip title={`Sugestão IA — confiança ${Math.round(cat.confianca * 100)}%`}>
+                <Tag
+                  color={cat.confianca >= 0.8 ? 'green' : 'orange'}
+                  icon={<RobotOutlined />}
+                  style={{ cursor: 'default', fontSize: 11 }}
+                >
+                  {cat.contaGerencialDescricao}
+                </Tag>
+              </Tooltip>
+            )}
+            <Select
+              size="small"
+              variant="borderless"
+              placeholder="Sobrescrever..."
+              value={cat?.fonte === 'usuario' ? cat.contaGerencialId : undefined}
+              style={{ width: '100%' }}
+              showSearch
+              allowClear
+              filterOption={(input, opt) => (opt?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+              options={contasGerenciais.map(c => ({ value: c.id, label: c.descricao }))}
+              onChange={(val, opt) => {
+                const next = { ...categorizacoes };
+                if (val) {
+                  const label = Array.isArray(opt) ? opt[0]?.label : (opt as { label: string })?.label;
+                  next[row.chaveImportacao] = { contaGerencialId: val, contaGerencialDescricao: label ?? val, confianca: 1, fonte: 'usuario' };
+                } else {
+                  delete next[row.chaveImportacao];
+                }
+                setCategorizacoes(next);
+              }}
+            />
+          </div>
+        );
+      },
     },
     {
       title: 'Status',
       key: 'status',
-      width: 130,
+      width: 110,
       render: (_, row) =>
-        row.jaImportado ? (
-          <Tag color="default">Já importado</Tag>
-        ) : (
-          <Tag color="green">Novo</Tag>
-        ),
+        row.jaImportado ? <Tag color="default">Já importado</Tag> : <Tag color="green">Novo</Tag>,
     },
   ];
 
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto' }}>
+    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {contextHolder}
 
-      <Title level={3} style={{ marginBottom: 24 }}>
-        Importar fatura de cartão
-      </Title>
+      {/* Header neon */}
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary mb-2">OPERAÇÕES FINANCEIRAS</p>
+        <h1 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface mb-2">
+          Importar <span className="text-primary">Fatura</span>
+        </h1>
+        <p className="text-on-surface-variant">
+          Importa CSV, PDF ou OFX de cartão de crédito. A IA categoriza automaticamente cada transação.
+        </p>
+      </div>
 
-      {/* ── Configuração ── */}
-      <div style={{ background: 'var(--color-surface-container)', borderRadius: 8, padding: 20, marginBottom: 24 }}>
-        <Title level={5} style={{ marginBottom: 16 }}>1. Configuração</Title>
-        <Space orientation="vertical" style={{ width: '100%' }} size={12}>
+      {/* Configuração */}
+      <div className="bg-surface-container-low border border-white/5 rounded-3xl p-6 space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <span className="material-symbols-outlined text-base">settings</span>
+          </div>
+          <span className="font-bold text-on-surface">1. Configuração</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>Cartão</Text>
+            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wide mb-1 block">Cartão</label>
             <Select
               style={{ width: '100%' }}
-              placeholder="Selecione o cartão da fatura"
+              placeholder="Selecione o cartão"
               value={cartaoId}
               onChange={v => { setCartaoId(v); setPreview(null); setArquivo(null); }}
               options={cartoes.map(c => ({ value: c.id, label: `${c.nome} •••• ${c.numeroFinal}` }))}
             />
           </div>
-
           <div>
-            <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>Forma de pagamento (do cartão)</Text>
+            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wide mb-1 block">Forma de pagamento</label>
             <Select
               style={{ width: '100%' }}
-              placeholder="Ex: Cartão de crédito Nubank"
+              placeholder="Ex: Cartão Nubank"
               value={formaPagamentoId}
               onChange={setFormaPagamentoId}
               options={formasPagamento.map(f => ({ value: f.id, label: f.nome }))}
             />
           </div>
-
           <div>
-            <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>Recebedor padrão</Text>
+            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wide mb-1 block">Recebedor padrão</label>
             <Select
               showSearch
-              filterOption={(input, opt) =>
-                (opt?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
+              filterOption={(input, opt) => (opt?.label ?? '').toLowerCase().includes(input.toLowerCase())}
               style={{ width: '100%' }}
-              placeholder="Pessoa/fornecedor padrão para os lançamentos"
+              placeholder="Pessoa/fornecedor padrão"
               value={recebedorPadraoId}
               onChange={setRecebedorPadraoId}
               options={pessoas.map(p => ({ value: p.id, label: p.nome }))}
             />
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              Usado quando a descrição da compra não corresponde a nenhuma pessoa cadastrada.
-            </Text>
           </div>
-
           <div>
-            <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>Conta gerencial padrão</Text>
+            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wide mb-1 block">Categoria padrão (fallback)</label>
             <Select
               showSearch
-              filterOption={(input, opt) =>
-                (opt?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
+              filterOption={(input, opt) => (opt?.label ?? '').toLowerCase().includes(input.toLowerCase())}
               style={{ width: '100%' }}
-              placeholder="Conta de despesa para ratear os lançamentos"
+              placeholder="Usada quando IA não categorizar"
               value={contaGerencialPadraoId}
               onChange={setContaGerencialPadraoId}
-              options={contasGerenciais.map(c => ({
-                value: c.id,
-                label: c.codigo ? `${c.codigo} - ${c.descricao}` : c.descricao
-              }))}
+              options={contasGerenciais.map(c => ({ value: c.id, label: c.codigo ? `${c.codigo} - ${c.descricao}` : c.descricao }))}
             />
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              Usada para classificar os itens importados no dashboard gerencial.
-            </Text>
           </div>
-        </Space>
+        </div>
       </div>
 
-      {/* ── Upload ── */}
-      <div style={{ background: 'var(--color-surface-container)', borderRadius: 8, padding: 20, marginBottom: 24 }}>
-        <Title level={5} style={{ marginBottom: 16 }}>2. Arquivo CSV da fatura</Title>
+      {/* Upload */}
+      <div className="bg-surface-container-low border border-white/5 rounded-3xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <span className="material-symbols-outlined text-base">upload_file</span>
+          </div>
+          <span className="font-bold text-on-surface">2. Arquivo da fatura</span>
+        </div>
 
         <Dragger
-          accept=".pdf,.csv,.txt"
+          accept=".pdf,.csv,.txt,.ofx"
           multiple={false}
           beforeUpload={handleUpload}
           showUploadList={false}
           disabled={!cartaoId || loadingPreview}
         >
-          <p className="ant-upload-drag-icon">
-            <InboxOutlined />
-          </p>
+          <p className="ant-upload-drag-icon"><InboxOutlined /></p>
           <p className="ant-upload-text">
             {arquivo ? arquivo.name : 'Clique ou arraste a fatura aqui'}
           </p>
           <p className="ant-upload-hint">
-            Aceita PDF ou CSV — Nubank, Bradesco, Itaú, Inter, Santander e outros bancos brasileiros.
+            Aceita PDF, CSV e OFX — Nubank, Bradesco, Itaú, Inter, Santander e outros.
             {!cartaoId && <strong> Selecione o cartão primeiro.</strong>}
           </p>
         </Dragger>
 
-        {loadingPreview && (
-          <div style={{ textAlign: 'center', marginTop: 16 }}>
-            <Spin tip="Lendo arquivo..." />
-          </div>
-        )}
-
-        {avisoFormato && (
-          <Alert type="warning" message={avisoFormato} style={{ marginTop: 12 }} showIcon />
-        )}
+        {loadingPreview && <div className="text-center mt-4"><Spin tip="Lendo arquivo..." /></div>}
+        {avisoFormato && <Alert type="warning" message={avisoFormato} style={{ marginTop: 12 }} showIcon />}
       </div>
 
-      {/* ── Preview ── */}
+      {/* Preview */}
       {preview && (
-        <div ref={tableRef} style={{ background: 'var(--color-surface-container)', borderRadius: 8, padding: 20, marginBottom: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <Title level={5} style={{ margin: 0 }}>3. Revisar e confirmar</Title>
+        <div ref={tableRef} className="bg-surface-container-low border border-white/5 rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <span className="material-symbols-outlined text-base">fact_check</span>
+              </div>
+              <span className="font-bold text-on-surface">3. Revisar e confirmar</span>
+              {loadingCategorizacao && (
+                <span className="flex items-center gap-1 text-xs text-primary">
+                  <Spin size="small" /> IA categorizando...
+                </span>
+              )}
+            </div>
             <Space>
-              <Button
-                size="small"
-                onClick={() => setSelecionados(new Set(preview.filter(i => !i.jaImportado).map(i => i.chaveImportacao)))}
-              >
+              <Button size="small" onClick={() => setSelecionados(new Set(preview.filter(i => !i.jaImportado).map(i => i.chaveImportacao)))}>
                 Selecionar novos
               </Button>
-              <Button size="small" onClick={() => setSelecionados(new Set())}>
-                Limpar seleção
-              </Button>
+              <Button size="small" onClick={() => setSelecionados(new Set())}>Limpar</Button>
             </Space>
           </div>
 
@@ -324,24 +371,24 @@ export function ImportarFaturaPage() {
             pagination={preview.length > 20 ? { pageSize: 20 } : false}
             summary={() => (
               <Table.Summary.Row>
-                <Table.Summary.Cell index={0} colSpan={2}>
-                  <Text strong>{itensSelecionadosCount} item(ns) selecionado(s)</Text>
+                <Table.Summary.Cell index={0} colSpan={3}>
+                  <span className="font-bold">{itensSelecionadosCount} item(ns) selecionado(s)</span>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={2} colSpan={2} align="right">
-                  <Text strong>{formatCurrencyBRL(totalSelecionado)}</Text>
+                <Table.Summary.Cell index={3} align="right">
+                  <span className="font-bold">{formatCurrencyBRL(totalSelecionado)}</span>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={4} />
+                <Table.Summary.Cell index={4} colSpan={2} />
               </Table.Summary.Row>
             )}
           />
 
-          <div style={{ marginTop: 16, textAlign: 'right' }}>
+          <div className="mt-4 text-right">
             <Button
               type="primary"
               size="large"
               loading={loadingConfirmar}
               disabled={!configCompleta || itensSelecionadosCount === 0}
-              onClick={handleConfirmar}
+              onClick={() => void handleConfirmar()}
             >
               Importar {itensSelecionadosCount > 0 ? `${itensSelecionadosCount} lançamento(s)` : ''}
             </Button>
@@ -349,15 +396,14 @@ export function ImportarFaturaPage() {
         </div>
       )}
 
-      {/* ── Resultado ── */}
+      {/* Resultado */}
       {resultado && (
         <Alert
           type="success"
           icon={<CheckCircleOutlined />}
           showIcon
-          message={`Importação concluída: ${resultado.criadas} lançamento(s) criado(s)${resultado.duplicadas > 0 ? `, ${resultado.duplicadas} ignorado(s) por já existirem` : ''}.`}
-          description="Os lançamentos foram adicionados como contas a pagar. A fatura do cartão será atualizada automaticamente."
-          style={{ marginBottom: 24 }}
+          message={`Importação concluída: ${resultado.criadas} lançamento(s) criado(s)${resultado.duplicadas > 0 ? `, ${resultado.duplicadas} ignorado(s) por duplicidade` : ''}.`}
+          description="Os lançamentos foram adicionados como contas a pagar."
         />
       )}
     </div>
