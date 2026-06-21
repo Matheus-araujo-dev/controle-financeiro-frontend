@@ -20,8 +20,7 @@ describe('dashboardApi', () => {
     });
 
     await dashboardApi.obterFluxoCaixa({
-      mesReferencia: '2026-04',
-      visao: 'Economica'
+      mesReferencia: '2026-04'
     });
 
     await dashboardApi.obterResumoContasGerenciais({
@@ -62,8 +61,7 @@ describe('dashboardApi', () => {
 
     expect(apiClient.get).toHaveBeenCalledWith('/dashboard/fluxo-caixa', {
       params: {
-        mesReferencia: '2026-04',
-        visao: 'Economica'
+        mesReferencia: '2026-04'
       }
     });
 

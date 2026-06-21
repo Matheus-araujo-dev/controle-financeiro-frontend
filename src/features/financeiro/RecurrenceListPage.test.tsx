@@ -82,8 +82,8 @@ describe('RecurrenceListPage', () => {
 
     expect(await screen.findByText('Aluguel da sede')).toBeInTheDocument();
     expect(screen.getByText('Contrato de consultoria')).toBeInTheDocument();
-    expect(screen.getByText('Receitas Mensais Previstas')).toBeInTheDocument();
-    expect(screen.getByText('Despesas Mensais Previstas')).toBeInTheDocument();
+    expect(screen.getByText('Receitas mensais')).toBeInTheDocument();
+    expect(screen.getByText('Despesas mensais')).toBeInTheDocument();
     expect(screen.getAllByText('R$1.200,00').length).toBeGreaterThan(0);
     expect(screen.getAllByText('R$450,00').length).toBeGreaterThan(0);
   });

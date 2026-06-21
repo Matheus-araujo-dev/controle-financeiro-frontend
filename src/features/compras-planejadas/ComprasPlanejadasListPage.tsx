@@ -1,266 +1,446 @@
-import { useEffect, useMemo, useState, useDeferredValue } from 'react';
-import { Link } from 'react-router-dom';
-import { PageState } from '../../components/states/PageState';
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
+import { IconActionButton } from '../../components/data/IconActionButton';
+import { StatusBadge } from '../../components/data/StatusBadge';
+import { EyeOutlined, EditOutlined, ShoppingOutlined } from '@ant-design/icons';
+import { DateInput } from '../../components/forms/DateInput';
+import {
+  FilterCard,
+  FilterField,
+  FilterInputWrapper,
+  filterInputClass,
+  ListPageShell,
+  MultiSelectFilter,
+  SummaryCard
+} from '../../components/layout';
+import { Button } from '../../components/ui/Button';
+import { cadastrosApi } from '../../services/http/cadastros-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 import { formatCurrencyBRL } from '../../shared/currency';
+import { formatDateBR } from '../../shared/date';
 import type {
-  CompraPlanejadaResumo,
   CompraPlanejadaFilters,
   CompraPlanejadaListSummary,
+  CompraPlanejadaPrioridade,
+  CompraPlanejadaResumo,
   CompraPlanejadaStatus
 } from '../../types/compras-planejadas';
 import type { PagedResult } from '../../types/api';
 
-type StatusFilter = CompraPlanejadaStatus | 'Todos';
+const prioridadeOptions: Array<{ label: string; value: CompraPlanejadaPrioridade }> = [
+  { label: 'Baixa', value: 'Baixa' },
+  { label: 'Média', value: 'Media' },
+  { label: 'Alta', value: 'Alta' }
+];
 
-function getPriorityBadge(prioridade: string) {
-  switch (prioridade) {
-    case 'Alta':
-      return (
-        <span className="bg-error text-on-error px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">
-          Prioridade Crítica
-        </span>
-      );
-    case 'Media':
-      return (
-        <span className="bg-primary text-on-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">
-          Planejado
-        </span>
-      );
-    default:
-      return (
-        <span className="bg-surface-container-highest text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter">
-          Baixa Prioridade
-        </span>
-      );
+const statusOptions: Array<{ label: string; value: CompraPlanejadaStatus }> = [
+  { label: 'Planejada', value: 'Planejada' },
+  { label: 'Comprada', value: 'Comprada' },
+  { label: 'Cancelada', value: 'Cancelada' }
+];
+
+const yesNoOptions = [
+  { label: 'Sim', value: 'true' },
+  { label: 'Não', value: 'false' }
+];
+
+type FilterOption = { label: string; value: string };
+
+function prioridadeTone(prioridade: CompraPlanejadaPrioridade) {
+  if (prioridade === 'Alta') {
+    return 'warning' as const;
   }
+
+  if (prioridade === 'Media') {
+    return 'success' as const;
+  }
+
+  return 'neutral' as const;
 }
 
-function getStatusLabel(status: CompraPlanejadaStatus) {
-  switch (status) {
-    case 'Comprada':
-      return 'Adquirido';
-    case 'Cancelada':
-      return 'Cancelado';
-    default:
-      return 'Pendente';
+function statusTone(status: CompraPlanejadaStatus) {
+  if (status === 'Comprada') {
+    return 'success' as const;
   }
+
+  if (status === 'Cancelada') {
+    return 'danger' as const;
+  }
+
+  return 'info' as const;
+}
+
+function prioridadeLabel(prioridade: CompraPlanejadaPrioridade) {
+  return prioridade === 'Media' ? 'Média' : prioridade;
 }
 
 export function ComprasPlanejadasListPage() {
   const [filters, setFilters] = useState<CompraPlanejadaFilters>({
     page: 1,
-    pageSize: 50,
+    pageSize: 20,
     search: '',
-    status: undefined
+    prioridades: undefined,
+    statuses: undefined,
+    responsavelId: undefined,
+    contaGerencialId: undefined,
+    parcelavel: undefined,
+    sortBy: 'dataDesejada',
+    sortDirection: 'Asc'
   });
   const deferredFilters = useDeferredValue(filters);
   const [data, setData] = useState<PagedResult<CompraPlanejadaResumo, CompraPlanejadaListSummary>>();
+  const [contaGerencialOptions, setContaGerencialOptions] = useState<FilterOption[]>([]);
+  const [responsavelOptions, setResponsavelOptions] = useState<FilterOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
-  const [activeStatus, setActiveStatus] = useState<StatusFilter>('Todos');
 
-  useEffect(() => {
-    async function load() {
+  const loadData = useCallback(
+    async (targetFilters: CompraPlanejadaFilters = deferredFilters) => {
       setLoading(true);
       setError(undefined);
       try {
-        const result = await comprasPlanejadasApi.listar(deferredFilters);
+        const result = await comprasPlanejadasApi.listar(targetFilters);
         setData(result);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Falha ao carregar compras planejadas.');
       } finally {
         setLoading(false);
       }
+    },
+    [deferredFilters]
+  );
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadOptions() {
+      try {
+        const [contasGerenciais, pessoas] = await Promise.all([
+          cadastrosApi.contasGerenciais.listar({
+            page: 1,
+            pageSize: 200,
+            search: '',
+            tipo: 'Despesa',
+            ativo: true,
+            aceitaLancamentos: true
+          }),
+          cadastrosApi.pessoas.listar({
+            page: 1,
+            pageSize: 200,
+            search: '',
+            ativo: true
+          })
+        ]);
+
+        if (!mounted) {
+          return;
+        }
+
+        setContaGerencialOptions(
+          contasGerenciais.items.map((item) => ({
+            label: item.codigo ? `${item.codigo} - ${item.descricao}` : item.descricao,
+            value: item.id
+          }))
+        );
+        setResponsavelOptions(pessoas.items.map((item) => ({ label: item.nome, value: item.id })));
+      } catch {
+        if (mounted) {
+          setContaGerencialOptions([]);
+          setResponsavelOptions([]);
+        }
+      }
     }
-    void load();
-  }, [deferredFilters]);
 
-  function handleStatusFilter(status: StatusFilter) {
-    setActiveStatus(status);
-    setFilters((prev) => ({
-      ...prev,
-      page: 1,
-      status: status === 'Todos' ? undefined : (status as CompraPlanejadaStatus)
-    }));
-  }
+    void loadOptions();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const totalEstimado = useMemo(() => {
-    return data?.summary?.valorTotalEstimado ?? 0;
-  }, [data]);
+  const totalEstimado = useMemo(() => data?.summary?.valorTotalEstimado ?? 0, [data]);
 
-  if (loading && !data) {
-    return <PageState state="loading" title="Carregando planejador" />;
-  }
-
-  if (error) {
-    return (
-      <>
-        <div className="max-w-7xl mx-auto px-4 py-10">
-          <PageState state="error" title="Falha ao carregar planejador" subtitle={error} />
+  const columns: TableColumnsType<CompraPlanejadaResumo> = [
+    {
+      title: 'Título',
+      dataIndex: 'titulo',
+      key: 'titulo',
+      render: (value, record) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-sm font-semibold text-white">{String(value)}</span>
+          {record.link ? (
+            <a href={record.link} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary hover:underline">
+              Link de referência
+            </a>
+          ) : null}
         </div>
-      </>
-    );
-  }
+      )
+    },
+    {
+      title: 'Valor estimado',
+      dataIndex: 'valorEstimado',
+      key: 'valorEstimado',
+      align: 'right',
+      render: (value) => <span className="font-headline text-sm font-bold text-white">{formatCurrencyBRL(Number(value))}</span>
+    },
+    {
+      title: 'Data desejada',
+      dataIndex: 'dataDesejada',
+      key: 'dataDesejada',
+      render: (value) => (
+        <span className="text-sm font-medium text-on-surface-variant">
+          {value ? formatDateBR(String(value)) : 'Sem data'}
+        </span>
+      )
+    },
+    {
+      title: 'Prioridade',
+      dataIndex: 'prioridade',
+      key: 'prioridade',
+      render: (value) => (
+        <StatusBadge
+          label={prioridadeLabel(value as CompraPlanejadaPrioridade)}
+          tone={prioridadeTone(value as CompraPlanejadaPrioridade)}
+        />
+      )
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (value) => <StatusBadge label={String(value)} tone={statusTone(value as CompraPlanejadaStatus)} />
+    },
+    {
+      title: 'Conta gerencial',
+      dataIndex: 'contaGerencialDescricao',
+      key: 'contaGerencialDescricao',
+      render: (value) => <span className="text-sm text-on-surface-variant">{String(value)}</span>
+    },
+    {
+      title: 'Responsável',
+      dataIndex: 'responsavelNome',
+      key: 'responsavelNome',
+      render: (value) => <span className="text-sm text-on-surface-variant">{String(value)}</span>
+    },
+    {
+      title: 'Parcelas',
+      key: 'quantidadeParcelasDesejada',
+      dataIndex: 'quantidadeParcelasDesejada',
+      render: (_value, record) =>
+        record.parcelavel ? `${record.quantidadeParcelasDesejada ?? 1}x` : 'Pagamento único'
+    },
+    {
+      title: 'Ações',
+      key: 'acoes',
+      width: 150,
+      align: 'right',
+      sorter: false,
+      render: (_value, record) => (
+        <div className="flex justify-end gap-1">
+          {record.status === 'Planejada' && !record.contaPagarGeradaId ? (
+            <IconActionButton
+              label="Adquirir"
+              type="primary"
+              icon={<ShoppingOutlined />}
+              href={`/compras-planejadas/${record.id}/realizar`}
+            />
+          ) : null}
+          {record.contaPagarGeradaId ? (
+            <IconActionButton
+              label="Ver conta a pagar"
+              icon={<EyeOutlined />}
+              href={`/contas-pagar/${record.contaPagarGeradaId}`}
+            />
+          ) : (
+            <IconActionButton
+              label="Editar"
+              icon={<EditOutlined />}
+              href={`/compras-planejadas/${record.id}`}
+            />
+          )}
+        </div>
+      )
+    }
+  ];
 
   return (
-    <>
-      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <h1 className="text-4xl font-black font-headline tracking-tight text-on-surface mb-2">Planejador de Compras</h1>
-            <p className="text-on-surface-variant max-w-xl font-body">
-              Gerencie seu desejo de consumo com inteligência. Priorize aquisições baseado em metas financeiras reais.
-            </p>
+    <ListPageShell
+      actions={
+        <Button to="/compras-planejadas/novo" icon={<span className="material-symbols-outlined text-sm">add_circle</span>}>
+          Nova compra planejada
+        </Button>
+      }
+      summary={
+        <SummaryCard
+          label="Total estimado filtrado"
+          value={formatCurrencyBRL(totalEstimado)}
+          accent="primary"
+          highlight
+        />
+      }
+      summaryColumns={2}
+      filters={
+        <FilterCard className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <FilterField label="Busca">
+              <FilterInputWrapper>
+                <input
+                  className={filterInputClass}
+                  placeholder="Título, conta, responsável ou link"
+                  value={filters.search ?? ''}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, page: 1, search: event.target.value }))}
+                />
+              </FilterInputWrapper>
+            </FilterField>
+            <FilterField label="Prioridade">
+              <MultiSelectFilter
+                ariaLabel="Prioridade"
+                options={prioridadeOptions}
+                value={filters.prioridades ?? []}
+                onChange={(next) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    page: 1,
+                    prioridades: next.length ? (next as CompraPlanejadaPrioridade[]) : undefined
+                  }))
+                }
+              />
+            </FilterField>
+            <FilterField label="Status">
+              <MultiSelectFilter
+                ariaLabel="Status"
+                options={statusOptions}
+                value={filters.statuses ?? []}
+                onChange={(next) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    page: 1,
+                    statuses: next.length ? (next as CompraPlanejadaStatus[]) : undefined
+                  }))
+                }
+              />
+            </FilterField>
+            <FilterField label="Parcelável">
+              <MultiSelectFilter
+                ariaLabel="Parcelável"
+                options={yesNoOptions}
+                value={filters.parcelavel === undefined ? [] : [String(filters.parcelavel)]}
+                onChange={(next) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    page: 1,
+                    parcelavel: next.length === 1 ? next[0] === 'true' : undefined
+                  }))
+                }
+              />
+            </FilterField>
           </div>
-          <div className="bg-surface-container p-6 rounded-2xl border border-outline-variant/10 min-w-[280px]">
-            <span className="text-[10px] text-on-surface-variant uppercase tracking-widest block mb-1 font-bold">Total Estimado Filtrado</span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-primary text-3xl font-black font-headline">
-                {formatCurrencyBRL(totalEstimado)}
-              </span>
-            </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <FilterField label="Conta gerencial">
+              <MultiSelectFilter
+                ariaLabel="Conta gerencial"
+                options={contaGerencialOptions}
+                placeholder="Todas"
+                value={filters.contaGerencialId ? [filters.contaGerencialId] : []}
+                onChange={(next) => setFilters((prev) => ({ ...prev, page: 1, contaGerencialId: next[0] || undefined }))}
+              />
+            </FilterField>
+            <FilterField label="Responsável">
+              <MultiSelectFilter
+                ariaLabel="Responsável"
+                options={responsavelOptions}
+                placeholder="Todos"
+                value={filters.responsavelId ? [filters.responsavelId] : []}
+                onChange={(next) => setFilters((prev) => ({ ...prev, page: 1, responsavelId: next[0] || undefined }))}
+              />
+            </FilterField>
+            <FilterField label="Valor mínimo">
+              <FilterInputWrapper>
+                <input
+                  className={filterInputClass}
+                  inputMode="decimal"
+                  value={filters.valorEstimadoMin ?? ''}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, page: 1, valorEstimadoMin: event.target.value || undefined }))}
+                />
+              </FilterInputWrapper>
+            </FilterField>
+            <FilterField label="Valor máximo">
+              <FilterInputWrapper>
+                <input
+                  className={filterInputClass}
+                  inputMode="decimal"
+                  value={filters.valorEstimadoMax ?? ''}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, page: 1, valorEstimadoMax: event.target.value || undefined }))}
+                />
+              </FilterInputWrapper>
+            </FilterField>
           </div>
-        </header>
 
-        {/* Filters Section */}
-        <section className="flex flex-wrap gap-4">
-          <div className="flex gap-2 p-1 bg-surface-container-low rounded-xl">
-            {(['Todos', 'Planejada', 'Comprada'] as StatusFilter[]).map((status) => (
-              <button
-                key={status}
-                onClick={() => handleStatusFilter(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                  activeStatus === status ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                {status === 'Todos' ? 'Tudo' : status === 'Planejada' ? 'Pendente' : getStatusLabel(status)}
-              </button>
-            ))}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <FilterField label="Data desejada de">
+              <DateInput
+                ariaLabel="Data desejada de"
+                value={filters.dataDesejadaInicial ?? ''}
+                onChange={(value) => setFilters((prev) => ({ ...prev, page: 1, dataDesejadaInicial: value || undefined }))}
+              />
+            </FilterField>
+            <FilterField label="Data desejada até">
+              <DateInput
+                ariaLabel="Data desejada até"
+                value={filters.dataDesejadaFinal ?? ''}
+                onChange={(value) => setFilters((prev) => ({ ...prev, page: 1, dataDesejadaFinal: value || undefined }))}
+              />
+            </FilterField>
+            <FilterField label="Link de referência">
+              <FilterInputWrapper>
+                <input
+                  className={filterInputClass}
+                  value={filters.link ?? ''}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, page: 1, link: event.target.value || undefined }))}
+                />
+              </FilterInputWrapper>
+            </FilterField>
           </div>
-        </section>
+        </FilterCard>
+      }
+    >
+      <AppDataTable
+        rowKey="id"
+        loading={loading}
+        errorMessage={error}
+        emptyMessage="Nenhuma compra planejada encontrada."
+        onRetry={() => void loadData(filters)}
+        dataSource={data?.items ?? []}
+        columns={columns}
+        onTableChange={(pagination, _f, sorter) => {
+          const s = Array.isArray(sorter) ? sorter[0] : sorter;
+          const sortKey =
+            typeof s?.columnKey === 'string'
+              ? s.columnKey
+              : typeof s?.field === 'string'
+                ? s.field
+                : undefined;
 
-        {/* Shopping List Grid (Bento Style) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {data?.items.map((item) => (
-            <div
-              key={item.id}
-              className="group relative bg-surface-container rounded-2xl overflow-hidden border border-outline-variant/15 hover:border-primary/30 transition-all duration-300"
-            >
-              <div className="h-48 overflow-hidden relative bg-surface-container-highest">
-                {/* Fallback pattern when no image is available */}
-                <div className="w-full h-full flex items-center justify-center text-outline-variant/20">
-                    <span className="material-symbols-outlined text-[100px]">shopping_bag</span>
-                </div>
-                <div className="absolute top-4 left-4">
-                  {getPriorityBadge(item.prioridade)}
-                </div>
-              </div>
-
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold font-headline text-on-surface truncate">
-                      {item.titulo}
-                    </h3>
-                    <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mt-1">
-                      {item.contaGerencialDescricao}
-                    </p>
-                  </div>
-                  <span className="text-primary font-black font-headline text-lg whitespace-nowrap ml-4">
-                    {formatCurrencyBRL(item.valorEstimado)}
-                  </span>
-                </div>
-
-                {/* Progress bar simulation (in a real app, we might have saved amount) */}
-                <div className="space-y-3">
-                   <div className="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-                      <div className={`bg-primary h-full shadow-[0_0_8px_rgba(63,255,139,0.5)] ${item.status === 'Comprada' ? 'w-full' : 'w-1/3'}`}></div>
-                   </div>
-                   <div className="flex justify-between text-[10px] font-bold text-on-surface-variant uppercase">
-                      <span>{item.status === 'Comprada' ? 'Concluído' : 'Planejado'}</span>
-                      <span>{item.status === 'Comprada' ? '100%' : '33%'}</span>
-                   </div>
-                </div>
-
-                <div className="mt-4 flex items-center gap-4 text-[11px] text-on-surface-variant font-medium">
-                  {item.responsavelNome && (
-                    <span className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-sm">person</span>
-                      {item.responsavelNome}
-                    </span>
-                  )}
-                  {item.dataDesejada && (
-                    <span className="flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-sm">calendar_today</span>
-                      {new Date(item.dataDesejada).toLocaleDateString('pt-BR')}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="px-6 pb-6 pt-2 flex gap-3">
-                {item.status === 'Planejada' && !item.contaPagarGeradaId ? (
-                  <>
-                    <Link
-                      to={`/compras-planejadas/${item.id}/realizar`}
-                      className="flex-1 py-3 bg-primary text-on-primary font-bold rounded-xl text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all no-underline"
-                    >
-                      <span className="material-symbols-outlined text-sm">shopping_bag</span> Adquirir
-                    </Link>
-                    <Link
-                      to={`/compras-planejadas/${item.id}`}
-                      className="p-3 bg-surface-container-highest text-on-surface rounded-xl hover:bg-surface-bright transition-all no-underline flex items-center justify-center"
-                    >
-                      <span className="material-symbols-outlined text-sm">edit</span>
-                    </Link>
-                  </>
-                ) : item.contaPagarGeradaId ? (
-                  <Link
-                    to={`/contas-pagar/${item.contaPagarGeradaId}`}
-                    className="flex-1 py-3 border border-primary/40 text-primary font-bold rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-primary/5 active:scale-95 transition-all no-underline"
-                  >
-                    <span className="material-symbols-outlined text-sm">visibility</span> Ver conta a pagar
-                  </Link>
-                ) : (
-                  <button
-                    disabled
-                    className="flex-1 py-3 bg-surface-container-highest text-on-surface-variant font-bold rounded-xl text-sm flex items-center justify-center gap-2 cursor-not-allowed opacity-50"
-                  >
-                    <span className="material-symbols-outlined text-sm">schedule</span> {getStatusLabel(item.status)}
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {!data?.items.length && (
-          <div className="text-center py-20 bg-surface-container rounded-3xl border border-dashed border-outline-variant/30">
-            <span className="material-symbols-outlined text-6xl text-outline-variant/30 mb-4 block">shopping_cart</span>
-            <p className="text-on-surface-variant text-lg font-headline font-bold">Nenhuma compra planejada encontrada.</p>
-            <p className="text-on-surface-variant/60 text-sm mt-1">Sua lista de desejos está vazia para este filtro.</p>
-          </div>
-        )}
-
-        {/* Call to Action Floating Area */}
-        <div className="mt-12 p-8 bg-gradient-to-r from-surface-container to-surface-container-low rounded-3xl border border-outline-variant/10 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
-          <div className="relative z-10">
-            <h2 className="text-2xl font-black font-headline text-on-surface">Planeje sua próxima conquista</h2>
-            <p className="text-on-surface-variant mt-2 font-body">Deseja adicionar um novo item à sua wishlist financeira?</p>
-          </div>
-          <Link
-            to="/compras-planejadas/novo"
-            className="relative z-10 px-8 py-4 bg-primary text-on-primary font-black rounded-2xl flex items-center gap-3 hover:shadow-[0_0_30px_rgba(63,255,139,0.3)] transition-all transform active:scale-95 no-underline whitespace-nowrap"
-          >
-            <span className="material-symbols-outlined">add_circle</span> NOVO ITEM DE COMPRA
-          </Link>
-          <div className="absolute -right-10 -bottom-10 opacity-5 pointer-events-none" aria-hidden="true">
-            <span className="material-symbols-outlined text-[12rem]">shopping_cart_checkout</span>
-          </div>
-        </div>
-      </div>
-    </>
+          setFilters((prev) => ({
+            ...prev,
+            page: pagination.current ?? prev.page,
+            pageSize: pagination.pageSize ?? prev.pageSize,
+            sortBy: sortKey,
+            sortDirection: s?.order === 'ascend' ? 'Asc' : s?.order === 'descend' ? 'Desc' : undefined
+          }));
+        }}
+        pagination={{
+          current: data?.page ?? filters.page,
+          pageSize: data?.pageSize ?? filters.pageSize,
+          total: data?.totalItems ?? 0,
+          showSizeChanger: true,
+          pageSizeOptions: ['20', '50', '100']
+        }}
+      />
+    </ListPageShell>
   );
 }

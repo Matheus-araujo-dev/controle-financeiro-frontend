@@ -33,7 +33,19 @@ export type ImportacoesWhatsappFilters = {
   page: number;
   pageSize: number;
   search?: string;
+  sortBy?: string;
+  sortDirection?: 'Asc' | 'Desc';
+  tipoOrigemCodigo?: TipoOrigemImportacaoWhatsappCodigo | '';
   statusCodigo?: StatusImportacaoWhatsappCodigo | '';
+  remetente?: string;
+  nomeArquivo?: string;
+  mimeType?: string;
+  confiancaExtracaoMin?: number | string;
+  confiancaExtracaoMax?: number | string;
+  recebidoEmInicial?: string;
+  recebidoEmFinal?: string;
+  processadoEmInicial?: string;
+  processadoEmFinal?: string;
 };
 
 export type ImportacaoWhatsappResumo = {
@@ -68,7 +80,6 @@ export type ItemImportadoWhatsapp = {
   responsavelId: string | null;
   responsavelNome: string | null;
   contaReceberId: string | null;
-  movimentacaoFinanceiraId: string | null;
   statusPrevisaoCodigo: 'PREVISTO' | 'NAO_PREVISTO' | null;
   statusPrevisaoNome: string | null;
   observacao: string | null;

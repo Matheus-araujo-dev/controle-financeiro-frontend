@@ -1,8 +1,8 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { DashboardPage } from './DashboardPage';
 import { dashboardApi } from '../../../services/http/dashboard-api';
+import { selectMonthInDateInput } from '../../../test/date-input';
 
 vi.mock('../../../services/http/dashboard-api', () => ({
   dashboardApi: {
@@ -83,30 +83,11 @@ const fluxoCaixaMock = {
   ]
 } as const;
 
-const fluxoEconomicoMock = {
-  visao: 'Economica',
-  dataInicial: '2026-04-05',
-  dias: 15,
-  riscoSaldoNegativo: false,
-  itens: [
-    {
-      data: '2026-04-06',
-      saldoInicial: 700,
-      entradasPrevistas: 0,
-      saidasPrevistas: 0,
-      saldoFinalPrevisto: 700,
-      riscoSaldoNegativo: false
-    }
-  ]
-} as const;
-
 const defaultReferenceMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
 
 function mockDashboardBase() {
   vi.mocked(dashboardApi.obterResumo).mockResolvedValue(resumoMock as never);
-  vi.mocked(dashboardApi.obterFluxoCaixa).mockImplementation(async (params) =>
-    (params?.visao === 'Economica' ? fluxoEconomicoMock : fluxoCaixaMock) as never
-  );
+  vi.mocked(dashboardApi.obterFluxoCaixa).mockResolvedValue(fluxoCaixaMock as never);
 }
 
 function renderPage() {
@@ -122,12 +103,12 @@ describe('DashboardPage', () => {
     vi.clearAllMocks();
   });
 
-  it('loads the dashboard, renders real data and toggles the flow view', async () => {
+  it('loads the dashboard and renders real data', async () => {
     mockDashboardBase();
 
     renderPage();
 
-    expect(await screen.findByRole('heading', { name: 'Dashboard Executivo' })).toBeInTheDocument();
+    expect(await screen.findByText('Saldo Atual')).toBeInTheDocument();
     expect((await screen.findAllByText(/1\.150,00/)).length).toBeGreaterThan(0);
     expect(await screen.findByText('Imposto da semana')).toBeInTheDocument();
     expect(screen.getByText('Cliente da semana')).toBeInTheDocument();
@@ -135,17 +116,7 @@ describe('DashboardPage', () => {
 
     await waitFor(() =>
       expect(dashboardApi.obterFluxoCaixa).toHaveBeenLastCalledWith({
-        mesReferencia: defaultReferenceMonth,
-        visao: 'Caixa'
-      })
-    );
-
-    await userEvent.click(screen.getByRole('button', { name: 'ECONÔMICA' }));
-
-    await waitFor(() =>
-      expect(dashboardApi.obterFluxoCaixa).toHaveBeenLastCalledWith({
-        mesReferencia: defaultReferenceMonth,
-        visao: 'Economica'
+        mesReferencia: defaultReferenceMonth
       })
     );
   }, 30000);
@@ -181,9 +152,7 @@ describe('DashboardPage', () => {
 
     expect(await screen.findByText('Imposto da semana')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Mês de referência do dashboard'), {
-      target: { value: '2026-05' }
-    });
+    await selectMonthInDateInput('Mês de referência do dashboard', '2026-05');
 
     await waitFor(() =>
       expect(dashboardApi.obterResumo).toHaveBeenLastCalledWith({
@@ -193,8 +162,7 @@ describe('DashboardPage', () => {
 
     await waitFor(() =>
       expect(dashboardApi.obterFluxoCaixa).toHaveBeenLastCalledWith({
-        mesReferencia: '2026-05',
-        visao: 'Caixa'
+        mesReferencia: '2026-05'
       })
     );
   });

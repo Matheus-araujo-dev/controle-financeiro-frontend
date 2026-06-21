@@ -1,22 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Form, Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
-import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Controller, useFieldArray, useForm, useWatch, type Control, type FieldErrors } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { AxiosError } from 'axios';
-import { EntityFormShell } from '../../components/forms/EntityFormShell';
+import { DateInput } from '../../components/forms/DateInput';
+import { ComboBox, type ComboBoxOption } from '../../components/forms/ComboBox';
+import {
+  FieldError,
+  FormActionPanel,
+  ReadonlyField,
+  ToggleField,
+  formFieldClass,
+  formLabelClass,
+  formTextAreaClass
+} from '../../components/forms/FormPrimitives';
+import { Button } from '../../components/ui/Button';
 import { PageState } from '../../components/states/PageState';
+import { FormSection } from '../../components/layout';
 import { applyServerValidationErrors } from '../../services/forms/applyServerValidationErrors';
 import type { ApiErrorResponse } from '../../types/api';
 import type { FormFieldConfig, MasterDataModuleConfig, SelectOption } from './module-config';
 import { applyInputMask, extractDigits } from './input-masks';
 import { CurrencyInput } from '../../shared/CurrencyInput';
 
-function buildFieldOptions(
-  field: FormFieldConfig<Record<string, unknown>>,
-  loadedOptions: Record<string, SelectOption[]>
-) {
+function buildFieldOptions(field: FormFieldConfig<Record<string, unknown>>, loadedOptions: Record<string, SelectOption[]>) {
   return [...(field.options ?? []), ...(loadedOptions[field.name] ?? [])];
 }
 
@@ -37,9 +44,7 @@ function buildNextContaGerencialCode(options: SelectOption[], contaPaiId?: strin
       .filter((code): code is string => typeof code === 'string' && code.length > 0)
       .filter((code) => !code.includes('.') && /^\d+$/.test(code));
 
-    if (rootCodes.length === 0) {
-      return '';
-    }
+    if (rootCodes.length === 0) return '';
 
     const maxRoot = Math.max(...rootCodes.map((code) => parseInt(code, 10)));
     return String(maxRoot + 1).padStart(2, '0');
@@ -47,79 +52,118 @@ function buildNextContaGerencialCode(options: SelectOption[], contaPaiId?: strin
 
   const parentOption = options.find((option) => option.value === contaPaiId);
   const parentCode = getContaGerencialOptionData(parentOption)?.codigo?.trim();
-
-  if (!parentCode) {
-    return '';
-  }
+  if (!parentCode) return '';
 
   const directChildCodes = options
     .filter((option) => getContaGerencialOptionData(option)?.contaPaiId === contaPaiId)
     .map((option) => getContaGerencialOptionData(option)?.codigo?.trim())
     .filter((code): code is string => Boolean(code));
 
-  if (directChildCodes.length === 0) {
-    return `${parentCode}.01`;
-  }
+  if (directChildCodes.length === 0) return `${parentCode}.01`;
 
   const maxSuffix = Math.max(
     ...directChildCodes
       .map((code) => {
-        if (!code.startsWith(`${parentCode}.`)) {
-          return null;
-        }
-
+        if (!code.startsWith(`${parentCode}.`)) return null;
         const suffix = code.slice(parentCode.length + 1);
-
-        if (suffix.includes('.')) {
-          return null;
-        }
-
+        if (suffix.includes('.')) return null;
         const numericSuffix = Number.parseInt(suffix, 10);
         return Number.isNaN(numericSuffix) ? null : numericSuffix;
       })
       .filter((value): value is number => value !== null)
   );
 
-  if (!Number.isFinite(maxSuffix)) {
-    return `${parentCode}.01`;
-  }
-
+  if (!Number.isFinite(maxSuffix)) return `${parentCode}.01`;
   return `${parentCode}.${String(maxSuffix + 1).padStart(2, '0')}`;
 }
 
-const pessoaPixTipoOptions = [
+const pessoaPixTipoOptions: ComboBoxOption[] = [
   { label: 'CPF/CNPJ', value: 'CpfCnpj' },
   { label: 'Email', value: 'Email' },
   { label: 'Telefone', value: 'Telefone' },
-  { label: 'Aleatoria', value: 'Aleatoria' }
-] as const;
+  { label: 'Aleatória', value: 'Aleatoria' }
+];
 
 function getPixMaskKind(tipo?: string) {
-  if (tipo === 'CpfCnpj') {
-    return 'cpfCnpj';
-  }
-
-  if (tipo === 'Telefone') {
-    return 'phone';
-  }
-
+  if (tipo === 'CpfCnpj') return 'cpfCnpj';
+  if (tipo === 'Telefone') return 'phone';
   return undefined;
 }
 
 function getPixPlaceholder(tipo?: string) {
-  if (tipo === 'CpfCnpj') {
-    return 'CPF ou CNPJ da chave Pix';
-  }
+  if (tipo === 'CpfCnpj') return 'CPF ou CNPJ da chave Pix';
+  if (tipo === 'Email') return 'email@exemplo.com';
+  if (tipo === 'Telefone') return '(00) 00000-0000';
+  return 'Chave aleatória';
+}
 
-  if (tipo === 'Email') {
-    return 'email@exemplo.com';
-  }
+function toComboOptions(options: SelectOption[], includeEmpty = false): ComboBoxOption[] {
+  const normalized = options.map((option) => ({
+    label: option.label,
+    value: String(option.value)
+  }));
 
-  if (tipo === 'Telefone') {
-    return '(00) 00000-0000';
-  }
+  return includeEmpty ? [{ label: 'Sem seleção', value: '' }, ...normalized] : normalized;
+}
 
-  return 'Chave aleatoria';
+function isOptionalSelect(fieldName: string) {
+  return ['contaPaiId', 'responsavelPadraoId', 'contaBancariaPagamentoPadraoId'].includes(fieldName);
+}
+
+function sectionPlanFor(key: string) {
+  const sections: Record<string, Array<{ title: string; eyebrow: string; icon: string; fields: string[] }>> = {
+    pessoas: [
+      { title: 'Dados da Pessoa', eyebrow: 'Cadastro', icon: 'badge', fields: ['nome', 'tipoPessoa', 'cpfCnpj'] },
+      { title: 'Contato', eyebrow: 'Comunicação', icon: 'alternate_email', fields: ['email', 'telefone'] },
+      { title: 'Observações', eyebrow: 'Notas', icon: 'notes', fields: ['observacao'] }
+    ],
+    'formas-pagamento': [
+      { title: 'Dados da Forma', eyebrow: 'Cadastro', icon: 'payments', fields: ['nome', 'tipo'] },
+      { title: 'Configurações Operacionais', eyebrow: 'Regras', icon: 'tune', fields: ['ehCartao', 'baixarAutomaticamente', 'ativo'] }
+    ],
+    'contas-bancarias': [
+      {
+        title: 'Dados Bancários',
+        eyebrow: 'Cadastro',
+        icon: 'account_balance',
+        fields: ['nome', 'banco', 'agencia', 'numeroConta', 'tipoConta']
+      },
+      {
+        title: 'Saldo e Limites',
+        eyebrow: 'Controle',
+        icon: 'savings',
+        fields: ['saldoInicial', 'dataSaldoInicial', 'limiteCartoesCompartilhado']
+      },
+      { title: 'Configurações', eyebrow: 'Status', icon: 'toggle_on', fields: ['ativo'] }
+    ],
+    cartoes: [
+      { title: 'Dados do Cartão', eyebrow: 'Cadastro', icon: 'credit_card', fields: ['nome', 'bandeira', 'numeroFinal'] },
+      {
+        title: 'Fechamento e Pagamento',
+        eyebrow: 'Ciclo',
+        icon: 'event_repeat',
+        fields: ['diaFechamentoFatura', 'diaVencimentoFatura', 'contaBancariaPagamentoPadraoId']
+      },
+      { title: 'Limite e Status', eyebrow: 'Controle', icon: 'credit_score', fields: ['limiteCredito', 'ativo'] }
+    ],
+    'contas-gerenciais': [
+      { title: 'Estrutura Gerencial', eyebrow: 'Cadastro', icon: 'account_tree', fields: ['contaPaiId', 'codigo', 'descricao', 'tipo'] },
+      {
+        title: 'Responsabilidade e Regras',
+        eyebrow: 'Governança',
+        icon: 'admin_panel_settings',
+        fields: ['responsavelPadraoId', 'ehPadraoRecebimentoFaturaCartao', 'ativo']
+      }
+    ]
+  };
+
+  return sections[key] ?? [{ title: 'Dados do Cadastro', eyebrow: 'Cadastro', icon: 'edit_note', fields: [] }];
+}
+
+function getSummaryTitle(values: Record<string, unknown>, fallback: string) {
+  const candidate = values.nome ?? values.descricao ?? values.banco ?? values.codigo;
+  const text = typeof candidate === 'string' ? candidate.trim() : '';
+  return text || fallback;
 }
 
 function PessoaPixKeysSection({
@@ -131,86 +175,68 @@ function PessoaPixKeysSection({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errors: FieldErrors<any>;
 }) {
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'chavesPix'
-  });
+  const { fields, append, remove } = useFieldArray({ control, name: 'chavesPix' });
   const chavesPix = (useWatch({ control, name: 'chavesPix' }) as Array<{ tipo?: string; chave?: string }> | undefined) ?? [];
   const pixErrors = (errors.chavesPix as Array<{ tipo?: { message?: string }; chave?: { message?: string } }> | undefined) ?? [];
 
   return (
-    <Space orientation="vertical" size={12} style={{ width: '100%' }}>
-      <div>
-        <Typography.Title level={5} style={{ marginBottom: 4 }}>
-          Chaves Pix
-        </Typography.Title>
-        <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-          Cadastre uma ou mais chaves Pix para esta pessoa.
-        </Typography.Paragraph>
+    <FormSection title="Chaves Pix" eyebrow="Dados bancários" icon={<span className="material-symbols-outlined text-2xl">key</span>}>
+      <div className="space-y-4">
+        <p className="text-sm text-on-surface-variant">Cadastre uma ou mais chaves Pix para esta pessoa.</p>
+
+        {fields.map((item, index) => {
+          const tipo = chavesPix[index]?.tipo ?? 'CpfCnpj';
+          const mask = getPixMaskKind(tipo);
+          const fieldError = pixErrors[index];
+
+          return (
+            <div key={item.id} className="grid grid-cols-1 items-end gap-4 md:grid-cols-[220px_minmax(0,1fr)_auto]">
+              <div className="space-y-2">
+                {index === 0 ? <label className={formLabelClass}>Tipo da Chave Pix</label> : null}
+                <Controller
+                  control={control}
+                  name={`chavesPix.${index}.tipo`}
+                  render={({ field }) => (
+                    <ComboBox
+                      aria-label={`Tipo da chave Pix ${index + 1}`}
+                      value={field.value ?? 'CpfCnpj'}
+                      onChange={field.onChange}
+                      options={pessoaPixTipoOptions}
+                    />
+                  )}
+                />
+                <FieldError message={fieldError?.tipo?.message} />
+              </div>
+
+              <div className="space-y-2">
+                {index === 0 ? <label className={formLabelClass}>Chave Pix</label> : null}
+                <Controller
+                  control={control}
+                  name={`chavesPix.${index}.chave`}
+                  render={({ field }) => (
+                    <input
+                      value={mask ? applyInputMask(mask, String(field.value ?? '')) : String(field.value ?? '')}
+                      onChange={(event) => field.onChange(mask ? extractDigits(event.target.value) : event.target.value)}
+                      className={formFieldClass}
+                      placeholder={getPixPlaceholder(tipo)}
+                    />
+                  )}
+                />
+                <FieldError message={fieldError?.chave?.message} />
+              </div>
+
+              <Button type="button" variant="danger" size="lg" icon={<span className="material-symbols-outlined text-base">delete</span>} onClick={() => remove(index)}>
+                Remover
+              </Button>
+            </div>
+          );
+        })}
+
+        <Button type="button" variant="secondary" icon={<span className="material-symbols-outlined text-base">add</span>} onClick={() => append({ tipo: 'CpfCnpj', chave: '' })}>
+          Adicionar chave Pix
+        </Button>
       </div>
-
-      {fields.map((item, index) => {
-        const tipo = chavesPix[index]?.tipo ?? 'CpfCnpj';
-        const mask = getPixMaskKind(tipo);
-        const fieldError = pixErrors[index];
-
-        return (
-          <Space key={item.id} align="start" size={12} wrap style={{ display: 'flex' }}>
-            <Controller
-              control={control}
-              name={`chavesPix.${index}.tipo`}
-              render={({ field }) => (
-                <Form.Item
-                  label={index === 0 ? 'Tipo da chave Pix' : undefined}
-                  help={fieldError?.tipo?.message as string | undefined}
-                  validateStatus={fieldError?.tipo ? 'error' : undefined}
-                  style={{ minWidth: 180, marginBottom: 0 }}
-                >
-                  <Select
-                    value={field.value ?? 'CpfCnpj'}
-                    options={pessoaPixTipoOptions.map((option) => ({ label: option.label, value: option.value }))}
-                    onChange={(value) => field.onChange(value)}
-                  />
-                </Form.Item>
-              )}
-            />
-
-            <Controller
-              control={control}
-              name={`chavesPix.${index}.chave`}
-              render={({ field }) => (
-                <Form.Item
-                  label={index === 0 ? 'Chave Pix' : undefined}
-                  help={fieldError?.chave?.message as string | undefined}
-                  validateStatus={fieldError?.chave ? 'error' : undefined}
-                  style={{ minWidth: 320, flex: 1, marginBottom: 0 }}
-                >
-                  <Input
-                    value={mask ? applyInputMask(mask, String(field.value ?? '')) : String(field.value ?? '')}
-                    onChange={(event) => field.onChange(mask ? extractDigits(event.target.value) : event.target.value)}
-                    placeholder={getPixPlaceholder(tipo)}
-                  />
-                </Form.Item>
-              )}
-            />
-
-            <Button htmlType="button" danger icon={<DeleteOutlined />} onClick={() => remove(index)}>
-              Remover
-            </Button>
-          </Space>
-        );
-      })}
-
-      <Button
-        htmlType="button"
-        type="dashed"
-        icon={<PlusOutlined />}
-        onClick={() => append({ tipo: 'CpfCnpj', chave: '' })}
-        style={{ alignSelf: 'flex-start' }}
-      >
-        Adicionar chave Pix
-      </Button>
-    </Space>
+    </FormSection>
   );
 }
 
@@ -224,7 +250,8 @@ export function MasterDataFormPage({
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(Boolean(id));
-  const [errorMessage, setErrorMessage] = useState<string>();
+  const [loadError, setLoadError] = useState<string>();
+  const [submitError, setSubmitError] = useState<string>();
   const [loadedOptions, setLoadedOptions] = useState<Record<string, SelectOption[]>>({});
 
   const {
@@ -240,6 +267,14 @@ export function MasterDataFormPage({
     defaultValues: config.defaultValues as TPayload,
     mode: 'onChange'
   });
+
+  const watchedValues = useWatch({ control }) as Record<string, unknown>;
+  const isContaGerencial = config.key === 'contas-gerenciais';
+  const isPessoa = config.key === 'pessoas';
+  const contaPaiIdValue = useWatch({ control, name: 'contaPaiId' }) as string | undefined;
+  const contaGerencialOptions = isContaGerencial ? loadedOptions['contaPaiId'] ?? [] : [];
+  const contaGerencialPaiSelecionada = contaGerencialOptions.find((option) => option.value === contaPaiIdValue);
+  const tipoContaGerencialHerdado = getContaGerencialOptionData(contaGerencialPaiSelecionada)?.tipo;
 
   useEffect(() => {
     async function loadOptions() {
@@ -263,13 +298,13 @@ export function MasterDataFormPage({
 
     async function loadDetail() {
       setLoading(true);
-      setErrorMessage(undefined);
+      setLoadError(undefined);
 
       try {
         const detail = await config.detail(id!);
         reset(config.toFormValues(detail));
       } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar o cadastro.');
+        setLoadError(error instanceof Error ? error.message : 'Falha ao carregar o cadastro.');
       } finally {
         setLoading(false);
       }
@@ -278,38 +313,38 @@ export function MasterDataFormPage({
     void loadDetail();
   }, [config, id, reset]);
 
-  const isContaGerencial = config.key === 'contas-gerenciais';
-  const isPessoa = config.key === 'pessoas';
-  const contaPaiIdValue = useWatch({ control, name: 'contaPaiId' }) as string | undefined;
-  const contaGerencialOptions = isContaGerencial ? loadedOptions['contaPaiId'] ?? [] : [];
-  const contaGerencialPaiSelecionada = contaGerencialOptions.find((option) => option.value === contaPaiIdValue);
-  const tipoContaGerencialHerdado = getContaGerencialOptionData(contaGerencialPaiSelecionada)?.tipo;
-
   useEffect(() => {
     if (isContaGerencial && !id && loadedOptions['contaPaiId']) {
       const nextCode = buildNextContaGerencialCode(loadedOptions['contaPaiId'], contaPaiIdValue);
-
-      if (nextCode) {
-        setValue('codigo', nextCode, { shouldValidate: true });
-      }
+      if (nextCode) setValue('codigo', nextCode, { shouldValidate: true });
     }
   }, [isContaGerencial, id, contaPaiIdValue, loadedOptions, setValue]);
 
   useEffect(() => {
-    if (!isContaGerencial || !tipoContaGerencialHerdado) {
-      return;
-    }
-
+    if (!isContaGerencial || !tipoContaGerencialHerdado) return;
     setValue('tipo', tipoContaGerencialHerdado, { shouldValidate: true });
   }, [isContaGerencial, setValue, tipoContaGerencialHerdado]);
 
-  async function onSubmit(payload: Record<string, any>) {
+  const fieldByName = useMemo(() => new Map(config.fields.map((field) => [field.name, field])), [config.fields]);
+  const sections = useMemo(() => {
+    const planned = sectionPlanFor(config.key);
+    if (planned.length === 1 && planned[0].fields.length === 0) {
+      return [{ ...planned[0], fields: config.fields.map((field) => field.name) }];
+    }
+
+    const knownFieldNames = new Set(planned.flatMap((section) => section.fields));
+    const fallbackFields = config.fields.map((field) => field.name).filter((name) => !knownFieldNames.has(name));
+
+    return planned.concat(
+      fallbackFields.length > 0 ? [{ title: 'Dados Complementares', eyebrow: 'Cadastro', icon: 'more_horiz', fields: fallbackFields }] : []
+    );
+  }, [config.fields, config.key]);
+
+  async function onSubmit(payload: TPayload) {
+    setSubmitError(undefined);
     try {
-      if (id) {
-        await config.update(id, payload);
-      } else {
-        await config.create(payload);
-      }
+      if (id) await config.update(id, payload);
+      else await config.create(payload);
 
       navigate(config.routeBase);
     } catch (error) {
@@ -318,151 +353,177 @@ export function MasterDataFormPage({
 
       if (validationErrors) {
         applyServerValidationErrors(validationErrors, (field, message) =>
-          setError(field as never, {
-            type: 'server',
-            message
-          })
+          setError(field as never, { type: 'server', message })
         );
-
         return;
       }
 
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao salvar o cadastro.');
+      setSubmitError(error instanceof Error ? error.message : 'Falha ao salvar o cadastro.');
     }
   }
 
-  if (loading) {
-    return <PageState state="loading" title="Carregando cadastro..." />;
+  function renderField(field: FormFieldConfig<TPayload>) {
+    const fieldError = errors[field.name as keyof typeof errors]?.message as string | undefined;
+    const fullWidth = field.kind === 'textarea' || ['nome', 'descricao', 'observacao'].includes(field.name);
+
+    return (
+      <div key={field.name} className={`space-y-2 ${fullWidth ? 'md:col-span-2' : ''}`}>
+        <label className={formLabelClass}>{field.label}</label>
+        <Controller
+          control={control}
+          name={field.name as never}
+          render={({ field: controlledField }) => {
+            if (field.kind === 'text') {
+              if (isContaGerencial && field.name === 'codigo') {
+                return <ReadonlyField>{String(controlledField.value ?? '') || 'Gerado automaticamente'}</ReadonlyField>;
+              }
+
+              return (
+                <input
+                  {...controlledField}
+                  value={
+                    field.mask
+                      ? applyInputMask(field.mask, String(controlledField.value ?? ''))
+                      : String(controlledField.value ?? '')
+                  }
+                  onChange={(event) => controlledField.onChange(field.mask ? extractDigits(event.target.value) : event.target.value)}
+                  className={formFieldClass}
+                  placeholder={field.placeholder}
+                />
+              );
+            }
+
+            if (field.kind === 'textarea') {
+              return (
+                <textarea
+                  {...controlledField}
+                  value={String(controlledField.value ?? '')}
+                  rows={4}
+                  className={formTextAreaClass}
+                  placeholder={field.placeholder}
+                />
+              );
+            }
+
+            if (field.kind === 'select') {
+              if (isContaGerencial && field.name === 'tipo' && tipoContaGerencialHerdado) {
+                return <ReadonlyField>{tipoContaGerencialHerdado}</ReadonlyField>;
+              }
+
+              return (
+                <ComboBox
+                  aria-label={field.label}
+                  value={controlledField.value === undefined || controlledField.value === null ? '' : String(controlledField.value)}
+                  options={toComboOptions(
+                    buildFieldOptions(field as FormFieldConfig<Record<string, unknown>>, loadedOptions),
+                    isOptionalSelect(field.name)
+                  )}
+                  placeholder="Selecione..."
+                  onChange={(value) => controlledField.onChange(value)}
+                />
+              );
+            }
+
+            if (field.kind === 'switch') {
+              return (
+                <ToggleField
+                  checked={Boolean(controlledField.value)}
+                  onChange={controlledField.onChange}
+                  label={controlledField.value ? 'Ativo' : 'Inativo'}
+                  description={field.label}
+                />
+              );
+            }
+
+            if (field.kind === 'number') {
+              if (field.numberFormat === 'currency') {
+                return (
+                  <CurrencyInput
+                    value={typeof controlledField.value === 'number' ? controlledField.value : null}
+                    onChange={(value) => controlledField.onChange(value ?? (field.nullable ? null : 0))}
+                    className={formFieldClass}
+                  />
+                );
+              }
+
+              return (
+                <input
+                  type="number"
+                  value={typeof controlledField.value === 'number' ? controlledField.value : ''}
+                  onChange={(event) => controlledField.onChange(event.target.value === '' ? (field.nullable ? null : 0) : Number(event.target.value))}
+                  className={formFieldClass}
+                  min={field.min}
+                  max={field.max}
+                  step={field.step}
+                />
+              );
+            }
+
+            if (field.kind === 'date') {
+              return (
+                <DateInput
+                  ariaLabel={field.label}
+                  value={String(controlledField.value ?? '')}
+                  onChange={(value) => controlledField.onChange(value)}
+                />
+              );
+            }
+
+            return <></>;
+          }}
+        />
+        <FieldError message={fieldError} />
+      </div>
+    );
   }
 
-  if (errorMessage) {
-    return <PageState state="error" title="Falha ao carregar cadastro" subtitle={errorMessage} />;
-  }
+  if (loading) return <PageState state="loading" title="Carregando cadastro..." />;
+  if (loadError) return <PageState state="error" title="Falha ao carregar cadastro" subtitle={loadError} />;
+
+  const summaryTitle = getSummaryTitle(watchedValues, `Novo ${config.singularTitle.toLowerCase()}`);
+  const ativoValue = typeof watchedValues.ativo === 'boolean' ? (watchedValues.ativo ? 'Ativo' : 'Inativo') : 'Pronto';
 
   return (
-    <div className="max-w-5xl mx-auto space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div>
-        <h2 className="text-on-surface-variant font-label text-xs uppercase tracking-[0.2em] mb-2">Cadastros</h2>
-        <h1 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface">
-          {id ? 'Editar' : 'Criar'}: <span className="text-primary">{config.singularTitle}</span>
-        </h1>
-        <p className="text-on-surface-variant font-medium mt-2">{config.formDescription}</p>
-      </div>
+    <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-8 pb-24 lg:grid-cols-12">
+        <div className="space-y-8 lg:col-span-7">
+          {sections.map((section) => {
+            const fields = section.fields.map((fieldName) => fieldByName.get(fieldName)).filter((field): field is FormFieldConfig<TPayload> => Boolean(field));
+            if (fields.length === 0) return null;
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <EntityFormShell
-          title={config.singularTitle}
-          description={config.formDescription}
-          isValid={isValid}
-          isSubmitting={isSubmitting}
-          showHeader={false}
-          onCancel={() => navigate(config.routeBase)}
-        >
-          <Space orientation="vertical" size={16} style={{ width: '100%' }}>
-            {config.fields.map((field) => (
-              <Controller
-                key={field.name}
-                control={control}
-                name={field.name as never}
-                render={({ field: controlledField }) => (
-                  <Form.Item
-                    label={field.label}
-                    help={errors[field.name as keyof typeof errors]?.message as string | undefined}
-                    validateStatus={errors[field.name as keyof typeof errors] ? 'error' : undefined}
-                  >
-                    {field.kind === 'text' ? (
-                      isContaGerencial && field.name === 'codigo' ? (
-                        <Typography.Text
-                          style={{ display: 'block', padding: '4px 11px', background: 'rgba(0,0,0,0.1)', borderRadius: 8, fontFamily: 'monospace' }}
-                        >
-                          {String(controlledField.value ?? '') || '—'}
-                        </Typography.Text>
-                      ) : (
-                        <Input
-                          {...controlledField}
-                          value={
-                            field.mask
-                              ? applyInputMask(field.mask, String(controlledField.value ?? ''))
-                              : String(controlledField.value ?? '')
-                          }
-                          onChange={(event) =>
-                            controlledField.onChange(field.mask ? extractDigits(event.target.value) : event.target.value)
-                          }
-                          placeholder={field.placeholder}
-                        />
-                      )
-                    ) : null}
-                    {field.kind === 'textarea' ? (
-                      <Input.TextArea
-                        {...controlledField}
-                        value={String(controlledField.value ?? '')}
-                        rows={4}
-                        placeholder={field.placeholder}
-                      />
-                    ) : null}
-                    {field.kind === 'select' ? (
-                      isContaGerencial && field.name === 'tipo' && tipoContaGerencialHerdado ? (
-                        <Typography.Text
-                          style={{ display: 'block', padding: '4px 11px', background: 'rgba(0,0,0,0.1)', borderRadius: 8 }}
-                        >
-                          {tipoContaGerencialHerdado}
-                        </Typography.Text>
-                      ) : (
-                        <Select
-                          value={controlledField.value === '' ? undefined : (controlledField.value as string | undefined)}
-                          options={buildFieldOptions(field as FormFieldConfig<Record<string, unknown>>, loadedOptions)}
-                          onChange={(value) => controlledField.onChange(value ?? '')}
-                          allowClear
-                          showSearch
-                          optionFilterProp="label"
-                          filterOption={(input, option) =>
-                            String(option?.label ?? '')
-                              .toLowerCase()
-                              .includes(input.toLowerCase())
-                          }
-                        />
-                      )
-                    ) : null}
-                    {field.kind === 'switch' ? (
-                      <Switch checked={Boolean(controlledField.value)} onChange={controlledField.onChange} />
-                    ) : null}
-                    {field.kind === 'number' ? (
-                      field.numberFormat === 'currency' ? (
-                        <CurrencyInput
-                          value={typeof controlledField.value === 'number' ? controlledField.value : null}
-                          onChange={(value) => controlledField.onChange(value ?? (field.nullable ? null : 0))}
-                          style={{ width: '100%' }}
-                        />
-                      ) : (
-                        <InputNumber
-                          value={typeof controlledField.value === 'number' ? controlledField.value : undefined}
-                          onChange={(value) => controlledField.onChange(value ?? (field.nullable ? null : 0))}
-                          style={{ width: '100%' }}
-                          min={field.min}
-                          max={field.max}
-                          step={field.step}
-                        />
-                      )
-                    ) : null}
-                    {field.kind === 'date' ? (
-                      <Input type="date" value={String(controlledField.value ?? '')} onChange={controlledField.onChange} />
-                    ) : null}
-                  </Form.Item>
-                )}
-              />
-            ))}
+            return (
+              <FormSection
+                key={section.title}
+                title={section.title}
+                eyebrow={section.eyebrow}
+                icon={<span className="material-symbols-outlined text-2xl">{section.icon}</span>}
+              >
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">{fields.map(renderField)}</div>
+              </FormSection>
+            );
+          })}
 
-            {isPessoa ? <PessoaPixKeysSection control={control} errors={errors} /> : null}
-          </Space>
-        </EntityFormShell>
+          {isPessoa ? <PessoaPixKeysSection control={control} errors={errors} /> : null}
+        </div>
+
+        <div className="space-y-8 lg:col-span-5">
+          <FormActionPanel
+            title="Pronto para salvar?"
+            eyebrow="Resumo do Cadastro"
+            submitLabel={id ? 'Atualizar Cadastro' : 'Confirmar Cadastro'}
+            submitDisabled={!isValid || isSubmitting}
+            submitting={isSubmitting}
+            error={submitError}
+            onCancel={() => navigate(config.routeBase)}
+            items={[
+              { label: 'Cadastro', value: summaryTitle },
+              { label: 'Tipo', value: config.singularTitle },
+              { label: 'Modo', value: id ? 'Edição' : 'Novo cadastro' },
+              { label: 'Status', value: ativoValue, accent: ativoValue === 'Ativo' }
+            ]}
+          />
+        </div>
       </form>
-
-      <Link
-        to={config.routeBase}
-        className="inline-flex items-center gap-2 text-sm font-bold text-on-surface-variant hover:text-primary transition-colors no-underline"
-      >
-        <ArrowLeftOutlined /> Voltar para {config.title.toLowerCase()}
-      </Link>
     </div>
   );
 }

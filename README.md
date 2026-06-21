@@ -25,7 +25,7 @@ npm run build       # Build de produção
 npm run lint        # Análise estática
 npm run test        # Testes unitários
 npm run coverage    # Cobertura de testes
-npm run quality:check  # Build + Coverage + Lint
+npm run quality:check  # Lint + Build + Coverage
 npm run quality:gate   # Quality gate completo
 npm run security:audit # Scanner de vulnerabilidades
 npm run generate:types # Gera tipos do Swagger
@@ -70,7 +70,6 @@ Configuracao:
 - `/movimentacoes` - Movimentações
 - `/faturas` - Faturas de cartão
 - `/importacoes-whatsapp` - Importações WhatsApp
-- `/conciliacao` - Conciliação
 
 ## Quality Gate
 

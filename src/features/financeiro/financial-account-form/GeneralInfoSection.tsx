@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { CreditCardOutlined, FileTextOutlined, InfoCircleOutlined, RobotOutlined, SearchOutlined } from '@ant-design/icons';
 import { agenteApi } from '../../../services/http/agente-api';
 
 import { formatMonthYearBR } from '../../../shared/date';
 import { buildCardInvoiceLink } from './card-invoice';
 import { errorTextClass, fieldLabelClass, nativeFieldWithPaddingClass } from './field-classes';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
-import { SelectWithQuickAdd } from '../../../components/forms/SelectWithQuickAdd';
+import { ComboBox } from '../../../components/forms/ComboBox';
+import { FormSection } from '../../../components/layout';
 import { QuickAddPessoaModal } from '../../cadastros/quick-add/QuickAddPessoaModal';
 import { QuickAddContaGerencialModal } from '../../cadastros/quick-add/QuickAddContaGerencialModal';
 
@@ -45,19 +45,32 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
     if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current);
     setAiSugestao(null);
     if (!descricaoWatched || descricaoWatched.length < 4 || !canEdit) return;
+
     aiDebounceRef.current = setTimeout(() => {
-      agenteApi.categorizar([descricaoWatched]).then((resp) => {
-        const item = resp.itens[0];
-        if (item?.contaGerencialId && item.confianca >= 0.65) {
-          setAiSugestao({ id: item.contaGerencialId, descricao: item.contaGerencialDescricao ?? '', confianca: item.confianca });
-        }
-      }).catch(() => { /* silencioso */ });
+      agenteApi
+        .categorizar([descricaoWatched])
+        .then((resp) => {
+          const item = resp.itens[0];
+          if (item?.contaGerencialId && item.confianca >= 0.65) {
+            setAiSugestao({
+              id: item.contaGerencialId,
+              descricao: item.contaGerencialDescricao ?? '',
+              confianca: item.confianca
+            });
+          }
+        })
+        .catch(() => {
+          // Sugestão automática não bloqueia o preenchimento manual.
+        });
     }, 800);
-    return () => { if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current); };
+
+    return () => {
+      if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current);
+    };
   }, [descricaoWatched, canEdit]);
 
   function handlePessoaSuccess(newId: string) {
-    const target = pessoaModalTarget; // capture before modal closes and resets state
+    const target = pessoaModalTarget;
     void reloadPessoaOptions().then(() => {
       if (target) setValue(target, newId);
     });
@@ -70,53 +83,36 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
   }
 
   return (
-    <div className="bg-surface-container-low p-8 rounded-3xl border border-white/5 space-y-8">
-      <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-          <FileTextOutlined />
-        </span>
-        <div>
-          <h3 className="text-lg font-headline font-bold leading-tight">Informações do Título</h3>
-          <p className="text-xs text-on-surface-variant">O que é este lançamento e a quem se refere</p>
-        </div>
-        <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Passo 1</span>
-      </div>
-
-      {origemCompraPlanejadaId && (
-        <div className="bg-tertiary/10 border border-tertiary/20 p-4 rounded-2xl flex gap-3 text-tertiary">
-          <InfoCircleOutlined className="mt-1" />
+    <FormSection title="Informações do Título" eyebrow="Passo 1" icon={<span className="material-symbols-outlined text-2xl">description</span>}>
+      {origemCompraPlanejadaId ? (
+        <div className="flex gap-3 rounded-2xl border border-tertiary/20 bg-tertiary/10 p-4 text-tertiary">
+          <span className="material-symbols-outlined mt-1">info</span>
           <div>
             <p className="text-sm font-bold">Lançamento derivado de compra planejada</p>
             <p className="text-xs opacity-80">Os campos foram pré-preenchidos. Complete os dados antes de salvar.</p>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {cardInvoicePreview && (
-        <div className="bg-primary/10 border border-primary/20 p-4 rounded-2xl space-y-3">
+      {cardInvoicePreview ? (
+        <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/10 p-4">
           <div className="flex gap-3 text-primary">
-            <CreditCardOutlined className="mt-1 text-lg" />
+            <span className="material-symbols-outlined mt-1 text-lg">credit_card</span>
             <div>
-              <p className="text-sm font-bold">
-                Direcionado para fatura {formatMonthYearBR(cardInvoicePreview.competencia)}
-              </p>
+              <p className="text-sm font-bold">Direcionado para fatura {formatMonthYearBR(cardInvoicePreview.competencia)}</p>
               <p className="text-xs opacity-80">
                 {`${cardInvoicePreview.cartaoNome ?? 'Cartão selecionado'} • fechamento ${cardInvoicePreview.dataFechamento} • vencimento ${cardInvoicePreview.dataVencimento}`}
               </p>
             </div>
           </div>
-          <Link
-            to={buildCardInvoiceLink(cardInvoicePreview)}
-            className="inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline"
-          >
-            Abrir fatura prevista <SearchOutlined />
+          <Link to={buildCardInvoiceLink(cardInvoicePreview)} className="inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline">
+            Abrir fatura prevista <span className="material-symbols-outlined text-sm">search</span>
           </Link>
         </div>
-      )}
+      ) : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Description */}
-        <div className="md:col-span-2 space-y-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="space-y-2 md:col-span-2">
           <label className={fieldLabelClass}>Descrição</label>
           <Controller
             control={control}
@@ -126,23 +122,22 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
                 <input
                   {...field}
                   disabled={!canEdit}
-                  className={`w-full bg-surface-container-highest border-none rounded-2xl px-4 py-4 focus:ring-1 transition-all text-white placeholder:text-on-surface-variant/40 ${errors.descricao ? 'ring-1 ring-error' : 'focus:ring-primary/40'}`}
-                  placeholder="Ex: Aluguel Mensal"
+                  className={`${nativeFieldWithPaddingClass} ${errors.descricao ? 'ring-1 ring-error' : ''}`}
+                  placeholder="Ex: Aluguel mensal"
                 />
-                {errors.descricao && <span className={errorTextClass}>{errors.descricao.message}</span>}
+                {errors.descricao ? <span className={errorTextClass}>{errors.descricao.message}</span> : null}
               </div>
             )}
           />
         </div>
 
-        {/* Managerial account (category) */}
-        <div className="md:col-span-2 space-y-2">
+        <div className="space-y-2 md:col-span-2">
           <label className={fieldLabelClass}>Categoria · conta gerencial</label>
           <Controller
             control={control}
             name="rateios.0.contaGerencialId"
             render={({ field }) => (
-              <SelectWithQuickAdd
+              <ComboBox
                 {...field}
                 disabled={!canEdit}
                 className={nativeFieldWithPaddingClass}
@@ -154,31 +149,35 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
                     {opt.label}
                   </option>
                 ))}
-              </SelectWithQuickAdd>
+              </ComboBox>
             )}
           />
-          {aiSugestao && !categoriaAtual && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/8 border border-primary/20 animate-in fade-in duration-300">
-              <RobotOutlined className="text-primary text-xs" />
-              <span className="text-xs text-primary font-medium flex-1">
+
+          {aiSugestao && !categoriaAtual ? (
+            <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/8 px-3 py-2 animate-in fade-in duration-300">
+              <span className="material-symbols-outlined text-sm text-primary">smart_toy</span>
+              <span className="flex-1 text-xs font-medium text-primary">
                 IA sugere: <strong>{aiSugestao.descricao}</strong>
                 <span className="ml-1 opacity-60">({Math.round(aiSugestao.confianca * 100)}%)</span>
               </span>
               <button
                 type="button"
-                onClick={() => { setValue('rateios.0.contaGerencialId', aiSugestao.id); setAiSugestao(null); }}
-                className="text-[11px] font-bold text-primary bg-primary/15 hover:bg-primary/25 px-2 py-0.5 rounded-lg transition-colors"
+                onClick={() => {
+                  setValue('rateios.0.contaGerencialId', aiSugestao.id);
+                  setAiSugestao(null);
+                }}
+                className="rounded-lg bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary transition-colors hover:bg-primary/25"
               >
                 Usar
               </button>
             </div>
-          )}
-          <p className="text-[11px] text-on-surface-variant/70 ml-1">
+          ) : null}
+
+          <p className="ml-1 text-[11px] text-on-surface-variant/70">
             Para dividir entre várias contas, use o rateio por centro de custo abaixo.
           </p>
         </div>
 
-        {/* Person */}
         <div className="space-y-2">
           <label className={fieldLabelClass}>{personLabel}</label>
           <Controller
@@ -186,22 +185,25 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
             name="pessoaId"
             render={({ field }) => (
               <div className="space-y-1">
-                <SelectWithQuickAdd
+                <ComboBox
                   {...field}
                   disabled={!canEdit}
                   className={nativeFieldWithPaddingClass}
                   onAddNew={canEdit ? () => setPessoaModalTarget('pessoaId') : undefined}
                 >
                   <option value="">Selecionar...</option>
-                  {pessoaOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </SelectWithQuickAdd>
-                {errors.pessoaId && <span className={errorTextClass}>{errors.pessoaId.message}</span>}
+                  {pessoaOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </ComboBox>
+                {errors.pessoaId ? <span className={errorTextClass}>{errors.pessoaId.message}</span> : null}
               </div>
             )}
           />
         </div>
 
-        {/* Responsible */}
         <div className="space-y-2">
           <label className={fieldLabelClass}>Responsável</label>
           <Controller
@@ -209,50 +211,39 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
             name="responsavelId"
             render={({ field }) => (
               <div className="space-y-1">
-                <SelectWithQuickAdd
+                <ComboBox
                   {...field}
                   disabled={!canEdit}
                   className={nativeFieldWithPaddingClass}
                   onAddNew={canEdit ? () => setPessoaModalTarget('responsavelId') : undefined}
                 >
                   <option value="">Selecionar...</option>
-                  {pessoaOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </SelectWithQuickAdd>
-                {errors.responsavelId && <span className={errorTextClass}>{errors.responsavelId.message}</span>}
+                  {pessoaOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </ComboBox>
+                {errors.responsavelId ? <span className={errorTextClass}>{errors.responsavelId.message}</span> : null}
               </div>
             )}
           />
         </div>
 
-        {/* Document Number */}
-        <div className="md:col-span-2 space-y-2">
+        <div className="space-y-2 md:col-span-2">
           <label className={fieldLabelClass}>Nº Documento</label>
           <Controller
             control={control}
             name="numeroDocumento"
             render={({ field: { value, ...rest } }) => (
-              <input
-                {...rest}
-                value={value ?? ''}
-                disabled={!canEdit}
-                className={nativeFieldWithPaddingClass}
-                placeholder="000.000"
-              />
+              <input {...rest} value={value ?? ''} disabled={!canEdit} className={nativeFieldWithPaddingClass} placeholder="000.000" />
             )}
           />
         </div>
       </div>
 
-      <QuickAddPessoaModal
-        open={pessoaModalTarget !== null}
-        onClose={() => setPessoaModalTarget(null)}
-        onSuccess={handlePessoaSuccess}
-      />
-      <QuickAddContaGerencialModal
-        open={contaGerencialModalOpen}
-        onClose={() => setContaGerencialModalOpen(false)}
-        onSuccess={handleContaGerencialSuccess}
-      />
-    </div>
+      <QuickAddPessoaModal open={pessoaModalTarget !== null} onClose={() => setPessoaModalTarget(null)} onSuccess={handlePessoaSuccess} />
+      <QuickAddContaGerencialModal open={contaGerencialModalOpen} onClose={() => setContaGerencialModalOpen(false)} onSuccess={handleContaGerencialSuccess} />
+    </FormSection>
   );
 }

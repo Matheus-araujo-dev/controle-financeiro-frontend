@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'antd/dist/reset.css';
 import './styles/theme.css';
-import './telemetry';
 import App from './App';
 
 const queryClient = new QueryClient({

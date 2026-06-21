@@ -21,6 +21,19 @@ describe('MasterDataFormPage', () => {
     navigateMock.mockReset();
   });
 
+  async function submitCreate() {
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar Cadastro' }));
+  }
+
+  async function submitUpdate() {
+    await userEvent.click(screen.getByRole('button', { name: 'Atualizar Cadastro' }));
+  }
+
+  async function selectCombo(label: string, option: string) {
+    await userEvent.click(await screen.findByRole('combobox', { name: label }));
+    await userEvent.click(await screen.findByRole('button', { name: option }));
+  }
+
   it('submits creation payloads', async () => {
     const create = vi.fn().mockResolvedValue({});
 
@@ -59,7 +72,7 @@ describe('MasterDataFormPage', () => {
     );
 
     await userEvent.type(screen.getByRole('textbox'), 'Pessoa Exemplo');
-    await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    await submitCreate();
 
     await waitFor(() => expect(create).toHaveBeenCalledWith({ nome: 'Pessoa Exemplo' }));
     expect(navigateMock).toHaveBeenCalledWith('/pessoas');
@@ -122,7 +135,7 @@ describe('MasterDataFormPage', () => {
     expect(cpfCnpjInput).toHaveValue('437.782.098-25');
     expect(telefoneInput).toHaveValue('(11) 98889-1273');
 
-    await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    await submitCreate();
 
     await waitFor(() =>
       expect(create).toHaveBeenCalledWith({
@@ -261,7 +274,7 @@ describe('MasterDataFormPage', () => {
     await userEvent.type(firstPixInput, '43778209825');
     await userEvent.type(secondPixInput, '12345678000190');
 
-    await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    await submitCreate();
 
     await waitFor(() =>
       expect(create).toHaveBeenCalledWith(
@@ -321,7 +334,7 @@ describe('MasterDataFormPage', () => {
 
     await userEvent.type(screen.getByRole('textbox'), 'Notebook');
     fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '' } });
-    await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    await submitCreate();
 
     await waitFor(() =>
       expect(create).toHaveBeenCalledWith({
@@ -388,7 +401,7 @@ describe('MasterDataFormPage', () => {
 
     expect(valorInput).toHaveValue('R$6.000,00');
 
-    await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    await submitCreate();
 
     await waitFor(() =>
       expect(create).toHaveBeenCalledWith({
@@ -398,7 +411,7 @@ describe('MasterDataFormPage', () => {
     );
   });
 
-  it('supports autocomplete in select fields', async () => {
+  it('renders selectable options in combo fields', async () => {
     render(
       <MemoryRouter initialEntries={['/compras-planejadas/novo']}>
         <Routes>
@@ -445,12 +458,10 @@ describe('MasterDataFormPage', () => {
       </MemoryRouter>
     );
 
-    const comboBox = screen.getByRole('combobox');
-    await userEvent.click(comboBox);
-    await userEvent.type(comboBox, 'Tec');
+    await userEvent.click(await screen.findByRole('combobox', { name: 'Conta gerencial' }));
 
-    expect(await screen.findByText('TEC - Tecnologia')).toBeInTheDocument();
-    expect(screen.queryByText('MOR - Moradia')).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'TEC - Tecnologia' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'MOR - Moradia' })).toBeInTheDocument();
   });
 
   it('inherits type from the parent account and generates the next child code', async () => {
@@ -536,15 +547,13 @@ describe('MasterDataFormPage', () => {
       </MemoryRouter>
     );
 
-    const comboBoxes = await screen.findAllByRole('combobox');
-    await userEvent.click(comboBoxes[0]);
-    await userEvent.click(await screen.findByText('REC - Receitas'));
+    await selectCombo('Conta pai', 'REC - Receitas');
 
     await waitFor(() => expect(screen.getByText('REC.02')).toBeInTheDocument());
     expect(screen.getByText('Receita')).toBeInTheDocument();
 
     await userEvent.type(screen.getByRole('textbox'), 'Receita recorrente');
-    await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    await submitCreate();
 
     await waitFor(() =>
       expect(create).toHaveBeenCalledWith({
@@ -612,11 +621,11 @@ describe('MasterDataFormPage', () => {
 
     await userEvent.clear(screen.getByRole('textbox'));
     await userEvent.type(screen.getByRole('textbox'), ' ');
-    await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    await submitCreate();
 
     await userEvent.clear(screen.getByRole('textbox'));
     await userEvent.type(screen.getByRole('textbox'), 'Pessoa Exemplo');
-    await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    await submitCreate();
 
     expect(await screen.findByText('Nome obrigatório.')).toBeInTheDocument();
   }, 20000);
@@ -662,7 +671,7 @@ describe('MasterDataFormPage', () => {
     expect(await screen.findByDisplayValue('Pessoa existente')).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Pessoa atualizada' } });
-    await userEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    await submitUpdate();
 
     await waitFor(() => expect(update).toHaveBeenCalledWith('1', { nome: 'Pessoa atualizada' }));
   });

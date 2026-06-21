@@ -1,7 +1,9 @@
+import { Suspense } from 'react';
 import { render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '../store/auth-store';
 import { appRoutes } from './router';
+import '../features/cadastros/MasterDataListPage';
 
 const apiClientMock = vi.hoisted(() => ({
   get: vi.fn(),
@@ -13,6 +15,18 @@ const apiClientMock = vi.hoisted(() => ({
 vi.mock('../services/http/api-client', () => ({
   apiClient: apiClientMock
 }));
+
+function renderRoute(initialEntry: string) {
+  const router = createMemoryRouter(appRoutes, {
+    initialEntries: [initialEntry]
+  });
+
+  render(
+    <Suspense fallback={<div>Carregando...</div>}>
+      <RouterProvider router={router} />
+    </Suspense>
+  );
+}
 
 describe('card routes', () => {
   beforeEach(() => {
@@ -43,27 +57,18 @@ describe('card routes', () => {
     window.localStorage.clear();
   });
 
-  it('renders the dedicated cards list route', async () => {
-    const router = createMemoryRouter(appRoutes, {
-      initialEntries: ['/cartoes']
-    });
+  it('renders the master data cards list route', async () => {
+    renderRoute('/cartoes');
 
-    render(<RouterProvider router={router} />);
-
-    expect(await screen.findByRole('heading', { level: 1, name: /Gest.o de Cart/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Adicionar Cart.o/i })).toHaveAttribute('href', '/cartoes/novo');
-    expect(screen.getByText(/Hist.rico de cart/i)).toBeInTheDocument();
+    expect(await screen.findByPlaceholderText('Nome, bandeira ou final')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Novo cartão/i })).toBeInTheDocument();
   });
 
-  it('renders the dedicated cards form route', async () => {
-    const router = createMemoryRouter(appRoutes, {
-      initialEntries: ['/cartoes/novo']
-    });
+  it('renders the master data cards form route', async () => {
+    renderRoute('/cartoes/novo');
 
-    render(<RouterProvider router={router} />);
-
-    expect(await screen.findByRole('heading', { level: 1, name: 'Adicionar cartao' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Nome do cartao')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Salvar cartao' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Confirmar Cadastro' })).toBeInTheDocument();
+    expect(screen.getByText('Nome')).toBeInTheDocument();
+    expect(screen.getByText('Bandeira')).toBeInTheDocument();
   });
 });

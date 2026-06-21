@@ -19,6 +19,17 @@ export const compraPlanejadaSchema = z.object({
   }),
   observacao: z.string().trim()
 }).superRefine((values, context) => {
+  const today = new Date();
+  const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  if (values.dataDesejada && values.dataDesejada < todayIso) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['dataDesejada'],
+      message: 'Data desejada não pode ser menor que a data atual.'
+    });
+  }
+
   if (values.quantidadeParcelasDesejada !== null && values.quantidadeParcelasDesejada < 2) {
     context.addIssue({
       code: z.ZodIssueCode.custom,

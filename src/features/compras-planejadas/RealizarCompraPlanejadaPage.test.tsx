@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { RealizarCompraPlanejadaPage } from './RealizarCompraPlanejadaPage';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
+import { selectDateInDateInput } from '../../test/date-input';
 
 const navigateMock = vi.fn();
 
@@ -73,9 +74,17 @@ function renderPage() {
 }
 
 async function submitPurchase() {
-  const submitButton = screen.getByRole('button', { name: /CONFIRMAR COMPRA/ });
+  const submitButton = screen.getByRole('button', { name: /Confirmar Compra/i });
   await waitFor(() => expect(submitButton).toBeEnabled());
   await userEvent.click(submitButton);
+}
+
+async function selectCombo(label: string, option: string) {
+  const combo = await screen.findByRole('combobox', { name: label });
+  await userEvent.click(combo);
+  await userEvent.clear(combo);
+  await userEvent.type(combo, option);
+  await userEvent.click(await screen.findByRole('button', { name: option }));
 }
 
 describe('RealizarCompraPlanejadaPage', () => {
@@ -90,9 +99,7 @@ describe('RealizarCompraPlanejadaPage', () => {
       contaPagarGeradaId: 'cpagar-1'
     });
     vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({
-      items: [
-        { id: 'p-rec', nome: 'Fornecedor A', tipoPessoa: 'Juridica', cpfCnpj: null, email: null, telefone: null, ativo: true }
-      ],
+      items: [{ id: 'p-rec', nome: 'Fornecedor A', tipoPessoa: 'Juridica', cpfCnpj: null, email: null, telefone: null, ativo: true }],
       page: 1,
       pageSize: 200,
       totalItems: 1,
@@ -110,9 +117,7 @@ describe('RealizarCompraPlanejadaPage', () => {
       totalPages: 1
     } as never);
     vi.mocked(cadastrosApi.contasBancarias.listar).mockResolvedValue({
-      items: [
-        { id: 'cb-1', nome: 'Conta principal', banco: 'Banco Exemplo', ativo: true }
-      ],
+      items: [{ id: 'cb-1', nome: 'Conta principal', banco: 'Banco Exemplo', ativo: true }],
       page: 1,
       pageSize: 200,
       totalItems: 1,
@@ -141,11 +146,9 @@ describe('RealizarCompraPlanejadaPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Realizar Compra' })).toBeInTheDocument();
 
-    await userEvent.selectOptions(screen.getByLabelText('Forma de Pagamento'), 'fp-pix');
-    await userEvent.selectOptions(screen.getByLabelText('Beneficiário / Recebedor'), 'p-rec');
-
-    const contaSelect = await screen.findByLabelText('Conta para Baixa Automática');
-    await userEvent.selectOptions(contaSelect, 'cb-1');
+    await selectCombo('Forma de Pagamento', 'Pix');
+    await selectCombo('Beneficiário / Recebedor', 'Fornecedor A');
+    await selectCombo('Conta para Baixa Automática', 'Conta principal - Banco Exemplo');
 
     await submitPurchase();
 
@@ -172,15 +175,11 @@ describe('RealizarCompraPlanejadaPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Realizar Compra' })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Data da Compra'), {
-      target: { value: '2026-05-12' }
-    });
+    await selectDateInDateInput('Data da Compra', '2026-05-12');
 
-    await userEvent.selectOptions(screen.getByLabelText('Forma de Pagamento'), 'fp-cartao');
-    await userEvent.selectOptions(screen.getByLabelText('Beneficiário / Recebedor'), 'p-rec');
-
-    const cartaoSelect = await screen.findByLabelText('Cartão');
-    await userEvent.selectOptions(cartaoSelect, 'cartao-1');
+    await selectCombo('Forma de Pagamento', 'Cartao de credito');
+    await selectCombo('Beneficiário / Recebedor', 'Fornecedor A');
+    await selectCombo('Cartão', 'Visa Platinum - final 4242');
 
     fireEvent.change(screen.getByLabelText('Parcelas'), {
       target: { value: '3' }
@@ -216,13 +215,10 @@ describe('RealizarCompraPlanejadaPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Realizar Compra' })).toBeInTheDocument();
 
-    await userEvent.selectOptions(screen.getByLabelText('Forma de Pagamento'), 'fp-boleto');
-    await userEvent.selectOptions(screen.getByLabelText('Beneficiário / Recebedor'), 'p-rec');
+    await selectCombo('Forma de Pagamento', 'Boleto');
+    await selectCombo('Beneficiário / Recebedor', 'Fornecedor A');
 
-    const vencimentoInput = await screen.findByLabelText('Vencimento da Conta');
-    fireEvent.change(vencimentoInput, {
-      target: { value: '2026-05-25' }
-    });
+    await selectDateInDateInput('Vencimento da Conta', '2026-05-25');
 
     await submitPurchase();
 

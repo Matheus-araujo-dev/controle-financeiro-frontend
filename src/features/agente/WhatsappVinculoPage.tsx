@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Button, Card, Divider, Form, Input, InputNumber, Popconfirm, Spin, Switch, Tag, Typography } from 'antd';
-import { MobileOutlined, CheckCircleOutlined, DisconnectOutlined, BellOutlined } from '@ant-design/icons';
+import { Alert, Card, Divider, Form, Input, InputNumber, Popconfirm, Spin, Switch, Tag, Typography } from 'antd';
+import { MobileOutlined, CheckCircleOutlined, DisconnectOutlined, BellOutlined, WhatsAppOutlined } from '@ant-design/icons';
 import { agenteApi, type WhatsappAlertasResponse, type WhatsappStatusResponse } from '../../services/http/agente-api';
 import { getApiErrorMessage } from '../../services/http/api-error';
 import { notify } from '../../store/notification-store';
+import { Button } from '../../components/ui/Button';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -154,7 +155,7 @@ export function WhatsappVinculoPage() {
           </Form.Item>
 
           <div className="flex gap-2">
-            <Button type="primary" htmlType="submit" loading={salvando} icon={<CheckCircleOutlined />}>
+            <Button type="submit" loading={salvando} icon={<WhatsAppOutlined />}>
               {status?.ativo ? 'Atualizar número' : 'Vincular WhatsApp'}
             </Button>
 
@@ -167,7 +168,7 @@ export function WhatsappVinculoPage() {
                 cancelText="Cancelar"
                 okButtonProps={{ danger: true }}
               >
-                <Button danger icon={<DisconnectOutlined />} loading={salvando}>
+                <Button variant="danger" icon={<DisconnectOutlined />} loading={salvando}>
                   Desvincular
                 </Button>
               </Popconfirm>
@@ -265,12 +266,7 @@ export function WhatsappVinculoPage() {
             <Tag className="ml-2" color="default">Em breve</Tag>
           </Form.Item>
 
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={salvandoAlertas}
-            disabled={!status?.ativo}
-          >
+          <Button type="submit" loading={salvandoAlertas} disabled={!status?.ativo} icon={<CheckCircleOutlined />}>
             Salvar alertas
           </Button>
 

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Input, type InputProps } from 'antd';
 import { formatCurrencyBRL, formatCurrencyEditable, parseEditableCurrencyInput } from './currency';
 
-type CurrencyInputProps = Omit<InputProps, 'value' | 'onChange'> & {
+type CurrencyInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & {
   value?: number | null;
   onChange?: (value: number | null) => void;
 };
@@ -55,7 +54,7 @@ export function CurrencyInput({ value, onChange, onBlur, onFocus, ...props }: Cu
   );
 
   return (
-    <Input
+    <input
       {...props}
       inputMode="decimal"
       value={displayValue}

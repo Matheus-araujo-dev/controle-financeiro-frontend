@@ -105,13 +105,12 @@ describe('FinancialAccountFormPage', () => {
     const config = createConfig();
     renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
 
-    expect(await screen.findByText('Operações Financeiras')).toBeInTheDocument();
+    expect(await screen.findByText('Informações do Título')).toBeInTheDocument();
     await waitFor(() => expect(config.loadPessoaOptions).toHaveBeenCalled());
-    expect(screen.getByText('Informações do Título')).toBeInTheDocument();
     expect(screen.getByText('Recorrência Automática')).toBeInTheDocument();
     expect(screen.getByText('Rateio por Centro de Custo')).toBeInTheDocument();
     expect(screen.getByText('Observações Adicionais')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('2026-08')).toBeInTheDocument();
+    expect(screen.getByText('08/2026')).toBeInTheDocument();
     expect(screen.getByText(/05\/2026/)).toBeInTheDocument();
   }, 20000);
 
@@ -140,7 +139,7 @@ describe('FinancialAccountFormPage', () => {
     renderWithRoute('/contas-pagar/123', '/contas-pagar/:id', config);
 
     expect(await screen.findByDisplayValue('Despesa de teste')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('2026-08')).toBeInTheDocument();
+    expect(screen.getByText('08/2026')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lançamento' }));
 

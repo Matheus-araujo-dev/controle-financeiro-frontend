@@ -240,8 +240,11 @@ describe('financeiro module config', () => {
     });
 
     await contasPagarModuleConfig.liquidar?.('1', {
+      valorLiquidacao: 0,
       dataLiquidacao: '2026-04-05',
-      contaBancariaId: 'cb1'
+      contaBancariaId: 'cb1',
+      formaPagamentoId: 'f1',
+      atualizarValorConta: false
     });
 
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
@@ -264,8 +267,11 @@ describe('financeiro module config', () => {
       })
     );
     expect(financeiroApi.contasPagar.liquidar).toHaveBeenCalledWith('1', {
+      valorLiquidacao: 0,
       dataLiquidacao: '2026-04-05',
-      contaBancariaId: 'cb1'
+      contaBancariaId: 'cb1',
+      formaPagamentoId: 'f1',
+      atualizarValorConta: false
     });
   });
 

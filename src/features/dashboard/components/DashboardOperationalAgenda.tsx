@@ -19,7 +19,7 @@ export const DashboardOperationalAgenda: React.FC<DashboardOperationalAgendaProp
       </div>
 
       <div className="space-y-6 overflow-y-auto max-h-[340px] pr-2 custom-scrollbar">
-        {items.map((item, index) => {
+        {items.map((item) => {
           const isToday = new Date().toISOString().split('T')[0] === item.dataVencimento;
           
           return (

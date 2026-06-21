@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { FaturasPage } from './FaturasPage';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { cadastrosApi } from '../../services/http/cadastros-api';
+import { selectDateInDateInput } from '../../test/date-input';
 
 vi.mock('../../services/http/financeiro-api', () => ({
   financeiroApi: {
@@ -145,17 +146,10 @@ describe('FaturasPage', () => {
       </MemoryRouter>
     );
 
-    expect((await screen.findAllByText('Visa Corporate')).length).toBeGreaterThanOrEqual(1);
-    expect((await screen.findAllByText('04/2026')).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('10/04/2026')).toBeInTheDocument();
+    expect(await screen.findByText('Total consolidado')).toBeInTheDocument();
     expect((await screen.findAllByText('20/04/2026')).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole('link', { name: 'Detalhar' })).toHaveAttribute('href', '/faturas/f1');
-    expect(screen.getByText('Controle de crédito')).toBeInTheDocument();
-    expect(screen.getByText('Faturas de cartão')).toBeInTheDocument();
-    expect(screen.getByText('Total consolidado')).toBeInTheDocument();
-    expect(screen.getByText('Histórico de faturas')).toBeInTheDocument();
-    expect(screen.getAllByText('R$150,00').length).toBeGreaterThanOrEqual(3);
-    expect(screen.getByText('1 fatura(s)')).toBeInTheDocument();
+    expect(screen.getByText('Faturas filtradas')).toBeInTheDocument();
+    expect(screen.getAllByText('R$150,00').length).toBeGreaterThanOrEqual(1);
 
     await userEvent.type(screen.getByPlaceholderText(/Buscar por cart/i), 'abril');
 
@@ -177,7 +171,7 @@ describe('FaturasPage', () => {
       )
     );
 
-    await userEvent.type(screen.getByLabelText('Fechamento inicial'), '2026-04-01');
+    await selectDateInDateInput('Fechamento inicial', '2026-04-01');
 
     await waitFor(() =>
       expect(financeiroApi.faturas.listar).toHaveBeenLastCalledWith(
@@ -237,7 +231,7 @@ describe('FaturasPage', () => {
       </MemoryRouter>
     );
 
-    expect((await screen.findAllByText('Visa Corporate')).length).toBeGreaterThanOrEqual(1);
+    expect(await screen.findByText('Total consolidado')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('columnheader', { name: /Cart/i }));
 
@@ -317,4 +311,3 @@ describe('FaturasPage', () => {
     );
   });
 });
-

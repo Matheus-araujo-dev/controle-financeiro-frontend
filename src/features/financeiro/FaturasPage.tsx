@@ -1,9 +1,19 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { Alert, Input, Select, Space, Tag, Typography } from 'antd';
-import { CheckCircleFilled, CreditCardOutlined, EyeOutlined, WalletOutlined } from '@ant-design/icons';
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { AppDataTable } from '../../components/data/AppDataTable';
+import { ExportButton } from '../../components/data/ExportButton';
 import { IconActionButton } from '../../components/data/IconActionButton';
+import { DateInput } from '../../components/forms/DateInput';
+import {
+  FilterCard,
+  FilterField,
+  FilterInputWrapper,
+  filterInputClass,
+  ListPageShell,
+  MultiSelectFilter,
+  SummaryCard
+} from '../../components/layout';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
@@ -24,28 +34,10 @@ const defaultFilters: FaturaFilters = {
   dataFechamentoFinal: undefined
 };
 
-const statusOptions = [
-  { label: 'Todos os status', value: '' },
+const statusOptions: Array<{ label: string; value: StatusFaturaCodigo }> = [
   { label: 'Aberta', value: 'ABERTA' },
   { label: 'Paga', value: 'PAGA' }
-] as const;
-
-type CardHighlight = {
-  cartaoId: string;
-  cartaoNome: string;
-  bandeira?: string;
-  numeroFinal?: string;
-  valorAtual: number;
-  quantidadeFaturas: number;
-  dataFechamento?: string;
-  dataVencimento?: string;
-  competencia?: string;
-  statusCodigo?: StatusFaturaCodigo;
-  statusNome?: string;
-  limiteDisponivel?: number | null;
-  limiteBase?: number | null;
-  percentualComprometido: number;
-};
+];
 
 function normalizeCompetenciaInput(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 6);
@@ -83,6 +75,14 @@ function buildInitialFilters(searchParams: URLSearchParams): FaturaFilters {
   };
 }
 
+function toArrayFilter<T>(value?: T | T[]) {
+  if (!value) {
+    return [];
+  }
+
+  return Array.isArray(value) ? value : [value];
+}
+
 function getLimitBase(cartao?: CartaoResumo) {
   return cartao?.limiteEfetivo ?? cartao?.limiteCredito ?? null;
 }
@@ -105,45 +105,18 @@ function getLimitAvailable(cartao?: CartaoResumo) {
   return Math.max(0, limiteBase - cartao.limiteComprometido);
 }
 
-function getCommittedPercent(cartao?: CartaoResumo) {
-  const limiteBase = getLimitBase(cartao);
-  const limiteDisponivel = getLimitAvailable(cartao);
-
-  if (!limiteBase || limiteBase <= 0 || limiteDisponivel === null) {
-    return 0;
-  }
-
-  return Math.min(100, Math.max(0, ((limiteBase - limiteDisponivel) / limiteBase) * 100));
-}
-
-function getPreferredInvoice(invoices: FaturaResumo[]) {
-  return [...invoices].sort((left, right) => {
-    const leftPriority = left.statusCodigo === 'ABERTA' ? 0 : 1;
-    const rightPriority = right.statusCodigo === 'ABERTA' ? 0 : 1;
-
-    if (leftPriority !== rightPriority) {
-      return leftPriority - rightPriority;
-    }
-
-    return left.dataVencimento.localeCompare(right.dataVencimento);
-  })[0];
-}
-
-function getStatusTone(statusCodigo?: StatusFaturaCodigo) {
-  return statusCodigo === 'ABERTA' ? 'faturas-status-badge--open' : 'faturas-status-badge--paid';
-}
-
-function renderStatusBadge(statusCodigo: StatusFaturaCodigo, statusNome: string) {
-  if (statusCodigo === 'PAGA') {
-    return (
-      <span className={`faturas-status-badge ${getStatusTone(statusCodigo)}`}>
-        <CheckCircleFilled />
-        {statusNome}
-      </span>
-    );
-  }
-
-  return <span className={`faturas-status-badge ${getStatusTone(statusCodigo)}`}>{statusNome}</span>;
+function StatusBadge({ codigo, nome }: { codigo: StatusFaturaCodigo; nome: string }) {
+  const paga = codigo === 'PAGA';
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold ${
+        paga ? 'bg-primary/15 text-primary' : 'bg-amber-400/15 text-amber-400'
+      }`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${paga ? 'bg-primary' : 'bg-amber-400'}`} />
+      {nome}
+    </span>
+  );
 }
 
 export function FaturasPage() {
@@ -163,7 +136,7 @@ export function FaturasPage() {
     setCompetenciaInput(competenciaApiToInput(initialFilters.competencia));
   }, [initialFilters]);
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setErrorMessage(undefined);
 
@@ -174,11 +147,11 @@ export function FaturasPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [deferredFilters]);
 
   useEffect(() => {
     void loadData();
-  }, [deferredFilters.page, deferredFilters.pageSize, JSON.stringify(deferredFilters)]);
+  }, [loadData]);
 
   useEffect(() => {
     void (async () => {
@@ -192,470 +165,278 @@ export function FaturasPage() {
     })();
   }, []);
 
-  const cartoesById = useMemo(
-    () => new Map(cartoes.map((cartao) => [cartao.id, cartao])),
-    [cartoes]
-  );
+  const cartoesById = useMemo(() => new Map(cartoes.map((cartao) => [cartao.id, cartao])), [cartoes]);
 
   const resumoGeral = useMemo(() => {
     const totalRegistros = data?.summary?.totalRegistros ?? data?.totalItems ?? 0;
     const valorTotal = data?.summary?.valorTotal ?? 0;
-    const valorMedio = totalRegistros > 0 ? valorTotal / totalRegistros : 0;
     const proximaFatura =
       [...(data?.items ?? [])]
         .filter((item) => item.statusCodigo === 'ABERTA')
         .sort((left, right) => left.dataVencimento.localeCompare(right.dataVencimento))[0] ??
       [...(data?.items ?? [])].sort((left, right) => left.dataVencimento.localeCompare(right.dataVencimento))[0];
     const limiteTotalDisponivel = cartoes.reduce((total, cartao) => total + (getLimitAvailable(cartao) ?? 0), 0);
+    const cartoesMonitorados = data?.summary?.porCartao.length ?? 0;
 
     return {
       totalRegistros,
       valorTotal,
-      valorMedio,
-      itensPagina: data?.items.length ?? 0,
       proximaFatura,
-      limiteTotalDisponivel
+      limiteTotalDisponivel,
+      cartoesMonitorados
     };
   }, [cartoes, data]);
 
-  const destaqueCartoes = useMemo(() => {
-    const invoicesByCard = new Map<string, FaturaResumo[]>();
-
-    for (const item of data?.items ?? []) {
-      const current = invoicesByCard.get(item.cartaoId) ?? [];
-      current.push(item);
-      invoicesByCard.set(item.cartaoId, current);
-    }
-
-    return (data?.summary?.porCartao ?? [])
-      .map((group) => {
-        const cartao = cartoesById.get(group.chave);
-        const preferredInvoice = getPreferredInvoice(invoicesByCard.get(group.chave) ?? []);
-
-        return {
-          cartaoId: group.chave,
-          cartaoNome: group.label,
-          bandeira: cartao?.bandeira,
-          numeroFinal: cartao?.numeroFinal,
-          valorAtual: preferredInvoice?.valorTotal ?? group.valorTotal,
-          quantidadeFaturas: group.quantidadeFaturas,
-          dataFechamento: preferredInvoice?.dataFechamento,
-          dataVencimento: preferredInvoice?.dataVencimento,
-          competencia: preferredInvoice?.competencia,
-          statusCodigo: preferredInvoice?.statusCodigo,
-          statusNome: preferredInvoice?.statusNome,
-          limiteDisponivel: getLimitAvailable(cartao),
-          limiteBase: getLimitBase(cartao),
-          percentualComprometido: getCommittedPercent(cartao)
-        } satisfies CardHighlight;
-      })
-      .slice(0, 2);
-  }, [cartoesById, data]);
-
   return (
-    <Space className="faturas-page" orientation="vertical" size={28} style={{ width: '100%' }}>
-      <section className="faturas-page__header">
-        <div className="faturas-page__copy">
-          <Typography.Text className="faturas-page__eyebrow">Controle de crédito</Typography.Text>
-          <Typography.Title level={2} className="faturas-page__title">
-            Faturas de cartão
-          </Typography.Title>
-          <Typography.Paragraph className="faturas-page__description">
-            Gerencie competências, acompanhe a pressão por cartão e navegue pelo histórico consolidado das faturas.
-          </Typography.Paragraph>
-        </div>
-
-        <div className="faturas-page__pills">
-          <Tag color="green">{resumoGeral.totalRegistros} fatura(s)</Tag>
-          <Tag color="gold">{resumoGeral.itensPagina} item(ns) na página</Tag>
-          <Tag color="gold">{formatCurrencyBRL(resumoGeral.valorMedio)} ticket médio</Tag>
-        </div>
-      </section>
-
-      {origemContaCartao ? (
-        <Alert
-          type="success"
-          showIcon
-          message="Compra no cartão localizada na fatura filtrada"
-          description="O filtro já foi ajustado para o cartão e a competência previstos no lançamento salvo."
+    <ListPageShell
+      actions={
+        <ExportButton
+          fetchPage={financeiroApi.faturas.listar}
+          filters={filters}
+          filename="faturas"
+          columns={[
+            { header: 'Competência', value: (f: FaturaResumo) => formatMonthYearBR(f.competencia) },
+            { header: 'Vencimento', value: (f: FaturaResumo) => formatDateBR(f.dataVencimento) },
+            { header: 'Fechamento', value: (f: FaturaResumo) => formatDateBR(f.dataFechamento) },
+            { header: 'Cartão', value: (f: FaturaResumo) => f.cartaoNome },
+            { header: 'Itens', value: (f: FaturaResumo) => f.quantidadeItens },
+            { header: 'Valor total', value: (f: FaturaResumo) => f.valorTotal },
+            { header: 'Status', value: (f: FaturaResumo) => f.statusNome }
+          ]}
         />
+      }
+      summaryColumns={4}
+      summary={
+        <>
+          <SummaryCard
+            label="Total consolidado"
+            value={formatCurrencyBRL(resumoGeral.valorTotal)}
+            accent="primary"
+            highlight
+          />
+          <SummaryCard
+            label="Próximo vencimento"
+            value={resumoGeral.proximaFatura ? formatDateBR(resumoGeral.proximaFatura.dataVencimento) : '—'}
+          />
+          <SummaryCard
+            label="Limite disponível"
+            value={formatCurrencyBRL(resumoGeral.limiteTotalDisponivel)}
+            accent="primary"
+          />
+          <SummaryCard
+            label="Faturas filtradas"
+            value={resumoGeral.totalRegistros}
+            footer={`${resumoGeral.cartoesMonitorados || cartoes.length} cartão(ões) monitorados`}
+          />
+        </>
+      }
+      filters={
+        <FilterCard>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <FilterField label="Busca">
+              <FilterInputWrapper icon={<SearchOutlined />}>
+                <input
+                  aria-label="Busca de faturas"
+                  placeholder="Buscar por cartão ou competência..."
+                  value={filters.search ?? ''}
+                  onChange={(e) => setFilters((f) => ({ ...f, page: 1, search: e.target.value }))}
+                  className={filterInputClass}
+                />
+              </FilterInputWrapper>
+            </FilterField>
+            <FilterField label="Cartão">
+              <MultiSelectFilter
+                ariaLabel="Cartão"
+                options={[
+                  ...cartoes.map((cartao) => ({ label: cartao.nome, value: cartao.id }))
+                ]}
+                value={toArrayFilter(filters.cartaoIds ?? filters.cartaoId)}
+                onChange={(next) =>
+                  setFilters((f) => ({
+                    ...f,
+                    page: 1,
+                    cartaoId: undefined,
+                    cartaoIds: next.length ? next : undefined
+                  }))
+                }
+              />
+            </FilterField>
+            <FilterField label="Status">
+              <MultiSelectFilter
+                ariaLabel="Status da fatura"
+                options={statusOptions}
+                value={toArrayFilter(filters.statusCodigos ?? filters.statusCodigo)}
+                onChange={(next) =>
+                  setFilters((f) => ({
+                    ...f,
+                    page: 1,
+                    statusCodigo: undefined,
+                    statusCodigos: next.length ? (next as StatusFaturaCodigo[]) : undefined
+                  }))
+                }
+              />
+            </FilterField>
+            <FilterField label="Competência">
+              <FilterInputWrapper>
+                <input
+                  aria-label="Competência"
+                  placeholder="mm/aaaa"
+                  value={competenciaInput}
+                  onChange={(e) => {
+                    const next = normalizeCompetenciaInput(e.target.value);
+                    setCompetenciaInput(next);
+                    setFilters((f) => ({ ...f, page: 1, competencia: competenciaInputToApi(next) }));
+                  }}
+                  className={filterInputClass}
+                />
+              </FilterInputWrapper>
+            </FilterField>
+            <FilterField label="Vencimento de">
+              <DateInput
+                ariaLabel="Vencimento inicial"
+                value={filters.dataVencimentoInicial ?? ''}
+                onChange={(value) => setFilters((f) => ({ ...f, page: 1, dataVencimentoInicial: value || undefined }))}
+              />
+            </FilterField>
+            <FilterField label="Vencimento até">
+              <DateInput
+                ariaLabel="Vencimento final"
+                value={filters.dataVencimentoFinal ?? ''}
+                onChange={(value) => setFilters((f) => ({ ...f, page: 1, dataVencimentoFinal: value || undefined }))}
+              />
+            </FilterField>
+            <FilterField label="Fechamento de">
+              <DateInput
+                ariaLabel="Fechamento inicial"
+                value={filters.dataFechamentoInicial ?? ''}
+                onChange={(value) => setFilters((f) => ({ ...f, page: 1, dataFechamentoInicial: value || undefined }))}
+              />
+            </FilterField>
+            <FilterField label="Fechamento até">
+              <DateInput
+                ariaLabel="Fechamento final"
+                value={filters.dataFechamentoFinal ?? ''}
+                onChange={(value) => setFilters((f) => ({ ...f, page: 1, dataFechamentoFinal: value || undefined }))}
+              />
+            </FilterField>
+          </div>
+        </FilterCard>
+      }
+    >
+      {origemContaCartao ? (
+        <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-primary">
+          <p className="text-sm font-semibold">Compra no cartão localizada na fatura filtrada</p>
+          <p className="mt-0.5 text-xs text-on-surface-variant">
+            O filtro já foi ajustado para o cartão e a competência previstos no lançamento salvo.
+          </p>
+        </div>
       ) : null}
 
-      <section className="faturas-highlight-grid">
-        {destaqueCartoes.map((card, index) => (
-          <article
-            key={card.cartaoId}
-            className={`faturas-highlight-card ${index === 0 ? 'faturas-highlight-card--accent' : ''}`}
-          >
-            <div className="faturas-highlight-card__halo" aria-hidden="true" />
-
-            <div className="faturas-highlight-card__top">
-              <div>
-                <Typography.Text className="faturas-highlight-card__eyebrow">
-                  {card.bandeira ? `${card.bandeira} • ${card.quantidadeFaturas} fatura(s)` : `${card.quantidadeFaturas} fatura(s)`}
-                </Typography.Text>
-                <Typography.Title level={3} className="faturas-highlight-card__title">
-                  {card.cartaoNome}
-                </Typography.Title>
-              </div>
-              <span className="faturas-highlight-card__icon">
-                <CreditCardOutlined />
-              </span>
-            </div>
-
-            <div className="faturas-highlight-card__value-row">
-              <div>
-                <Typography.Text className="faturas-highlight-card__label">
-                  {card.statusCodigo === 'ABERTA' ? 'Fatura atual' : 'Valor no recorte'}
-                </Typography.Text>
-                <Typography.Title level={2} className="faturas-highlight-card__value">
-                  {formatCurrencyBRL(card.valorAtual)}
-                </Typography.Title>
-              </div>
-              {card.numeroFinal ? (
-                <Typography.Text className="faturas-highlight-card__final">
-                  •••• {card.numeroFinal}
-                </Typography.Text>
-              ) : null}
-            </div>
-
-            <div className="faturas-highlight-card__meta-grid">
-              <div>
-                <Typography.Text className="faturas-highlight-card__meta-label">Competência</Typography.Text>
-                <Typography.Text className="faturas-highlight-card__meta-value">
-                  {card.competencia ? formatMonthYearBR(card.competencia) : 'Sem fatura visível'}
-                </Typography.Text>
-              </div>
-              <div>
-                <Typography.Text className="faturas-highlight-card__meta-label">Vencimento</Typography.Text>
-                <Typography.Text className="faturas-highlight-card__meta-value">
-                  {card.dataVencimento ? formatDateBR(card.dataVencimento) : 'Não informado'}
-                </Typography.Text>
-              </div>
-            </div>
-
-            <div className="faturas-highlight-card__limit-shell">
-              <div className="faturas-highlight-card__limit-header">
-                <Typography.Text className="faturas-highlight-card__meta-label">Limite disponível</Typography.Text>
-                <Typography.Text className="faturas-highlight-card__limit-value">
-                  {card.limiteDisponivel !== null && card.limiteDisponivel !== undefined
-                    ? formatCurrencyBRL(card.limiteDisponivel)
-                    : 'Indisponível'}
-                </Typography.Text>
-              </div>
-              <div className="faturas-highlight-card__track" aria-hidden="true">
-                <span style={{ width: `${Math.max(8, card.percentualComprometido)}%` }} />
-              </div>
-              <div className="faturas-highlight-card__meta-grid">
-                <div>
-                  <Typography.Text className="faturas-highlight-card__meta-label">Fechamento</Typography.Text>
-                  <Typography.Text className="faturas-highlight-card__meta-value">
-                    {card.dataFechamento ? formatDateBR(card.dataFechamento) : 'Não informado'}
-                  </Typography.Text>
+      <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-white/5">
+        <AppDataTable
+          rowKey="id"
+          loading={loading}
+          errorMessage={errorMessage}
+          emptyMessage="Nenhuma fatura encontrada."
+          onRetry={loadData}
+          dataSource={data?.items ?? []}
+          columns={[
+            {
+              title: 'Mês/Ano',
+              dataIndex: 'competencia',
+              key: 'competencia',
+              sorter: true,
+              render: (value, record: FaturaResumo) => (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-semibold text-white">{formatMonthYearBR(String(value))}</span>
+                  <span className="text-xs text-on-surface-variant">Fechamento {formatDateBR(record.dataFechamento)}</span>
                 </div>
-                <div>
-                  <Typography.Text className="faturas-highlight-card__meta-label">Status</Typography.Text>
-                  <div>
-                    {card.statusCodigo && card.statusNome
-                      ? renderStatusBadge(card.statusCodigo, card.statusNome)
-                      : <span className="faturas-status-badge faturas-status-badge--muted">Sem leitura</span>}
+              )
+            },
+            {
+              title: 'Vencimento',
+              dataIndex: 'dataVencimento',
+              key: 'dataVencimento',
+              sorter: true,
+              render: (value) => <span className="text-sm text-on-surface-variant">{formatDateBR(String(value))}</span>
+            },
+            {
+              title: 'Cartão Principal',
+              dataIndex: 'cartaoNome',
+              key: 'cartaoNome',
+              sorter: true,
+              render: (value, record: FaturaResumo) => {
+                const cartao = cartoesById.get(record.cartaoId);
+
+                return (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-semibold text-white">
+                      {String(value)}
+                      {cartao?.numeroFinal ? ` •••• ${cartao.numeroFinal}` : ''}
+                    </span>
+                    <span className="text-xs text-on-surface-variant">{record.quantidadeItens} item(ns)</span>
                   </div>
-                </div>
-              </div>
-            </div>
-          </article>
-        ))}
-
-        {!destaqueCartoes.length ? (
-          <article className="faturas-highlight-card faturas-highlight-card--empty">
-            <div className="faturas-highlight-card__top">
-              <div>
-                <Typography.Text className="faturas-highlight-card__eyebrow">Sem destaque</Typography.Text>
-                <Typography.Title level={3} className="faturas-highlight-card__title">
-                  Nenhuma fatura encontrada
-                </Typography.Title>
-              </div>
-              <span className="faturas-highlight-card__icon">
-                <CreditCardOutlined />
-              </span>
-            </div>
-            <Typography.Paragraph className="faturas-highlight-card__empty-copy">
-              Ajuste os filtros para visualizar cartões com faturas abertas ou histórico no recorte atual.
-            </Typography.Paragraph>
-          </article>
-        ) : null}
-
-        <article className="faturas-total-card">
-          <Typography.Text className="faturas-total-card__eyebrow">Total consolidado</Typography.Text>
-          <Typography.Title level={1} className="faturas-total-card__value">
-            {formatCurrencyBRL(resumoGeral.valorTotal)}
-          </Typography.Title>
-
-          <div className="faturas-total-card__stats">
-            <div className="faturas-total-card__stat">
-              <Typography.Text className="faturas-total-card__stat-label">Vencimento próximo</Typography.Text>
-              <Typography.Text className="faturas-total-card__stat-value">
-                {resumoGeral.proximaFatura ? formatDateBR(resumoGeral.proximaFatura.dataVencimento) : 'Sem fatura'}
-              </Typography.Text>
-            </div>
-            <div className="faturas-total-card__stat">
-              <Typography.Text className="faturas-total-card__stat-label">Limite total disponível</Typography.Text>
-              <Typography.Text className="faturas-total-card__stat-value">
-                {formatCurrencyBRL(resumoGeral.limiteTotalDisponivel)}
-              </Typography.Text>
-            </div>
-          </div>
-
-          <div className="faturas-total-card__footer">
-            <div className="faturas-total-card__footer-item">
-              <WalletOutlined />
-              <span>{resumoGeral.totalRegistros} competência(s) filtradas</span>
-            </div>
-            <div className="faturas-total-card__footer-item">
-              <CreditCardOutlined />
-              <span>{destaqueCartoes.length || cartoes.length} cartão(ões) monitorados</span>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section className="faturas-history-shell">
-        <div className="faturas-history-shell__header">
-          <div>
-            <Typography.Title level={3} className="faturas-history-shell__title">
-              Histórico de faturas
-            </Typography.Title>
-            <Typography.Paragraph className="faturas-history-shell__description">
-              Navegue pelas competências, refine o recorte por cartão e acompanhe o comportamento financeiro por ciclo.
-            </Typography.Paragraph>
-          </div>
-
-          <div className="faturas-history-shell__summary">
-            <Tag color="green">Valor total {formatCurrencyBRL(resumoGeral.valorTotal)}</Tag>
-            <Tag color="success">{data?.summary?.porCompetencia.length ?? 0} competência(s)</Tag>
-          </div>
-        </div>
-
-        <div className="faturas-filter-grid">
-          <Input
-            aria-label="Busca de faturas"
-            className="faturas-filter-grid__search"
-            placeholder="Buscar por cartão ou competência"
-            value={filters.search ?? ''}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                page: 1,
-                search: event.target.value
-              }))
-            }
-          />
-
-          <Select
-            aria-label="Cartão"
-            placeholder="Cartão"
-            allowClear
-            value={filters.cartaoId}
-            onChange={(value) =>
-              setFilters((current) => ({
-                ...current,
-                page: 1,
-                cartaoId: value || undefined
-              }))
-            }
-            options={cartoes.map((cartao) => ({ label: cartao.nome, value: cartao.id }))}
-          />
-
-          <Select
-            aria-label="Status da fatura"
-            value={filters.statusCodigo ?? ''}
-            onChange={(value) =>
-              setFilters((current) => ({
-                ...current,
-                page: 1,
-                statusCodigo: (value || undefined) as StatusFaturaCodigo | undefined
-              }))
-            }
-            options={statusOptions.map((option) => ({ label: option.label, value: option.value }))}
-          />
-
-          <Input
-            aria-label="Competência"
-            placeholder="Competência (mm/aaaa)"
-            value={competenciaInput}
-            onChange={(event) => {
-              const nextInput = normalizeCompetenciaInput(event.target.value);
-              setCompetenciaInput(nextInput);
-              setFilters((current) => ({
-                ...current,
-                page: 1,
-                competencia: competenciaInputToApi(nextInput)
-              }));
-            }}
-          />
-
-          <Input
-            aria-label="Vencimento inicial"
-            type="date"
-            value={filters.dataVencimentoInicial ?? ''}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                page: 1,
-                dataVencimentoInicial: event.target.value || undefined
-              }))
-            }
-          />
-
-          <Input
-            aria-label="Vencimento final"
-            type="date"
-            value={filters.dataVencimentoFinal ?? ''}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                page: 1,
-                dataVencimentoFinal: event.target.value || undefined
-              }))
-            }
-          />
-
-          <Input
-            aria-label="Fechamento inicial"
-            type="date"
-            value={filters.dataFechamentoInicial ?? ''}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                page: 1,
-                dataFechamentoInicial: event.target.value || undefined
-              }))
-            }
-          />
-
-          <Input
-            aria-label="Fechamento final"
-            type="date"
-            value={filters.dataFechamentoFinal ?? ''}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                page: 1,
-                dataFechamentoFinal: event.target.value || undefined
-              }))
-            }
-          />
-        </div>
-
-        <div className="faturas-history-shell__table">
-          <AppDataTable
-            rowKey="id"
-            loading={loading}
-            errorMessage={errorMessage}
-            emptyMessage="Nenhuma fatura encontrada."
-            onRetry={loadData}
-            dataSource={data?.items ?? []}
-            columns={[
-              {
-                title: 'Mês/Ano',
-                dataIndex: 'competencia',
-                key: 'competencia',
-                render: (value, record: FaturaResumo) => (
-                  <div className="faturas-table-cell">
-                    <Typography.Text className="faturas-table-cell__primary">
-                      {formatMonthYearBR(String(value))}
-                    </Typography.Text>
-                    <Typography.Text className="faturas-table-cell__secondary">
-                      Fechamento {formatDateBR(record.dataFechamento)}
-                    </Typography.Text>
-                  </div>
-                )
-              },
-              {
-                title: 'Vencimento',
-                dataIndex: 'dataVencimento',
-                key: 'dataVencimento',
-                render: (value) => <span className="faturas-table-cell__muted">{formatDateBR(String(value))}</span>
-              },
-              {
-                title: 'Cartão Principal',
-                dataIndex: 'cartaoNome',
-                key: 'cartaoNome',
-                render: (value, record: FaturaResumo) => {
-                  const cartao = cartoesById.get(record.cartaoId);
-
-                  return (
-                    <div className="faturas-table-cell">
-                      <Typography.Text className="faturas-table-cell__primary">
-                        {String(value)}
-                        {cartao?.numeroFinal ? ` •••• ${cartao.numeroFinal}` : ''}
-                      </Typography.Text>
-                      <Typography.Text className="faturas-table-cell__secondary">
-                        {record.quantidadeItens} item(ns)
-                      </Typography.Text>
-                    </div>
-                  );
-                }
-              },
-              {
-                title: 'Valor Total',
-                dataIndex: 'valorTotal',
-                key: 'valorTotal',
-                render: (value, record: FaturaResumo) => (
-                  <span
-                    className={`faturas-table-value ${record.statusCodigo === 'ABERTA' ? 'faturas-table-value--accent' : ''}`}
-                  >
-                    {formatCurrencyBRL(Number(value))}
-                  </span>
-                )
-              },
-              {
-                title: 'Status',
-                dataIndex: 'statusCodigo',
-                key: 'statusCodigo',
-                render: (_value, record: FaturaResumo) => renderStatusBadge(record.statusCodigo, record.statusNome)
-              },
-              {
-                title: 'Ações',
-                key: 'acoes',
-                width: 116,
-                align: 'right',
-                render: (_value, record: FaturaResumo) => (
-                  <div className="faturas-table-action">
-                    <IconActionButton
-                      label="Detalhar"
-                      icon={<EyeOutlined />}
-                      href={`/faturas/${record.id}`}
-                      type="text"
-                    />
-                  </div>
-                )
+                );
               }
-            ]}
-            onTableChange={(pagination, _f, sorter) => {
-              const s = Array.isArray(sorter) ? sorter[0] : sorter;
-              const sortKey =
-                typeof s?.columnKey === 'string'
-                  ? s.columnKey
-                  : typeof s?.field === 'string'
-                    ? s.field
-                    : undefined;
-              setFilters((current) => ({
-                ...current,
-                page: pagination.current ?? current.page,
-                pageSize: pagination.pageSize ?? current.pageSize,
-                sortBy: sortKey,
-                sortDirection: s?.order === 'ascend' ? 'Asc' : s?.order === 'descend' ? 'Desc' : undefined
-              }));
-            }}
-            pagination={{
-              current: data?.page ?? filters.page,
-              pageSize: data?.pageSize ?? filters.pageSize,
-              total: data?.totalItems ?? 0
-            }}
-          />
-        </div>
-      </section>
-    </Space>
+            },
+            {
+              title: 'Valor Total',
+              dataIndex: 'valorTotal',
+              key: 'valorTotal',
+              align: 'right',
+              sorter: true,
+              render: (value, record: FaturaResumo) => (
+                <span
+                  className={`text-sm font-headline font-bold ${
+                    record.statusCodigo === 'ABERTA' ? 'text-primary' : 'text-white'
+                  }`}
+                >
+                  {formatCurrencyBRL(Number(value))}
+                </span>
+              )
+            },
+            {
+              title: 'Status',
+              dataIndex: 'statusCodigo',
+              key: 'statusCodigo',
+              sorter: true,
+              render: (_value, record: FaturaResumo) => (
+                <StatusBadge codigo={record.statusCodigo} nome={record.statusNome} />
+              )
+            },
+            {
+              title: 'Ações',
+              key: 'acoes',
+              width: 116,
+              align: 'right',
+              render: (_value, record: FaturaResumo) => (
+                <IconActionButton label="Detalhar" icon={<EyeOutlined />} href={`/faturas/${record.id}`} type="text" />
+              )
+            }
+          ]}
+          onTableChange={(pagination, _f, sorter) => {
+            const s = Array.isArray(sorter) ? sorter[0] : sorter;
+            const sortKey =
+              typeof s?.columnKey === 'string'
+                ? s.columnKey
+                : typeof s?.field === 'string'
+                  ? s.field
+                  : undefined;
+            setFilters((current) => ({
+              ...current,
+              page: pagination.current ?? current.page,
+              pageSize: pagination.pageSize ?? current.pageSize,
+              sortBy: sortKey,
+              sortDirection: s?.order === 'ascend' ? 'Asc' : s?.order === 'descend' ? 'Desc' : undefined
+            }));
+          }}
+          pagination={{
+            current: data?.page ?? filters.page,
+            pageSize: data?.pageSize ?? filters.pageSize,
+            total: data?.totalItems ?? 0
+          }}
+        />
+      </div>
+    </ListPageShell>
   );
 }

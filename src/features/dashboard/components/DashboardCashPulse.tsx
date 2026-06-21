@@ -34,7 +34,7 @@ export const DashboardCashPulse: React.FC<DashboardCashPulseProps> = ({ items })
         </div>
         
         <div className="w-full h-full flex items-end justify-between px-2 gap-1.5 md:gap-2">
-          {items.map((item, idx) => {
+          {items.map((item) => {
             const height = (Math.abs(item.saldoFinalPrevisto) / maxSaldo) * 100;
             const isToday = new Date().toISOString().split('T')[0] === item.data;
             

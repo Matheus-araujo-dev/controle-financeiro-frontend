@@ -22,7 +22,6 @@ import type {
   MovimentacaoListSummary,
   MovimentacaoResumo,
   PagarFaturaPayload,
-  RecorrenciaDetalhe,
   RecorrenciaFilters,
   RecorrenciaListItem,
   RecorrenciaListResponse,

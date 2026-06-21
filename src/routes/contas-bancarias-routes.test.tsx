@@ -1,7 +1,9 @@
+import { Suspense } from 'react';
 import { render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '../store/auth-store';
 import { appRoutes } from './router';
+import '../features/cadastros/MasterDataListPage';
 
 const apiClientMock = vi.hoisted(() => ({
   get: vi.fn(),
@@ -13,6 +15,18 @@ const apiClientMock = vi.hoisted(() => ({
 vi.mock('../services/http/api-client', () => ({
   apiClient: apiClientMock
 }));
+
+function renderRoute(initialEntry: string) {
+  const router = createMemoryRouter(appRoutes, {
+    initialEntries: [initialEntry]
+  });
+
+  render(
+    <Suspense fallback={<div>Carregando...</div>}>
+      <RouterProvider router={router} />
+    </Suspense>
+  );
+}
 
 describe('contas bancarias routes', () => {
   beforeEach(() => {
@@ -44,26 +58,18 @@ describe('contas bancarias routes', () => {
     window.localStorage.clear();
   });
 
-  it('renders the dedicated contas bancarias list route', async () => {
-    const router = createMemoryRouter(appRoutes, {
-      initialEntries: ['/contas-bancarias']
-    });
+  it('renders the master data contas bancarias list route', async () => {
+    renderRoute('/contas-bancarias');
 
-    render(<RouterProvider router={router} />);
-
-    expect(await screen.findByRole('heading', { level: 1, name: 'Contas Bancarias' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Adicionar Conta/i })).toHaveAttribute('href', '/contas-bancarias/novo');
+    expect(await screen.findByPlaceholderText('Nome, banco ou número da conta')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Nova conta bancária/i })).toBeInTheDocument();
   });
 
-  it('renders the dedicated contas bancarias form route', async () => {
-    const router = createMemoryRouter(appRoutes, {
-      initialEntries: ['/contas-bancarias/novo']
-    });
+  it('renders the master data contas bancarias form route', async () => {
+    renderRoute('/contas-bancarias/novo');
 
-    render(<RouterProvider router={router} />);
-
-    expect(await screen.findByRole('heading', { level: 1, name: 'Cadastro de Conta Bancaria' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Nome da conta')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Salvar conta' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Confirmar Cadastro' })).toBeInTheDocument();
+    expect(screen.getByText('Nome')).toBeInTheDocument();
+    expect(screen.getByText('Banco')).toBeInTheDocument();
   });
 });

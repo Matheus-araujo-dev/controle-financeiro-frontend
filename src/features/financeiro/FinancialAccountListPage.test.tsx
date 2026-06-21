@@ -13,7 +13,8 @@ function createConfig() {
           descricao: 'Aluguel',
           statusCodigo: 'PENDENTE',
           dataVencimento: '2026-04-10',
-          ehRecorrente: true
+          ehRecorrente: true,
+          valorLiquido: 120
         }
       ],
       page: 1,
@@ -32,7 +33,8 @@ function createConfig() {
           descricao: 'Aluguel',
           statusCodigo: 'PENDENTE',
           dataVencimento: '2026-04-10',
-          ehRecorrente: true
+          ehRecorrente: true,
+          valorLiquido: 120
         }
       ],
       page: 1,
@@ -74,8 +76,10 @@ function createConfig() {
       pausarRecorrencia: vi.fn().mockResolvedValue({ id: '1' }),
       encerrarRecorrencia: vi.fn().mockResolvedValue({ id: '1' }),
       toFormValues: vi.fn(),
-      loadPessoaOptions: vi.fn(),
-      loadFormaPagamentoOptions: vi.fn(),
+      loadPessoaOptions: vi.fn().mockResolvedValue([{ label: 'Aninha', value: 'p1' }]),
+      loadFormaPagamentoOptions: vi
+        .fn()
+        .mockResolvedValue([{ label: 'Cartão de crédito', value: 'fp1', ehCartao: true, baixarAutomaticamente: false }]),
       loadContaBancariaOptions: vi.fn().mockResolvedValue([{ label: 'Conta principal - Banco Exemplo', value: 'cb1' }]),
       loadCartaoOptions: vi.fn(),
       loadRateioOptions: vi.fn(),
@@ -96,12 +100,39 @@ describe('FinancialAccountListPage', () => {
     );
 
     expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
+    expect(screen.getByText('Pendente')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Nova conta a pagar/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Detalhes/Editar' })).toBeInTheDocument();
     await waitFor(() =>
       expect(list).toHaveBeenCalledWith(
         expect.objectContaining({
           statusCodigo: ['PENDENTE', 'VENCIDA']
+        })
+      )
+    );
+
+    await waitFor(() => expect(config.loadPessoaOptions).toHaveBeenCalled());
+    await waitFor(() => expect(config.loadFormaPagamentoOptions).toHaveBeenCalled());
+
+    await userEvent.click(screen.getByLabelText('Recebedor'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Aninha' }));
+
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          recebedorIds: ['p1']
+        })
+      )
+    );
+
+    await userEvent.click(screen.getByLabelText('Forma de pagamento'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Cartão de crédito' }));
+
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          recebedorIds: ['p1'],
+          formaPagamentoIds: ['fp1']
         })
       )
     );
@@ -200,8 +231,11 @@ describe('FinancialAccountListPage', () => {
 
     await waitFor(() =>
       expect(config.liquidar).toHaveBeenCalledWith('1', {
+        valorLiquidacao: 120,
         dataLiquidacao: hoje,
-        contaBancariaId: 'cb1'
+        contaBancariaId: 'cb1',
+        formaPagamentoId: 'fp1',
+        atualizarValorConta: true
       })
     );
   }, 20000);

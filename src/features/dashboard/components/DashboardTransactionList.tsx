@@ -1,7 +1,8 @@
+import { EyeOutlined } from '@ant-design/icons';
 import React from 'react';
+import { AppDataTable, type TableColumnsType } from '../../../components/data/AppDataTable';
+import { IconActionButton } from '../../../components/data/IconActionButton';
 import { GlassCard } from '../../../components/neon-ledger/GlassCard';
-import { NeonDataGrid } from '../../../components/neon-ledger/NeonDataGrid';
-import { NeonBadge } from '../../../components/neon-ledger/NeonBadge';
 import { formatCurrencyBRL } from '../../../shared/currency';
 import { formatDateBR } from '../../../shared/date';
 import { DashboardMovimentacaoResumo } from '../../../types/dashboard';
@@ -11,10 +12,63 @@ interface DashboardTransactionListProps {
   onViewAll?: () => void;
 }
 
-export const DashboardTransactionList: React.FC<DashboardTransactionListProps> = ({ 
+export const DashboardTransactionList: React.FC<DashboardTransactionListProps> = ({
   movimentacoes,
-  onViewAll 
+  onViewAll
 }) => {
+  const columns: TableColumnsType<DashboardMovimentacaoResumo> = [
+    {
+      title: 'Data',
+      dataIndex: 'dataMovimentacao',
+      key: 'dataMovimentacao',
+      render: (value) => <span className="text-on-surface-variant">{formatDateBR(String(value))}</span>
+    },
+    {
+      title: 'Descrição',
+      dataIndex: 'observacao',
+      key: 'observacao',
+      render: (value) => <span className="font-medium">{String(value) || 'Movimentação financeira'}</span>
+    },
+    {
+      title: 'Categoria',
+      dataIndex: 'natureza',
+      key: 'natureza',
+      render: (value) => (
+        <span className="inline-flex items-center rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+          {String(value)}
+        </span>
+      )
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      render: () => (
+        <div className="flex items-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-primary ring-2 ring-primary/20" />
+          <span className="text-[11px] text-on-surface">Confirmado</span>
+        </div>
+      )
+    },
+    {
+      title: 'Valor',
+      dataIndex: 'valor',
+      key: 'valor',
+      align: 'right',
+      render: (value, record) => (
+        <span className={`font-bold ${record.tipo === 'Entrada' ? 'text-primary' : 'text-error'}`}>
+          {record.tipo === 'Entrada' ? '+' : '-'} {formatCurrencyBRL(Number(value))}
+        </span>
+      )
+    },
+    {
+      title: 'Ações',
+      key: 'acoes',
+      align: 'right',
+      width: 100,
+      render: () => <IconActionButton label="Detalhar" icon={<EyeOutlined />} href="/movimentacoes" />
+    }
+  ];
+
   return (
     <GlassCard className="overflow-hidden flex flex-col">
       <div className="px-6 py-4 flex justify-between items-center border-b border-outline-variant/10">
@@ -24,60 +78,24 @@ export const DashboardTransactionList: React.FC<DashboardTransactionListProps> =
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm group-focus-within:text-primary transition-colors">
               search
             </span>
-            <input 
-              className="bg-surface-container-low border-none text-xs rounded-lg pl-9 pr-4 py-2 w-48 focus:ring-1 focus:ring-primary/40 outline-none transition-all" 
-              placeholder="Filtrar..." 
+            <input
+              className="bg-surface-container-low border-none text-xs rounded-lg pl-9 pr-4 py-2 w-48 focus:ring-1 focus:ring-primary/40 outline-none transition-all"
+              placeholder="Filtrar..."
               type="text"
             />
           </div>
         </div>
       </div>
-      
-      <div className="overflow-x-auto">
-        <NeonDataGrid
-          columns={[
-            {
-              key: 'dataMovimentacao',
-              label: 'Data',
-              render: (v) => <span className="text-on-surface-variant">{formatDateBR(v)}</span>
-            },
-            {
-              key: 'observacao',
-              label: 'Descrição',
-              render: (v) => <span className="font-medium">{v || 'Movimentação financeira'}</span>
-            },
-            {
-              key: 'natureza',
-              label: 'Categoria',
-              render: (v) => <NeonBadge variant="neutral" size="sm" fill="solid">{v}</NeonBadge>
-            },
-            {
-              key: 'status',
-              label: 'Status',
-              render: () => (
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary ring-2 ring-primary/20"></div>
-                  <span className="text-[11px] text-on-surface">Confirmado</span>
-                </div>
-              )
-            },
-            {
-              key: 'valor',
-              label: 'Valor',
-              align: 'right',
-              render: (v, record) => (
-                <span className={`font-bold ${record.tipo === 'Entrada' ? 'text-primary' : 'text-error'}`}>
-                  {record.tipo === 'Entrada' ? '+' : '-'} {formatCurrencyBRL(v)}
-                </span>
-              )
-            }
-          ]}
-          data={movimentacoes}
-        />
-      </div>
+
+      <AppDataTable
+        rowKey={(record) => `${record.dataMovimentacao}-${record.observacao ?? ''}-${record.valor}`}
+        columns={columns}
+        dataSource={movimentacoes}
+        pagination={false}
+      />
 
       <div className="p-4 border-t border-outline-variant/5 text-center">
-        <button 
+        <button
           onClick={onViewAll}
           className="text-xs font-bold text-primary hover:underline hover:glow-sm uppercase tracking-widest transition-all"
         >

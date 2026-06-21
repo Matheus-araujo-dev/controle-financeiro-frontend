@@ -88,12 +88,12 @@ describe('FinancialAccountFormPage recurrence fixes', () => {
   it('renders the recurrence fields and normalizes installments to one', async () => {
     renderPage();
 
-    expect(await screen.findByDisplayValue('2026-05')).toBeInTheDocument();
+    expect(await screen.findByText('05/2026')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Contrato mensal')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Permitido' })).toBeInTheDocument();
-    expect(screen.getByText('Início da série')).toBeInTheDocument();
-    expect(screen.getByText('Observação da recorrência')).toBeInTheDocument();
-    expect(screen.getByText('Edição individual')).toBeInTheDocument();
+    expect(screen.getByText('Permitido')).toBeInTheDocument();
+    expect(screen.getByText(/Início da Série/i)).toBeInTheDocument();
+    expect(screen.getByText(/Observação da Recorrência/i)).toBeInTheDocument();
+    expect(screen.getByText(/Edição Individual/i)).toBeInTheDocument();
 
     await waitFor(() => {
       const parcelasInput = document.querySelector('input[name="quantidadeParcelas"]') as HTMLInputElement | null;
@@ -105,15 +105,15 @@ describe('FinancialAccountFormPage recurrence fixes', () => {
   it('applies the dark native classes to emission, due and liquidation dates', async () => {
     renderPage();
 
-    await waitFor(() => expect(document.querySelector('input[name="dataEmissao"]')).not.toBeNull());
+    await waitFor(() => expect(screen.getByText('04/04/2026')).toBeInTheDocument());
 
-    const dataEmissaoInput = document.querySelector('input[name="dataEmissao"]') as HTMLInputElement | null;
-    const dataVencimentoInput = document.querySelector('input[name="dataVencimento"]') as HTMLInputElement | null;
-    const dataLiquidacaoInput = document.querySelector('input[name="dataLiquidacao"]') as HTMLInputElement | null;
+    const dataEmissaoButton = screen.getByText('04/04/2026').closest('button');
+    const dataVencimentoButton = screen.getAllByText('20/04/2026').at(0)?.closest('button');
+    const dataLiquidacaoButton = screen.getAllByText('20/04/2026').at(1)?.closest('button');
 
-    expect(dataEmissaoInput?.className).toContain('financial-native-field--date');
-    expect(dataVencimentoInput?.className).toContain('financial-native-field--date');
-    expect(dataLiquidacaoInput?.className).toContain('financial-native-field--date');
+    expect(dataEmissaoButton?.className).toContain('bg-surface-container');
+    expect(dataVencimentoButton?.className).toContain('bg-surface-container');
+    expect(dataLiquidacaoButton?.className).toContain('bg-surface-container');
   });
 
   it('requires responsável when validating the form payload', () => {

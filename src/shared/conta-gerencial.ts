@@ -2,6 +2,7 @@ type ContaGerencialLike = {
   id: string;
   codigo: string | null;
   descricao: string;
+  aceitaLancamentos?: boolean;
 };
 
 type SelectOption = {
@@ -52,6 +53,10 @@ export function mapContaGerencialSelectOptions<T extends ContaGerencialLike>(ite
     label: buildContaGerencialOptionLabel(item),
     value: item.id
   }));
+}
+
+export function filterContaGerencialLancavel<T extends ContaGerencialLike>(items: T[]) {
+  return items.filter((item) => item.aceitaLancamentos !== false);
 }
 
 export function mapContaGerencialSelectOptionsWithData<

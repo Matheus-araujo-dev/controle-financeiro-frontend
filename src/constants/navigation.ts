@@ -30,8 +30,7 @@ export const navigationStructure: NavGroup[] = [
       { key: '/recorrencias', label: 'Recorrências' },
       { key: '/faturas', label: 'Faturas' },
       { key: '/faturas/importar', label: 'Importar fatura CSV' },
-      { key: '/importacoes-whatsapp', label: 'Importações WhatsApp' },
-      { key: '/conciliacao', label: 'Conciliação' }
+      { key: '/importacoes-whatsapp', label: 'Importações WhatsApp' }
     ]
   },
   {

@@ -1,6 +1,4 @@
 import type { NaturezaMovimentacao, TipoMovimentacao } from './financeiro';
-
-export type DashboardFluxoCaixaVisao = 'Caixa' | 'Economica';
 export type DashboardTipoLancamento = 'ContaPagar' | 'ContaReceber';
 export type DashboardContaGerencialTipo = 'Receita' | 'Despesa';
 export type DashboardCentralPrevisaoOrigem =
@@ -21,7 +19,6 @@ export type DashboardFluxoCaixaFilters = {
   mesReferencia?: string;
   dataInicial?: string;
   dias?: number;
-  visao?: DashboardFluxoCaixaVisao;
 };
 
 export type DashboardContaGerencialResumoFilters = {
@@ -103,7 +100,7 @@ export type DashboardFluxoCaixaDia = {
 };
 
 export type DashboardFluxoCaixa = {
-  visao: DashboardFluxoCaixaVisao;
+  visao: 'Caixa' | 'Economica';
   dataInicial: string;
   dias: number;
   riscoSaldoNegativo: boolean;

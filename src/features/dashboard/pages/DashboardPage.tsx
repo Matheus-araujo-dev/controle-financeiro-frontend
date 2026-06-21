@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardKpiGrid } from '../components/DashboardKpiGrid';
 import { DashboardFaturasCartao } from '../components/DashboardFaturasCartao';
@@ -6,52 +6,35 @@ import { DashboardCashPulse } from '../components/DashboardCashPulse';
 import { DashboardOperationalAgenda } from '../components/DashboardOperationalAgenda';
 import { DashboardTransactionList } from '../components/DashboardTransactionList';
 import { DashboardAiInsights } from '../components/DashboardAiInsights';
+import { DateInput } from '../../../components/forms/DateInput';
 import { PageState } from '../../../components/states/PageState';
 import { dashboardApi } from '../../../services/http/dashboard-api';
 import { orcamentosApi } from '../../../services/http/orcamentos-api';
 import { formatCurrencyBRL } from '../../../shared/currency';
-import type {
-  DashboardFluxoCaixa,
-  DashboardFluxoCaixaVisao,
-  DashboardResumo
-} from '../../../types/dashboard';
+import type { DashboardFluxoCaixa, DashboardResumo } from '../../../types/dashboard';
 import type { OrcamentoItem } from '../../../types/orcamento';
-
-function formatCurrency(value: number) {
-  return formatCurrencyBRL(value);
-}
 
 function getCurrentReferenceMonth() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function formatReferenceMonth(value: string) {
-  const [year, month] = value.split('-').map(Number);
-  if (!year || !month) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(year, month - 1, 1));
-}
-
 export function DashboardPage() {
   const [summary, setSummary] = useState<DashboardResumo>();
   const [cashFlow, setCashFlow] = useState<DashboardFluxoCaixa>();
   const [referenceMonth, setReferenceMonth] = useState<string>(getCurrentReferenceMonth());
-  const [view, setView] = useState<DashboardFluxoCaixaVisao>('Caixa');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
   const [categoriasEstouradas, setCategoriasEstouradas] = useState<OrcamentoItem[]>([]);
 
-  async function loadDashboard() {
+  const loadDashboard = useCallback(async () => {
     setLoading(true);
     setErrorMessage(undefined);
 
     try {
       const [summaryResponse, cashFlowResponse] = await Promise.all([
         dashboardApi.obterResumo({ mesReferencia: referenceMonth }),
-        dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth, visao: view })
+        dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth })
       ]);
 
       setSummary(summaryResponse);
@@ -61,11 +44,11 @@ export function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [referenceMonth]);
 
   useEffect(() => {
     void loadDashboard();
-  }, [referenceMonth, view]);
+  }, [loadDashboard]);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,52 +82,26 @@ export function DashboardPage() {
   return (
     <>
       <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">
-              Dashboard Executivo
-            </h1>
-            <p className="text-on-surface-variant font-body mt-1">
-              Visão geral do ecossistema financeiro em {formatReferenceMonth(referenceMonth)}.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-             <div className="flex bg-surface-container-highest rounded-xl p-1 border border-outline-variant/10">
-                <button 
-                  onClick={() => setView('Caixa')}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${view === 'Caixa' ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:text-on-surface'}`}
-                >
-                  CAIXA
-                </button>
-                <button 
-                  onClick={() => setView('Economica')}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${view === 'Economica' ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:text-on-surface'}`}
-                >
-                  ECONÔMICA
-                </button>
-             </div>
-            
-            <input
-              type="month"
-              aria-label="Mês de referência do dashboard"
-              value={referenceMonth}
-              onChange={(event) => setReferenceMonth(event.target.value || getCurrentReferenceMonth())}
-              className="bg-surface-container-highest border border-outline-variant/15 rounded-xl px-4 py-2 text-sm font-semibold text-on-surface outline-none focus:border-primary/40 transition-all cursor-pointer"
-            />
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <DateInput
+            mode="month"
+            ariaLabel="Mês de referência do dashboard"
+            value={referenceMonth}
+            onChange={(value) => setReferenceMonth(value || getCurrentReferenceMonth())}
+            className="max-w-[220px]"
+          />
 
-            <button className="bg-primary px-4 py-2 rounded-xl text-on-primary text-sm font-bold flex items-center gap-2 active:scale-95 transition-transform shadow-lg shadow-primary/10">
-              <span className="material-symbols-outlined text-sm">download</span>
-              Exportar
-            </button>
-          </div>
+          <button className="bg-primary/15 hover:bg-primary/25 text-primary border border-primary/40 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-all shadow-[0_0_12px_rgba(63,255,139,0.15)]">
+            <span className="material-symbols-outlined text-sm">download</span>
+            Exportar
+          </button>
         </div>
 
         {errorMessage && (
-           <div className="bg-error-container/20 border border-error/20 p-4 rounded-2xl flex items-center gap-3 text-error animate-in fade-in slide-in-from-top-2">
-              <span className="material-symbols-outlined">warning</span>
-              <span className="text-sm font-medium">{errorMessage}</span>
-           </div>
+          <div className="bg-error-container/20 border border-error/20 p-4 rounded-2xl flex items-center gap-3 text-error animate-in fade-in slide-in-from-top-2">
+            <span className="material-symbols-outlined">warning</span>
+            <span className="text-sm font-medium">{errorMessage}</span>
+          </div>
         )}
 
         {/* Alerta de estouro de orçamento no mês corrente */}
@@ -192,19 +149,16 @@ export function DashboardPage() {
 
         {/* Middle Section: Graph and Agenda */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           <DashboardCashPulse items={cashFlow?.itens ?? []} />
-           <DashboardOperationalAgenda items={summary?.contasAVencer ?? []} />
+          <DashboardCashPulse items={cashFlow?.itens ?? []} />
+          <DashboardOperationalAgenda items={summary?.contasAVencer ?? []} />
         </div>
 
         {/* Bottom Section: Faturas e Transações */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           <DashboardFaturasCartao />
-           <div className="lg:col-span-2">
-             <DashboardTransactionList
-                movimentacoes={summary?.movimentacoesRecentes ?? []}
-                onViewAll={() => {}}
-             />
-           </div>
+          <DashboardFaturasCartao />
+          <div className="lg:col-span-2">
+            <DashboardTransactionList movimentacoes={summary?.movimentacoesRecentes ?? []} onViewAll={() => {}} />
+          </div>
         </div>
 
         {/* AI Insights */}

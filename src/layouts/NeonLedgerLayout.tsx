@@ -20,7 +20,6 @@ const navIcons: Record<string, string> = {
   '/movimentacoes': 'swap_horiz',
   '/faturas': 'credit_card',
   '/importacoes-whatsapp': 'chat',
-  '/conciliacao': 'checklist',
   '/pessoas': 'group',
   '/formas-pagamento': 'wallet',
   '/contas-bancarias': 'account_balance',
@@ -34,8 +33,8 @@ const navIcons: Record<string, string> = {
 
 const sideItemBase =
   'py-2.5 px-6 flex items-center gap-3 transition-all font-body text-sm font-medium tracking-wide';
-const sideItemInactive = `${sideItemBase} text-on-surface-variant hover:bg-surface-container-highest hover:text-white`;
-const sideItemActive = `${sideItemBase} bg-surface-container text-primary shadow-[inset_0_0_10px_rgba(63,255,139,0.1)] border-r-4 border-primary`;
+const sideItemInactive = `${sideItemBase} text-primary/70 hover:bg-primary/10 hover:text-primary`;
+const sideItemActive = `${sideItemBase} bg-primary/12 text-primary shadow-[inset_0_0_10px_rgba(63,255,139,0.16)] border-r-4 border-primary/80`;
 
 interface NeonLedgerLayoutProps {
   children?: React.ReactNode;
@@ -89,7 +88,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
   return (
     <div className="bg-surface font-body text-white min-h-screen" data-testid="admin-shell">
       {/* Barra superior */}
-      <nav className="fixed top-0 w-full z-50 flex items-center justify-between px-4 md:px-8 py-4 bg-[#0e0e0e] bg-opacity-90 backdrop-blur-md shadow-[0_20px_50px_rgba(63,255,139,0.05)]">
+      <nav className="fixed top-0 w-full z-50 flex items-center justify-between px-4 md:px-8 py-4 bg-surface/90 backdrop-blur-md border-b border-white/5">
         <div className="flex items-center gap-6 min-w-0">
           <Link to="/dashboard" className="text-2xl font-black text-primary tracking-tighter font-headline whitespace-nowrap">
             Controle<span className="text-white">Financeiro</span>
@@ -104,8 +103,11 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <QuickLaunchButton className="hidden sm:flex items-center gap-2 bg-primary text-on-primary font-bold text-sm rounded-xl px-4 py-2 border-0 cursor-pointer hover:opacity-90 transition-all">
-            <span className="material-symbols-outlined text-lg">add</span> Lançar
+          <QuickLaunchButton
+            className="hidden sm:inline-flex shadow-[0_0_12px_rgba(63,255,139,0.12)]"
+            icon={<span className="material-symbols-outlined block text-lg leading-none">add</span>}
+          >
+            Lançar
           </QuickLaunchButton>
           {currentUser ? (
             <div className="hidden sm:flex flex-col items-end leading-tight">
@@ -144,7 +146,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
         <nav className="flex-1">
           {navigationStructure.map((group) => (
             <div key={group.key} className="mb-6">
-              <h3 className="px-6 mb-2 text-primary font-bold font-headline text-xs uppercase tracking-wider">
+              <h3 className="px-6 mb-2 text-primary/90 font-bold font-headline text-xs uppercase tracking-wider">
                 {group.label}
               </h3>
               <div className="space-y-1">
@@ -191,7 +193,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
             key={item.to}
             to={item.to}
             className={`flex flex-col items-center justify-center p-2 font-body text-[10px] font-bold uppercase transition-all ${
-              item.to === selectedKey ? 'bg-primary text-[#0e0e0e] rounded-xl scale-110' : 'text-on-surface-variant'
+              item.to === selectedKey ? 'text-primary rounded-xl scale-110' : 'text-on-surface-variant'
             }`}
           >
             <span

@@ -41,7 +41,7 @@ describe('QuickAddContaGerencialModal', () => {
     const input = document.querySelector('input');
     expect(input).not.toBeNull();
     fireEvent.change(input!, { target: { value: 'Alimentacao' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Cadastro' }));
 
     await waitFor(() => {
       expect(cadastrosApi.contasGerenciais.criar).toHaveBeenCalledWith(

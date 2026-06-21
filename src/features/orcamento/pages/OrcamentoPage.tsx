@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { DateInput } from '../../../components/forms/DateInput';
 import { PageState } from '../../../components/states/PageState';
 import { orcamentosApi } from '../../../services/http/orcamentos-api';
 import { CurrencyInput } from '../../../shared/CurrencyInput';
@@ -136,7 +137,7 @@ export function OrcamentoPage() {
   const [savingContaId, setSavingContaId] = useState<string>();
   const [errorMessage, setErrorMessage] = useState<string>();
 
-  async function loadOrcamento() {
+  const loadOrcamento = useCallback(async () => {
     setLoading(true);
     setErrorMessage(undefined);
 
@@ -147,11 +148,11 @@ export function OrcamentoPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [competencia]);
 
   useEffect(() => {
     void loadOrcamento();
-  }, [competencia]);
+  }, [loadOrcamento]);
 
   async function handleSalvarMeta(item: OrcamentoItem, valorMeta: number | null) {
     setSavingContaId(item.contaGerencialId);
@@ -194,12 +195,12 @@ export function OrcamentoPage() {
             Metas por categoria de despesa em {formatCompetencia(competencia)}.
           </p>
         </div>
-        <input
-          type="month"
-          aria-label="Competência do orçamento"
+        <DateInput
+          mode="month"
+          ariaLabel="Competência do orçamento"
           value={competencia}
-          onChange={(event) => setCompetencia(event.target.value || getCurrentCompetencia())}
-          className="bg-surface-container-highest border border-outline-variant/15 rounded-xl px-4 py-2 text-sm font-semibold text-on-surface outline-none focus:border-primary/40 transition-all cursor-pointer"
+          onChange={(value) => setCompetencia(value || getCurrentCompetencia())}
+          className="max-w-[220px]"
         />
       </div>
 

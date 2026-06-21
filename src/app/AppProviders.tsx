@@ -10,90 +10,90 @@ export function AppProviders({ children }: PropsWithChildren) {
       theme={{
         algorithm: theme.darkAlgorithm,
         token: {
-          colorPrimary: '#3fff8b',
-          colorInfo: '#3fff8b',
-          colorSuccess: '#3fff8b',
-          colorWarning: '#ffb84d',
-          colorError: '#ff716c',
-          colorLink: '#3fff8b',
-          colorLinkHover: '#65ecae',
-          colorLinkActive: '#13ea79',
-          colorTextBase: '#ffffff',
-          colorTextDescription: '#adaaaa',
-          colorBgBase: '#0e0e0e',
-          colorBgContainer: '#1a1a1a',
-          colorBgElevated: '#20201f',
-          colorBorder: 'rgba(118,117,117,0.28)',
-          colorBorderSecondary: 'rgba(72,72,71,0.24)',
+          colorPrimary: '#2bf58e',
+          colorInfo: '#2bf58e',
+          colorSuccess: '#2bf58e',
+          colorWarning: '#f5b454',
+          colorError: '#f0857f',
+          colorLink: '#2bf58e',
+          colorLinkHover: '#6ee7b7',
+          colorLinkActive: '#15dd84',
+          colorTextBase: '#e8eae9',
+          colorTextDescription: '#98a09d',
+          colorBgBase: '#0d0f11',
+          colorBgContainer: '#181b1f',
+          colorBgElevated: '#1f2329',
+          colorBorder: 'rgba(255,255,255,0.12)',
+          colorBorderSecondary: 'rgba(255,255,255,0.07)',
           fontFamily: "'Inter', 'Segoe UI', sans-serif",
           fontFamilyCode: "'Inter', 'Segoe UI', sans-serif",
-          borderRadius: 16,
-          borderRadiusLG: 18,
-          borderRadiusSM: 12,
+          borderRadius: 12,
+          borderRadiusLG: 14,
+          borderRadiusSM: 9,
           wireframe: false,
         },
         components: {
           Layout: {
             bodyBg: 'transparent',
             headerBg: 'transparent',
-            siderBg: '#0e0e0e',
-            triggerBg: '#131313',
-            triggerColor: '#ffffff',
+            siderBg: '#0d0f11',
+            triggerBg: '#121417',
+            triggerColor: '#e8eae9',
           },
           Menu: {
             darkItemBg: 'transparent',
             itemBg: 'transparent',
-            itemColor: '#adaaaa',
-            itemHoverColor: '#ffffff',
-            itemSelectedColor: '#3fff8b',
-            itemSelectedBg: 'rgba(63, 255, 139, 0.08)',
-            itemActiveBg: 'rgba(63, 255, 139, 0.08)',
-            groupTitleColor: '#767575'
+            itemColor: '#98a09d',
+            itemHoverColor: '#e8eae9',
+            itemSelectedColor: '#2bf58e',
+            itemSelectedBg: 'rgba(43, 245, 142, 0.10)',
+            itemActiveBg: 'rgba(43, 245, 142, 0.10)',
+            groupTitleColor: '#6b736f'
           },
           Card: {
-            colorBgContainer: '#1a1a1a',
-            colorBorderSecondary: 'rgba(72,72,71,0.2)'
+            colorBgContainer: '#181b1f',
+            colorBorderSecondary: 'rgba(255,255,255,0.07)'
           },
           Button: {
-            borderRadius: 14,
+            borderRadius: 12,
             controlHeight: 40,
-            controlHeightLG: 46,
-            defaultBg: '#1a1a1a',
-            defaultBorderColor: 'rgba(118,117,117,0.28)',
-            defaultColor: '#ffffff',
-            primaryShadow: '0 10px 20px rgba(63,255,139,0.18)'
+            controlHeightLG: 44,
+            defaultBg: '#181b1f',
+            defaultBorderColor: 'rgba(255,255,255,0.12)',
+            defaultColor: '#e8eae9',
+            primaryShadow: 'none'
           },
           Input: {
-            activeBg: '#20201f',
-            hoverBg: '#20201f',
-            activeBorderColor: 'rgba(63,255,139,0.4)'
+            activeBg: '#1f2329',
+            hoverBg: '#1f2329',
+            activeBorderColor: 'rgba(43,245,142,0.45)'
           },
           InputNumber: {
-            activeBg: '#20201f',
-            hoverBg: '#20201f',
-            activeBorderColor: 'rgba(63,255,139,0.4)'
+            activeBg: '#1f2329',
+            hoverBg: '#1f2329',
+            activeBorderColor: 'rgba(43,245,142,0.45)'
           },
           Select: {
-            optionSelectedBg: 'rgba(63,255,139,0.12)',
-            activeBorderColor: 'rgba(63,255,139,0.4)',
-            selectorBg: '#1a1a1a'
+            optionSelectedBg: 'rgba(43,245,142,0.12)',
+            activeBorderColor: 'rgba(43,245,142,0.45)',
+            selectorBg: '#181b1f'
           },
           Table: {
-            headerBg: '#20201f',
-            headerColor: '#adaaaa',
-            rowHoverBg: '#20201f',
-            colorFillAlter: '#131313',
-            borderColor: 'rgba(72,72,71,0.18)'
+            headerBg: '#1f2329',
+            headerColor: '#98a09d',
+            rowHoverBg: '#1f2329',
+            colorFillAlter: '#121417',
+            borderColor: 'rgba(255,255,255,0.07)'
           },
           Tag: {
-            defaultBg: '#20201f',
-            defaultColor: '#ffffff'
+            defaultBg: '#1f2329',
+            defaultColor: '#e8eae9'
           },
           Breadcrumb: {
-            itemColor: '#767575',
-            lastItemColor: '#ffffff',
-            linkColor: '#adaaaa',
-            separatorColor: '#767575'
+            itemColor: '#6b736f',
+            lastItemColor: '#e8eae9',
+            linkColor: '#98a09d',
+            separatorColor: '#6b736f'
           }
         }
       }}

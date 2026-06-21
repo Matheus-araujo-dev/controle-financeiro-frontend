@@ -1,16 +1,13 @@
 import { useState } from 'react';
-import { Modal } from 'antd';
+import { formFieldClass, formLabelClass } from '../../../components/forms/FormPrimitives';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
+import { QuickAddModal } from './QuickAddModal';
 
 type Props = {
   open: boolean;
   onClose: () => void;
   onSuccess: (id: string, label: string) => void;
 };
-
-const inputClass =
-  'w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 transition-colors';
-const labelClass = 'block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1';
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -23,8 +20,14 @@ export function QuickAddContaBancariaModal({ open, onClose, onSuccess }: Props) 
   const [error, setError] = useState<string>();
 
   async function handleSave() {
-    if (!nome.trim()) { setError('Nome é obrigatório.'); return; }
-    if (!banco.trim()) { setError('Banco é obrigatório.'); return; }
+    if (!nome.trim()) {
+      setError('Nome é obrigatório.');
+      return;
+    }
+    if (!banco.trim()) {
+      setError('Banco é obrigatório.');
+      return;
+    }
     setLoading(true);
     setError(undefined);
     try {
@@ -56,46 +59,29 @@ export function QuickAddContaBancariaModal({ open, onClose, onSuccess }: Props) 
   }
 
   return (
-    <Modal
-      title="Nova Conta Bancária"
+    <QuickAddModal
       open={open}
-      onCancel={handleClose}
-      onOk={handleSave}
-      okText="Salvar"
-      cancelText="Cancelar"
-      confirmLoading={loading}
-      centered
-      okButtonProps={{ disabled: !nome.trim() || !banco.trim() }}
+      title="Nova Conta Bancária"
+      icon="account_balance"
+      error={error}
+      loading={loading}
+      submitDisabled={!nome.trim() || !banco.trim()}
+      onClose={handleClose}
+      onSubmit={handleSave}
     >
-      <div className="space-y-4 py-2">
-        <div>
-          <label className={labelClass}>Nome da conta</label>
-          <input
-            autoFocus
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            placeholder="Ex: Conta Corrente Nubank"
-            className={inputClass}
-          />
-        </div>
-
-        <div>
-          <label className={labelClass}>Banco</label>
-          <input
-            value={banco}
-            onChange={(e) => setBanco(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            placeholder="Ex: Nubank, Itaú, Bradesco"
-            className={inputClass}
-          />
-        </div>
-
-        {error && <p className="text-xs font-bold text-red-400">{error}</p>}
-
-        <p className="text-[11px] text-on-surface-variant">
-          Saldo inicial será R$ 0,00. Ajuste em <strong>Cadastros → Contas Bancárias</strong>.
-        </p>
+      <div className="space-y-2">
+        <label className={formLabelClass}>Nome da Conta</label>
+        <input autoFocus value={nome} onChange={(event) => setNome(event.target.value)} placeholder="Ex: Conta Corrente Nubank" className={formFieldClass} />
       </div>
-    </Modal>
+
+      <div className="space-y-2">
+        <label className={formLabelClass}>Banco</label>
+        <input value={banco} onChange={(event) => setBanco(event.target.value)} placeholder="Ex: Nubank, Itaú, Bradesco" className={formFieldClass} />
+      </div>
+
+      <p className="text-[11px] text-on-surface-variant">
+        Saldo inicial será R$ 0,00. Ajuste em <strong>Cadastros → Contas Bancárias</strong>.
+      </p>
+    </QuickAddModal>
   );
 }

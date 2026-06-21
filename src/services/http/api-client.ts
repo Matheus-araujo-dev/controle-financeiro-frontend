@@ -104,7 +104,10 @@ export function registerApiClientInterceptors(client: ReturnType<typeof axios.cr
 
 export const apiClient = axios.create({
   baseURL: resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL),
-  timeout: 10000
+  timeout: 10000,
+  // Serializa arrays como chaves repetidas (`tiposPessoa=1&tiposPessoa=2`),
+  // formato que o model binding do ASP.NET Core entende para filtros multi-select.
+  paramsSerializer: { indexes: null }
 });
 
 registerApiClientInterceptors(apiClient);

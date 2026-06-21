@@ -79,7 +79,7 @@ describe('ImportacoesWhatsappPage', () => {
     expect(await screen.findByText('5511988887777')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Revisar' })).toHaveAttribute('href', '/importacoes-whatsapp/iw1');
 
-    await userEvent.type(screen.getByPlaceholderText('Buscar por remetente, texto ou arquivo'), 'academia');
+    await userEvent.type(screen.getByPlaceholderText(/Buscar por remetente, texto ou arquivo/), 'academia');
 
     await waitFor(() =>
       expect(importacoesWhatsappApi.listar).toHaveBeenLastCalledWith(

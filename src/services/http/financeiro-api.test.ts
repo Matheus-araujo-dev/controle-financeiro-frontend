@@ -102,7 +102,13 @@ describe('financeiroApi', () => {
     await financeiroApi.contasPagar.gerarOcorrencias('1', { ateData: '2026-06-30' });
     await financeiroApi.contasPagar.pausarRecorrencia('1');
     await financeiroApi.contasPagar.encerrarRecorrencia('1', { dataFim: '2026-07-20' });
-    await financeiroApi.contasPagar.liquidar('1', { dataLiquidacao: '2026-04-05', contaBancariaId: 'cb1' });
+    await financeiroApi.contasPagar.liquidar('1', {
+      valorLiquidacao: 120,
+      dataLiquidacao: '2026-04-05',
+      contaBancariaId: 'cb1',
+      formaPagamentoId: 'f1',
+      atualizarValorConta: true
+    });
     await financeiroApi.contasPagar.cancelar('1');
 
     await financeiroApi.contasReceber.listar({
@@ -185,7 +191,13 @@ describe('financeiroApi', () => {
     await financeiroApi.contasReceber.gerarOcorrencias('1', { ateData: '2026-06-30' });
     await financeiroApi.contasReceber.pausarRecorrencia('1');
     await financeiroApi.contasReceber.encerrarRecorrencia('1', { dataFim: '2026-07-25' });
-    await financeiroApi.contasReceber.liquidar('1', { dataLiquidacao: '2026-04-08', contaBancariaId: 'cb1' });
+    await financeiroApi.contasReceber.liquidar('1', {
+      valorLiquidacao: 120,
+      dataLiquidacao: '2026-04-08',
+      contaBancariaId: 'cb1',
+      formaPagamentoId: 'f1',
+      atualizarValorConta: true
+    });
     await financeiroApi.contasReceber.cancelar('1');
 
     await financeiroApi.movimentacoes.listar({
@@ -206,16 +218,19 @@ describe('financeiroApi', () => {
     });
     await financeiroApi.faturas.estornar('f1');
 
-    expect(apiClient.get).toHaveBeenCalledWith('/contas-pagar', {
-      params: {
-        page: 1,
-        pageSize: 10,
-        search: '',
-        statusCodigo: 'PENDENTE,VENCIDA',
-        dataVencimentoInicial: '2026-04-01',
-        dataVencimentoFinal: '2026-04-30'
-      }
-    });
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/contas-pagar',
+      expect.objectContaining({
+        params: expect.objectContaining({
+          page: 1,
+          pageSize: 10,
+          search: '',
+          statusCodigo: 'PENDENTE,VENCIDA',
+          dataVencimentoInicial: '2026-04-01',
+          dataVencimentoFinal: '2026-04-30'
+        })
+      })
+    );
     expect(apiClient.get).toHaveBeenCalledWith('/contas-pagar/1');
     expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar', expect.any(Object));
     expect(apiClient.put).toHaveBeenCalledWith('/contas-pagar/1', expect.any(Object));
@@ -223,19 +238,28 @@ describe('financeiroApi', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/gerar-ocorrencias', { ateData: '2026-06-30' });
     expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/pausar-recorrencia', undefined);
     expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/encerrar-recorrencia', { dataFim: '2026-07-20' });
-    expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/liquidar', { dataLiquidacao: '2026-04-05', contaBancariaId: 'cb1' });
+    expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/liquidar', {
+      valorLiquidacao: 120,
+      dataLiquidacao: '2026-04-05',
+      contaBancariaId: 'cb1',
+      formaPagamentoId: 'f1',
+      atualizarValorConta: true
+    });
     expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/cancelar', undefined);
 
-    expect(apiClient.get).toHaveBeenCalledWith('/contas-receber', {
-      params: {
-        page: 1,
-        pageSize: 10,
-        search: '',
-        statusCodigo: 'PENDENTE,VENCIDA',
-        dataVencimentoInicial: '2026-04-01',
-        dataVencimentoFinal: '2026-04-30'
-      }
-    });
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/contas-receber',
+      expect.objectContaining({
+        params: expect.objectContaining({
+          page: 1,
+          pageSize: 10,
+          search: '',
+          statusCodigo: 'PENDENTE,VENCIDA',
+          dataVencimentoInicial: '2026-04-01',
+          dataVencimentoFinal: '2026-04-30'
+        })
+      })
+    );
     expect(apiClient.get).toHaveBeenCalledWith('/contas-receber/1');
     expect(apiClient.post).toHaveBeenCalledWith('/contas-receber', expect.any(Object));
     expect(apiClient.put).toHaveBeenCalledWith('/contas-receber/1', expect.any(Object));
@@ -243,7 +267,13 @@ describe('financeiroApi', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/contas-receber/1/gerar-ocorrencias', { ateData: '2026-06-30' });
     expect(apiClient.post).toHaveBeenCalledWith('/contas-receber/1/pausar-recorrencia', undefined);
     expect(apiClient.post).toHaveBeenCalledWith('/contas-receber/1/encerrar-recorrencia', { dataFim: '2026-07-25' });
-    expect(apiClient.post).toHaveBeenCalledWith('/contas-receber/1/liquidar', { dataLiquidacao: '2026-04-08', contaBancariaId: 'cb1' });
+    expect(apiClient.post).toHaveBeenCalledWith('/contas-receber/1/liquidar', {
+      valorLiquidacao: 120,
+      dataLiquidacao: '2026-04-08',
+      contaBancariaId: 'cb1',
+      formaPagamentoId: 'f1',
+      atualizarValorConta: true
+    });
     expect(apiClient.post).toHaveBeenCalledWith('/contas-receber/1/cancelar', undefined);
 
     expect(apiClient.get).toHaveBeenCalledWith('/movimentacoes', {

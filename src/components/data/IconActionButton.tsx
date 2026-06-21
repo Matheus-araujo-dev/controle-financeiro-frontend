@@ -1,5 +1,4 @@
 import React, { type ReactNode } from 'react';
-import { Button, Tooltip } from 'antd';
 import { Link } from 'react-router-dom';
 
 type IconActionButtonProps = {
@@ -21,39 +20,42 @@ function IconActionButtonComponent({
   danger = false,
   disabled = false,
   loading = false,
-  type = 'default'
+  type: _type = 'default'
 }: IconActionButtonProps) {
-  const button = (
-    <Button
-      size="small"
-      shape="circle"
-      icon={icon}
-      danger={danger}
-      disabled={disabled}
-      loading={loading}
-      type={type}
-      aria-label={label}
-      title={label}
-      onClick={href ? undefined : onClick}
-    />
+  const classes = `inline-flex h-7 w-7 items-center justify-center rounded-full border border-transparent bg-transparent text-[18px] leading-none transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-primary/10 active:bg-transparent active:text-primary focus:bg-transparent ${
+    danger ? 'text-error hover:text-error' : 'text-primary hover:text-primary'
+  }`;
+
+  const style = danger ? undefined : { color: 'var(--color-primary)' };
+
+  const content = loading ? (
+    <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent" />
+  ) : (
+    <span className="flex items-center justify-center [&>svg]:h-[18px] [&>svg]:w-[18px]">
+      {icon}
+    </span>
   );
 
   if (href && !disabled) {
     return (
-      <Tooltip title={label}>
-        <span style={{ display: 'inline-flex' }}>
-          <Link to={href} aria-label={label} title={label}>
-            {button}
-          </Link>
-        </span>
-      </Tooltip>
+      <Link to={href} aria-label={label} title={label} className={classes} style={style}>
+        {content}
+      </Link>
     );
   }
 
   return (
-    <Tooltip title={label}>
-      <span style={{ display: 'inline-flex' }}>{button}</span>
-    </Tooltip>
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled || loading}
+      onClick={onClick}
+      className={classes}
+      style={style}
+    >
+      {content}
+    </button>
   );
 }
 

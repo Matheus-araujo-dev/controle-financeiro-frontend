@@ -6,14 +6,13 @@ import {
   Select,
   Space,
   Spin,
-  Table,
   Tag,
   Tooltip,
   message,
 } from 'antd';
-import type { TableColumnsType } from 'antd';
 import { InboxOutlined, CheckCircleOutlined, RobotOutlined } from '@ant-design/icons';
 import { Upload } from 'antd';
+import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import type { ImportacaoFaturaItemPreview } from '../../services/http/financeiro-api';
@@ -164,6 +163,7 @@ export function ImportarFaturaPage() {
       title: '',
       key: 'sel',
       width: 40,
+      sorter: false,
       render: (_, row) => (
         <Checkbox
           checked={selecionados.has(row.chaveImportacao)}
@@ -177,11 +177,11 @@ export function ImportarFaturaPage() {
         />
       ),
     },
-    { title: 'Data', dataIndex: 'dataTransacao', width: 100, render: v => formatDateBR(v) },
+    { title: 'Data', dataIndex: 'dataTransacao', width: 100, render: v => formatDateBR(String(v)) },
     { title: 'Descrição', dataIndex: 'descricao', ellipsis: true },
-    { title: 'Valor', dataIndex: 'valor', width: 120, align: 'right', render: v => formatCurrencyBRL(v) },
+    { title: 'Valor', dataIndex: 'valor', width: 120, align: 'right', render: v => formatCurrencyBRL(Number(v)) },
     {
-      title: () => (
+      title: (
         <span className="flex items-center gap-1">
           Categoria
           {loadingCategorizacao ? <Spin size="small" /> : <RobotOutlined style={{ opacity: 0.5 }} />}
@@ -189,13 +189,14 @@ export function ImportarFaturaPage() {
       ),
       key: 'categoria',
       width: 200,
+      sorter: false,
       render: (_, row) => {
         if (row.jaImportado) return null;
         const cat = categorizacoes[row.chaveImportacao];
         return (
           <div className="flex flex-col gap-1">
             {cat && (
-              <Tooltip title={`Sugestão IA — confiança ${Math.round(cat.confianca * 100)}%`}>
+              <Tooltip title={`Sugestão IA - confiança ${Math.round(cat.confianca * 100)}%`}>
                 <Tag
                   color={cat.confianca >= 0.8 ? 'green' : 'orange'}
                   icon={<RobotOutlined />}
@@ -234,6 +235,7 @@ export function ImportarFaturaPage() {
       title: 'Status',
       key: 'status',
       width: 110,
+      sorter: false,
       render: (_, row) =>
         row.jaImportado ? <Tag color="default">Já importado</Tag> : <Tag color="green">Novo</Tag>,
     },
@@ -363,24 +365,18 @@ export function ImportarFaturaPage() {
             </Space>
           </div>
 
-          <Table
+          <AppDataTable
             dataSource={preview}
             columns={columns}
             rowKey="chaveImportacao"
             size="small"
-            pagination={preview.length > 20 ? { pageSize: 20 } : false}
-            summary={() => (
-              <Table.Summary.Row>
-                <Table.Summary.Cell index={0} colSpan={3}>
-                  <span className="font-bold">{itensSelecionadosCount} item(ns) selecionado(s)</span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={3} align="right">
-                  <span className="font-bold">{formatCurrencyBRL(totalSelecionado)}</span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={4} colSpan={2} />
-              </Table.Summary.Row>
-            )}
+            pagination={false}
           />
+
+          <div className="mt-3 flex flex-col gap-2 rounded-2xl border border-white/5 bg-surface-container px-4 py-3 text-sm font-bold text-on-surface sm:flex-row sm:items-center sm:justify-between">
+            <span>{itensSelecionadosCount} item(ns) selecionado(s)</span>
+            <span>{formatCurrencyBRL(totalSelecionado)}</span>
+          </div>
 
           <div className="mt-4 text-right">
             <Button

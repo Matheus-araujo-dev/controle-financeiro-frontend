@@ -1,12 +1,11 @@
-import { Tag } from 'antd';
-import type { TableColumnsType } from 'antd';
+import type { TableColumnsType } from '../../components/data/AppDataTable';
 import type { SummaryCardItem } from '../../components/data/ListSummaryCards';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR, toMonthInputValue } from '../../shared/date';
-import { mapContaGerencialSelectOptions } from '../../shared/conta-gerencial';
+import { filterContaGerencialLancavel, mapContaGerencialSelectOptions } from '../../shared/conta-gerencial';
 import type { ContaGerencialTipo } from '../../types/cadastros';
 import type {
   ContaPagarDetalhe,
@@ -18,7 +17,6 @@ import type {
   ContaReceberFilters,
   ContaReceberPayload,
   ContaReceberResumo,
-  LiquidacaoPayload,
   RecorrenciaPayload,
   StatusContaCodigo
 } from '../../types/financeiro';
@@ -29,6 +27,7 @@ export type FinanceiroResumo = {
   totalRegistros: number;
   valorTotal: number;
   totalPendente?: number;
+  totalVencido?: number;
   totalVencendoHoje?: number;
   totalLiquidado?: number;
 };
@@ -79,11 +78,14 @@ export type FinanceiroFormValues = {
 };
 
 export type FinanceiroLiquidacaoFormValues = {
+  valorLiquidacao: number;
   dataLiquidacao: string;
   contaBancariaId: string;
+  formaPagamentoId: string;
+  atualizarValorConta: boolean;
 };
 
-export type FinanceiroModuleConfig<TSummary, TDetail, TFilters> = {
+export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> = {
   key: string;
   title: string;
   singularTitle: string;
@@ -125,6 +127,7 @@ export type FinanceiroModuleConfig<TSummary, TDetail, TFilters> = {
 const statusOptions: Array<SelectOption & { code?: StatusContaCodigo }> = [
   { label: 'Todos', value: '' },
   { label: 'Pendentes', value: 'PENDENTE', code: 'PENDENTE' },
+  { label: 'Parciais', value: 'PARCIAL', code: 'PARCIAL' },
   { label: 'Liquidadas', value: 'LIQUIDADA', code: 'LIQUIDADA' },
   { label: 'Canceladas', value: 'CANCELADA', code: 'CANCELADA' },
   { label: 'Vencidas', value: 'VENCIDA', code: 'VENCIDA' }
@@ -173,7 +176,7 @@ function buildContaFinanceiraSummaryItems(summary: FinanceiroResumo): SummaryCar
       key: 'total-pendente',
       label: 'Total Pendente',
       value: formatCurrencyBRL(summary.totalPendente ?? 0),
-      tone: (summary.totalPendente ?? 0) > 0 ? 'warning' : 'neutral'
+      tone: (summary.totalPendente ?? 0) > 0 ? 'danger' : 'neutral'
     },
     {
         key: 'total-hoje',
@@ -332,7 +335,7 @@ async function loadRateioOptions(tipo: ContaGerencialTipo) {
     aceitaLancamentos: true
   });
 
-  return mapContaGerencialSelectOptions(response.items.filter((item) => item.aceitaLancamentos));
+  return mapContaGerencialSelectOptions(filterContaGerencialLancavel(response.items));
 }
 
 function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload {
@@ -471,7 +474,16 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
     page: 1,
     pageSize: 20,
     search: '',
-    statusCodigo: ['PENDENTE', 'VENCIDA']
+    numeroDocumento: '',
+    descricao: '',
+    statusCodigo: ['PENDENTE', 'VENCIDA'],
+    dataEmissaoInicial: undefined,
+    dataEmissaoFinal: undefined,
+    dataInicial: undefined,
+    dataFinal: undefined,
+    valorMinimo: undefined,
+    valorMaximo: undefined,
+    ehRecorrente: undefined
   },
   defaultValues,
   list: financeiroApi.contasPagar.listar,
@@ -484,8 +496,11 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
   encerrarRecorrencia: (id, values) => financeiroApi.contasPagar.encerrarRecorrencia(id, values),
   liquidar: (id, values) =>
     financeiroApi.contasPagar.liquidar(id, {
+      valorLiquidacao: values.valorLiquidacao,
       dataLiquidacao: values.dataLiquidacao,
-      contaBancariaId: values.contaBancariaId
+      contaBancariaId: values.contaBancariaId,
+      formaPagamentoId: values.formaPagamentoId,
+      atualizarValorConta: values.atualizarValorConta
     }),
   estornar: financeiroApi.contasPagar.estornar,
   cancelar: financeiroApi.contasPagar.cancelar,
@@ -569,7 +584,16 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
     page: 1,
     pageSize: 20,
     search: '',
-    statusCodigo: ['PENDENTE', 'VENCIDA']
+    numeroDocumento: '',
+    descricao: '',
+    statusCodigo: ['PENDENTE', 'VENCIDA'],
+    dataEmissaoInicial: undefined,
+    dataEmissaoFinal: undefined,
+    dataInicial: undefined,
+    dataFinal: undefined,
+    valorMinimo: undefined,
+    valorMaximo: undefined,
+    ehRecorrente: undefined
   },
   defaultValues,
   list: financeiroApi.contasReceber.listar,
@@ -582,8 +606,11 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
   encerrarRecorrencia: (id, values) => financeiroApi.contasReceber.encerrarRecorrencia(id, values),
   liquidar: (id, values) =>
     financeiroApi.contasReceber.liquidar(id, {
+      valorLiquidacao: values.valorLiquidacao,
       dataLiquidacao: values.dataLiquidacao,
-      contaBancariaId: values.contaBancariaId
+      contaBancariaId: values.contaBancariaId,
+      formaPagamentoId: values.formaPagamentoId,
+      atualizarValorConta: values.atualizarValorConta
     }),
   estornar: financeiroApi.contasReceber.estornar,
   cancelar: financeiroApi.contasReceber.cancelar,

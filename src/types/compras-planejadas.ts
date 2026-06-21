@@ -7,6 +7,8 @@ export type ListQueryBase = {
   page: number;
   pageSize: number;
   search?: string;
+  sortBy?: string;
+  sortDirection?: 'Asc' | 'Desc';
 };
 
 export type CompraPlanejadaResumo = {
@@ -64,8 +66,17 @@ export type RealizarCompraPlanejadaPayload = {
 
 export type CompraPlanejadaFilters = ListQueryBase & {
   prioridade?: CompraPlanejadaPrioridade;
+  prioridades?: CompraPlanejadaPrioridade[];
   status?: CompraPlanejadaStatus;
+  statuses?: CompraPlanejadaStatus[];
   responsavelId?: string;
+  contaGerencialId?: string;
+  parcelavel?: boolean;
+  dataDesejadaInicial?: string;
+  dataDesejadaFinal?: string;
+  valorEstimadoMin?: number | string;
+  valorEstimadoMax?: number | string;
+  link?: string;
 };
 
 export type CompraPlanejadaListSummary = {

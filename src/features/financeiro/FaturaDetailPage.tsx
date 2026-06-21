@@ -3,6 +3,7 @@ import { ArrowLeftOutlined, CalendarOutlined, CheckCircleOutlined, CreditCardOut
 import { Button, Card, Form, Input, Select, Space, Tag, Typography } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 import { AppDataTable } from '../../components/data/AppDataTable';
+import { DateInput } from '../../components/forms/DateInput';
 import { PageState } from '../../components/states/PageState';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
@@ -314,14 +315,13 @@ export function FaturaDetailPage() {
           <Form layout="vertical" className="fatura-detail-page__payment-form">
             <div className="fatura-detail-page__payment-grid">
               <Form.Item label="Data de pagamento">
-                <Input
-                  aria-label="Data de pagamento"
-                  type="date"
+                <DateInput
+                  ariaLabel="Data de pagamento"
                   value={paymentValues.dataPagamento}
-                  onChange={(event) =>
+                  onChange={(value) =>
                     setPaymentValues((current) => ({
                       ...current,
-                      dataPagamento: event.target.value
+                      dataPagamento: value
                     }))
                   }
                 />

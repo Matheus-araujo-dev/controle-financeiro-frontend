@@ -67,8 +67,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
 
   const valorLiquido = useMemo(() => calculateValorLiquido(watchedValues), [watchedValues]);
   const totalRateios = useMemo(
-    () => watchedValues.rateios.reduce((total, item) => total + (Number(item.valor) || 0), 0),
-    [watchedValues.rateios]
+    () => (watchedValues.rateios.length === 1 ? valorLiquido : watchedValues.rateios.reduce((total, item) => total + (Number(item.valor) || 0), 0)),
+    [valorLiquido, watchedValues.rateios]
   );
   const formaPagamentoBehavior = useMemo(
     () => resolveFormaPagamentoBehavior(watchedValues.formaPagamentoId, formaPagamentoOptions),

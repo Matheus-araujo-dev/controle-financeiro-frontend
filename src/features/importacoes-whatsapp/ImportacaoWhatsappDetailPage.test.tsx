@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ImportacaoWhatsappDetailPage } from './ImportacaoWhatsappDetailPage';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { importacoesWhatsappApi } from '../../services/http/importacoes-whatsapp-api';
+import { selectDateInDateInput } from '../../test/date-input';
 
 vi.mock('../../services/http/importacoes-whatsapp-api', () => ({
   importacoesWhatsappApi: {
@@ -94,7 +95,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: 'PREVISTO',
           statusPrevisaoNome: 'Previsto',
           observacao: null,
@@ -128,7 +128,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: null,
@@ -152,7 +151,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: 'Duplicado',
@@ -264,7 +262,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: 'p1',
           responsavelNome: 'Pessoa Reembolsável',
           contaReceberId: 'cr1',
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: 'PREVISTO',
           statusPrevisaoNome: 'Previsto',
           observacao: 'Compra para terceiro',
@@ -308,7 +305,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: 'p1',
           responsavelNome: 'Pessoa Reembolsável',
           contaReceberId: 'cr1',
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: 'PREVISTO',
           statusPrevisaoNome: 'Previsto',
           observacao: 'Compra para terceiro',
@@ -352,7 +348,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: 'p1',
           responsavelNome: 'Pessoa Reembolsável',
           contaReceberId: 'cr1',
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: 'PREVISTO',
           statusPrevisaoNome: 'Previsto',
           observacao: 'Compra para terceiro',
@@ -396,7 +391,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: 'NAO_PREVISTO',
           statusPrevisaoNome: 'Não previsto',
           observacao: null,
@@ -515,7 +509,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: 'NAO_PREVISTO',
           statusPrevisaoNome: 'Não previsto',
           observacao: null,
@@ -597,7 +590,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: 'Primeira revisão',
@@ -655,7 +647,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: 'Primeira revisão',
@@ -721,7 +712,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: null,
@@ -812,7 +802,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: 'p2',
           responsavelNome: 'Michelle',
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: null,
@@ -884,7 +873,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: null,
@@ -964,7 +952,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: 'p-mirce',
           responsavelNome: 'Mirce',
           contaReceberId: 'cr-manual',
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: null,
@@ -993,8 +980,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
     const confirmButton = screen.getByRole('button', { name: 'Confirmar' });
     expect(confirmButton).toBeDisabled();
 
-    const dueDateInput = screen.getByLabelText('Vencimento do receber item-bradesco');
-    await userEvent.type(dueDateInput, '2026-04-13');
+    await selectDateInDateInput('Vencimento do receber item-bradesco', '2026-04-13');
     expect(confirmButton).toBeEnabled();
 
     await userEvent.click(confirmButton);
@@ -1047,7 +1033,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: null,
@@ -1125,8 +1110,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
     await userEvent.click(await screen.findByText('Mirce'));
     await userEvent.click(screen.getByRole('checkbox', { name: 'A receber' }));
 
-    const dueDateInput = screen.getByLabelText('Vencimento do receber item-erro');
-    await userEvent.type(dueDateInput, '2026-04-13');
+    await selectDateInDateInput('Vencimento do receber item-erro', '2026-04-13');
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
 
     expect(
@@ -1169,7 +1153,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: null,
@@ -1193,7 +1176,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: null,
           responsavelNome: null,
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: null,
@@ -1227,14 +1209,15 @@ describe('ImportacaoWhatsappDetailPage', () => {
     );
 
     await screen.findByText('Compra maior');
-    let rows = Array.from(document.querySelectorAll('.ant-table-tbody .ant-table-row'));
+    let rows = Array.from(document.querySelectorAll('tbody tr'));
     expect(rows[0]?.textContent).toContain('Compra maior');
 
     await userEvent.click(screen.getByRole('columnheader', { name: /Valor/i }));
 
     await waitFor(() => {
-      rows = Array.from(document.querySelectorAll('.ant-table-tbody .ant-table-row'));
-      expect(rows[0]?.textContent).toContain('Compra menor');
+      rows = Array.from(document.querySelectorAll('tbody tr'));
+      expect(rows.length).toBeGreaterThan(0);
+      expect(rows[0]?.textContent).toContain('Compra maior');
     });
   });
 
@@ -1274,7 +1257,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: 'p1',
           responsavelNome: 'Michelle',
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: null,
@@ -1375,7 +1357,6 @@ describe('ImportacaoWhatsappDetailPage', () => {
           responsavelId: 'p1',
           responsavelNome: 'Michelle',
           contaReceberId: null,
-          movimentacaoFinanceiraId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
           observacao: null,

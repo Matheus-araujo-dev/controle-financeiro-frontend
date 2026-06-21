@@ -1,17 +1,14 @@
 import type { ReactNode } from 'react';
-import { Button, Space, Tag } from 'antd';
-import type { TableColumnsType } from 'antd';
-import type { FieldValues } from 'react-hook-form';
-import type { ZodType, ZodTypeAny } from 'zod';
+import type { TableColumnsType } from '../../components/data/AppDataTable';
+import type { ZodType } from 'zod';
 import {
-  CheckCircleOutlined,
   EditOutlined,
-  EyeOutlined,
-  FileAddOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined
 } from '@ant-design/icons';
 import type { SummaryCardItem } from '../../components/data/ListSummaryCards';
+import { StatusBadge } from '../../components/data/StatusBadge';
+import type { ExportColumn } from '../../shared/export/exportListing';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import type {
   CartaoDetalhe,
@@ -71,7 +68,7 @@ export type FormFieldConfig<TPayload> = {
 export type FilterFieldConfig<TFilters> = {
   name: keyof TFilters & string;
   label: string;
-  kind: 'text' | 'select';
+  kind: 'text' | 'select' | 'multiselect';
   options?: SelectOption[];
   placeholder?: string;
 };
@@ -96,6 +93,7 @@ export type MasterDataModuleConfig<
   key: string;
   title: string;
   singularTitle: string;
+  createLabel?: string;
   routeBase: string;
   emptyMessage: string;
   listDescription: string;
@@ -114,12 +112,17 @@ export type MasterDataModuleConfig<
   rowActions?: RowAction<TSummary>[];
   actionsColumnWidth?: number;
   buildSummaryItems?: (summary: unknown) => SummaryCardItem[];
+  exportColumns?: ExportColumn<TSummary>[];
 };
 
 const statusOptions: SelectOption[] = [
-  { label: 'Todos', value: '' },
-  { label: 'Ativos', value: 'true' },
-  { label: 'Inativos', value: 'false' }
+  { label: 'Ativos', value: true },
+  { label: 'Inativos', value: false }
+];
+
+const yesNoOptions: SelectOption[] = [
+  { label: 'Sim', value: true },
+  { label: 'Não', value: false }
 ];
 
 const pessoaTipoOptions: SelectOption[] = [
@@ -143,11 +146,11 @@ const contaGerencialTipoOptions: SelectOption[] = [
 ];
 
 function renderStatusTag(ativo: boolean) {
-  return <Tag color={ativo ? 'success' : 'default'}>{ativo ? 'Ativo' : 'Inativo'}</Tag>;
+  return <StatusBadge label={ativo ? 'Ativo' : 'Inativo'} tone={ativo ? 'success' : 'neutral'} />;
 }
 
 function renderBooleanTag(value: boolean, trueLabel: string, falseLabel: string) {
-  return <Tag color={value ? 'success' : 'default'}>{value ? trueLabel : falseLabel}</Tag>;
+  return <StatusBadge label={value ? trueLabel : falseLabel} tone={value ? 'success' : 'neutral'} />;
 }
 
 function renderCurrency(value: number | null | undefined) {
@@ -196,6 +199,7 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
   key: 'pessoas',
   title: 'Pessoas',
   singularTitle: 'Pessoa',
+  createLabel: 'Nova pessoa',
   routeBase: '/pessoas',
   emptyMessage: 'Nenhuma pessoa cadastrada.',
   listDescription: 'Cadastros de pagadores, recebedores e contrapartes.',
@@ -209,8 +213,29 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome, documento ou email' },
-    { name: 'tipoPessoa', label: 'Tipo', kind: 'select', options: [{ label: 'Todos', value: '' }, ...pessoaTipoOptions] },
-    { name: 'ativo', label: 'Status', kind: 'select', options: statusOptions }
+    { name: 'tiposPessoa', label: 'Tipo', kind: 'multiselect', options: pessoaTipoOptions },
+    { name: 'ativo', label: 'Status', kind: 'multiselect', options: statusOptions },
+    { name: 'documento', label: 'Documento', kind: 'text', placeholder: 'CPF ou CNPJ' },
+    { name: 'email', label: 'E-mail', kind: 'text', placeholder: 'E-mail' },
+    { name: 'telefone', label: 'Telefone', kind: 'text', placeholder: 'Telefone' }
+  ],
+  buildSummaryItems: (summary) => {
+    const data = summary as { total?: number; ativos?: number; inativos?: number; fisicas?: number; juridicas?: number } | undefined;
+    return [
+      { key: 'total', label: 'Total', value: data?.total ?? 0 },
+      { key: 'ativos', label: 'Ativos', value: data?.ativos ?? 0, tone: 'success' },
+      { key: 'inativos', label: 'Inativos', value: data?.inativos ?? 0 },
+      { key: 'fisicas', label: 'Físicas', value: data?.fisicas ?? 0 },
+      { key: 'juridicas', label: 'Jurídicas', value: data?.juridicas ?? 0 }
+    ];
+  },
+  exportColumns: [
+    { header: 'Nome', value: (p: PessoaResumo) => p.nome },
+    { header: 'Tipo', value: (p: PessoaResumo) => p.tipoPessoa },
+    { header: 'Documento', value: (p: PessoaResumo) => (p.cpfCnpj ? applyCpfCnpjMask(p.cpfCnpj) : '') },
+    { header: 'E-mail', value: (p: PessoaResumo) => p.email ?? '' },
+    { header: 'Telefone', value: (p: PessoaResumo) => p.telefone ?? '' },
+    { header: 'Status', value: (p: PessoaResumo) => (p.ativo ? 'Ativo' : 'Inativo') }
   ],
   fields: [
     { name: 'nome', label: 'Nome', kind: 'text', placeholder: 'Nome completo ou razão social' },
@@ -276,6 +301,7 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
   key: 'formas-pagamento',
   title: 'Formas de pagamento',
   singularTitle: 'Forma de pagamento',
+  createLabel: 'Nova forma de pagamento',
   routeBase: '/formas-pagamento',
   emptyMessage: 'Nenhuma forma de pagamento cadastrada.',
   listDescription: 'Cadastros de meios de pagamento para uso operacional.',
@@ -294,8 +320,10 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome da forma de pagamento' },
-    { name: 'tipo', label: 'Tipo', kind: 'select', options: [{ label: 'Todos', value: '' }, ...formaPagamentoTipoOptions] },
-    { name: 'ativo', label: 'Status', kind: 'select', options: statusOptions }
+    { name: 'tipos', label: 'Tipo', kind: 'multiselect', options: formaPagamentoTipoOptions },
+    { name: 'ehCartao', label: 'Cartão', kind: 'multiselect', options: yesNoOptions },
+    { name: 'baixarAutomaticamente', label: 'Baixa automática', kind: 'multiselect', options: yesNoOptions },
+    { name: 'ativo', label: 'Status', kind: 'multiselect', options: statusOptions }
   ],
   fields: [
     { name: 'nome', label: 'Nome', kind: 'text' },
@@ -343,6 +371,7 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
   key: 'contas-bancarias',
   title: 'Contas bancárias',
   singularTitle: 'Conta bancária',
+  createLabel: 'Nova conta bancária',
   routeBase: '/contas-bancarias',
   emptyMessage: 'Nenhuma conta bancária cadastrada.',
   listDescription: 'Base de contas para saldo inicial, baixa automática e pagamentos.',
@@ -374,7 +403,10 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome, banco ou número da conta' },
     { name: 'banco', label: 'Banco', kind: 'text' },
-    { name: 'ativo', label: 'Status', kind: 'select', options: statusOptions }
+    { name: 'agencia', label: 'Agência', kind: 'text' },
+    { name: 'numeroConta', label: 'Número da conta', kind: 'text' },
+    { name: 'tipoConta', label: 'Tipo da conta', kind: 'text' },
+    { name: 'ativo', label: 'Status', kind: 'multiselect', options: statusOptions }
   ],
   fields: [
     { name: 'nome', label: 'Nome', kind: 'text' },
@@ -429,6 +461,7 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
   key: 'cartoes',
   title: 'Cartões',
   singularTitle: 'Cartão',
+  createLabel: 'Novo cartão',
   routeBase: '/cartoes',
   emptyMessage: 'Nenhum cartão cadastrado.',
   listDescription: 'Cadastre cartões com fechamento, vencimento e conta padrão de pagamento.',
@@ -462,7 +495,10 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome, bandeira ou final' },
     { name: 'bandeira', label: 'Bandeira', kind: 'text' },
-    { name: 'ativo', label: 'Status', kind: 'select', options: statusOptions }
+    { name: 'numeroFinal', label: 'Número final', kind: 'text' },
+    { name: 'diaFechamentoFatura', label: 'Fechamento', kind: 'text', placeholder: 'Dia' },
+    { name: 'diaVencimentoFatura', label: 'Vencimento', kind: 'text', placeholder: 'Dia' },
+    { name: 'ativo', label: 'Status', kind: 'multiselect', options: statusOptions }
   ],
   fields: [
     { name: 'nome', label: 'Nome', kind: 'text' },
@@ -532,6 +568,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
   key: 'contas-gerenciais',
   title: 'Contas gerenciais',
   singularTitle: 'Conta gerencial',
+  createLabel: 'Nova conta gerencial',
   routeBase: '/contas-gerenciais',
   emptyMessage: 'Nenhuma conta gerencial cadastrada.',
   listDescription: 'Cadastre a estrutura de receita e despesa para rateio e visão gerencial.',
@@ -558,8 +595,12 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Código ou descrição' },
-    { name: 'tipo', label: 'Tipo', kind: 'select', options: [{ label: 'Todos', value: '' }, ...contaGerencialTipoOptions] },
-    { name: 'ativo', label: 'Status', kind: 'select', options: statusOptions }
+    { name: 'tipos', label: 'Tipo', kind: 'multiselect', options: contaGerencialTipoOptions },
+    { name: 'contaPai', label: 'Conta pai', kind: 'text' },
+    { name: 'responsavelPadrao', label: 'Responsável padrão', kind: 'text' },
+    { name: 'aceitaLancamentos', label: 'Uso', kind: 'multiselect', options: yesNoOptions },
+    { name: 'ehPadraoRecebimentoFaturaCartao', label: 'Receb. fatura', kind: 'multiselect', options: yesNoOptions },
+    { name: 'ativo', label: 'Status', kind: 'multiselect', options: statusOptions }
   ],
   fields: [
     { name: 'contaPaiId', label: 'Conta pai', kind: 'select', loadOptions: loadContaGerencialOptions },
@@ -676,13 +717,3 @@ const contaGerencialPadraoFaturaField = contasGerenciaisModuleConfig.fields.find
 if (contaGerencialPadraoFaturaField) {
   contaGerencialPadraoFaturaField.label = 'Padrão para recebimento de fatura';
 }
-
-
-export const getFutureModulePlaceholderActions = () => [
-  <Button key="future" disabled>
-    Fases futuras
-  </Button>
-];
-
-
-

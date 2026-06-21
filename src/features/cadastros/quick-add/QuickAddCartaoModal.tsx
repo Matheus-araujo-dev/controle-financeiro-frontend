@@ -1,18 +1,13 @@
 import { useState } from 'react';
-import { Modal } from 'antd';
+import { formCompactFieldClass, formFieldClass, formLabelClass } from '../../../components/forms/FormPrimitives';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
+import { QuickAddModal } from './QuickAddModal';
 
 type Props = {
   open: boolean;
   onClose: () => void;
   onSuccess: (id: string, label: string) => void;
 };
-
-const inputClass =
-  'w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 transition-colors';
-const labelClass = 'block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1';
-const numInputClass =
-  'w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors';
 
 export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
   const [nome, setNome] = useState('');
@@ -26,9 +21,18 @@ export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
   const finalValid = /^\d{4}$/.test(numeroFinal);
 
   async function handleSave() {
-    if (!nome.trim()) { setError('Nome é obrigatório.'); return; }
-    if (!bandeira.trim()) { setError('Bandeira é obrigatória.'); return; }
-    if (!finalValid) { setError('Número final deve ter exatamente 4 dígitos.'); return; }
+    if (!nome.trim()) {
+      setError('Nome é obrigatório.');
+      return;
+    }
+    if (!bandeira.trim()) {
+      setError('Bandeira é obrigatória.');
+      return;
+    }
+    if (!finalValid) {
+      setError('Número final deve ter exatamente 4 dígitos.');
+      return;
+    }
     setLoading(true);
     setError(undefined);
     try {
@@ -62,78 +66,62 @@ export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
   }
 
   return (
-    <Modal
-      title="Novo Cartão"
+    <QuickAddModal
       open={open}
-      onCancel={handleClose}
-      onOk={handleSave}
-      okText="Salvar"
-      cancelText="Cancelar"
-      confirmLoading={loading}
-      centered
-      okButtonProps={{ disabled: !nome.trim() || !bandeira.trim() || !finalValid }}
+      title="Novo Cartão"
+      icon="credit_card"
+      error={error}
+      loading={loading}
+      submitDisabled={!nome.trim() || !bandeira.trim() || !finalValid}
+      onClose={handleClose}
+      onSubmit={handleSave}
     >
-      <div className="space-y-4 py-2">
-        <div>
-          <label className={labelClass}>Nome do cartão</label>
+      <div className="space-y-2">
+        <label className={formLabelClass}>Nome do Cartão</label>
+        <input autoFocus value={nome} onChange={(event) => setNome(event.target.value)} placeholder="Ex: Nubank Roxinho" className={formFieldClass} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label className={formLabelClass}>Bandeira</label>
+          <input value={bandeira} onChange={(event) => setBandeira(event.target.value)} placeholder="Visa, Mastercard..." className={formFieldClass} />
+        </div>
+        <div className="space-y-2">
+          <label className={formLabelClass}>4 Últimos Dígitos</label>
           <input
-            autoFocus
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            placeholder="Ex: Nubank Roxinho"
-            className={inputClass}
+            value={numeroFinal}
+            onChange={(event) => setNumeroFinal(event.target.value.replace(/\D/g, '').slice(0, 4))}
+            placeholder="0000"
+            maxLength={4}
+            className={formFieldClass}
           />
         </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelClass}>Bandeira</label>
-            <input
-              value={bandeira}
-              onChange={(e) => setBandeira(e.target.value)}
-              placeholder="Visa, Mastercard..."
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>4 últimos dígitos</label>
-            <input
-              value={numeroFinal}
-              onChange={(e) => setNumeroFinal(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              placeholder="0000"
-              maxLength={4}
-              className={inputClass}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelClass}>Dia fechamento</label>
-            <input
-              type="number"
-              min={1}
-              max={31}
-              value={diaFechamento}
-              onChange={(e) => setDiaFechamento(Number(e.target.value))}
-              className={numInputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Dia vencimento</label>
-            <input
-              type="number"
-              min={1}
-              max={31}
-              value={diaVencimento}
-              onChange={(e) => setDiaVencimento(Number(e.target.value))}
-              className={numInputClass}
-            />
-          </div>
-        </div>
-
-        {error && <p className="text-xs font-bold text-red-400">{error}</p>}
       </div>
-    </Modal>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label className={formLabelClass}>Dia Fechamento</label>
+          <input
+            type="number"
+            min={1}
+            max={31}
+            value={diaFechamento}
+            onChange={(event) => setDiaFechamento(Number(event.target.value))}
+            className={formCompactFieldClass}
+          />
+        </div>
+        <div className="space-y-2">
+          <label className={formLabelClass}>Dia Vencimento</label>
+          <input
+            type="number"
+            min={1}
+            max={31}
+            value={diaVencimento}
+            onChange={(event) => setDiaVencimento(Number(event.target.value))}
+            className={formCompactFieldClass}
+          />
+        </div>
+      </div>
+    </QuickAddModal>
   );
 }

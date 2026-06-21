@@ -12,6 +12,8 @@ export type ListQueryBase = {
   page: number;
   pageSize: number;
   search?: string;
+  sortBy?: string;
+  sortDirection?: 'Asc' | 'Desc';
 };
 
 export type RateioPayload = {
@@ -53,6 +55,7 @@ export type ContaFinanceiraListSummary = {
   totalRegistros: number;
   valorTotal: number;
   totalPendente: number;
+  totalVencido: number;
   totalVencendoHoje: number;
   totalLiquidado: number;
 };
@@ -100,6 +103,7 @@ export type ContaPagarResumo = {
   descricao: string;
   recebedorId: string;
   recebedorNome: string;
+  responsavelNome: string | null;
   dataEmissao: string;
   dataVencimento: string;
   dataLiquidacao: string | null;
@@ -179,11 +183,21 @@ export type ContaPagarPayload = {
 };
 
 export type ContaPagarFilters = ListQueryBase & {
+  numeroDocumento?: string;
+  descricao?: string;
   recebedorId?: string;
+  recebedorIds?: string[];
   formaPagamentoId?: string;
+  formaPagamentoIds?: string[];
   statusCodigo?: StatusContaCodigo | StatusContaCodigo[];
+  statusCodigos?: StatusContaCodigo[];
+  dataEmissaoInicial?: string;
+  dataEmissaoFinal?: string;
   dataInicial?: string;
   dataFinal?: string;
+  valorMinimo?: number;
+  valorMaximo?: number;
+  ehRecorrente?: boolean;
 };
 
 export type ContaReceberResumo = {
@@ -192,6 +206,7 @@ export type ContaReceberResumo = {
   descricao: string;
   pagadorId: string;
   pagadorNome: string;
+  responsavelNome: string | null;
   dataEmissao: string;
   dataVencimento: string;
   dataLiquidacao: string | null;
@@ -266,16 +281,29 @@ export type ContaReceberPayload = {
 };
 
 export type ContaReceberFilters = ListQueryBase & {
+  numeroDocumento?: string;
+  descricao?: string;
   pagadorId?: string;
+  pagadorIds?: string[];
   formaPagamentoId?: string;
+  formaPagamentoIds?: string[];
   statusCodigo?: StatusContaCodigo | StatusContaCodigo[];
+  statusCodigos?: StatusContaCodigo[];
+  dataEmissaoInicial?: string;
+  dataEmissaoFinal?: string;
   dataInicial?: string;
   dataFinal?: string;
+  valorMinimo?: number;
+  valorMaximo?: number;
+  ehRecorrente?: boolean;
 };
 
 export type LiquidacaoPayload = {
+  valorLiquidacao: number;
   dataLiquidacao: string;
   contaBancariaId: string;
+  formaPagamentoId: string;
+  atualizarValorConta: boolean;
 };
 
 export type GerarOcorrenciasPayload = {
@@ -304,7 +332,6 @@ export type MovimentacaoResumo = {
 };
 
 export type MovimentacaoDetalhe = MovimentacaoResumo & {
-  dataConciliacao: string | null;
   createdAtUtc: string;
   updatedAtUtc: string;
 };
@@ -369,9 +396,11 @@ export type FaturaDetalhe = FaturaResumo & {
 };
 
 export type FaturaFilters = ListQueryBase & {
-  cartaoId?: string;
+  cartaoId?: string | string[];
+  cartaoIds?: string[];
   competencia?: string;
-  statusCodigo?: StatusFaturaCodigo;
+  statusCodigo?: StatusFaturaCodigo | StatusFaturaCodigo[];
+  statusCodigos?: StatusFaturaCodigo[];
   dataVencimentoInicial?: string;
   dataVencimentoFinal?: string;
   dataFechamentoInicial?: string;

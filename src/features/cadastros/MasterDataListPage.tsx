@@ -1,6 +1,4 @@
-import { useDeferredValue, useEffect, useState } from 'react';
-import { Input, Select, Space } from 'antd';
-import type { TableColumnsType } from 'antd';
+import { useCallback, useDeferredValue, useEffect, useState } from 'react';
 import {
   CheckCircleOutlined,
   EditOutlined,
@@ -8,12 +6,24 @@ import {
   FileAddOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
-  PlusOutlined
+  PlusOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { AppDataTable } from '../../components/data/AppDataTable';
+import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
+import { ExportButton } from '../../components/data/ExportButton';
 import { IconActionButton } from '../../components/data/IconActionButton';
 import { ListSummaryCards } from '../../components/data/ListSummaryCards';
+import { estimateActionsColumnWidth } from './master-data-list-helpers';
+import { Button } from '../../components/ui/Button';
+import {
+  FilterCard,
+  FilterField,
+  FilterInputWrapper,
+  filterInputClass,
+  ListPageShell,
+  MultiSelectFilter
+} from '../../components/layout';
 import type { MasterDataModuleConfig, RowAction, SelectOption } from './module-config';
 
 type KeyedValue<T> = {
@@ -21,28 +31,40 @@ type KeyedValue<T> = {
   value: T;
 };
 
-function normalizeSelectValue(value: string | boolean | undefined) {
-  if (value === '' || value === undefined) {
+function asMultiValue(value: unknown) {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is string | boolean | number => ['string', 'boolean', 'number'].includes(typeof item))
+      .map(String);
+  }
+
+  if (typeof value === 'string' && value.length > 0) {
+    return [value];
+  }
+
+  if (typeof value === 'boolean' || typeof value === 'number') {
+    return [String(value)];
+  }
+
+  return [];
+}
+
+function resolveFilterValue(filter: { kind: 'text' | 'select' | 'multiselect'; options?: SelectOption[] }, selected: string[]) {
+  if (selected.length === 0) {
     return undefined;
   }
 
-  if (value === 'true') {
-    return true;
+  const values = selected.map((value) => filter.options?.find((option) => String(option.value) === value)?.value ?? value);
+
+  if (values.every((value) => typeof value === 'boolean')) {
+    return values.length === 1 ? values[0] : undefined;
   }
 
-  if (value === 'false') {
-    return false;
+  if (filter.kind === 'select') {
+    return values[0];
   }
 
-  return value;
-}
-
-export function estimateActionsColumnWidth<TSummary>(rowActions: RowAction<TSummary>[] | undefined) {
-  if (!rowActions?.length) {
-    return 96;
-  }
-
-  return Math.max(96, Math.min(220, rowActions.length * 44 + 20));
+  return values;
 }
 
 function resolveActionIcon<TSummary>(action: RowAction<TSummary>, record: TSummary) {
@@ -92,7 +114,7 @@ function buildColumns<TSummary extends { id: string }>(
       fixed: 'right' as const,
       width: actionsColumnWidth ?? estimateActionsColumnWidth(rowActions),
       render: (_value: unknown, record: TSummary) => (
-        <Space size={4} wrap>
+        <div className="flex flex-wrap items-center justify-end gap-1">
           {rowActions
             .filter((action) => action.isVisible?.(record) ?? true)
             .map((action) => {
@@ -118,7 +140,7 @@ function buildColumns<TSummary extends { id: string }>(
                 />
               );
             })}
-        </Space>
+        </div>
       )
     }
   ] satisfies TableColumnsType<TSummary>;
@@ -143,7 +165,7 @@ export function MasterDataListPage({
   const [errorState, setErrorState] = useState<KeyedValue<string> | undefined>();
   const errorMessage = errorState?.configKey === config.key ? errorState.value : undefined;
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setErrorState(undefined);
 
@@ -161,7 +183,7 @@ export function MasterDataListPage({
     } finally {
       setLoading(false);
     }
-  }
+  }, [config, deferredFilters]);
 
   useEffect(() => {
     setFiltersState({
@@ -171,91 +193,80 @@ export function MasterDataListPage({
     setDataState(undefined);
     setErrorState(undefined);
     setLoading(false);
-  }, [config.key]);
+  }, [config.key, config.defaultFilters]);
 
   useEffect(() => {
     void loadData();
-  }, [config.key, deferredFilters.page, deferredFilters.pageSize, JSON.stringify(deferredFilters)]);
+  }, [loadData]);
 
   const columns = buildColumns(
     config.columns,
-    config.rowActions as RowAction<any>[] | undefined,
+    config.rowActions,
     loadData,
     config.actionsColumnWidth
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-        <div>
-          <h2 className="text-on-surface-variant font-label text-xs uppercase tracking-[0.2em] mb-2">Cadastros</h2>
-          <h1 className="text-4xl md:text-5xl font-headline font-extrabold tracking-tighter text-white mb-2 neon-glow">
-            {config.title}
-          </h1>
-          <p className="text-on-surface-variant font-medium">{config.listDescription}</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => navigate(`${config.routeBase}/novo`)}
-          className="bg-primary hover:bg-primary-container text-on-primary font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-[0_4px_20px_rgba(63,255,139,0.2)] self-start md:self-auto"
-        >
-          <PlusOutlined aria-hidden className="text-lg" />
-          Nova {config.singularTitle.toLowerCase()}
-        </button>
-      </div>
-
-      {/* Filters */}
-      {config.filters.length > 0 ? (
-        <div className="bg-surface-container-low p-5 rounded-3xl border border-white/5 flex flex-wrap items-end gap-4">
-          {config.filters.map((filter) => (
-            <div key={filter.name} className="space-y-2">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant px-1">
-                {filter.label}
-              </label>
-              {filter.kind === 'text' ? (
-                <Input
-                  placeholder={filter.placeholder ?? filter.label}
-                  value={String((filters as Record<string, unknown>)[filter.name] ?? '')}
-                  onChange={(event) =>
-                    setFiltersState({
-                      configKey: config.key,
-                      value: {
-                        ...filters,
-                        page: 1,
-                        [filter.name]: event.target.value
+    <ListPageShell
+      actions={
+        <>
+          {config.exportColumns && config.exportColumns.length > 0 && (
+            <ExportButton
+              fetchPage={config.list}
+              filters={filters}
+              columns={config.exportColumns}
+              filename={config.key}
+            />
+          )}
+          <Button onClick={() => navigate(`${config.routeBase}/novo`)} icon={<PlusOutlined aria-hidden />}>
+            {config.createLabel ?? `Nova ${config.singularTitle.toLowerCase()}`}
+          </Button>
+        </>
+      }
+      filters={
+        config.filters.length > 0 ? (
+        <FilterCard>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {config.filters.map((filter) => (
+              <FilterField key={filter.name} label={filter.label}>
+                {filter.kind === 'text' ? (
+                  <FilterInputWrapper icon={<SearchOutlined />}>
+                    <input
+                      placeholder={filter.placeholder ?? filter.label}
+                      value={String((filters as Record<string, unknown>)[filter.name] ?? '')}
+                      onChange={(event) =>
+                        setFiltersState({
+                          configKey: config.key,
+                          value: { ...filters, page: 1, [filter.name]: event.target.value }
+                        })
                       }
-                    })
-                  }
-                  style={{ width: 240 }}
-                />
-              ) : (
-                <Select
-                  placeholder={filter.label}
-                  options={filter.options as SelectOption[]}
-                  value={
-                    typeof (filters as Record<string, unknown>)[filter.name] === 'boolean'
-                      ? String((filters as Record<string, unknown>)[filter.name])
-                      : ((filters as Record<string, unknown>)[filter.name] as string | undefined)
-                  }
-                  onChange={(value) =>
-                    setFiltersState({
-                      configKey: config.key,
-                      value: {
-                        ...filters,
-                        page: 1,
-                        [filter.name]: normalizeSelectValue(value)
-                      }
-                    })
-                  }
-                  style={{ minWidth: 180 }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      ) : null}
-
+                      className={filterInputClass}
+                    />
+                  </FilterInputWrapper>
+                ) : filter.kind === 'multiselect' || filter.kind === 'select' ? (
+                  <MultiSelectFilter
+                    ariaLabel={filter.label}
+                    placeholder={filter.placeholder ?? 'Todos'}
+                    options={(filter.options as SelectOption[]).map((opt) => ({
+                      label: opt.label,
+                      value: String(opt.value ?? '')
+                    }))}
+                    value={asMultiValue((filters as Record<string, unknown>)[filter.name])}
+                    onChange={(next) =>
+                      setFiltersState({
+                        configKey: config.key,
+                        value: { ...filters, page: 1, [filter.name]: resolveFilterValue(filter, next) }
+                      })
+                    }
+                  />
+                ) : null}
+              </FilterField>
+            ))}
+          </div>
+        </FilterCard>
+        ) : undefined
+      }
+    >
       {config.buildSummaryItems && data?.summary ? <ListSummaryCards items={config.buildSummaryItems(data.summary)} /> : null}
 
       <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-white/5">
@@ -288,6 +299,6 @@ export function MasterDataListPage({
           }}
         />
       </div>
-    </div>
+    </ListPageShell>
   );
 }

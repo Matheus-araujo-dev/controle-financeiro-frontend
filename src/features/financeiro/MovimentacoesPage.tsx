@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
@@ -8,16 +8,22 @@ import {
   SearchOutlined,
   ShoppingCartOutlined,
   WalletOutlined,
-  DownloadOutlined,
-  PrinterOutlined,
-  CalendarOutlined,
   FilterOutlined,
-  SafetyCertificateOutlined,
   UserOutlined
 } from '@ant-design/icons';
-import { Select, Tooltip } from 'antd';
+import { DateInput } from '../../components/forms/DateInput';
 import type { MovimentacaoFilters, MovimentacaoResumo, NaturezaMovimentacao, TipoMovimentacao } from '../../types/financeiro';
 import { AppDataTable } from '../../components/data/AppDataTable';
+import { StatusBadge, type StatusTone } from '../../components/data/StatusBadge';
+import {
+  FilterCard,
+  FilterField,
+  FilterInputWrapper,
+  filterInputClass,
+  ListPageShell,
+  MultiSelectFilter,
+  SummaryCard
+} from '../../components/layout';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
@@ -36,16 +42,20 @@ const naturezaOptions: Array<{ label: string; value: NaturezaMovimentacao | '' }
   { label: 'Econômica', value: 'Economica' }
 ];
 
-const allAccountsValue = '__ALL_ACCOUNTS__';
-const allResponsiblesValue = '__ALL_RESPONSIBLES__';
-
-type Tone = 'positive' | 'negative' | 'neutral';
 type FilterOption = { label: string; value: string };
 
-function getMovementTone(item: MovimentacaoResumo): Tone {
-  if (item.tipo === 'Entrada') return 'positive';
-  if (item.tipo === 'Saida') return 'negative';
+function naturezaTone(value: NaturezaMovimentacao): StatusTone {
+  if (value === 'Realizada') return 'success';
+  if (value === 'Economica') return 'warning';
   return 'neutral';
+}
+
+function tipoTone(value: TipoMovimentacao): StatusTone {
+  return value === 'Entrada' ? 'success' : 'neutral';
+}
+
+function movimentacaoStatusTone(statusCodigo: string): StatusTone {
+  return statusCodigo === 'EFETIVADA' ? 'success' : 'neutral';
 }
 
 function getMovementDescriptor(item: MovimentacaoResumo) {
@@ -88,14 +98,7 @@ function getMovementDescriptor(item: MovimentacaoResumo) {
   };
 }
 
-function normalizeMultiSelectSelection(values: string[], options: FilterOption[], selectAllValue: string) {
-  if (!values.length) return undefined;
-  if (values.includes(selectAllValue)) return options.map((option) => option.value);
-  const sanitizedValues = values.filter((value) => value !== selectAllValue);
-  return sanitizedValues.length ? sanitizedValues : undefined;
-}
-
-export function MovimentacoesPage({ embedded = false }: { embedded?: boolean } = {}) {
+export function MovimentacoesPage() {
   // Link "ver extrato" das contas bancárias abre a página já filtrada pela conta.
   const contaBancariaInicial = new URLSearchParams(window.location.search).get('contaBancariaId');
 
@@ -117,22 +120,25 @@ export function MovimentacoesPage({ embedded = false }: { embedded?: boolean } =
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
 
-  async function loadData(targetFilters: MovimentacaoFilters = deferredFilters) {
-    setLoading(true);
-    setErrorMessage(undefined);
+  const loadData = useCallback(
+    async (targetFilters: MovimentacaoFilters = deferredFilters) => {
+      setLoading(true);
+      setErrorMessage(undefined);
 
-    try {
-      setData(await financeiroApi.movimentacoes.listar(targetFilters));
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar as movimentações.');
-    } finally {
-      setLoading(false);
-    }
-  }
+      try {
+        setData(await financeiroApi.movimentacoes.listar(targetFilters));
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar as movimentações.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [deferredFilters]
+  );
 
   useEffect(() => {
     void loadData();
-  }, [deferredFilters.page, deferredFilters.pageSize, JSON.stringify(deferredFilters)]);
+  }, [loadData]);
 
   useEffect(() => {
     async function loadContaBancariaOptions() {
@@ -196,167 +202,105 @@ export function MovimentacoesPage({ embedded = false }: { embedded?: boolean } =
   }, [data]);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Header & Metrics Section */}
-      <div className={`flex flex-col lg:flex-row lg:items-end gap-6 ${embedded ? 'lg:justify-end' : 'justify-between'}`}>
-        {!embedded && (
-          <div>
-            <h2 className="text-on-surface-variant font-label text-xs uppercase tracking-[0.2em] mb-2">Controle em Tempo Real</h2>
-            <h1 className="text-4xl md:text-5xl font-headline font-extrabold tracking-tighter text-white mb-2 neon-glow">
-              Extrato de Movimentações
-            </h1>
-          </div>
-        )}
+    <ListPageShell
+      summary={
+        <>
+          <SummaryCard label="Entradas" value={formatCurrencyBRL(resumo.totalEntradas)} accent="primary" icon={<ArrowDownOutlined />} />
+          <SummaryCard label="Saídas" value={formatCurrencyBRL(resumo.totalSaidas)} accent="error" icon={<ArrowUpOutlined />} />
+          <SummaryCard label="Saldo Líquido" value={formatCurrencyBRL(resumo.saldoLiquido)} accent={resumo.saldoLiquido >= 0 ? 'primary' : 'error'} highlight />
+        </>
+      }
+      filters={
+      <FilterCard className="space-y-4">
+        {/* Linha 1: Período + Tipo + Natureza */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <FilterField label="De">
+            <DateInput
+              ariaLabel="Data inicial"
+              value={filters.dataInicial ?? ''}
+              onChange={(value) => setFilters((prev) => ({ ...prev, dataInicial: value || undefined, page: 1 }))}
+            />
+          </FilterField>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="bg-surface-container p-5 rounded-3xl border border-white/5 min-w-[160px]">
-            <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest block mb-1">Entradas</span>
-            <div className="flex items-center gap-2">
-              <ArrowDownOutlined className="text-primary text-sm" />
-              <span className="text-white text-xl font-headline font-extrabold">{formatCurrencyBRL(resumo.totalEntradas)}</span>
-            </div>
-          </div>
-          <div className="bg-surface-container p-5 rounded-3xl border border-white/5 min-w-[160px]">
-            <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest block mb-1">Saídas</span>
-            <div className="flex items-center gap-2">
-              <ArrowUpOutlined className="text-error text-sm" />
-              <span className="text-white text-xl font-headline font-extrabold">{formatCurrencyBRL(resumo.totalSaidas)}</span>
-            </div>
-          </div>
-          <div className="bg-surface-container-highest p-5 rounded-3xl border border-primary/20 min-w-[180px] shadow-[0_8px_32px_rgba(63,255,139,0.1)]">
-            <span className="text-primary text-[10px] font-bold uppercase tracking-widest block mb-1">Saldo Líquido</span>
-            <span className="text-primary text-2xl font-headline font-extrabold">{formatCurrencyBRL(resumo.saldoLiquido)}</span>
-          </div>
+          <FilterField label="Até">
+            <DateInput
+              ariaLabel="Data final"
+              value={filters.dataFinal ?? ''}
+              onChange={(value) => setFilters((prev) => ({ ...prev, dataFinal: value || undefined, page: 1 }))}
+            />
+          </FilterField>
+
+          <FilterField label="Tipo">
+            <MultiSelectFilter
+              ariaLabel="Tipo"
+              icon={<FilterOutlined />}
+              options={tipoOptions}
+              value={filters.tipo ? [filters.tipo] : []}
+              onChange={(next) => setFilters((prev) => ({ ...prev, tipo: next[0] as TipoMovimentacao | undefined, page: 1 }))}
+            />
+          </FilterField>
+
+          <FilterField label="Natureza">
+            <MultiSelectFilter
+              ariaLabel="Natureza"
+              icon={<HistoryOutlined />}
+              options={naturezaOptions}
+              value={filters.natureza ? [filters.natureza] : []}
+              onChange={(next) => setFilters((prev) => ({ ...prev, natureza: next[0] as NaturezaMovimentacao | undefined, page: 1 }))}
+            />
+          </FilterField>
         </div>
-      </div>
 
-      {/* Bento Filters Section */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Date Filter */}
-        <div className="bg-surface-container-low p-5 rounded-3xl border border-white/5 space-y-3">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Período</label>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-2 rounded-xl border border-white/5">
-              <CalendarOutlined className="text-on-surface-variant text-sm" />
+        {/* Linha 2: Conta + Responsável + Busca */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_2fr] gap-3">
+          <FilterField label="Conta bancária">
+            <MultiSelectFilter
+              ariaLabel="Filtro de conta bancária"
+              icon={<WalletOutlined />}
+              placeholder="Todas as contas"
+              options={contaBancariaOptions}
+              value={filters.contaBancariaIds ?? []}
+              onChange={(next) =>
+                setFilters((prev) => ({ ...prev, contaBancariaIds: next.length ? next : undefined, page: 1 }))
+              }
+            />
+          </FilterField>
+
+          <FilterField label="Responsável">
+            <MultiSelectFilter
+              ariaLabel="Filtro de responsável"
+              icon={<UserOutlined />}
+              placeholder="Todos os responsáveis"
+              options={responsavelOptions}
+              value={filters.responsavelIds ?? []}
+              onChange={(next) =>
+                setFilters((prev) => ({ ...prev, responsavelIds: next.length ? next : undefined, page: 1 }))
+              }
+            />
+          </FilterField>
+
+          <FilterField label="Buscar">
+            <FilterInputWrapper icon={<SearchOutlined />}>
               <input
-                type="date"
-                aria-label="Data inicial"
-                className="bg-transparent border-none text-xs font-bold uppercase tracking-wider focus:ring-0 text-white w-full"
-                value={filters.dataInicial ?? ''}
-                onChange={(e) => setFilters((prev) => ({ ...prev, dataInicial: e.target.value || undefined, page: 1 }))}
+                className={filterInputClass}
+                placeholder="Filtrar por observação..."
+                value={filters.search}
+                onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))}
               />
-            </div>
-            <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-2 rounded-xl border border-white/5">
-              <CalendarOutlined className="text-on-surface-variant text-sm" />
-              <input
-                type="date"
-                aria-label="Data final"
-                className="bg-transparent border-none text-xs font-bold uppercase tracking-wider focus:ring-0 text-white w-full"
-                value={filters.dataFinal ?? ''}
-                onChange={(e) => setFilters((prev) => ({ ...prev, dataFinal: e.target.value || undefined, page: 1 }))}
-              />
-            </div>
-          </div>
+              {filters.search && (
+                <button
+                  onClick={() => setFilters(prev => ({ ...prev, search: '', page: 1 }))}
+                  className="text-on-surface-variant hover:text-white text-xs shrink-0"
+                >×</button>
+              )}
+            </FilterInputWrapper>
+          </FilterField>
         </div>
-
-        <div className="bg-surface-container-low p-5 rounded-3xl border border-white/5 space-y-3">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Contas e Responsáveis</label>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-1 rounded-xl border border-white/5 min-h-[42px]">
-              <WalletOutlined className="text-on-surface-variant text-sm shrink-0" />
-              <Select
-                mode="multiple"
-                allowClear
-                aria-label="Filtro de conta bancária"
-                placeholder="Todas as Contas"
-                className="neon-select-simple w-full"
-                value={filters.contaBancariaIds}
-                onChange={(vals) => setFilters((prev) => ({ ...prev, contaBancariaIds: vals, page: 1 }))}
-                options={contaBancariaOptions}
-                maxTagCount="responsive"
-                variant="borderless"
-              />
-            </div>
-            <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-1 rounded-xl border border-white/5 min-h-[42px]">
-              <UserOutlined className="text-on-surface-variant text-sm shrink-0" />
-              <Select
-                mode="multiple"
-                allowClear
-                aria-label="Filtro de responsável"
-                placeholder="Todos os Responsáveis"
-                className="neon-select-simple w-full"
-                value={filters.responsavelIds}
-                onChange={(vals) => setFilters((prev) => ({ ...prev, responsavelIds: vals, page: 1 }))}
-                options={responsavelOptions}
-                maxTagCount="responsive"
-                variant="borderless"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Classification Filter */}
-        <div className="bg-surface-container-low p-5 rounded-3xl border border-white/5 space-y-3">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Classificação</label>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-2 rounded-xl border border-white/5">
-                <FilterOutlined className="text-on-surface-variant text-sm" />
-                <select
-                    className="bg-transparent border-none text-xs font-bold uppercase tracking-wider focus:ring-0 text-white w-full"
-                    value={filters.tipo ?? ''}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, tipo: (e.target.value as TipoMovimentacao) || undefined, page: 1 }))}
-                >
-                    {tipoOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
-            </div>
-            <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-2 rounded-xl border border-white/5">
-                <HistoryOutlined className="text-on-surface-variant text-sm" />
-                <select
-                    className="bg-transparent border-none text-xs font-bold uppercase tracking-wider focus:ring-0 text-white w-full"
-                    value={filters.natureza ?? ''}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, natureza: (e.target.value as NaturezaMovimentacao) || undefined, page: 1 }))}
-                >
-                    {naturezaOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Search Filter */}
-        <div className="bg-surface-container-low p-5 rounded-3xl border border-white/5 space-y-3">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Busca</label>
-            <div className="flex items-center gap-2 bg-surface-container-highest px-3 py-3 rounded-xl border border-white/5 h-[46px]">
-                <SearchOutlined className="text-on-surface-variant text-sm" />
-                <input
-                    className="bg-transparent border-none text-xs font-bold uppercase tracking-wider focus:ring-0 text-white w-full placeholder:text-on-surface-variant"
-                    placeholder="Filtrar por observação..."
-                    value={filters.search}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))}
-                />
-            </div>
-            <button
-              onClick={() => void loadData()}
-              className="w-full bg-primary hover:bg-primary-container text-on-primary font-bold py-2 rounded-xl transition-all active:scale-95 shadow-[0_4px_15px_rgba(63,255,139,0.15)] text-xs uppercase tracking-widest"
-            >
-              Aplicar Filtros
-            </button>
-        </div>
-      </div>
-
+      </FilterCard>
+      }
+    >
       {/* Main Ledger Section */}
       <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-white/5">
-        <div className="p-6 border-b border-white/5 flex justify-between items-center">
-            <h3 className="text-lg font-headline font-bold text-white">Transações do Período</h3>
-            <div className="flex gap-2">
-                <button className="p-2 hover:bg-white/5 rounded-lg text-on-surface-variant hover:text-primary transition-all">
-                    <DownloadOutlined className="text-lg" />
-                </button>
-                <button className="p-2 hover:bg-white/5 rounded-lg text-on-surface-variant hover:text-primary transition-all">
-                    <PrinterOutlined className="text-lg" />
-                </button>
-            </div>
-        </div>
-
         <AppDataTable
           rowKey="id"
           loading={loading}
@@ -397,19 +341,12 @@ export function MovimentacoesPage({ embedded = false }: { embedded?: boolean } =
               dataIndex: 'natureza',
               key: 'natureza',
               render: (value, record: MovimentacaoResumo) => {
-                  const natureColors = {
-                      Realizada: 'bg-primary/20 text-primary border-primary/20',
-                      Prevista: 'bg-white/5 text-on-surface-variant border-white/10',
-                      Economica: 'bg-tertiary/20 text-tertiary border-tertiary/20'
-                  };
-                  const activeStyle = natureColors[value as keyof typeof natureColors] || natureColors.Prevista;
-
-                  return (
-                    <div className="flex flex-col gap-1 items-start">
-                        <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold border ${activeStyle}`}>{value}</span>
-                        <span className="text-[10px] font-bold text-on-surface-variant/60 uppercase ml-0.5">{record.tipo}</span>
-                    </div>
-                  );
+                return (
+                  <div className="flex flex-col items-start gap-1">
+                    <StatusBadge label={String(value)} tone={naturezaTone(value as NaturezaMovimentacao)} />
+                    <StatusBadge label={record.tipo} tone={tipoTone(record.tipo)} />
+                  </div>
+                );
               }
             },
             {
@@ -446,10 +383,7 @@ export function MovimentacoesPage({ embedded = false }: { embedded?: boolean } =
                         {`${prefix} ${formatCurrencyBRL(Math.abs(Number(value)))}`}
                       </span>
                       {record.statusNome && (
-                        <div className="flex items-center gap-1">
-                            <SafetyCertificateOutlined className="text-[9px] text-on-surface-variant" />
-                            <span className="text-[9px] font-bold text-on-surface-variant uppercase">{record.statusNome}</span>
-                        </div>
+                        <StatusBadge label={record.statusNome} tone={movimentacaoStatusTone(record.statusCodigo)} />
                       )}
                   </div>
                 );
@@ -467,11 +401,30 @@ export function MovimentacoesPage({ embedded = false }: { embedded?: boolean } =
               )
             }
           ]}
+          onTableChange={(pagination, _f, sorter) => {
+            const s = Array.isArray(sorter) ? sorter[0] : sorter;
+            const sortKey =
+              typeof s?.columnKey === 'string'
+                ? s.columnKey
+                : typeof s?.field === 'string'
+                  ? s.field
+                  : undefined;
+
+            setFilters((current) => ({
+              ...current,
+              page: pagination.current ?? current.page,
+              pageSize: pagination.pageSize ?? current.pageSize,
+              sortBy: sortKey,
+              sortDirection: s?.order === 'ascend' ? 'Asc' : s?.order === 'descend' ? 'Desc' : undefined
+            }));
+          }}
           pagination={{
             current: data?.page ?? filters.page,
             pageSize: data?.pageSize ?? filters.pageSize,
             total: data?.totalItems ?? 0,
             showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+            showTotal: (total, range) => `${range[0]}–${range[1]} de ${total} registros`,
             onChange: (page, pageSize) =>
               setFilters((current) => ({
                 ...current,
@@ -481,6 +434,6 @@ export function MovimentacoesPage({ embedded = false }: { embedded?: boolean } =
           }}
         />
       </div>
-    </div>
+    </ListPageShell>
   );
 }

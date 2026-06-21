@@ -4,13 +4,14 @@ import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { Link, useParams } from 'react-router-dom';
 import { AppDataTable } from '../../components/data/AppDataTable';
 import { IconActionButton } from '../../components/data/IconActionButton';
+import { DateInput } from '../../components/forms/DateInput';
 import { ListSummaryCards } from '../../components/data/ListSummaryCards';
 import { PageState } from '../../components/states/PageState';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { getApiErrorMessage, getApiFieldErrors } from '../../services/http/api-error';
 import { importacoesWhatsappApi } from '../../services/http/importacoes-whatsapp-api';
 import { notify } from '../../store/notification-store';
-import { mapContaGerencialSelectOptionsWithData } from '../../shared/conta-gerencial';
+import { filterContaGerencialLancavel, mapContaGerencialSelectOptionsWithData } from '../../shared/conta-gerencial';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
 import type { ImportacaoWhatsappDetalhe, ItemImportadoWhatsapp } from '../../types/importacoes-whatsapp';
@@ -417,7 +418,7 @@ export function ImportacaoWhatsappDetailPage() {
         setItemDrafts(
           Object.fromEntries(importacao.itens.map((item) => [item.id, buildInitialDraft(item)]))
         );
-        setContasGerenciaisOptions(mapContaGerencialSelectOptionsWithData(contasGerenciais.items));
+        setContasGerenciaisOptions(mapContaGerencialSelectOptionsWithData(filterContaGerencialLancavel(contasGerenciais.items)));
         setResponsavelOptions(peopleOptions);
         setRecebedorOptions(peopleOptions);
         setCartaoOptions(builtCardOptions);
@@ -922,14 +923,10 @@ export function ImportacaoWhatsappDetailPage() {
                             </div>
 
                             {requiresManualDueDate ? (
-                              <Input
-                                size="small"
-                                type="date"
-                                aria-label={`Vencimento do receber ${record.id}`}
+                              <DateInput
+                                ariaLabel={`Vencimento do receber ${record.id}`}
                                 value={draft.dataVencimentoContaReceber}
-                                onChange={(event) =>
-                                  updateDraft(record.id, { dataVencimentoContaReceber: event.target.value })
-                                }
+                                onChange={(value) => updateDraft(record.id, { dataVencimentoContaReceber: value })}
                               />
                             ) : null}
                           </>
@@ -971,7 +968,6 @@ export function ImportacaoWhatsappDetailPage() {
                           ) : null}
                           {record.marcarComoRecorrente ? <Tag color="gold">Recorrente mensal</Tag> : null}
                           {record.contaReceberId ? <Tag color="green">Conta a receber gerada</Tag> : null}
-                          {record.movimentacaoFinanceiraId ? <Tag color="green">Conciliado</Tag> : null}
                         </div>
                         {record.observacao ? <Typography.Text type="secondary">Obs.: {record.observacao}</Typography.Text> : null}
                       </div>

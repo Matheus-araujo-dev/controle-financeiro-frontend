@@ -2,10 +2,22 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ComprasPlanejadasListPage } from './ComprasPlanejadasListPage';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
+import { cadastrosApi } from '../../services/http/cadastros-api';
 
 vi.mock('../../services/http/compras-planejadas-api', () => ({
   comprasPlanejadasApi: {
     listar: vi.fn()
+  }
+}));
+
+vi.mock('../../services/http/cadastros-api', () => ({
+  cadastrosApi: {
+    contasGerenciais: {
+      listar: vi.fn()
+    },
+    pessoas: {
+      listar: vi.fn()
+    }
   }
 }));
 
@@ -52,24 +64,41 @@ describe('ComprasPlanejadasListPage', () => {
         valorTotalEstimado: 4500
       }
     });
+    vi.mocked(cadastrosApi.contasGerenciais.listar).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 200,
+      totalItems: 0,
+      totalPages: 0
+    });
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 200,
+      totalItems: 0,
+      totalPages: 0
+    });
   });
 
   it('renders the planner list without crashing and shows the fetched item', async () => {
     renderPage();
 
-    expect(await screen.findByText('Planejador de Compras')).toBeInTheDocument();
+    expect(await screen.findByText('Nova compra planejada')).toBeInTheDocument();
     expect(screen.getByText('Notebook novo')).toBeInTheDocument();
     expect(screen.getByText('Tecnologia')).toBeInTheDocument();
     expect(screen.getAllByText(/4\.500,00/).length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: /adquirir/i })).toHaveAttribute('href', '/compras-planejadas/cp-1/realizar');
 
     await waitFor(() =>
-      expect(comprasPlanejadasApi.listar).toHaveBeenCalledWith({
-        page: 1,
-        pageSize: 50,
-        search: '',
-        status: undefined
-      })
+      expect(comprasPlanejadasApi.listar).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: 1,
+          pageSize: 20,
+          search: '',
+          sortBy: 'dataDesejada',
+          sortDirection: 'Asc'
+        })
+      )
     );
   });
 });

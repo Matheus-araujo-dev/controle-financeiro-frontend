@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { NovaCompraPlanejadaPage } from './NovaCompraPlanejadaPage';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
+import { selectDateInDateInput } from '../../test/date-input';
 
 const navigateMock = vi.fn();
 
@@ -44,9 +45,12 @@ function renderPage() {
 }
 
 describe('NovaCompraPlanejadaPage', () => {
+  const tomorrow = new Date();
+
   beforeEach(() => {
     navigateMock.mockReset();
     vi.clearAllMocks();
+    tomorrow.setDate(new Date().getDate() + 1);
 
     vi.mocked(cadastrosApi.contasGerenciais.listar).mockResolvedValue({
       items: [
@@ -111,8 +115,7 @@ describe('NovaCompraPlanejadaPage', () => {
   it('renders the dedicated planning form sections', async () => {
     renderPage();
 
-    expect(await screen.findByText('Cadastro de Compra')).toBeInTheDocument();
-    expect(screen.getByText('Classificação Técnica')).toBeInTheDocument();
+    expect(await screen.findByText('Classificação Técnica')).toBeInTheDocument();
     expect(screen.getByText('Configurações de Fluxo')).toBeInTheDocument();
     expect(screen.getByText('Pronto para salvar?')).toBeInTheDocument();
     expect(screen.getByLabelText('Título da Compra')).toBeInTheDocument();
@@ -122,7 +125,7 @@ describe('NovaCompraPlanejadaPage', () => {
   it('submits the planned purchase payload and navigates back to the planner', async () => {
     renderPage();
 
-    expect(await screen.findByText('Cadastro de Compra')).toBeInTheDocument();
+    expect(await screen.findByText('Classificação Técnica')).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('Título da Compra'), 'Notebook novo');
     await userEvent.type(screen.getByLabelText('Descrição Detalhada'), 'Troca do equipamento principal');
@@ -131,17 +134,19 @@ describe('NovaCompraPlanejadaPage', () => {
       target: { value: '4500' }
     });
 
-    fireEvent.change(screen.getByLabelText('Data Desejada'), {
-      target: { value: '2026-11-20' }
-    });
+    const tomorrowIso = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+
+    await selectDateInDateInput('Data Desejada', tomorrowIso);
 
     await userEvent.click(screen.getByLabelText('Parcelável'));
     fireEvent.change(screen.getByLabelText('Parcelas Desejadas'), {
       target: { value: '10' }
     });
 
-    await userEvent.selectOptions(screen.getByLabelText('Conta Gerencial'), 'cg-1');
-    await userEvent.selectOptions(screen.getByLabelText('Responsável'), 'p-1');
+    await userEvent.click(screen.getByLabelText('Conta Gerencial'));
+    await userEvent.click(screen.getByRole('button', { name: 'DES.10.01 - Tecnologia' }));
+    await userEvent.click(screen.getByLabelText('Responsável'));
+    await userEvent.click(screen.getByRole('button', { name: 'Michelle' }));
 
     await userEvent.type(screen.getByLabelText('Link de Referência'), 'https://loja.exemplo.com/notebook');
     await userEvent.type(screen.getByLabelText('Observações Internas'), 'Aguardar melhor janela');
@@ -155,7 +160,7 @@ describe('NovaCompraPlanejadaPage', () => {
         titulo: 'Notebook novo',
         descricao: 'Troca do equipamento principal',
         valorEstimado: 4500,
-        dataDesejada: '2026-11-20',
+        dataDesejada: tomorrowIso,
         prioridade: 'Media',
         status: 'Planejada',
         parcelavel: true,

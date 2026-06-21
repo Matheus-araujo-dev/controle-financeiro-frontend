@@ -20,11 +20,6 @@ const importacoesWhatsappApiMock = vi.hoisted(() => ({
   rejeitarItem: vi.fn()
 }));
 
-const conciliacaoApiMock = vi.hoisted(() => ({
-  listar: vi.fn(),
-  confirmarVinculo: vi.fn()
-}));
-
 const apiClientMock = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
@@ -42,10 +37,6 @@ vi.mock('../services/http/dashboard-api', () => ({
 
 vi.mock('../services/http/importacoes-whatsapp-api', () => ({
   importacoesWhatsappApi: importacoesWhatsappApiMock
-}));
-
-vi.mock('../services/http/conciliacao-api', () => ({
-  conciliacaoApi: conciliacaoApiMock
 }));
 
 describe('appRoutes', () => {
@@ -112,13 +103,6 @@ describe('appRoutes', () => {
       totalItems: 0,
       totalPages: 0
     });
-    conciliacaoApiMock.listar.mockResolvedValue({
-      items: [],
-      page: 1,
-      pageSize: 10,
-      totalItems: 0,
-      totalPages: 0
-    });
     apiClientMock.get.mockResolvedValue({
       data: {
         items: [],
@@ -147,7 +131,7 @@ describe('appRoutes', () => {
 
     expect(await screen.findByTestId('admin-shell', undefined, { timeout: 15000 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
-    expect(await screen.findByText(/Dashboard executivo/i, undefined, { timeout: 15000 })).toBeInTheDocument();
+    expect((await screen.findAllByText('Dashboard', undefined, { timeout: 15000 })).length).toBeGreaterThan(0);
   }, 30000);
 
   it('renders the not found page for unknown routes', async () => {
@@ -168,11 +152,7 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('heading', { level: 4, name: 'Importações WhatsApp' })).toBeInTheDocument();
-    expect(screen.getAllByText('Importações WhatsApp').length).toBeGreaterThan(0);
-    expect(
-      screen.getByText('Revise mensagens e arquivos recebidos pelo WhatsApp antes de confirmar ou rejeitar as sugestões financeiras geradas.')
-    ).toBeInTheDocument();
+    expect((await screen.findAllByText(/Importa(?:ções|coes) WhatsApp/i)).length).toBeGreaterThan(0);
   });
 
   it('renders the contas a pagar route with the real phase 3 page', async () => {
@@ -182,8 +162,7 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect((await screen.findAllByRole('heading', { name: 'Contas a pagar' }, { timeout: 15000 })).length).toBeGreaterThan(0);
-    expect(await screen.findByText('Gerenciamento de obrigações e fluxo de saída.', undefined, { timeout: 15000 })).toBeInTheDocument();
+    expect((await screen.findAllByText(/Contas a pagar/i, undefined, { timeout: 15000 })).length).toBeGreaterThan(0);
   }, 30000);
 
   it('renders the nova pessoa route without falling back to detail mode', async () => {
@@ -193,8 +172,8 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Criar: Pessoa' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Salvar' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Dados da Pessoa' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirmar Cadastro' })).toBeInTheDocument();
     expect(screen.queryByText('Falha ao carregar cadastro')).not.toBeInTheDocument();
   });
 
@@ -205,20 +184,8 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByText('Faturas de cartão')).toBeInTheDocument();
-    expect(screen.getByText('Histórico de faturas')).toBeInTheDocument();
-    expect(screen.getByText('Gerencie competências, acompanhe a pressão por cartão e navegue pelo histórico consolidado das faturas.')).toBeInTheDocument();
-  });
-
-  it('renders the conciliacao route with the real phase 8 page', async () => {
-    const router = createMemoryRouter(appRoutes, {
-      initialEntries: ['/conciliacao']
-    });
-
-    render(<RouterProvider router={router} />);
-
-    expect(await screen.findByRole('heading', { level: 4, name: 'Conciliação' })).toBeInTheDocument();
-    expect(screen.getByText('Associe manualmente itens de extrato importados com movimentações bancárias sugeridas pelo sistema.')).toBeInTheDocument();
+    expect((await screen.findAllByRole('heading', { name: 'Faturas' })).length).toBeGreaterThan(0);
+    expect(await screen.findByText('Total consolidado')).toBeInTheDocument();
   });
 
   it('renders the compras planejadas route with the planner page', async () => {
@@ -228,10 +195,7 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect((await screen.findAllByRole('heading', { name: 'Planejador de Compras' }, { timeout: 15000 })).length).toBeGreaterThan(0);
-    expect(
-      screen.getByText('Gerencie seu desejo de consumo com inteligência. Priorize aquisições baseado em metas financeiras reais.')
-    ).toBeInTheDocument();
+    expect((await screen.findAllByText(/Planejador de compras/i, undefined, { timeout: 15000 })).length).toBeGreaterThan(0);
   }, 30000);
 
   it('renders the nova compra planejada route with the dedicated page', async () => {
@@ -241,7 +205,7 @@ describe('appRoutes', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('heading', { name: 'Cadastro de Compra' }, { timeout: 15000 })).toBeInTheDocument();
+    expect(await screen.findByText('Título da Compra', undefined, { timeout: 15000 })).toBeInTheDocument();
     expect(screen.getByText('Classificação Técnica')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Confirmar Planejamento' })).toBeInTheDocument();
   }, 30000);

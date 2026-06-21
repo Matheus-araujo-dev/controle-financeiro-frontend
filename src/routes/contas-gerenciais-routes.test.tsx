@@ -1,7 +1,9 @@
+import { Suspense } from 'react';
 import { render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '../store/auth-store';
 import { appRoutes } from './router';
+import '../features/cadastros/MasterDataListPage';
 
 const apiClientMock = vi.hoisted(() => ({
   get: vi.fn(),
@@ -13,6 +15,18 @@ const apiClientMock = vi.hoisted(() => ({
 vi.mock('../services/http/api-client', () => ({
   apiClient: apiClientMock
 }));
+
+function renderRoute(initialEntry: string) {
+  const router = createMemoryRouter(appRoutes, {
+    initialEntries: [initialEntry]
+  });
+
+  render(
+    <Suspense fallback={<div>Carregando...</div>}>
+      <RouterProvider router={router} />
+    </Suspense>
+  );
+}
 
 describe('contas gerenciais routes', () => {
   beforeEach(() => {
@@ -44,26 +58,18 @@ describe('contas gerenciais routes', () => {
     window.localStorage.clear();
   });
 
-  it('renders the dedicated contas gerenciais list route', async () => {
-    const router = createMemoryRouter(appRoutes, {
-      initialEntries: ['/contas-gerenciais']
-    });
+  it('renders the master data contas gerenciais list route', async () => {
+    renderRoute('/contas-gerenciais');
 
-    render(<RouterProvider router={router} />);
-
-    expect(await screen.findByRole('heading', { level: 1, name: 'Contas Gerenciais' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Criar Nova Conta/i })).toHaveAttribute('href', '/contas-gerenciais/novo');
+    expect(await screen.findByPlaceholderText('Código ou descrição')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Nova conta gerencial/i })).toBeInTheDocument();
   });
 
-  it('renders the dedicated contas gerenciais form route', async () => {
-    const router = createMemoryRouter(appRoutes, {
-      initialEntries: ['/contas-gerenciais/novo']
-    });
+  it('renders the master data contas gerenciais form route', async () => {
+    renderRoute('/contas-gerenciais/novo');
 
-    render(<RouterProvider router={router} />);
-
-    expect(await screen.findByRole('heading', { level: 1, name: 'Cadastro de Conta Gerencial' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Descricao da conta')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Salvar conta' }).length).toBeGreaterThan(0);
+    expect(await screen.findByRole('button', { name: 'Confirmar Cadastro' })).toBeInTheDocument();
+    expect(screen.getByText('Código')).toBeInTheDocument();
+    expect(screen.getByText('Descrição')).toBeInTheDocument();
   });
 });

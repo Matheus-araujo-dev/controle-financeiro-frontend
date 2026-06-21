@@ -15,6 +15,10 @@ describe('LoginPage', () => {
 
   it('stores the session and redirects to the requested route', async () => {
     const user = userEvent.setup();
+    useAuthStore.setState({
+      mode: 'development',
+      currentUser: null
+    });
 
     render(
       <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: '/dashboard' } }]}>

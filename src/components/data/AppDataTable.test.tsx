@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { TableColumnsType } from 'antd';
-import { AppDataTable } from './AppDataTable';
+import { AppDataTable, type TableColumnsType } from './AppDataTable';
 
 type Row = {
   id: string;
@@ -77,10 +76,11 @@ describe('AppDataTable', () => {
     expect(screen.getByText('Registro base')).toBeInTheDocument();
   });
 
-  it('sorts rows locally when clicking the column header', async () => {
+  it('emits server-side sort intent when clicking the column header', async () => {
     const user = userEvent.setup();
+    const onTableChange = vi.fn();
 
-    const { container } = render(
+    render(
       <AppDataTable<Row>
         columns={columns}
         dataSource={[
@@ -88,14 +88,18 @@ describe('AppDataTable', () => {
           { id: '1', name: 'Alpha' }
         ]}
         rowKey="id"
+        onTableChange={onTableChange}
+        pagination={{ current: 1, pageSize: 20, total: 2 }}
       />
     );
 
     await user.click(screen.getByText('Nome'));
     await waitFor(() => {
-      const cells = Array.from(container.querySelectorAll('.ant-table-row .ant-table-cell'));
-      expect(cells[0]).toHaveTextContent('Alpha');
-      expect(cells[1]).toHaveTextContent('Zulu');
+      expect(onTableChange).toHaveBeenCalledWith(
+        expect.objectContaining({ current: 1, pageSize: 20 }),
+        {},
+        expect.objectContaining({ columnKey: 'name', order: 'ascend' })
+      );
     });
   });
 });

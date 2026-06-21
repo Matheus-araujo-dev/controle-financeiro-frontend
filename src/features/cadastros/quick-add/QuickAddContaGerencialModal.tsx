@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Modal } from 'antd';
+import { ComboBox } from '../../../components/forms/ComboBox';
+import { formFieldClass, formLabelClass } from '../../../components/forms/FormPrimitives';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
 import type { ContaGerencialTipo } from '../../../types/cadastros';
+import { QuickAddModal } from './QuickAddModal';
 
 type Props = {
   open: boolean;
@@ -10,9 +12,10 @@ type Props = {
   defaultTipo?: ContaGerencialTipo;
 };
 
-const inputClass =
-  'w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 transition-colors';
-const labelClass = 'block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1';
+const tipoOptions: Array<{ label: string; value: ContaGerencialTipo }> = [
+  { label: 'Despesa', value: 'Despesa' },
+  { label: 'Receita', value: 'Receita' }
+];
 
 export function QuickAddContaGerencialModal({ open, onClose, onSuccess, defaultTipo = 'Despesa' }: Props) {
   const [descricao, setDescricao] = useState('');
@@ -55,59 +58,35 @@ export function QuickAddContaGerencialModal({ open, onClose, onSuccess, defaultT
   }
 
   return (
-    <Modal
-      title="Nova Conta Gerencial"
+    <QuickAddModal
       open={open}
-      onCancel={handleClose}
-      onOk={handleSave}
-      okText="Salvar"
-      cancelText="Cancelar"
-      confirmLoading={loading}
-      centered
-      okButtonProps={{ disabled: !descricao.trim() }}
+      title="Nova Conta Gerencial"
+      icon="account_tree"
+      error={error}
+      loading={loading}
+      submitDisabled={!descricao.trim()}
+      onClose={handleClose}
+      onSubmit={handleSave}
     >
-      <div className="space-y-4 py-2">
-        <div>
-          <label className={labelClass}>Descrição</label>
-          <input
-            autoFocus
-            value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            placeholder="Ex: Despesas com Alimentação"
-            className={inputClass}
-          />
-        </div>
-
-        <div>
-          <label className={labelClass}>Natureza</label>
-          <div className="grid grid-cols-2 gap-2">
-            {(['Despesa', 'Receita'] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTipo(t)}
-                className={`py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${
-                  tipo === t
-                    ? t === 'Receita'
-                      ? 'bg-primary text-[#062412]'
-                      : 'bg-[#ff8a7a] text-[#2c0600]'
-                    : 'bg-white/5 text-on-surface-variant hover:text-white border border-white/10'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {error && <p className="text-xs font-bold text-red-400">{error}</p>}
-
-        <p className="text-[11px] text-on-surface-variant">
-          Será criada como conta analítica (aceita lançamentos). Configure a hierarquia depois em{' '}
-          <strong>Cadastros → Contas Gerenciais</strong>.
-        </p>
+      <div className="space-y-2">
+        <label className={formLabelClass}>Descrição</label>
+        <input
+          autoFocus
+          value={descricao}
+          onChange={(event) => setDescricao(event.target.value)}
+          placeholder="Ex: Despesas com Alimentação"
+          className={formFieldClass}
+        />
       </div>
-    </Modal>
+
+      <div className="space-y-2">
+        <label className={formLabelClass}>Natureza</label>
+        <ComboBox aria-label="Natureza" value={tipo} onChange={(value) => setTipo(value as ContaGerencialTipo)} options={tipoOptions} />
+      </div>
+
+      <p className="text-[11px] text-on-surface-variant">
+        Será criada como conta analítica, apta para lançamentos. Configure a hierarquia depois em <strong>Cadastros → Contas Gerenciais</strong>.
+      </p>
+    </QuickAddModal>
   );
 }

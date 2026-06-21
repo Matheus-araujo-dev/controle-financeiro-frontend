@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { MasterDataListPage, estimateActionsColumnWidth } from './MasterDataListPage';
+import { MasterDataListPage } from './MasterDataListPage';
+import { estimateActionsColumnWidth } from './master-data-list-helpers';
 
 describe('MasterDataListPage', () => {
   it('estimates a wider actions column for long labels', () => {

@@ -23,14 +23,10 @@
 - A fase 6 substituiu o placeholder de `dashboard` por uma tela operacional real, consumindo `GET /dashboard/resumo` e `GET /dashboard/fluxo-caixa` com estados de loading, erro e retry.
 - O dashboard passou a consolidar cards, listas de contas vencidas/a vencer, movimentacoes recentes e tabela de fluxo diario sem criar uma rota extra fora do `/dashboard` canonico.
 - A formatacao de datas do dashboard foi feita manualmente a partir de strings `yyyy-MM-dd` para evitar deslocamentos por fuso horario em `Date` do navegador e nos testes.
-- A fase 7 substituiu os placeholders de `importacoes-whatsapp` por telas reais de listagem e detalhe, mantendo `conciliacao` como o unico placeholder restante para a fase 8.
+- A fase 7 substituiu os placeholders de `importacoes-whatsapp` por telas reais de listagem e detalhe.
 - Os contratos novos do backend passaram a ser refletidos em `types/importacoes-whatsapp.ts` e no cliente HTTP dedicado `importacoes-whatsapp-api.ts`, evitando misturar a revisao de importacao com os modulos financeiros ja consolidados.
 - A tela de listagem passou a expor busca, status, confianca da extracao e pendencias de revisao, enquanto a tela de detalhe mostra texto bruto, metadados do arquivo, payload sugerido e acoes de confirmar, rejeitar e reprocessar.
 - O frontend desta fase trata confirmacao e rejeicao como revisao humana da sugestao, sem prometer efetivacao automatica de lancamento financeiro antes das fases seguintes.
-- A fase 8 substituiu o ultimo placeholder restante por uma pagina real de `conciliacao`, mantendo a navegacao administrativa consistente com as fases anteriores e sem criar rotas fora do fluxo canonico.
-- Os contratos do backend foram refletidos em `types/conciliacao.ts` e no cliente HTTP dedicado `conciliacao-api.ts`, desacoplando a conciliacao dos modulos de movimentacao e importacao.
-- A tela de conciliacao foi desenhada para operacao assistida: lista o item de extrato confirmado, mostra candidatas sugeridas e permite confirmar o vinculo diretamente pela grade, sem automatizar conciliacao em segundo plano.
-- O estado local da linha conciliada e a mensagem de ultima acao confirmada evitam roundtrip extra imediato sem perder compatibilidade com uma futura tela mais rica de conciliacao.
 - O quality gate local do frontend passou a considerar o custo atual da suite com Ant Design e coverage, com aumento explicito dos timeouts de testes mais pesados para reduzir flakiness sem afrouxar thresholds de cobertura.
 - A fase 9 nao adicionou regra de negocio; consolidou a documentacao operacional do MVP e deixou a validacao de build/test/coverage refletida no README e no documento de fechamento.
 - Como extensao pos-MVP aprovada localmente, `Contas bancarias` passaram a expor no frontend o limite compartilhado de cartoes e o saldo disponivel agregado, enquanto `Cartoes` passaram a mostrar origem do limite, limite efetivo e disponibilidade calculada.
@@ -51,7 +47,7 @@
 - A tela de detalhe de `Importacoes WhatsApp` passou a exigir `ContaGerencial` e `Responsavel` em `CompraCartao`, exibindo claramente quando o item esta `PREVISTO` ou `NAO_PREVISTO`.
 - A tela de detalhe de `Importacoes WhatsApp` passou a operar com aprovacao explicita da importacao inteira, exibindo `Aprovar importacao` quando nao ha mais itens sugeridos e `Reabrir importacao` quando a revisao ja foi travada.
 - Enquanto a importacao estiver aberta, itens confirmados ou rejeitados continuam editaveis no mesmo grid; depois da aprovacao, toda a revisao fica somente leitura ate a reabertura.
-- A interface de importacao deixou de tratar `ItemExtrato` como etapa de conciliacao posterior; a aprovacao da importacao passou a ser o encerramento do fluxo operacional desses itens.
+- A interface de importacao passou a tratar a aprovacao da importacao como encerramento do fluxo operacional dos itens importados.
 - O dashboard trocou o recorte principal por dias por um filtro de mes de referencia, permitindo navegar por meses futuros e visualizar a projecao completa baseada em recorrencias, parcelas e compras em cartao previstas.
 - O drill-down gerencial e as consultas de resumo e fluxo passaram a reutilizar o mesmo `MesReferencia`, mantendo o dashboard coerente em leituras futuras sem abrir novas rotas.
 - O dashboard ganhou uma central de previsao no proprio `/dashboard`, com filtros por origem e status, resumo diario e drill-down dos itens previstos, realizados e substituidos.
@@ -95,6 +91,11 @@
 - A tela de importacao de fatura passou a exigir uma `Conta gerencial padrao` de despesa e enviar `contaGerencialPadraoId` na confirmacao, mantendo rateio e dashboard gerencial coerentes.
 - O teste de recorrencia foi alinhado ao contrato atual do formulario mensal (`yyyy-MM`) e foi adicionada cobertura para a normalizacao do quick-add.
 - As dependencias vulneraveis do frontend foram atualizadas pelo `npm audit fix`, zerando o `npm audit --audit-level=moderate`.
+- A tela de `Relatorios` iniciou o backlog gerencial, saindo do relatorio unico por responsavel para uma area com abas de visao geral, responsaveis, contas gerenciais, fluxo de caixa e previsoes usando os endpoints existentes do dashboard.
+- A tela de `Relatorios` recebeu a proxima leva do backlog com `Inadimplencia`, `Faturas`, `Recorrencias` e `Compras planejadas`, todos com filtros proprios e consumo dos endpoints existentes de financeiro e compras planejadas.
+- A exportacao de relatorios foi centralizada em um builder de workbook XLSX com nomes de abas, filtros, largura de colunas e nomes de arquivos padronizados; a impressao/PDF recebeu CSS dedicado para gerar uma pagina limpa sem acoes e navegacao.
+- O `ComboBox` compartilhado passou a abrir mostrando todas as opcoes antes de aplicar busca textual, corrigindo o caso em que o valor selecionado filtrava a lista e escondia opcoes validas.
+- Os testes de relatorios passaram a cobrir carregamento das fontes, troca de abas, filtro especifico de faturas e montagem do workbook de exportacao.
 
 ## Pendencias nao criticas
 - configurar secrets reais de SonarQube/SonarCloud no CI para ativar o quality gate remoto.

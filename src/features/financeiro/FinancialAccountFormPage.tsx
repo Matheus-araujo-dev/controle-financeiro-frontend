@@ -1,14 +1,14 @@
 import { Controller } from 'react-hook-form';
-import { FileTextOutlined, PieChartOutlined } from '@ant-design/icons';
 
 import { PageState } from '../../components/states/PageState';
+import { FormSection } from '../../components/layout';
 import type { FinanceiroModuleConfig } from './module-config';
 import { GeneralInfoSection } from './financial-account-form/GeneralInfoSection';
 import { TermsValueSection } from './financial-account-form/TermsValueSection';
+import { PaymentSection } from './financial-account-form/PaymentSection';
 import { RecurrenceSection } from './financial-account-form/RecurrenceSection';
 import { RateioSection } from './financial-account-form/RateioSection';
 import { SummarySidebar } from './financial-account-form/SummarySidebar';
-import { AccordionSection } from './financial-account-form/AccordionSection';
 import { nativeTextareaClass } from './financial-account-form/field-classes';
 import { useFinancialAccountForm } from './financial-account-form/useFinancialAccountForm';
 
@@ -20,8 +20,6 @@ export function FinancialAccountFormPage({
 }) {
   const form = useFinancialAccountForm(config);
   const { id, control, canEdit, loading, errorMessage, handleSubmit, onSubmit } = form;
-
-  const isEditing = Boolean(id) && id !== 'novo';
   const isReceita = config.key === 'contas-receber';
 
   if (loading) return <PageState state="loading" title="Carregando lançamento..." />;
@@ -29,14 +27,7 @@ export function FinancialAccountFormPage({
 
   return (
     <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Page Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-on-surface-variant font-label text-xs uppercase tracking-[0.2em] mb-2">Operações Financeiras</h2>
-          <h1 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface">
-            {isEditing ? 'Editar' : 'Criar'}: <span className="text-primary">{config.singularTitle}</span>
-          </h1>
-        </div>
+      <div className="flex justify-end">
         <span
           className={`inline-flex w-fit items-center gap-2 rounded-full px-4 py-2 text-xs font-bold ${
             isReceita ? 'bg-primary/10 text-primary' : 'bg-error/10 text-error'
@@ -48,25 +39,17 @@ export function FinancialAccountFormPage({
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-7">
-          {/* Main Information Column */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-7 space-y-8">
             <GeneralInfoSection form={form} personLabel={config.personLabel} />
             <TermsValueSection form={form} />
+            <PaymentSection form={form} />
             <RecurrenceSection form={form} />
 
-            <AccordionSection
-              icon={<PieChartOutlined />}
-              title="Rateio por Centro de Custo"
-              subtitle="Dividir o lançamento entre várias contas gerenciais"
-            >
+            <FormSection title="Rateio por Centro de Custo" eyebrow="Passo 4" icon={<span className="material-symbols-outlined text-2xl">pie_chart</span>}>
               <RateioSection form={form} />
-            </AccordionSection>
+            </FormSection>
 
-            <AccordionSection
-              icon={<FileTextOutlined />}
-              title="Observações Adicionais"
-              subtitle="Notas, nota fiscal, motivo do parcelamento"
-            >
+            <FormSection title="Observações Adicionais" eyebrow="Passo 5" icon={<span className="material-symbols-outlined text-2xl">notes</span>}>
               <Controller
                 control={control}
                 name="observacao"
@@ -81,10 +64,9 @@ export function FinancialAccountFormPage({
                   />
                 )}
               />
-            </AccordionSection>
+            </FormSection>
           </div>
 
-          {/* Sidebar / Actions Column */}
           <SummarySidebar form={form} />
         </div>
       </form>

@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MovimentacoesPage } from './MovimentacoesPage';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
+import { selectDateInDateInput } from '../../test/date-input';
 
 vi.mock('../../services/http/cadastros-api', () => ({
   cadastrosApi: {
@@ -144,12 +145,8 @@ describe('MovimentacoesPage', () => {
 
     render(<MovimentacoesPage />);
 
-    fireEvent.change(screen.getByLabelText('Data inicial'), {
-      target: { value: '2026-04-01' }
-    });
-    fireEvent.change(screen.getByLabelText('Data final'), {
-      target: { value: '2026-04-30' }
-    });
+    await selectDateInDateInput('Data inicial', '2026-04-01');
+    await selectDateInDateInput('Data final', '2026-04-30');
 
     await waitFor(() =>
       expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
@@ -178,9 +175,8 @@ describe('MovimentacoesPage', () => {
 
     render(<MovimentacoesPage />);
 
-    const selector = screen.getByLabelText(/Filtro de conta banc/i);
-    fireEvent.mouseDown(selector);
-    await userEvent.click(await screen.findByText('Conta principal - Banco Exemplo'));
+    await userEvent.click(screen.getByRole('button', { name: /Filtro de conta banc/i }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Conta principal - Banco Exemplo' }));
 
     await waitFor(() =>
       expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
@@ -208,9 +204,8 @@ describe('MovimentacoesPage', () => {
 
     render(<MovimentacoesPage />);
 
-    const selector = screen.getByLabelText(/Filtro de respons/i);
-    fireEvent.mouseDown(selector);
-    await userEvent.click(await screen.findByText('Michelle'));
+    await userEvent.click(screen.getByRole('button', { name: /Filtro de respons/i }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Michelle' }));
 
     await waitFor(() =>
       expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(

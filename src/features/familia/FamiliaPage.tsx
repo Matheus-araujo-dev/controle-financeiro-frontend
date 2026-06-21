@@ -1,7 +1,6 @@
 import {
   Alert,
   Avatar,
-  Button,
   Card,
   Form,
   Input,
@@ -14,6 +13,7 @@ import {
   Typography
 } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
+import { PlusOutlined } from '@ant-design/icons';
 import {
   alterarPapelMembro,
   criarConvite,
@@ -26,6 +26,7 @@ import {
 import { notify } from '../../store/notification-store';
 import { useCurrentUser } from '../../store/auth-store';
 import { getApiErrorMessage } from '../../services/http/api-error';
+import { Button } from '../../components/ui/Button';
 
 const papelOptions = [
   { value: 'Administrador', label: 'Administrador' },
@@ -179,9 +180,9 @@ export function FamiliaPage() {
                         title="Remover este membro da família?"
                         onConfirm={() => void handleRemover(membro.id)}
                       >
-                        <Button danger size="small">
+                      <Button variant="danger" size="sm">
                           Remover
-                        </Button>
+                      </Button>
                       </Popconfirm>
                     ]
                   : [<Tag key="papel" color={papelColors[membro.papel]}>{membro.papel}</Tag>]
@@ -213,7 +214,7 @@ export function FamiliaPage() {
               <Select options={papelOptions} style={{ width: 160 }} />
             </Form.Item>
             <Form.Item>
-              <Button type="primary" htmlType="submit">
+              <Button type="submit" icon={<PlusOutlined />}>
                 Gerar convite
               </Button>
             </Form.Item>
@@ -227,7 +228,7 @@ export function FamiliaPage() {
               renderItem={(convite) => (
                 <List.Item
                   actions={[
-                    <Button key="revogar" size="small" danger onClick={() => void handleRevogar(convite.id)}>
+                    <Button key="revogar" variant="danger" size="sm" onClick={() => void handleRevogar(convite.id)}>
                       Revogar
                     </Button>
                   ]}
@@ -248,9 +249,8 @@ export function FamiliaPage() {
         title="Convite criado"
         onCancel={() => setConviteLink(null)}
         footer={[
-          <Button
+              <Button
             key="copiar"
-            type="primary"
             onClick={() => {
               if (conviteLink) {
                 void navigator.clipboard.writeText(conviteLink);

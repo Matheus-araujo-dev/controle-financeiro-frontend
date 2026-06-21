@@ -16,6 +16,8 @@ export type ListQueryBase = {
   page: number;
   pageSize: number;
   search?: string;
+  sortBy?: string;
+  sortDirection?: 'Asc' | 'Desc';
 };
 
 export type PessoaResumo = {
@@ -52,7 +54,19 @@ export type PessoaPayload = {
 
 export type PessoaFilters = ListQueryBase & {
   tipoPessoa?: PessoaTipo;
+  tiposPessoa?: PessoaTipo[];
   ativo?: boolean;
+  documento?: string;
+  email?: string;
+  telefone?: string;
+};
+
+export type PessoaListSummary = {
+  total: number;
+  ativos: number;
+  inativos: number;
+  fisicas: number;
+  juridicas: number;
 };
 
 export type FormaPagamentoResumo = {
@@ -73,6 +87,7 @@ export type FormaPagamentoPayload = Omit<FormaPagamentoResumo, 'id'>;
 
 export type FormaPagamentoFilters = ListQueryBase & {
   tipo?: FormaPagamentoTipo;
+  tipos?: FormaPagamentoTipo[];
   ehCartao?: boolean;
   baixarAutomaticamente?: boolean;
   ativo?: boolean;
@@ -113,7 +128,18 @@ export type ContaBancariaPayload = {
 
 export type ContaBancariaFilters = ListQueryBase & {
   banco?: string;
+  agencia?: string;
+  numeroConta?: string;
+  tipoConta?: string;
   ativo?: boolean;
+  tiposConta?: string[];
+};
+
+export type ContaBancariaListSummary = {
+  total: number;
+  ativas: number;
+  saldoTotal: number;
+  creditoDisponivel: number;
 };
 
 export type CartaoResumo = {
@@ -150,6 +176,10 @@ export type CartaoPayload = {
 
 export type CartaoFilters = ListQueryBase & {
   bandeira?: string;
+  numeroFinal?: string;
+  diaFechamentoFatura?: number | string;
+  diaVencimentoFatura?: number | string;
+  contaBancariaPagamentoPadraoId?: string;
   ativo?: boolean;
 };
 
@@ -179,11 +209,14 @@ export type ContaGerencialPayload = Omit<
 
 export type ContaGerencialFilters = ListQueryBase & {
   tipo?: ContaGerencialTipo;
+  tipos?: ContaGerencialTipo[];
   contaPaiId?: string;
+  contaPai?: string;
+  responsavelPadraoId?: string;
+  responsavelPadrao?: string;
   ativo?: boolean;
   aceitaLancamentos?: boolean;
-  sortBy?: string;
-  sortDirection?: 'Asc' | 'Desc';
+  ehPadraoRecebimentoFaturaCartao?: boolean;
 };
 
 export type PagedCadastro<T> = PagedResult<T>;
