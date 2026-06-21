@@ -7,8 +7,36 @@ on:
     branches: [ main ]
 
 jobs:
-  build-test-sonar:
+  lint-and-security:
     runs-on: ubuntu-latest
+
+    env:
+      NODE_VERSION: '22'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Security audit
+        run: npm run security:audit
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint-and-security
 
     env:
       NODE_VERSION: '22'
@@ -30,6 +58,25 @@ jobs:
 
       - name: Test with coverage
         run: npm run coverage
+
+  security-and-sonar:
+    runs-on: ubuntu-latest
+    needs: lint-and-security
+
+    env:
+      NODE_VERSION: '22'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install
+        run: npm ci
 
       - name: Sonar scan
         if: ${{ secrets.SONAR_TOKEN != '' && secrets.SONAR_HOST_URL != '' }}
