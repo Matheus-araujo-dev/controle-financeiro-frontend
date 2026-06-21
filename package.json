@@ -14,6 +14,7 @@
     "quality:gate": "npm run security:audit && npm run lint && npm run build && npm run test -- --coverage --threshold.lines=80 --threshold.functions=80 --threshold.statements=80 --threshold.branches=70",
     "quality:check": "npm run lint && npm run build && npm run coverage",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "security:audit": "npm audit --audit-level=moderate",
     "security:audit:fix": "npm audit fix --audit-level=moderate",
     "generate:types": "swagger-typescript-api generate -p http://localhost:5000/swagger/v1/swagger.json -o src/types/generated -n api.ts --extract-enums --modular --add-headers --clean-output"
