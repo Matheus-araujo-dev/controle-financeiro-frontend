@@ -1,29 +1,25 @@
-import { cadastrosApi } from '../../services/http/cadastros-api';
-import { financeiroApi } from '../../services/http/financeiro-api';
+import { isValidElement } from 'react';
 import {
   calculateValorLiquido,
   contasPagarModuleConfig,
   contasReceberModuleConfig,
-  resolveFormaPagamentoBehavior
+  resolveFormaPagamentoBehavior,
+  resolveStatusTone,
+  statusFilterOptions,
+  statusOptions,
+  type FinanceiroFormValues
 } from './module-config';
+import { cadastrosApi } from '../../services/http/cadastros-api';
+import { financeiroApi } from '../../services/http/financeiro-api';
+import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 
 vi.mock('../../services/http/cadastros-api', () => ({
   cadastrosApi: {
-    pessoas: {
-      listar: vi.fn()
-    },
-    formasPagamento: {
-      listar: vi.fn()
-    },
-    contasBancarias: {
-      listar: vi.fn()
-    },
-    cartoes: {
-      listar: vi.fn()
-    },
-    contasGerenciais: {
-      listar: vi.fn()
-    }
+    pessoas: { listar: vi.fn() },
+    formasPagamento: { listar: vi.fn() },
+    contasBancarias: { listar: vi.fn() },
+    cartoes: { listar: vi.fn() },
+    contasGerenciais: { listar: vi.fn() }
   }
 }));
 
@@ -39,6 +35,7 @@ vi.mock('../../services/http/financeiro-api', () => ({
       pausarRecorrencia: vi.fn(),
       encerrarRecorrencia: vi.fn(),
       liquidar: vi.fn(),
+      estornar: vi.fn(),
       cancelar: vi.fn()
     },
     contasReceber: {
@@ -51,348 +48,294 @@ vi.mock('../../services/http/financeiro-api', () => ({
       pausarRecorrencia: vi.fn(),
       encerrarRecorrencia: vi.fn(),
       liquidar: vi.fn(),
+      estornar: vi.fn(),
       cancelar: vi.fn()
-    },
-    movimentacoes: {
-      listar: vi.fn(),
-      obterPorId: vi.fn()
     }
   }
 }));
 
+vi.mock('../../services/http/compras-planejadas-api', () => ({
+  comprasPlanejadasApi: {
+    obterPorId: vi.fn()
+  }
+}));
+
+function formValues(overrides: Partial<FinanceiroFormValues> = {}): FinanceiroFormValues {
+  return {
+    ...contasPagarModuleConfig.defaultValues,
+    origemCompraPlanejadaId: '',
+    numeroDocumento: ' DOC-1 ',
+    pessoaId: 'pessoa-1',
+    responsavelId: 'resp-1',
+    dataEmissao: '2026-06-10',
+    dataVencimento: '2026-06-20',
+    formaPagamentoId: 'forma-1',
+    cartaoId: '',
+    contaBancariaId: '',
+    dataLiquidacao: '',
+    valorOriginal: 100,
+    valorDesconto: 10,
+    valorJuros: 2,
+    valorMulta: 3,
+    quantidadeParcelas: 2,
+    descricao: ' Descricao ',
+    observacao: ' Observacao ',
+    rateios: [{ contaGerencialId: 'conta-1', valor: 95 }],
+    ehRecorrente: true,
+    recorrenciaTipoPeriodicidade: 'Mensal',
+    recorrenciaTipoDia: 'DiaFixo',
+    recorrenciaDiaOrdemMensal: 31,
+    recorrenciaDataInicio: '2026-02',
+    recorrenciaDataFim: '2026-04',
+    recorrenciaPermiteEdicaoOcorrenciaIndividual: false,
+    recorrenciaObservacao: ' Recorrencia ',
+    recorrenciaGerarAteData: '',
+    ...overrides
+  };
+}
+
+const detailBase = {
+  numeroDocumento: null,
+  dataEmissao: '2026-06-10',
+  dataVencimento: '2026-06-20',
+  formaPagamentoId: 'forma-1',
+  cartaoId: null,
+  contaBancariaId: null,
+  dataLiquidacao: null,
+  valorOriginal: 100,
+  valorDesconto: 10,
+  valorJuros: 2,
+  valorMulta: 3,
+  quantidadeParcelas: 2,
+  descricao: 'Descricao',
+  observacao: null,
+  rateios: [{ contaGerencialId: 'conta-1', valor: 95 }],
+  ehRecorrente: true,
+  recorrencia: {
+    tipoPeriodicidade: 'Mensal' as const,
+    tipoDia: 'DiaUtil' as const,
+    diaOrdemMensal: 5,
+    dataInicio: '2026-06-01',
+    dataFim: null,
+    permiteEdicaoOcorrenciaIndividual: true,
+    observacao: null
+  }
+};
+
 describe('financeiro module config', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('calculates valor liquido and maps detail payloads to form values', () => {
-    expect(
-      calculateValorLiquido({
-        valorOriginal: 100,
-        valorDesconto: 10,
-        valorJuros: 5,
-        valorMulta: 2
-      })
-    ).toBe(97);
-
-    expect(
-      contasPagarModuleConfig.toFormValues({
-        id: '1',
-        numeroDocumento: null,
-        dataEmissao: '2026-04-04',
-        responsavelCompraId: null,
-        responsavelCompraNome: null,
-        recebedorId: 'p1',
-        recebedorNome: 'Fornecedor',
-        dataVencimento: '2026-04-20',
-        dataLiquidacao: null,
-        formaPagamentoId: 'f1',
-        formaPagamentoNome: 'Pix',
-        formaPagamentoEhCartao: false,
-        formaPagamentoBaixarAutomaticamente: false,
-        cartaoId: null,
-        cartaoNome: null,
-        contaBancariaId: null,
-        contaBancariaNome: null,
-        valorOriginal: 100,
-        valorDesconto: 0,
-        valorJuros: 0,
-        valorMulta: 0,
-        valorLiquido: 100,
-        quantidadeParcelas: 1,
-        numeroParcela: 1,
-        grupoParcelamentoId: null,
-        origemCompraPlanejadaId: null,
-        descricao: 'Despesa',
-        observacao: null,
-        statusCodigo: 'PENDENTE',
-        statusNome: 'Pendente',
-        ehRecorrente: true,
-        origem: 'Manual',
-        recorrencia: {
-          id: 'rec1',
-          tipoPeriodicidade: 'Mensal',
-          tipoDia: 'DiaFixo',
-          diaOrdemMensal: 20,
-          dataInicio: '2026-04-20',
-          dataFim: null,
-          ativa: true,
-          permiteEdicaoOcorrenciaIndividual: true,
-          observacao: 'Contrato mensal',
-          contaOrigemTipo: 'ContaPagar'
-        },
-        competenciaFaturaCartao: null,
-        dataFechamentoFaturaCartao: null,
-        dataVencimentoFaturaCartao: null,
-        rateios: [
-          {
-            id: 'r1',
-            contaGerencialId: 'cg1',
-            contaGerencialCodigo: 'DESP',
-            contaGerencialDescricao: 'Despesa Operacional',
-            valor: 100,
-            percentual: 100
-          }
-        ],
-        createdAtUtc: '2026-04-04T00:00:00Z',
-        updatedAtUtc: '2026-04-04T00:00:00Z'
-      })
-    ).toMatchObject({
-      origemCompraPlanejadaId: '',
-      numeroDocumento: '',
-      responsavelId: '',
-      cartaoId: '',
-      contaBancariaId: '',
-      observacao: '',
-      rateios: [{ contaGerencialId: 'cg1', valor: 100 }],
-      ehRecorrente: true,
-      recorrenciaTipoDia: 'DiaFixo',
-      recorrenciaDiaOrdemMensal: 20,
-      recorrenciaDataInicio: '2026-04',
-      recorrenciaDataFim: ''
-    });
-
-    const vencimentoColumn = contasPagarModuleConfig.columns.find((column) => column.key === 'dataVencimento');
-    expect(vencimentoColumn && 'render' in vencimentoColumn && typeof vencimentoColumn.render === 'function'
-      ? vencimentoColumn.render('2026-04-20', {} as never, 0)
-      : null).toBe('20/04/2026');
-  });
-
-  it('resolves the expected status tones', () => {
-    expect(
-      resolveFormaPagamentoBehavior('f1', [{ label: 'Dinheiro', value: 'f1', ehCartao: false, baixarAutomaticamente: false }])
-    ).toEqual({ ehCartao: false, baixarAutomaticamente: false });
-  });
-
-  it('opens contas with default filter for pendentes e vencidas', () => {
-    expect(contasPagarModuleConfig.defaultFilters).toMatchObject({
-      statusCodigo: ['PENDENTE', 'VENCIDA']
-    });
-
-    expect(contasReceberModuleConfig.defaultFilters).toMatchObject({
-      statusCodigo: ['PENDENTE', 'VENCIDA']
-    });
-  });
-
-  it('normalizes payloads and liquidacao actions', async () => {
-    vi.mocked(financeiroApi.contasPagar.criar).mockResolvedValue({} as never);
-    vi.mocked(financeiroApi.contasReceber.atualizar).mockResolvedValue({} as never);
-    vi.mocked(financeiroApi.contasPagar.liquidar).mockResolvedValue({} as never);
-
-    await contasPagarModuleConfig.create({
-      origemCompraPlanejadaId: '',
-      numeroDocumento: '',
-      pessoaId: 'p1',
-      responsavelId: 'resp-1',
-      dataEmissao: '2026-04-04',
-      dataVencimento: '2026-04-20',
-      formaPagamentoId: 'f1',
-      cartaoId: '',
-      contaBancariaId: '',
-      dataLiquidacao: '',
-      valorOriginal: 100,
-      valorDesconto: 0,
-      valorJuros: 0,
-      valorMulta: 0,
-      quantidadeParcelas: 1,
-      descricao: 'Despesa',
-      observacao: '',
-      rateios: [{ contaGerencialId: 'cg1', valor: 100 }],
-      ehRecorrente: false,
-      recorrenciaTipoPeriodicidade: 'Mensal' as const,
-      recorrenciaTipoDia: 'DiaFixo' as const,
-      recorrenciaDiaOrdemMensal: 20,
-      recorrenciaDataInicio: '',
-      recorrenciaDataFim: '',
-      recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
-      recorrenciaObservacao: '',
-      recorrenciaGerarAteData: ''
-    });
-
-    await contasReceberModuleConfig.update('1', {
-      origemCompraPlanejadaId: '',
-      numeroDocumento: '',
-      pessoaId: 'p2',
+    vi.mocked(financeiroApi.contasPagar.criar).mockResolvedValue({ id: 'cp-1' } as never);
+    vi.mocked(financeiroApi.contasPagar.atualizar).mockResolvedValue({ id: 'cp-1' } as never);
+    vi.mocked(financeiroApi.contasPagar.alterarFuturas).mockResolvedValue({ id: 'cp-1' } as never);
+    vi.mocked(financeiroApi.contasPagar.liquidar).mockResolvedValue({ id: 'cp-1' } as never);
+    vi.mocked(financeiroApi.contasReceber.criar).mockResolvedValue({ id: 'cr-1' } as never);
+    vi.mocked(financeiroApi.contasReceber.atualizar).mockResolvedValue({ id: 'cr-1' } as never);
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({ items: [{ id: 'p1', nome: 'Pessoa' }] } as never);
+    vi.mocked(cadastrosApi.formasPagamento.listar).mockResolvedValue({
+      items: [{ id: 'f1', nome: 'Pix', ehCartao: false, baixarAutomaticamente: true }]
+    } as never);
+    vi.mocked(cadastrosApi.contasBancarias.listar).mockResolvedValue({ items: [{ id: 'b1', nome: 'Conta', banco: 'Banco' }] } as never);
+    vi.mocked(cadastrosApi.cartoes.listar).mockResolvedValue({ items: [{ id: 'c1', nome: 'Visa', numeroFinal: '1234' }] } as never);
+    vi.mocked(cadastrosApi.contasGerenciais.listar).mockResolvedValue({
+      items: [
+        { id: 'g2', codigo: '2.1', descricao: 'Receita', aceitaLancamentos: true },
+        { id: 'g1', codigo: '1', descricao: 'Sintetica', aceitaLancamentos: false }
+      ]
+    } as never);
+    vi.mocked(comprasPlanejadasApi.obterPorId).mockResolvedValue({
+      id: 'compra-1',
+      titulo: 'Notebook',
+      link: 'https://example.test/produto',
+      valorEstimado: 3000,
+      quantidadeParcelasDesejada: null,
       responsavelId: 'resp-2',
-      dataEmissao: '2026-04-04',
-      dataVencimento: '2026-04-25',
-      formaPagamentoId: 'f1',
-      cartaoId: '',
-      contaBancariaId: '',
-      dataLiquidacao: '',
-      valorOriginal: 200,
-      valorDesconto: 0,
-      valorJuros: 0,
-      valorMulta: 0,
-      quantidadeParcelas: 1,
-      descricao: 'Receita',
-      observacao: '',
-      rateios: [{ contaGerencialId: 'cg2', valor: 200 }],
-      ehRecorrente: false,
-      recorrenciaTipoPeriodicidade: 'Mensal' as const,
-      recorrenciaTipoDia: 'DiaFixo' as const,
-      recorrenciaDiaOrdemMensal: 25,
-      recorrenciaDataInicio: '',
-      recorrenciaDataFim: '',
-      recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
-      recorrenciaObservacao: '',
-      recorrenciaGerarAteData: ''
-    });
-
-    await contasPagarModuleConfig.liquidar?.('1', {
-      valorLiquidacao: 0,
-      dataLiquidacao: '2026-04-05',
-      contaBancariaId: 'cb1',
-      formaPagamentoId: 'f1',
-      atualizarValorConta: false
-    });
-
-    expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
-      expect.objectContaining({
-        numeroDocumento: null,
-        responsavelCompraId: 'resp-1',
-        cartaoId: null,
-        contaBancariaId: null,
-        dataLiquidacao: null
-      })
-    );
-    expect(financeiroApi.contasReceber.atualizar).toHaveBeenCalledWith(
-      '1',
-      expect.objectContaining({
-        numeroDocumento: null,
-        responsavelId: 'resp-2',
-        cartaoId: null,
-        contaBancariaId: null,
-        dataLiquidacao: null
-      })
-    );
-    expect(financeiroApi.contasPagar.liquidar).toHaveBeenCalledWith('1', {
-      valorLiquidacao: 0,
-      dataLiquidacao: '2026-04-05',
-      contaBancariaId: 'cb1',
-      formaPagamentoId: 'f1',
-      atualizarValorConta: false
-    });
+      dataDesejada: null,
+      contaGerencialId: 'conta-2'
+    } as never);
   });
 
-  it('sends recurring payloads without explicit recurrence start date', async () => {
-    vi.mocked(financeiroApi.contasPagar.criar).mockResolvedValue({} as never);
-
-    await contasPagarModuleConfig.create({
-      origemCompraPlanejadaId: '',
-      numeroDocumento: '',
-      pessoaId: 'p1',
-      responsavelId: 'resp-1',
-      dataEmissao: '2026-05-01',
-      dataVencimento: '2026-05-08',
-      formaPagamentoId: 'f1',
-      cartaoId: '',
-      contaBancariaId: '',
-      dataLiquidacao: '',
-      valorOriginal: 100,
-      valorDesconto: 0,
-      valorJuros: 0,
-      valorMulta: 0,
-      quantidadeParcelas: 1,
-      descricao: 'Despesa recorrente',
-      observacao: '',
-      rateios: [{ contaGerencialId: 'cg1', valor: 100 }],
-      ehRecorrente: true,
-      recorrenciaTipoPeriodicidade: 'Mensal' as const,
-      recorrenciaTipoDia: 'DiaFixo' as const,
-      recorrenciaDiaOrdemMensal: 8,
-      recorrenciaDataInicio: '',
-      recorrenciaDataFim: '2026-08',
-      recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
-      recorrenciaObservacao: '',
-      recorrenciaGerarAteData: ''
+  it('calculates totals, payment behavior and status tones', () => {
+    expect(calculateValorLiquido({ valorOriginal: 100, valorDesconto: 10, valorJuros: 2.335, valorMulta: 1 })).toBe(93.34);
+    expect(resolveFormaPagamentoBehavior('f-card', [{ label: 'Cartao', value: 'f-card', ehCartao: true, baixarAutomaticamente: false }])).toEqual({
+      ehCartao: true,
+      baixarAutomaticamente: false
     });
+    expect(resolveFormaPagamentoBehavior('missing', [])).toEqual({ ehCartao: false, baixarAutomaticamente: false });
+    expect(resolveStatusTone('LIQUIDADA')).toBe('positive');
+    expect(resolveStatusTone('CANCELADA')).toBe('neutral');
+    expect(resolveStatusTone('EM_FATURA')).toBe('neutral');
+    expect(resolveStatusTone('VENCIDA')).toBe('negative');
+    expect(resolveStatusTone('PENDENTE')).toBe('warning');
+    expect(statusOptions).toHaveLength(6);
+    expect(statusFilterOptions.every((option) => option.value)).toBe(true);
+  });
 
+  it('builds payable payloads, recurrence dates and planned purchase defaults', async () => {
+    const values = formValues({ origemCompraPlanejadaId: 'compra-1', cartaoId: 'cartao-1', contaBancariaId: 'banco-1' });
+
+    await contasPagarModuleConfig.create(values);
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
       expect.objectContaining({
+        origemCompraPlanejadaId: 'compra-1',
+        numeroDocumento: 'DOC-1',
+        descricao: 'Descricao',
+        observacao: 'Observacao',
+        cartaoId: 'cartao-1',
+        contaBancariaId: 'banco-1',
+        responsavelCompraId: 'resp-1',
+        recebedorId: 'pessoa-1',
         recorrencia: expect.objectContaining({
-          diaOrdemMensal: 8,
-          dataInicio: null,
-          dataFim: '2026-08-08'
+          dataInicio: '2026-02-28',
+          dataFim: '2026-04-30',
+          observacao: 'Recorrencia'
         })
       })
     );
+
+    await contasPagarModuleConfig.update('cp-1', values);
+    await contasPagarModuleConfig.alterarFuturas?.('cp-1', values);
+    await contasPagarModuleConfig.liquidar?.('cp-1', {
+      valorLiquidacao: 90,
+      dataLiquidacao: '2026-06-21',
+      contaBancariaId: 'banco-1',
+      formaPagamentoId: 'forma-1',
+      atualizarValorConta: true
+    });
+
+    expect(financeiroApi.contasPagar.atualizar).toHaveBeenCalled();
+    expect(financeiroApi.contasPagar.alterarFuturas).toHaveBeenCalled();
+    expect(financeiroApi.contasPagar.liquidar).toHaveBeenCalledWith('cp-1', {
+      valorLiquidacao: 90,
+      dataLiquidacao: '2026-06-21',
+      contaBancariaId: 'banco-1',
+      formaPagamentoId: 'forma-1',
+      atualizarValorConta: true
+    });
+
+    await expect(contasPagarModuleConfig.resolveCreateDefaults?.(new URLSearchParams())).resolves.toBeNull();
+    await expect(
+      contasPagarModuleConfig.resolveCreateDefaults?.(new URLSearchParams('origemCompraPlanejadaId=compra-1'))
+    ).resolves.toEqual(
+      expect.objectContaining({
+        origemCompraPlanejadaId: 'compra-1',
+        descricao: 'Notebook',
+        quantidadeParcelas: 1,
+        observacao: 'Origem: compra planejada\nhttps://example.test/produto'
+      })
+    );
   });
 
-  it('loads the expected option sets and resolves payment behavior', async () => {
-    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({
-      items: [{ id: 'p1', nome: 'Fornecedor', tipoPessoa: 'Juridica', cpfCnpj: null, email: null, telefone: null, ativo: true }],
-      page: 1,
-      pageSize: 100,
-      totalItems: 1,
-      totalPages: 1
-    } as never);
-    vi.mocked(cadastrosApi.formasPagamento.listar).mockResolvedValue({
-      items: [{ id: 'f1', nome: 'Credito', tipo: 'Credito', ehCartao: true, baixarAutomaticamente: false, ativo: true }],
-      page: 1,
-      pageSize: 100,
-      totalItems: 1,
-      totalPages: 1
-    } as never);
-    vi.mocked(cadastrosApi.contasBancarias.listar).mockResolvedValue({
-      items: [{ id: 'cb1', nome: 'Conta principal', banco: 'Banco Exemplo', agencia: null, numeroConta: null, tipoConta: null, saldoInicial: 0, dataSaldoInicial: '2026-04-01', ativo: true }],
-      page: 1,
-      pageSize: 100,
-      totalItems: 1,
-      totalPages: 1
-    } as never);
-    vi.mocked(cadastrosApi.cartoes.listar).mockResolvedValue({
-      items: [{ id: 'c1', nome: 'Visa Corporate', bandeira: 'Visa', numeroFinal: '4242', diaFechamentoFatura: 10, diaVencimentoFatura: 20, contaBancariaPagamentoPadraoId: 'cb1', limiteCredito: 5000, ativo: true }],
-      page: 1,
-      pageSize: 100,
-      totalItems: 1,
-      totalPages: 1
-    } as never);
-    vi.mocked(cadastrosApi.contasGerenciais.listar).mockResolvedValue({
-      items: [
-        {
-          id: 'cg2',
-          codigo: 'DESP.02',
-          descricao: 'Alimentação',
-          tipo: 'Despesa',
-          contaPaiId: 'cg-parent',
-          contaPaiDescricao: 'Despesas',
-          ativo: true,
-          aceitaLancamentos: true
-        },
-        { id: 'cg-parent', codigo: 'DESP', descricao: 'Despesas', tipo: 'Despesa', contaPaiId: null, contaPaiDescricao: null, ativo: true, aceitaLancamentos: false },
-        {
-          id: 'cg1',
-          codigo: 'DESP.10',
-          descricao: 'Despesa Operacional',
-          tipo: 'Despesa',
-          contaPaiId: 'cg-parent',
-          contaPaiDescricao: 'Despesas',
-          ativo: true,
-          aceitaLancamentos: true
-        }
-      ],
-      page: 1,
-      pageSize: 100,
-      totalItems: 3,
-      totalPages: 1
-    } as never);
+  it('builds receivable payloads and omits optional recurrence fields when disabled', async () => {
+    const values = formValues({
+      ehRecorrente: false,
+      numeroDocumento: '',
+      observacao: '',
+      dataLiquidacao: ' ',
+      cartaoId: '',
+      contaBancariaId: ''
+    });
 
-    await expect(contasPagarModuleConfig.loadPessoaOptions()).resolves.toEqual([{ label: 'Fornecedor', value: 'p1' }]);
-    await expect(contasPagarModuleConfig.loadFormaPagamentoOptions()).resolves.toEqual([
-      { label: 'Credito', value: 'f1', ehCartao: true, baixarAutomaticamente: false }
-    ]);
-    await expect(contasPagarModuleConfig.loadContaBancariaOptions()).resolves.toEqual([{ label: 'Conta principal - Banco Exemplo', value: 'cb1' }]);
-    await expect(contasPagarModuleConfig.loadCartaoOptions()).resolves.toEqual([{ label: 'Visa Corporate - final 4242', value: 'c1' }]);
-    await expect(contasPagarModuleConfig.loadRateioOptions()).resolves.toEqual([
-      { label: 'DESP.02 - Alimentação', value: 'cg2' },
-      { label: 'DESP.10 - Despesa Operacional', value: 'cg1' }
-    ]);
+    await contasReceberModuleConfig.create(values);
+    await contasReceberModuleConfig.update('cr-1', values);
 
-    expect(cadastrosApi.contasGerenciais.listar).toHaveBeenCalledWith(expect.objectContaining({ tipo: 'Despesa', aceitaLancamentos: true }));
+    expect(financeiroApi.contasReceber.criar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        numeroDocumento: null,
+        observacao: null,
+        dataLiquidacao: null,
+        cartaoId: null,
+        contaBancariaId: null,
+        pagadorId: 'pessoa-1',
+        responsavelId: 'resp-1',
+        recorrencia: null
+      })
+    );
+    expect(financeiroApi.contasReceber.atualizar).toHaveBeenCalled();
+  });
+
+  it('maps details back to form values for payable and receivable accounts', () => {
     expect(
-      resolveFormaPagamentoBehavior('f1', [{ label: 'Credito', value: 'f1', ehCartao: true, baixarAutomaticamente: false }])
-    ).toEqual({ ehCartao: true, baixarAutomaticamente: false });
-    expect(resolveFormaPagamentoBehavior('missing', [])).toEqual({ ehCartao: false, baixarAutomaticamente: false });
+      contasPagarModuleConfig.toFormValues({
+        ...detailBase,
+        origemCompraPlanejadaId: 'compra-1',
+        recebedorId: 'pessoa-1',
+        responsavelCompraId: null
+      } as never)
+    ).toEqual(
+      expect.objectContaining({
+        origemCompraPlanejadaId: 'compra-1',
+        pessoaId: 'pessoa-1',
+        responsavelId: '',
+        formaPagamentoId: 'forma-1',
+        recorrenciaTipoDia: 'DiaUtil',
+        recorrenciaDataInicio: '2026-06',
+        recorrenciaDataFim: ''
+      })
+    );
+
+    expect(
+      contasReceberModuleConfig.toFormValues({
+        ...detailBase,
+        pagadorId: 'pessoa-2',
+        responsavelId: 'resp-2'
+      } as never)
+    ).toEqual(expect.objectContaining({ pessoaId: 'pessoa-2', responsavelId: 'resp-2', formaPagamentoId: 'forma-1' }));
+  });
+
+  it('loads select options and builds summary items', async () => {
+    await expect(contasPagarModuleConfig.loadPessoaOptions()).resolves.toEqual([{ label: 'Pessoa', value: 'p1' }]);
+    await expect(contasPagarModuleConfig.loadFormaPagamentoOptions()).resolves.toEqual([
+      { label: 'Pix', value: 'f1', ehCartao: false, baixarAutomaticamente: true }
+    ]);
+    await expect(contasPagarModuleConfig.loadContaBancariaOptions()).resolves.toEqual([{ label: 'Conta - Banco', value: 'b1' }]);
+    await expect(contasPagarModuleConfig.loadCartaoOptions()).resolves.toEqual([{ label: 'Visa - final 1234', value: 'c1' }]);
+    await expect(contasPagarModuleConfig.loadRateioOptions()).resolves.toEqual([{ label: '2.1 - Receita', value: 'g2' }]);
+    expect(cadastrosApi.contasGerenciais.listar).toHaveBeenCalledWith(
+      expect.objectContaining({ tipo: 'Despesa', aceitaLancamentos: true })
+    );
+
+    const summary = contasReceberModuleConfig.buildSummaryItems?.({
+      totalRegistros: 2,
+      totalPendente: 100,
+      totalVencendoHoje: 1,
+      totalLiquidado: 30,
+      valorTotal: 130
+    });
+
+    expect(summary?.map((item) => item.key)).toEqual(['registros', 'total-pendente', 'total-hoje', 'total-liquidado', 'valor-total']);
+    expect(summary?.[1].tone).toBe('danger');
+  });
+
+  it('renders configured columns for table-only values', () => {
+    const payableRow = {
+      numeroParcela: 1,
+      quantidadeParcelas: 3,
+      dataVencimento: '2026-06-21',
+      valorLiquido: 95,
+      statusCodigo: 'PENDENTE'
+    };
+
+    const renderResults = contasPagarModuleConfig.columns
+      .map((column) => ('render' in column && typeof column.render === 'function' ? column.render(payableRow[column.dataIndex as never], payableRow as never, 0) : null))
+      .filter(Boolean);
+
+    expect(renderResults).toEqual(expect.arrayContaining(['21/06/2026', 'R$95,00', '1/3']));
+    expect(contasPagarModuleConfig.defaultFilters.statusCodigo).toEqual(['PENDENTE', 'VENCIDA']);
+  });
+
+  it('keeps direct service delegates wired for recurring actions', async () => {
+    await contasPagarModuleConfig.gerarOcorrencias?.('cp-1', { ateData: '2026-12-31' });
+    await contasPagarModuleConfig.pausarRecorrencia?.('cp-1');
+    await contasPagarModuleConfig.encerrarRecorrencia?.('cp-1', { dataFim: '2026-12-31' });
+    await contasPagarModuleConfig.estornar?.('cp-1');
+    await contasPagarModuleConfig.cancelar?.('cp-1');
+
+    expect(isValidElement(contasPagarModuleConfig.columns[0].title as never)).toBe(false);
+    expect(financeiroApi.contasPagar.gerarOcorrencias).toHaveBeenCalledWith('cp-1', { ateData: '2026-12-31' });
+    expect(financeiroApi.contasPagar.pausarRecorrencia).toHaveBeenCalledWith('cp-1');
+    expect(financeiroApi.contasPagar.encerrarRecorrencia).toHaveBeenCalledWith('cp-1', { dataFim: '2026-12-31' });
+    expect(financeiroApi.contasPagar.estornar).toHaveBeenCalledWith('cp-1');
+    expect(financeiroApi.contasPagar.cancelar).toHaveBeenCalledWith('cp-1');
   });
 });

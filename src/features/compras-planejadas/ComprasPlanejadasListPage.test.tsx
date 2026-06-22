@@ -1,8 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ComprasPlanejadasListPage } from './ComprasPlanejadasListPage';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 import { cadastrosApi } from '../../services/http/cadastros-api';
+import { selectDateInDateInput } from '../../test/date-input';
 
 vi.mock('../../services/http/compras-planejadas-api', () => ({
   comprasPlanejadasApi: {
@@ -101,4 +103,75 @@ describe('ComprasPlanejadasListPage', () => {
       )
     );
   });
+
+  it('applies filters and table sorting to the query', async () => {
+    vi.mocked(cadastrosApi.contasGerenciais.listar).mockResolvedValue({
+      items: [
+        {
+          id: 'cg-1',
+          codigo: '1.01',
+          descricao: 'Tecnologia'
+        }
+      ],
+      page: 1,
+      pageSize: 200,
+      totalItems: 1,
+      totalPages: 1
+    } as never);
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({
+      items: [
+        {
+          id: 'p-1',
+          nome: 'Michelle'
+        }
+      ],
+      page: 1,
+      pageSize: 200,
+      totalItems: 1,
+      totalPages: 1
+    } as never);
+
+    renderPage();
+
+    expect(await screen.findByText('Notebook novo')).toBeInTheDocument();
+    await waitFor(() => expect(cadastrosApi.pessoas.listar).toHaveBeenCalled());
+
+    await userEvent.type(screen.getByPlaceholderText(/T.tulo, conta/i), 'notebook');
+    await userEvent.click(screen.getByLabelText('Prioridade'));
+    await userEvent.click(screen.getByRole('button', { name: 'Alta' }));
+    await userEvent.click(screen.getByLabelText('Status'));
+    await userEvent.click(screen.getByRole('button', { name: 'Comprada' }));
+    await userEvent.click(screen.getByLabelText(/Parcel.vel/i));
+    await userEvent.click(screen.getByRole('button', { name: 'Sim' }));
+    await userEvent.click(screen.getByLabelText(/Conta gerencial/i));
+    await userEvent.click(await screen.findByRole('button', { name: '1.01 - Tecnologia' }));
+    await userEvent.click(screen.getByLabelText(/Respons.vel/i));
+    await userEvent.click(await screen.findByRole('button', { name: 'Michelle' }));
+    await selectDateInDateInput('Data desejada de', '2026-11-01');
+
+    await waitFor(() =>
+      expect(comprasPlanejadasApi.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          search: 'notebook',
+          prioridades: ['Alta'],
+          statuses: ['Comprada'],
+          parcelavel: true,
+          contaGerencialId: 'cg-1',
+          responsavelId: 'p-1',
+          dataDesejadaInicial: '2026-11-01'
+        })
+      )
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /Valor estimado/i }));
+
+    await waitFor(() =>
+      expect(comprasPlanejadasApi.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          sortBy: 'valorEstimado',
+          sortDirection: 'Asc'
+        })
+      )
+    );
+  }, 40000);
 });
