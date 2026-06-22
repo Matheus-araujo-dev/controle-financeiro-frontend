@@ -297,4 +297,74 @@ describe('FinancialAccountListPage', () => {
     expect(screen.queryByText('Ações de recorrência')).not.toBeInTheDocument();
     expect(config.gerarOcorrencias).not.toHaveBeenCalled();
   });
+
+  it('applies status, recurrence, period, document, description and sort filters', async () => {
+    const { config, list } = createConfig();
+
+    render(
+      <MemoryRouter>
+        <FinancialAccountListPage config={config} />
+      </MemoryRouter>
+    );
+
+    expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
+
+    await userEvent.click(screen.getByLabelText('Status'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Liquidada' }));
+
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          statusCodigo: ['PENDENTE', 'VENCIDA', 'LIQUIDADA']
+        })
+      )
+    );
+
+    await userEvent.click(screen.getByRole('combobox', { name: /Recorr.ncia/i }));
+    await userEvent.click(screen.getByRole('button', { name: 'Somente recorrentes' }));
+
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          ehRecorrente: true
+        })
+      )
+    );
+
+    await userEvent.click(screen.getByRole('combobox', { name: /Per.odo de vencimento/i }));
+    await userEvent.click(screen.getByRole('button', { name: 'Hoje' }));
+
+    const hoje = new Date().toISOString().split('T')[0];
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          dataInicial: hoje,
+          dataFinal: hoje
+        })
+      )
+    );
+
+    await userEvent.type(screen.getByLabelText(/N.mero do documento/i), 'NF-123');
+    await userEvent.type(screen.getByLabelText(/Descri..o/i), 'Aluguel comercial');
+
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          numeroDocumento: 'NF-123',
+          descricao: 'Aluguel comercial'
+        })
+      )
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Vencimento' }));
+
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          sortBy: 'dataVencimento',
+          sortDirection: 'Asc'
+        })
+      )
+    );
+  }, 40000);
 });

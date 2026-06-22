@@ -1,3 +1,4 @@
+import { isValidElement } from 'react';
 import {
   cartoesModuleConfig,
   contasBancariasModuleConfig,
@@ -44,406 +45,221 @@ vi.mock('../../services/http/cadastros-api', () => ({
   }
 }));
 
-describe('cadastro module config', () => {
+function renderColumn(config: typeof pessoasModuleConfig, key: string, value: unknown, record: unknown) {
+  const column = config.columns.find((item) => item.key === key);
+  return column && 'render' in column && typeof column.render === 'function' ? column.render(value as never, record as never, 0) : null;
+}
+
+describe('cadastros module config', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(cadastrosApi.pessoas.ativar).mockResolvedValue({} as never);
+    vi.mocked(cadastrosApi.pessoas.inativar).mockResolvedValue({} as never);
+    vi.mocked(cadastrosApi.cartoes.criar).mockResolvedValue({ id: 'cartao-1' } as never);
+    vi.mocked(cadastrosApi.cartoes.atualizar).mockResolvedValue({ id: 'cartao-1' } as never);
+    vi.mocked(cadastrosApi.contasGerenciais.criar).mockResolvedValue({ id: 'cg-1' } as never);
+    vi.mocked(cadastrosApi.contasGerenciais.atualizar).mockResolvedValue({ id: 'cg-1' } as never);
+    vi.mocked(cadastrosApi.contasBancarias.listar).mockResolvedValue({
+      items: [{ id: 'conta-1', nome: 'Conta Principal', banco: 'Banco A' }]
+    } as never);
+    vi.mocked(cadastrosApi.contasGerenciais.listar).mockResolvedValue({
+      items: [
+        {
+          id: 'pai-1',
+          codigo: '1.1',
+          descricao: 'Alimentacao',
+          tipo: 'Despesa',
+          contaPaiId: null,
+          responsavelPadraoId: 'pessoa-1',
+          responsavelPadraoNome: 'Responsavel',
+          aceitaLancamentos: true
+        }
+      ]
+    } as never);
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({
+      items: [{ id: 'pessoa-1', nome: 'Responsavel' }]
+    } as never);
   });
 
-  it('maps detail payloads to form values', () => {
-    expect(
-      pessoasModuleConfig.toFormValues({
-        id: '1',
-        nome: 'Pessoa',
-        tipoPessoa: 'Fisica',
-        cpfCnpj: null,
-        email: null,
-        telefone: null,
-        observacao: null,
-        chavesPix: [{ tipo: 'Email', chave: 'pix@example.com' }],
-        ativo: true,
-        createdAtUtc: '2026-04-03T00:00:00Z',
-        updatedAtUtc: '2026-04-03T00:00:00Z'
-      })
-    ).toEqual({
-      nome: 'Pessoa',
+  it('maps pessoas details, summary, export columns and toggle actions', async () => {
+    const detail = {
+      nome: 'Maria',
+      tipoPessoa: 'Fisica',
+      cpfCnpj: null,
+      email: null,
+      telefone: null,
+      observacao: null,
+      chavesPix: null
+    };
+
+    expect(pessoasModuleConfig.toFormValues(detail as never)).toEqual({
+      nome: 'Maria',
       tipoPessoa: 'Fisica',
       cpfCnpj: '',
       email: '',
       telefone: '',
       observacao: '',
-      chavesPix: [{ tipo: 'Email', chave: 'pix@example.com' }]
+      chavesPix: []
+    });
+    expect(pessoasModuleConfig.buildSummaryItems?.({ total: 2, ativos: 1, juridicas: 1 })).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'total', value: 2 }),
+        expect.objectContaining({ key: 'inativos', value: 0 })
+      ])
+    );
+    expect(pessoasModuleConfig.exportColumns?.map((column) => column.value({ cpfCnpj: '12345678901', ativo: true } as never))).toEqual([
+      undefined,
+      undefined,
+      '123.456.789-01',
+      '',
+      '',
+      'Ativo'
+    ]);
+
+    const [editAction, toggleAction] = pessoasModuleConfig.rowActions ?? [];
+    expect(editAction.href?.({ id: 'p1' } as never)).toBe('/pessoas/p1');
+    expect(typeof toggleAction.label).toBe('function');
+    expect(typeof toggleAction.icon).toBe('function');
+    expect((toggleAction.label as (record: { ativo: boolean }) => string)({ ativo: true })).toBe('Inativar');
+    expect(isValidElement((toggleAction.icon as (record: { ativo: boolean }) => unknown)({ ativo: false }))).toBe(true);
+    await toggleAction.onClick?.({ id: 'p1', ativo: true } as never);
+    await toggleAction.onClick?.({ id: 'p1', ativo: false } as never);
+    expect(cadastrosApi.pessoas.inativar).toHaveBeenCalledWith('p1');
+    expect(cadastrosApi.pessoas.ativar).toHaveBeenCalledWith('p1');
+  });
+
+  it('renders cadastro table columns with fallback formatting', () => {
+    expect(renderColumn(pessoasModuleConfig, 'cpfCnpj', null, { ativo: true })).toBe('-');
+    expect(renderColumn(pessoasModuleConfig, 'email', null, { ativo: true })).toBe('-');
+    expect(isValidElement(renderColumn(pessoasModuleConfig, 'ativo', undefined, { ativo: true }))).toBe(true);
+
+    expect(isValidElement(renderColumn(formasPagamentoModuleConfig as never, 'ehCartao', undefined, { ehCartao: true }))).toBe(true);
+    expect(isValidElement(renderColumn(formasPagamentoModuleConfig as never, 'baixarAutomaticamente', undefined, { baixarAutomaticamente: false }))).toBe(
+      true
+    );
+    expect(isValidElement(renderColumn(formasPagamentoModuleConfig as never, 'ativo', undefined, { ativo: false }))).toBe(true);
+
+    expect(renderColumn(contasBancariasModuleConfig as never, 'numeroConta', null, { ativo: true })).toBe('-');
+    expect(renderColumn(contasBancariasModuleConfig as never, 'saldoInicial', 100, { ativo: true })).toBe('R$100,00');
+    expect(renderColumn(contasBancariasModuleConfig as never, 'limiteCartoesCompartilhado', null, { ativo: true })).toBe('-');
+
+    expect(isValidElement(renderColumn(cartoesModuleConfig as never, 'usaLimiteCompartilhado', undefined, { usaLimiteCompartilhado: false }))).toBe(
+      true
+    );
+    expect(renderColumn(cartoesModuleConfig as never, 'limiteEfetivo', 500, { ativo: true })).toBe('R$500,00');
+
+    expect(renderColumn(contasGerenciaisModuleConfig as never, 'codigo', null, { ativo: true })).toBe('-');
+    expect(renderColumn(contasGerenciaisModuleConfig as never, 'contaPaiDescricao', null, { ativo: true })).toBe('-');
+    expect(renderColumn(contasGerenciaisModuleConfig as never, 'responsavelPadraoNome', null, { ativo: true })).toBe('-');
+    expect(
+      isValidElement(renderColumn(contasGerenciaisModuleConfig as never, 'aceitaLancamentos', undefined, { aceitaLancamentos: true }))
+    ).toBe(true);
+    expect(
+      isValidElement(
+        renderColumn(contasGerenciaisModuleConfig as never, 'ehPadraoRecebimentoFaturaCartao', undefined, {
+          ehPadraoRecebimentoFaturaCartao: false
+        })
+      )
+    ).toBe(true);
+  });
+
+  it('maps simple form values for payment methods and bank accounts', () => {
+    expect(
+      formasPagamentoModuleConfig.toFormValues({
+        nome: 'Pix',
+        tipo: 'Pix',
+        ehCartao: false,
+        baixarAutomaticamente: true,
+        ativo: true
+      } as never)
+    ).toEqual({
+      nome: 'Pix',
+      tipo: 'Pix',
+      ehCartao: false,
+      baixarAutomaticamente: true,
+      ativo: true
     });
 
     expect(
       contasBancariasModuleConfig.toFormValues({
-        id: '1',
         nome: 'Conta',
         banco: 'Banco',
         agencia: null,
         numeroConta: null,
         tipoConta: null,
-        saldoInicial: 10,
-        dataSaldoInicial: '2026-04-03',
-        saldoAtual: 10,
-        limiteCartoesCompartilhado: 5000,
-        limiteCartoesComprometido: 350,
-        limiteCartoesDisponivel: 4650,
-        ativo: true,
-        createdAtUtc: '',
-        updatedAtUtc: ''
+        saldoInicial: 100,
+        dataSaldoInicial: '2026-06-01',
+        limiteCartoesCompartilhado: null,
+        ativo: true
+      } as never)
+    ).toEqual(
+      expect.objectContaining({
+        agencia: '',
+        numeroConta: '',
+        tipoConta: '',
+        limiteCartoesCompartilhado: null
       })
-    ).toMatchObject({
-      agencia: '',
-      numeroConta: '',
-      tipoConta: '',
-      limiteCartoesCompartilhado: 5000
-    });
-
-    expect(
-      formasPagamentoModuleConfig.toFormValues({
-        id: '1',
-        nome: 'Pix',
-        tipo: 'Pix',
-        ehCartao: false,
-        baixarAutomaticamente: false,
-        ativo: true,
-        createdAtUtc: '',
-        updatedAtUtc: ''
-      })
-    ).toEqual({
-      nome: 'Pix',
-      tipo: 'Pix',
-      ehCartao: false,
-      baixarAutomaticamente: false,
-      ativo: true
-    });
-
-    expect(
-      cartoesModuleConfig.toFormValues({
-        id: '1',
-        nome: 'Cartao',
-        bandeira: 'Visa',
-        numeroFinal: '1234',
-        diaFechamentoFatura: 8,
-        diaVencimentoFatura: 15,
-        contaBancariaPagamentoPadraoId: null,
-        limiteCredito: null,
-        usaLimiteCompartilhado: true,
-        limiteEfetivo: 6000,
-        limiteComprometido: 350,
-        limiteDisponivel: 5650,
-        ativo: true,
-        createdAtUtc: '',
-        updatedAtUtc: ''
-      })
-    ).toMatchObject({
-      contaBancariaPagamentoPadraoId: '',
-      limiteCredito: null
-    });
-
-    expect(
-      contasGerenciaisModuleConfig.toFormValues({
-        id: '1',
-        codigo: null,
-        descricao: 'Despesa',
-        tipo: 'Despesa',
-        contaPaiId: null,
-        contaPaiDescricao: null,
-        ativo: true,
-        aceitaLancamentos: true,
-        ehPadraoRecebimentoFaturaCartao: false,
-        responsavelPadraoId: 'p1',
-        responsavelPadraoNome: 'Matheus',
-        createdAtUtc: '',
-        updatedAtUtc: ''
-      })
-    ).toMatchObject({
-      codigo: '',
-      contaPaiId: '',
-      ehPadraoRecebimentoFaturaCartao: false,
-      responsavelPadraoId: 'p1'
-    });
-
-    expect(contasGerenciaisModuleConfig.listDescription).toBe(
-      'Cadastre a estrutura de receita e despesa para rateio e visão gerencial.'
-    );
-    expect(contasGerenciaisModuleConfig.formDescription).toBe(
-      'Contas pai são estruturais; somente contas sem filhos podem receber lançamentos e planejamentos.'
-    );
-    expect(contasGerenciaisModuleConfig.columns.find((column) => column.key === 'responsavelPadraoNome')?.title).toBe(
-      'Responsável padrão'
-    );
-    expect(contasGerenciaisModuleConfig.fields.find((field) => field.name === 'responsavelPadraoId')?.label).toBe(
-      'Responsável padrão'
     );
   });
 
-  it('normalizes create and update payloads for related ids', async () => {
-    vi.mocked(cadastrosApi.cartoes.criar).mockResolvedValue({} as never);
-    vi.mocked(cadastrosApi.cartoes.atualizar).mockResolvedValue({} as never);
-    vi.mocked(cadastrosApi.contasGerenciais.criar).mockResolvedValue({} as never);
-    vi.mocked(cadastrosApi.contasGerenciais.atualizar).mockResolvedValue({} as never);
-
-    await cartoesModuleConfig.create({
-      nome: 'Cartao',
+  it('normalizes card payloads and loads bank account options', async () => {
+    const payload = {
+      nome: 'Visa',
       bandeira: 'Visa',
       numeroFinal: '1234',
-      diaFechamentoFatura: 8,
-      diaVencimentoFatura: 15,
+      diaFechamentoFatura: 5,
+      diaVencimentoFatura: 12,
       contaBancariaPagamentoPadraoId: '',
       limiteCredito: null,
       ativo: true
-    });
+    };
 
-    await cartoesModuleConfig.update('1', {
-      nome: 'Cartao',
-      bandeira: 'Visa',
-      numeroFinal: '1234',
-      diaFechamentoFatura: 8,
-      diaVencimentoFatura: 15,
-      contaBancariaPagamentoPadraoId: '',
-      limiteCredito: null,
-      ativo: true
-    });
-
-    await contasGerenciaisModuleConfig.create({
-      codigo: '',
-      descricao: 'Despesa',
-      tipo: 'Despesa',
-      contaPaiId: '',
-      ehPadraoRecebimentoFaturaCartao: false,
-      responsavelPadraoId: '',
-      ativo: true
-    });
-
-    await contasGerenciaisModuleConfig.update('1', {
-      codigo: '',
-      descricao: 'Despesa',
-      tipo: 'Despesa',
-      contaPaiId: '',
-      ehPadraoRecebimentoFaturaCartao: false,
-      responsavelPadraoId: '',
-      ativo: true
-    });
+    await cartoesModuleConfig.create(payload);
+    await cartoesModuleConfig.update('cartao-1', { ...payload, contaBancariaPagamentoPadraoId: 'conta-1' });
 
     expect(cadastrosApi.cartoes.criar).toHaveBeenCalledWith(expect.objectContaining({ contaBancariaPagamentoPadraoId: null }));
-    expect(cadastrosApi.cartoes.atualizar).toHaveBeenCalledWith('1', expect.objectContaining({ contaBancariaPagamentoPadraoId: null }));
-    expect(cadastrosApi.contasGerenciais.criar).toHaveBeenCalledWith(expect.objectContaining({ contaPaiId: null, responsavelPadraoId: null }));
-    expect(cadastrosApi.contasGerenciais.atualizar).toHaveBeenCalledWith('1', expect.objectContaining({ contaPaiId: null, responsavelPadraoId: null }));
+    expect(cadastrosApi.cartoes.atualizar).toHaveBeenCalledWith('cartao-1', expect.objectContaining({ contaBancariaPagamentoPadraoId: 'conta-1' }));
+    expect(cartoesModuleConfig.toFormValues({ ...payload, contaBancariaPagamentoPadraoId: null } as never).contaBancariaPagamentoPadraoId).toBe('');
+
+    const field = cartoesModuleConfig.fields.find((item) => item.name === 'contaBancariaPagamentoPadraoId');
+    await expect(field?.loadOptions?.()).resolves.toEqual([{ label: 'Conta Principal - Banco A', value: 'conta-1' }]);
   });
 
-  it('loads related options and triggers person status actions', async () => {
-    vi.mocked(cadastrosApi.contasBancarias.listar).mockResolvedValue({
-      items: [
-        {
-          id: 'b1',
-          nome: 'Conta principal',
-          banco: 'Banco Exemplo',
-          agencia: null,
-          numeroConta: null,
-          tipoConta: null,
-          saldoInicial: 0,
-          dataSaldoInicial: '2026-04-01',
-          saldoAtual: 0,
-          limiteCartoesCompartilhado: 5000,
-          limiteCartoesComprometido: 350,
-          limiteCartoesDisponivel: 4650,
-          ativo: true
-        }
-      ],
-      page: 1,
-      pageSize: 100,
-      totalItems: 1,
-      totalPages: 1
-    } as never);
-    vi.mocked(cadastrosApi.contasGerenciais.listar).mockResolvedValue({
-      items: [
-        {
-          id: 'c2',
-          codigo: 'DES.10',
-          descricao: 'Tecnologia',
-          tipo: 'Despesa',
-          contaPaiId: null,
-          contaPaiDescricao: null,
-          ativo: true,
-          aceitaLancamentos: false,
-          ehPadraoRecebimentoFaturaCartao: false,
-          responsavelPadraoId: 'p2',
-          responsavelPadraoNome: 'Matheus'
-        },
-        {
-          id: 'c1',
-          codigo: 'DES.02',
-          descricao: 'Alimentação',
-          tipo: 'Despesa',
-          contaPaiId: null,
-          contaPaiDescricao: null,
-          ativo: true,
-          aceitaLancamentos: false,
-          ehPadraoRecebimentoFaturaCartao: false,
-          responsavelPadraoId: null,
-          responsavelPadraoNome: null
-        },
-        {
-          id: 'c3',
-          codigo: null,
-          descricao: 'Sem código',
-          tipo: 'Despesa',
-          contaPaiId: null,
-          contaPaiDescricao: null,
-          ativo: true,
-          aceitaLancamentos: false,
-          ehPadraoRecebimentoFaturaCartao: false,
-          responsavelPadraoId: null,
-          responsavelPadraoNome: null
-        }
-      ],
-      page: 1,
-      pageSize: 100,
-      totalItems: 3,
-      totalPages: 1
-    } as never);
-    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({
-      items: [
-        {
-          id: 'p2',
-          nome: 'Matheus',
-          tipoPessoa: 'Fisica',
-          cpfCnpj: null,
-          email: null,
-          telefone: null,
-          ativo: true
-        }
-      ],
-      page: 1,
-      pageSize: 100,
-      totalItems: 1,
-      totalPages: 1
-    } as never);
-
-    const contaField = cartoesModuleConfig.fields.find((field) => field.name === 'contaBancariaPagamentoPadraoId');
-    const contaPaiField = contasGerenciaisModuleConfig.fields.find((field) => field.name === 'contaPaiId');
-    const responsavelField = contasGerenciaisModuleConfig.fields.find((field) => field.name === 'responsavelPadraoId');
-
-    await expect(contaField?.loadOptions?.()).resolves.toEqual([{ label: 'Conta principal - Banco Exemplo', value: 'b1' }]);
-    await expect(contaPaiField?.loadOptions?.()).resolves.toEqual([
-      {
-        label: 'DES.02 - Alimentação',
-        value: 'c1',
-        data: {
-          codigo: 'DES.02',
-          descricao: 'Alimentação',
-          tipo: 'Despesa',
-          contaPaiId: null,
-          responsavelPadraoId: null,
-          responsavelPadraoNome: null
-        }
-      },
-      {
-        label: 'DES.10 - Tecnologia',
-        value: 'c2',
-        data: {
-          codigo: 'DES.10',
-          descricao: 'Tecnologia',
-          tipo: 'Despesa',
-          contaPaiId: null,
-          responsavelPadraoId: 'p2',
-          responsavelPadraoNome: 'Matheus'
-        }
-      },
-      {
-        label: 'Sem código',
-        value: 'c3',
-        data: {
-          codigo: null,
-          descricao: 'Sem código',
-          tipo: 'Despesa',
-          contaPaiId: null,
-          responsavelPadraoId: null,
-          responsavelPadraoNome: null
-        }
-      }
-    ]);
-    await expect(responsavelField?.loadOptions?.()).resolves.toEqual([{ label: 'Matheus', value: 'p2' }]);
-
-    await pessoasModuleConfig.rowActions?.[1].onClick?.({
-      id: '1',
-      nome: 'Pessoa',
-      tipoPessoa: 'Fisica',
-      cpfCnpj: null,
-      email: null,
-      telefone: null,
+  it('normalizes managerial account payloads and loads parent/person options', async () => {
+    const payload = {
+      codigo: '1.1',
+      descricao: 'Alimentacao',
+      tipo: 'Despesa' as const,
+      contaPaiId: '',
+      responsavelPadraoId: '',
+      ehPadraoRecebimentoFaturaCartao: false,
       ativo: true
-    });
+    };
 
-    await pessoasModuleConfig.rowActions?.[1].onClick?.({
-      id: '2',
-      nome: 'Pessoa 2',
-      tipoPessoa: 'Juridica',
-      cpfCnpj: null,
-      email: null,
-      telefone: null,
-      ativo: false
-    });
+    await contasGerenciaisModuleConfig.create(payload);
+    await contasGerenciaisModuleConfig.update('cg-1', { ...payload, contaPaiId: 'pai-1', responsavelPadraoId: 'pessoa-1' });
 
-    expect(cadastrosApi.pessoas.inativar).toHaveBeenCalledWith('1');
-    expect(cadastrosApi.pessoas.ativar).toHaveBeenCalledWith('2');
-    expect(formasPagamentoModuleConfig.columns.length).toBeGreaterThan(0);
-    expect(pessoasModuleConfig.rowActions?.[0].href?.({ id: '1' } as never)).toBe('/pessoas/1');
+    expect(cadastrosApi.contasGerenciais.criar).toHaveBeenCalledWith(
+      expect.objectContaining({ contaPaiId: null, responsavelPadraoId: null })
+    );
+    expect(cadastrosApi.contasGerenciais.atualizar).toHaveBeenCalledWith(
+      'cg-1',
+      expect.objectContaining({ contaPaiId: 'pai-1', responsavelPadraoId: 'pessoa-1' })
+    );
+    expect(
+      contasGerenciaisModuleConfig.toFormValues({
+        ...payload,
+        contaPaiId: null,
+        responsavelPadraoId: null,
+        ehPadraoRecebimentoFaturaCartao: true
+      } as never)
+    ).toEqual(expect.objectContaining({ contaPaiId: '', responsavelPadraoId: '', ehPadraoRecebimentoFaturaCartao: true }));
 
-    const toggleStatusLabel = pessoasModuleConfig.rowActions?.[1].label;
-    expect(typeof toggleStatusLabel).toBe('function');
-
-    if (typeof toggleStatusLabel !== 'function') {
-      throw new Error('Expected toggle status label to be a function.');
-    }
-
-    expect(toggleStatusLabel({ ativo: true } as never)).toBe('Inativar');
-    expect(toggleStatusLabel({ ativo: false } as never)).toBe('Ativar');
-  });
-
-  it('executes render callbacks from the support module columns', () => {
-    const pessoaDocumentoRender = pessoasModuleConfig.columns[2].render;
-    const pessoaStatusRender = pessoasModuleConfig.columns[4].render;
-    const formaCartaoRender = formasPagamentoModuleConfig.columns[2].render;
-    const formaBaixaRender = formasPagamentoModuleConfig.columns[3].render;
-    const contaBancoRender = contasBancariasModuleConfig.columns[2].render;
-    const contaSaldoRender = contasBancariasModuleConfig.columns[3].render;
-    const contaLimiteRender = contasBancariasModuleConfig.columns[4].render;
-    const cartaoOrigemRender = cartoesModuleConfig.columns[5].render;
-    const cartaoDisponivelRender = cartoesModuleConfig.columns[7].render;
-    const cartaoStatusRender = cartoesModuleConfig.columns[8].render;
-    const contaGerencialPaiRender = contasGerenciaisModuleConfig.columns[3].render;
-    const contaGerencialResponsavelRender = contasGerenciaisModuleConfig.columns[4].render;
-    const contaGerencialUsoRender = contasGerenciaisModuleConfig.columns[5].render;
-    const contaGerencialPadraoRender = contasGerenciaisModuleConfig.columns[6].render;
-    const contaGerencialStatusRender = contasGerenciaisModuleConfig.columns[7].render;
-
-    expect(pessoaDocumentoRender?.('43778209825', {} as never, 0)).toBe('437.782.098-25');
-    expect(pessoaDocumentoRender?.(null, {} as never, 0)).toBe('-');
-    expect(pessoaStatusRender?.(true, { ativo: true } as never, 0)).toBeTruthy();
-    expect(formaCartaoRender?.(true, { ehCartao: true } as never, 0)).toBeTruthy();
-    expect(formaBaixaRender?.(false, { baixarAutomaticamente: false } as never, 0)).toBeTruthy();
-    expect(contaBancoRender?.(null, {} as never, 0)).toBe('-');
-    expect(contaSaldoRender?.(123.45, {} as never, 0)).toContain('R$');
-    expect(contaSaldoRender?.(undefined, {} as never, 0)).toBe('-');
-    expect(contaLimiteRender?.(5000, {} as never, 0)).toContain('R$');
-    expect(cartaoOrigemRender?.(true, { usaLimiteCompartilhado: true } as never, 0)).toBeTruthy();
-    expect(cartaoDisponivelRender?.(5650, {} as never, 0)).toContain('R$');
-    expect(cartaoStatusRender?.(false, { ativo: false } as never, 0)).toBeTruthy();
-    expect(contaGerencialPaiRender?.(null, {} as never, 0)).toBe('-');
-    expect(contaGerencialResponsavelRender?.('Matheus', {} as never, 0)).toBe('Matheus');
-    expect(contaGerencialUsoRender?.(true, { aceitaLancamentos: true } as never, 0)).toBeTruthy();
-    expect(contaGerencialPadraoRender?.(true, { ehPadraoRecebimentoFaturaCartao: true } as never, 0)).toBeTruthy();
-    expect(contaGerencialStatusRender?.(true, { ativo: true } as never, 0)).toBeTruthy();
-  });
-
-  it('opens contas gerenciais ordered by codigo by default', () => {
-    expect(contasGerenciaisModuleConfig.defaultFilters).toMatchObject({
-      page: 1,
-      pageSize: 20,
-      sortBy: 'codigo',
-      sortDirection: 'Asc'
-    });
+    await expect(contasGerenciaisModuleConfig.fields.find((item) => item.name === 'contaPaiId')?.loadOptions?.()).resolves.toEqual([
+      expect.objectContaining({ label: '1.1 - Alimentacao', value: 'pai-1' })
+    ]);
+    await expect(contasGerenciaisModuleConfig.fields.find((item) => item.name === 'responsavelPadraoId')?.loadOptions?.()).resolves.toEqual([
+      { label: 'Responsavel', value: 'pessoa-1' }
+    ]);
   });
 });

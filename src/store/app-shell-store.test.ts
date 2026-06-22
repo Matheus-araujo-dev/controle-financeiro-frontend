@@ -1,6 +1,7 @@
-import { useAppShellStore } from './app-shell-store';
+import { act, renderHook } from '@testing-library/react';
+import { useAppShellStore, useSidebarCollapsed } from './app-shell-store';
 
-describe('useAppShellStore', () => {
+describe('app-shell-store', () => {
   afterEach(() => {
     useAppShellStore.setState({
       collapsed: false,
@@ -8,15 +9,25 @@ describe('useAppShellStore', () => {
     });
   });
 
-  it('updates the collapsed state', () => {
+  it('updates shell state', () => {
     useAppShellStore.getState().setCollapsed(true);
+    useAppShellStore.getState().setPageTitle('Relatorios');
 
-    expect(useAppShellStore.getState().collapsed).toBe(true);
+    expect(useAppShellStore.getState()).toMatchObject({
+      collapsed: true,
+      pageTitle: 'Relatorios'
+    });
   });
 
-  it('updates the current page title', () => {
-    useAppShellStore.getState().setPageTitle('Contas a pagar');
+  it('exposes the collapsed selector hook', () => {
+    const { result } = renderHook(() => useSidebarCollapsed());
 
-    expect(useAppShellStore.getState().pageTitle).toBe('Contas a pagar');
+    expect(result.current).toBe(false);
+
+    act(() => {
+      useAppShellStore.getState().setCollapsed(true);
+    });
+
+    expect(result.current).toBe(true);
   });
 });
