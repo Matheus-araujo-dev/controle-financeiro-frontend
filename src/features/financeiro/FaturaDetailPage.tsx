@@ -10,6 +10,7 @@ import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR, formatMonthYearBR } from '../../shared/date';
 import type { FaturaDetalhe, FaturaItem } from '../../types/financeiro';
+import { AttachmentsSection } from '../../components/attachments/AttachmentsSection';
 
 type ContaBancariaOption = {
   label: string;
@@ -383,6 +384,23 @@ export function FaturaDetailPage() {
             </Button>
           </Space>
         )}
+      </Card>
+
+      <Card className="fatura-detail-page__attachments-card" variant="borderless">
+        <div className="fatura-detail-page__items-header">
+          <div>
+            <Typography.Text className="fatura-detail-page__section-eyebrow">Comprovantes</Typography.Text>
+            <Typography.Title level={4} className="fatura-detail-page__section-title">
+              Anexos da fatura
+            </Typography.Title>
+            <Typography.Paragraph className="fatura-detail-page__section-description">
+              Guarde comprovantes de pagamento, notas e documentos do ciclo da fatura.
+            </Typography.Paragraph>
+          </div>
+          <Tag color="default">Arquivos</Tag>
+        </div>
+
+        <AttachmentsSection tipoEntidade="faturas" entidadeId={detail.id} disabled={saving} />
       </Card>
 
       <Card className="fatura-detail-page__items-card" variant="borderless">

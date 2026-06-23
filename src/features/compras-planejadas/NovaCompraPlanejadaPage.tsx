@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { DateInput } from '../../components/forms/DateInput';
 import { ComboBox, type ComboBoxOption } from '../../components/forms/ComboBox';
 import { PageState } from '../../components/states/PageState';
@@ -15,11 +15,13 @@ import { cadastrosApi } from '../../services/http/cadastros-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 import { applyServerValidationErrors } from '../../services/forms/applyServerValidationErrors';
 import type { ApiErrorResponse } from '../../types/api';
-import type { CompraPlanejadaPayload } from '../../types/compras-planejadas';
+import type { CompraPlanejadaDetalhe, CompraPlanejadaPayload } from '../../types/compras-planejadas';
 import { compraPlanejadaSchema } from './schemas';
 import { QuickAddContaGerencialModal } from '../cadastros/quick-add/QuickAddContaGerencialModal';
 import { QuickAddPessoaModal } from '../cadastros/quick-add/QuickAddPessoaModal';
 
+import { AttachmentsSection } from '../../components/attachments/AttachmentsSection';
+import { uploadPendingAttachments } from '../../services/http/anexos-api';
 type SelectOption = ComboBoxOption;
 
 const prioridadeOptions: SelectOption[] = [
@@ -53,19 +55,39 @@ const labelClassName = 'block text-[10px] font-bold text-on-surface-variant uppe
 const fieldClassName =
   'cf-form-control w-full bg-surface-container border-none rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary/40 transition-all font-medium placeholder:text-outline/40 outline-none';
 const textAreaClassName = `${fieldClassName} resize-none`;
+function toFormValues(detail: CompraPlanejadaDetalhe): CompraPlanejadaPayload {
+  return {
+    titulo: detail.titulo,
+    descricao: detail.descricao ?? '',
+    valorEstimado: detail.valorEstimado,
+    dataDesejada: detail.dataDesejada ?? '',
+    prioridade: detail.prioridade,
+    status: detail.status,
+    parcelavel: detail.parcelavel,
+    quantidadeParcelasDesejada: detail.quantidadeParcelasDesejada,
+    contaGerencialId: detail.contaGerencialId,
+    responsavelId: detail.responsavelId,
+    link: detail.link ?? '',
+    observacao: detail.observacao ?? ''
+  };
+}
+
 
 export function NovaCompraPlanejadaPage() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string>();
   const [submitError, setSubmitError] = useState<string>();
   const [contaGerencialOptions, setContaGerencialOptions] = useState<SelectOption[]>([]);
   const [responsavelOptions, setResponsavelOptions] = useState<SelectOption[]>([]);
   const [contaGerencialModalOpen, setContaGerencialModalOpen] = useState(false);
+  const [pendingAttachmentFiles, setPendingAttachmentFiles] = useState<File[]>([]);
   const [responsavelModalOpen, setResponsavelModalOpen] = useState(false);
-
   const {
     control,
+    reset,
     handleSubmit,
     setError,
     setValue,
@@ -100,7 +122,7 @@ export function NovaCompraPlanejadaPage() {
       setLoading(true);
       setLoadError(undefined);
       try {
-        const [contasGerenciais, responsaveis] = await Promise.all([
+        const [contasGerenciais, responsaveis, detail] = await Promise.all([
           cadastrosApi.contasGerenciais.listar({
             page: 1,
             pageSize: 100,
@@ -113,11 +135,15 @@ export function NovaCompraPlanejadaPage() {
             pageSize: 100,
             search: '',
             ativo: true
-          })
+          }),
+          id ? comprasPlanejadasApi.obterPorId(id) : Promise.resolve(null)
         ]);
 
         setContaGerencialOptions(mapContaGerencialSelectOptions(filterContaGerencialLancavel(contasGerenciais.items)));
         setResponsavelOptions(responsaveis.items.map((item) => ({ label: item.nome, value: item.id })));
+        if (detail) {
+          reset(toFormValues(detail));
+        }
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : 'Falha ao carregar dados de apoio.');
       } finally {
@@ -126,7 +152,7 @@ export function NovaCompraPlanejadaPage() {
     }
 
     void loadOptions();
-  }, []);
+  }, [id, reset]);
 
   const resumo = useMemo(
     () => ({
@@ -149,12 +175,22 @@ export function NovaCompraPlanejadaPage() {
   async function onSubmit(values: CompraPlanejadaPayload) {
     setSubmitError(undefined);
     try {
-      await comprasPlanejadasApi.criar({
+      const payload = {
         ...values,
         descricao: values.descricao.trim(),
         link: values.link.trim(),
         observacao: values.observacao.trim()
-      });
+      };
+
+      const saved = id
+        ? await comprasPlanejadasApi.atualizar(id, payload)
+        : await comprasPlanejadasApi.criar(payload);
+
+      if (pendingAttachmentFiles.length > 0) {
+        await uploadPendingAttachments('compras-planejadas', saved.id, pendingAttachmentFiles);
+        setPendingAttachmentFiles([]);
+      }
+
       navigate('/compras-planejadas');
     } catch (err) {
       const apiError = err as AxiosError<ApiErrorResponse>;
@@ -429,6 +465,15 @@ export function NovaCompraPlanejadaPage() {
                 </div>
               </div>
             </FormSection>
+
+            <FormSection title="Anexos" eyebrow="Comprovantes" icon={<span className="material-symbols-outlined text-2xl">attach_file</span>}>
+              <AttachmentsSection
+                tipoEntidade="compras-planejadas"
+                entidadeId={id}
+                pendingFiles={pendingAttachmentFiles}
+                onPendingFilesChange={setPendingAttachmentFiles}
+              />
+            </FormSection>
           </div>
 
           <div className="lg:col-span-5 space-y-8">
@@ -471,7 +516,7 @@ export function NovaCompraPlanejadaPage() {
                   disabled={!isValid || isSubmitting}
                   className="w-full bg-primary/15 hover:bg-primary/25 text-primary border border-primary/40 font-black py-4 rounded-2xl active:scale-95 transition-all shadow-[0_0_20px_rgba(63,255,139,0.15)] uppercase tracking-tighter text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Salvando...' : 'Confirmar Planejamento'}
+                  {isSubmitting ? 'Salvando...' : isEditMode ? 'Salvar Planejamento' : 'Confirmar Planejamento'}
                 </button>
                 <button
                   type="button"

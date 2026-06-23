@@ -28,8 +28,12 @@ export function normalizeRecurringFormValues(values: FinanceiroFormValues): Fina
   };
 }
 
+type FinancialAccountFormOptions = {
+  afterSave?: (entityId: string, detail: unknown) => Promise<void>;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any, any>) {
+export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any, any>, options: FinancialAccountFormOptions = {}) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -189,11 +193,15 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     async (values: FinanceiroFormValues) => {
       try {
         if (id) {
-          await config.update(id, values);
+          const updated = await config.update(id, values);
+          await options.afterSave?.(id, updated);
           navigate(config.routeBase);
           return;
         } else {
           const created = await config.create(values);
+          if (created?.id) {
+            await options.afterSave?.(created.id, created);
+          }
           const preview = extractCardInvoicePreview(created);
           if (created?.id && preview) {
             navigate(`${config.routeBase}/${created.id}`);
@@ -213,7 +221,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         setErrorMessage(error instanceof Error ? error.message : 'Falha ao salvar o lançamento.');
       }
     },
-    [id, config, navigate, setError]
+    [id, config, navigate, setError, options]
   );
 
   const cancelar = useCallback(async () => {

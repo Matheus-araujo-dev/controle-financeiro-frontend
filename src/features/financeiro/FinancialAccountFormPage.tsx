@@ -1,3 +1,4 @@
+import { useCallback, useMemo, useState } from 'react';
 import { Controller } from 'react-hook-form';
 
 import { PageState } from '../../components/states/PageState';
@@ -11,6 +12,9 @@ import { RateioSection } from './financial-account-form/RateioSection';
 import { SummarySidebar } from './financial-account-form/SummarySidebar';
 import { nativeTextareaClass } from './financial-account-form/field-classes';
 import { useFinancialAccountForm } from './financial-account-form/useFinancialAccountForm';
+import { AttachmentsSection } from '../../components/attachments/AttachmentsSection';
+import { uploadPendingAttachments } from '../../services/http/anexos-api';
+import type { TipoEntidadeAnexo } from '../../types/anexos';
 
 export function FinancialAccountFormPage({
   config
@@ -18,7 +22,15 @@ export function FinancialAccountFormPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: FinanceiroModuleConfig<any, any, any>;
 }) {
-  const form = useFinancialAccountForm(config);
+  const [pendingAttachmentFiles, setPendingAttachmentFiles] = useState<File[]>([]);
+  const tipoEntidade = config.key as TipoEntidadeAnexo;
+  const afterSave = useCallback(async (entityId: string) => {
+    if (pendingAttachmentFiles.length === 0) return;
+    await uploadPendingAttachments(tipoEntidade, entityId, pendingAttachmentFiles);
+    setPendingAttachmentFiles([]);
+  }, [pendingAttachmentFiles, tipoEntidade]);
+  const formOptions = useMemo(() => ({ afterSave }), [afterSave]);
+  const form = useFinancialAccountForm(config, formOptions);
   const { id, control, canEdit, loading, errorMessage, handleSubmit, onSubmit } = form;
   const isReceita = config.key === 'contas-receber';
 
@@ -63,6 +75,16 @@ export function FinancialAccountFormPage({
                     className={nativeTextareaClass}
                   />
                 )}
+              />
+            </FormSection>
+
+            <FormSection title="Anexos" eyebrow="Comprovantes" icon={<span className="material-symbols-outlined text-2xl">attach_file</span>}>
+              <AttachmentsSection
+                tipoEntidade={tipoEntidade}
+                entidadeId={id}
+                disabled={!canEdit}
+                pendingFiles={pendingAttachmentFiles}
+                onPendingFilesChange={setPendingAttachmentFiles}
               />
             </FormSection>
           </div>
