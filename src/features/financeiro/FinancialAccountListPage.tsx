@@ -233,7 +233,7 @@ export function FinancialAccountListPage({
     }));
   }
 
-  async function liquidarRapido(record: FinancialRecord) {
+  const liquidarRapido = useCallback(async (record: FinancialRecord) => {
     if (!config.liquidar || !record.id) return;
 
     Modal.confirm({
@@ -253,9 +253,9 @@ export function FinancialAccountListPage({
         await refetch();
       }
     });
-  }
+  }, [config, contaBancariaId, liquidacaoFormaPagamentoId, refetch]);
 
-  async function estornar(record: FinancialRecord) {
+  const estornar = useCallback(async (record: FinancialRecord) => {
     if (!config.estornar || !record.id) return;
 
     Modal.confirm({
@@ -269,9 +269,9 @@ export function FinancialAccountListPage({
         await refetch();
       }
     });
-  }
+  }, [config, refetch]);
 
-  const columns: TableColumnsType<FinancialRecord> = [
+  const columns: TableColumnsType<FinancialRecord> = useMemo(() => [
     {
       title: 'Descrição',
       dataIndex: 'descricao',
@@ -386,7 +386,7 @@ export function FinancialAccountListPage({
         );
       }
     }
-  ];
+  ], [config.personLabel, estornar, liquidarRapido, onEdit]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">

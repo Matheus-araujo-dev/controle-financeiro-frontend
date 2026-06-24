@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { AppDataTable } from '../../components/data/AppDataTable';
+import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { ExportButton } from '../../components/data/ExportButton';
 import { IconActionButton } from '../../components/data/IconActionButton';
 import { DateInput } from '../../components/forms/DateInput';
@@ -188,6 +188,81 @@ export function FaturasPage() {
     };
   }, [cartoes, data]);
 
+  const tableColumns = useMemo<TableColumnsType<FaturaResumo>>(() => [
+            {
+              title: 'Mês/Ano',
+              dataIndex: 'competencia',
+              key: 'competencia',
+              sorter: true,
+              render: (value, record: FaturaResumo) => (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-semibold text-white">{formatMonthYearBR(String(value))}</span>
+                  <span className="text-xs text-on-surface-variant">Fechamento {formatDateBR(record.dataFechamento)}</span>
+                </div>
+              )
+            },
+            {
+              title: 'Vencimento',
+              dataIndex: 'dataVencimento',
+              key: 'dataVencimento',
+              sorter: true,
+              render: (value) => <span className="text-sm text-on-surface-variant">{formatDateBR(String(value))}</span>
+            },
+            {
+              title: 'Cartão Principal',
+              dataIndex: 'cartaoNome',
+              key: 'cartaoNome',
+              sorter: true,
+              render: (value, record: FaturaResumo) => {
+                const cartao = cartoesById.get(record.cartaoId);
+
+                return (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-semibold text-white">
+                      {String(value)}
+                      {cartao?.numeroFinal ? ` •••• ${cartao.numeroFinal}` : ''}
+                    </span>
+                    <span className="text-xs text-on-surface-variant">{record.quantidadeItens} item(ns)</span>
+                  </div>
+                );
+              }
+            },
+            {
+              title: 'Valor Total',
+              dataIndex: 'valorTotal',
+              key: 'valorTotal',
+              align: 'right',
+              sorter: true,
+              render: (value, record: FaturaResumo) => (
+                <span
+                  className={`text-sm font-headline font-bold ${
+                    record.statusCodigo === 'ABERTA' ? 'text-primary' : 'text-white'
+                  }`}
+                >
+                  {formatCurrencyBRL(Number(value))}
+                </span>
+              )
+            },
+            {
+              title: 'Status',
+              dataIndex: 'statusCodigo',
+              key: 'statusCodigo',
+              sorter: true,
+              render: (_value, record: FaturaResumo) => (
+                <StatusBadge codigo={record.statusCodigo} nome={record.statusNome} />
+              )
+            },
+            {
+              title: 'Ações',
+              key: 'acoes',
+              width: 116,
+              align: 'right',
+              render: (_value, record: FaturaResumo) => (
+                <IconActionButton label="Detalhar" icon={<EyeOutlined />} href={`/faturas/${record.id}`} type="text" />
+              )
+            }
+          ], [cartoesById]);
+
   return (
     <ListPageShell
       actions={
@@ -341,80 +416,7 @@ export function FaturasPage() {
           emptyMessage="Nenhuma fatura encontrada."
           onRetry={() => { void refetch(); void refetchCartoes(); }}
           dataSource={data?.items ?? []}
-          columns={[
-            {
-              title: 'Mês/Ano',
-              dataIndex: 'competencia',
-              key: 'competencia',
-              sorter: true,
-              render: (value, record: FaturaResumo) => (
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-semibold text-white">{formatMonthYearBR(String(value))}</span>
-                  <span className="text-xs text-on-surface-variant">Fechamento {formatDateBR(record.dataFechamento)}</span>
-                </div>
-              )
-            },
-            {
-              title: 'Vencimento',
-              dataIndex: 'dataVencimento',
-              key: 'dataVencimento',
-              sorter: true,
-              render: (value) => <span className="text-sm text-on-surface-variant">{formatDateBR(String(value))}</span>
-            },
-            {
-              title: 'Cartão Principal',
-              dataIndex: 'cartaoNome',
-              key: 'cartaoNome',
-              sorter: true,
-              render: (value, record: FaturaResumo) => {
-                const cartao = cartoesById.get(record.cartaoId);
-
-                return (
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-semibold text-white">
-                      {String(value)}
-                      {cartao?.numeroFinal ? ` •••• ${cartao.numeroFinal}` : ''}
-                    </span>
-                    <span className="text-xs text-on-surface-variant">{record.quantidadeItens} item(ns)</span>
-                  </div>
-                );
-              }
-            },
-            {
-              title: 'Valor Total',
-              dataIndex: 'valorTotal',
-              key: 'valorTotal',
-              align: 'right',
-              sorter: true,
-              render: (value, record: FaturaResumo) => (
-                <span
-                  className={`text-sm font-headline font-bold ${
-                    record.statusCodigo === 'ABERTA' ? 'text-primary' : 'text-white'
-                  }`}
-                >
-                  {formatCurrencyBRL(Number(value))}
-                </span>
-              )
-            },
-            {
-              title: 'Status',
-              dataIndex: 'statusCodigo',
-              key: 'statusCodigo',
-              sorter: true,
-              render: (_value, record: FaturaResumo) => (
-                <StatusBadge codigo={record.statusCodigo} nome={record.statusNome} />
-              )
-            },
-            {
-              title: 'Ações',
-              key: 'acoes',
-              width: 116,
-              align: 'right',
-              render: (_value, record: FaturaResumo) => (
-                <IconActionButton label="Detalhar" icon={<EyeOutlined />} href={`/faturas/${record.id}`} type="text" />
-              )
-            }
-          ]}
+          columns={tableColumns}
           onTableChange={(pagination, _f, sorter) => {
             const s = Array.isArray(sorter) ? sorter[0] : sorter;
             const sortKey =
