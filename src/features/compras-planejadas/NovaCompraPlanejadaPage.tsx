@@ -98,8 +98,11 @@ export function NovaCompraPlanejadaPage() {
     mode: 'onChange'
   });
 
-  const watchedValues = useWatch({ control });
-  const parcelavel = Boolean(watchedValues.parcelavel);
+  const [titulo, valorEstimado, dataDesejada, parcelavelValue, quantidadeParcelasDesejada] = useWatch({
+    control,
+    name: ['titulo', 'valorEstimado', 'dataDesejada', 'parcelavel', 'quantidadeParcelasDesejada']
+  });
+  const parcelavel = Boolean(parcelavelValue);
 
   const reloadContaGerencialOptions = useCallback(async () => {
     const response = await cadastrosApi.contasGerenciais.listar({
@@ -156,20 +159,12 @@ export function NovaCompraPlanejadaPage() {
 
   const resumo = useMemo(
     () => ({
-      titulo: watchedValues.titulo?.trim() || 'Nova compra planejada',
-      valor: watchedValues.valorEstimado ?? 0,
-      dataDesejada: watchedValues.dataDesejada ? formatDateBR(watchedValues.dataDesejada) : 'Sem data definida',
-      parcelas: watchedValues.parcelavel
-        ? watchedValues.quantidadeParcelasDesejada ?? 'Parcelamento em aberto'
-        : 'Pagamento único'
+      titulo: titulo?.trim() || 'Nova compra planejada',
+      valor: valorEstimado ?? 0,
+      dataDesejada: dataDesejada ? formatDateBR(dataDesejada) : 'Sem data definida',
+      parcelas: parcelavel ? quantidadeParcelasDesejada ?? 'Parcelamento em aberto' : 'Pagamento único'
     }),
-    [
-      watchedValues.dataDesejada,
-      watchedValues.parcelavel,
-      watchedValues.quantidadeParcelasDesejada,
-      watchedValues.titulo,
-      watchedValues.valorEstimado
-    ]
+    [dataDesejada, parcelavel, quantidadeParcelasDesejada, titulo, valorEstimado]
   );
 
   async function onSubmit(values: CompraPlanejadaPayload) {

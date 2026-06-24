@@ -268,7 +268,20 @@ export function MasterDataFormPage({
     mode: 'onChange'
   });
 
-  const watchedValues = useWatch({ control }) as Record<string, unknown>;
+  const [summaryNome, summaryDescricao, summaryBanco, summaryCodigo, summaryAtivo] = useWatch({
+    control,
+    name: ['nome', 'descricao', 'banco', 'codigo', 'ativo']
+  }) as unknown[];
+  const watchedValues = useMemo(
+    () => ({
+      nome: summaryNome,
+      descricao: summaryDescricao,
+      banco: summaryBanco,
+      codigo: summaryCodigo,
+      ativo: summaryAtivo
+    }),
+    [summaryAtivo, summaryBanco, summaryCodigo, summaryDescricao, summaryNome]
+  );
   const isContaGerencial = config.key === 'contas-gerenciais';
   const isPessoa = config.key === 'pessoas';
   const contaPaiIdValue = useWatch({ control, name: 'contaPaiId' }) as string | undefined;

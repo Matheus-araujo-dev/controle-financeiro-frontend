@@ -1,13 +1,21 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { DashboardPage } from './DashboardPage';
 import { dashboardApi } from '../../../services/http/dashboard-api';
+import { orcamentosApi } from '../../../services/http/orcamentos-api';
 import { selectMonthInDateInput } from '../../../test/date-input';
 
 vi.mock('../../../services/http/dashboard-api', () => ({
   dashboardApi: {
     obterResumo: vi.fn(),
     obterFluxoCaixa: vi.fn()
+  }
+}));
+
+vi.mock('../../../services/http/orcamentos-api', () => ({
+  orcamentosApi: {
+    obterPorCompetencia: vi.fn()
   }
 }));
 
@@ -85,13 +93,29 @@ const fluxoCaixaMock = {
 
 const defaultReferenceMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
 
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false }
+    }
+  });
+}
+
+function renderWithQueryClient(ui: Parameters<typeof render>[0]) {
+  return render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      {ui}
+    </QueryClientProvider>
+  );
+}
 function mockDashboardBase() {
   vi.mocked(dashboardApi.obterResumo).mockResolvedValue(resumoMock as never);
   vi.mocked(dashboardApi.obterFluxoCaixa).mockResolvedValue(fluxoCaixaMock as never);
 }
 
 function renderPage() {
-  return render(
+  return renderWithQueryClient(
     <MemoryRouter>
       <DashboardPage />
     </MemoryRouter>
@@ -101,6 +125,7 @@ function renderPage() {
 describe('DashboardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(orcamentosApi.obterPorCompetencia).mockResolvedValue({ itens: [] } as never);
   });
 
   it('loads the dashboard and renders real data', async () => {

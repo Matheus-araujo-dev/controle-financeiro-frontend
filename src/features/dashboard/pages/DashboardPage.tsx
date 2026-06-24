@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { DashboardKpiGrid } from '../components/DashboardKpiGrid';
 import { DashboardFaturasCartao } from '../components/DashboardFaturasCartao';
@@ -11,8 +12,6 @@ import { PageState } from '../../../components/states/PageState';
 import { dashboardApi } from '../../../services/http/dashboard-api';
 import { orcamentosApi } from '../../../services/http/orcamentos-api';
 import { formatCurrencyBRL } from '../../../shared/currency';
-import type { DashboardFluxoCaixa, DashboardResumo } from '../../../types/dashboard';
-import type { OrcamentoItem } from '../../../types/orcamento';
 
 function getCurrentReferenceMonth() {
   const now = new Date();
@@ -20,59 +19,38 @@ function getCurrentReferenceMonth() {
 }
 
 export function DashboardPage() {
-  const [summary, setSummary] = useState<DashboardResumo>();
-  const [cashFlow, setCashFlow] = useState<DashboardFluxoCaixa>();
   const [referenceMonth, setReferenceMonth] = useState<string>(getCurrentReferenceMonth());
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>();
-  const [categoriasEstouradas, setCategoriasEstouradas] = useState<OrcamentoItem[]>([]);
 
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
-
-    try {
+  const {
+    data: dashboardData,
+    isLoading: dashboardLoading,
+    error: dashboardError
+  } = useQuery({
+    queryKey: ['dashboard', referenceMonth],
+    queryFn: async () => {
       const [summaryResponse, cashFlowResponse] = await Promise.all([
         dashboardApi.obterResumo({ mesReferencia: referenceMonth }),
         dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth })
       ]);
 
-      setSummary(summaryResponse);
-      setCashFlow(cashFlowResponse);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar dashboard.');
-    } finally {
-      setLoading(false);
+      return { summary: summaryResponse, cashFlow: cashFlowResponse };
     }
-  }, [referenceMonth]);
+  });
 
-  useEffect(() => {
-    void loadDashboard();
-  }, [loadDashboard]);
+  const {
+    data: categoriasEstouradas = []
+  } = useQuery({
+    queryKey: ['orcamento-alerta', getCurrentReferenceMonth()],
+    queryFn: async () => {
+      const orcamento = await orcamentosApi.obterPorCompetencia(getCurrentReferenceMonth());
+      return orcamento.itens.filter((item) => item.estourado);
+    }
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-
-    // Alerta de orçamento sempre olha o mês corrente, independente do mês exibido.
-    orcamentosApi
-      .obterPorCompetencia(getCurrentReferenceMonth())
-      .then((orcamento) => {
-        if (!cancelled) {
-          setCategoriasEstouradas(orcamento.itens.filter((item) => item.estourado));
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setCategoriasEstouradas([]);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (loading && !summary && !cashFlow) {
+  const summary = dashboardData?.summary;
+  const cashFlow = dashboardData?.cashFlow;
+  const errorMessage = dashboardError instanceof Error ? dashboardError.message : undefined;
+  if (dashboardLoading && !summary && !cashFlow) {
     return <PageState state="loading" title="Carregando dashboard" />;
   }
 

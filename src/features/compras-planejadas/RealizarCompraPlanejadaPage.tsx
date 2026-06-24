@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { AxiosError } from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DateInput } from '../../components/forms/DateInput';
@@ -153,7 +153,6 @@ export function RealizarCompraPlanejadaPage() {
     setError,
     setValue,
     reset,
-    watch,
     formState: { errors, isSubmitting, isValid }
   } = useForm<RealizarCompraPlanejadaFormValues>({
     resolver: zodResolver(realizarCompraPlanejadaSchema),
@@ -175,7 +174,38 @@ export function RealizarCompraPlanejadaPage() {
     mode: 'onChange'
   });
 
-  const watchedValues = watch();
+  const [
+    dataCompra,
+    dataVencimento,
+    formaPagamentoId,
+    cartaoId,
+    contaBancariaId,
+    quantidadeParcelas,
+    formaEhCartaoValue,
+    formaBaixarAutomaticamenteValue
+  ] = useWatch({
+    control,
+    name: [
+      'dataCompra',
+      'dataVencimento',
+      'formaPagamentoId',
+      'cartaoId',
+      'contaBancariaId',
+      'quantidadeParcelas',
+      'formaEhCartao',
+      'formaBaixarAutomaticamente'
+    ]
+  });
+  const watchedValues = {
+    dataCompra,
+    dataVencimento,
+    formaPagamentoId,
+    cartaoId,
+    contaBancariaId,
+    quantidadeParcelas,
+    formaEhCartao: formaEhCartaoValue,
+    formaBaixarAutomaticamente: formaBaixarAutomaticamenteValue
+  };
   const formaSelecionada = useMemo(
     () => formaPagamentoOptions.find((item) => item.value === watchedValues.formaPagamentoId) ?? null,
     [formaPagamentoOptions, watchedValues.formaPagamentoId]

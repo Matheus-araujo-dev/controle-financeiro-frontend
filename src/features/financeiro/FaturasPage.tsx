@@ -1,5 +1,6 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { AppDataTable } from '../../components/data/AppDataTable';
 import { ExportButton } from '../../components/data/ExportButton';
@@ -125,10 +126,7 @@ export function FaturasPage() {
   const [filters, setFilters] = useState<FaturaFilters>(initialFilters);
   const deferredFilters = useDeferredValue(filters);
   const [competenciaInput, setCompetenciaInput] = useState(() => competenciaApiToInput(initialFilters.competencia));
-  const [data, setData] = useState<Awaited<ReturnType<typeof financeiroApi.faturas.listar>>>();
-  const [cartoes, setCartoes] = useState<CartaoResumo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>();
+
   const origemContaCartao = searchParams.get('origem') === 'conta-cartao';
 
   useEffect(() => {
@@ -136,35 +134,38 @@ export function FaturasPage() {
     setCompetenciaInput(competenciaApiToInput(initialFilters.competencia));
   }, [initialFilters]);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
+  const {
+    data,
+    isLoading,
+    isFetching,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['faturas', deferredFilters],
+    queryFn: () => financeiroApi.faturas.listar(deferredFilters)
+  });
 
-    try {
-      setData(await financeiroApi.faturas.listar(deferredFilters));
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar faturas.');
-    } finally {
-      setLoading(false);
-    }
-  }, [deferredFilters]);
+  const {
+    data: cartoesResponse,
+    error: cartoesError,
+    refetch: refetchCartoes
+  } = useQuery({
+    queryKey: ['faturas', 'cartoes'],
+    queryFn: () => cadastrosApi.cartoes.listar({
+      page: 1,
+      pageSize: 200,
+      search: '',
+      ativo: true
+    })
+  });
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
-
-  useEffect(() => {
-    void (async () => {
-      const response = await cadastrosApi.cartoes.listar({
-        page: 1,
-        pageSize: 200,
-        search: '',
-        ativo: true
-      });
-      setCartoes(response.items);
-    })();
-  }, []);
-
+  const cartoes = useMemo(() => cartoesResponse?.items ?? [], [cartoesResponse?.items]);
+  const loading = isLoading || isFetching;
+  const errorMessage = error instanceof Error
+    ? error.message
+    : cartoesError instanceof Error
+      ? cartoesError.message
+      : undefined;
   const cartoesById = useMemo(() => new Map(cartoes.map((cartao) => [cartao.id, cartao])), [cartoes]);
 
   const resumoGeral = useMemo(() => {
@@ -338,7 +339,7 @@ export function FaturasPage() {
           loading={loading}
           errorMessage={errorMessage}
           emptyMessage="Nenhuma fatura encontrada."
-          onRetry={loadData}
+          onRetry={() => { void refetch(); void refetchCartoes(); }}
           dataSource={data?.items ?? []}
           columns={[
             {

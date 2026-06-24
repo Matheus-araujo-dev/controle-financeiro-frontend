@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Modal } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
@@ -119,11 +120,7 @@ export function FinancialAccountListPage({
   const statusInicial = searchParams.get('status') as StatusContaCodigo | null;
   const isPagar = config.routeBase.includes('pagar');
 
-  const [data, setData] = useState<Awaited<ReturnType<typeof config.list>>>();
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string>();
-  const [pessoaOptions, setPessoaOptions] = useState<Array<{ label: string; value: string }>>([]);
-  const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<Array<{ label: string; value: string }>>([]);
+
   const [contaBancariaId, setContaBancariaId] = useState('');
   const [liquidacaoFormaPagamentoId, setLiquidacaoFormaPagamentoId] = useState('');
   const [filters, setFilters] = useState<ListFilters>({
@@ -137,55 +134,52 @@ export function FinancialAccountListPage({
     sortDirection: undefined
   });
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
+  const {
+    data,
+    isLoading,
+    isFetching,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['financeiro-list', config.key, filters],
+    queryFn: () => config.list(filters)
+  });
 
-    try {
-      setData(await config.list(filters));
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar os lançamentos.');
-    } finally {
-      setLoading(false);
+  const {
+    data: filterOptions,
+    error: filterOptionsError,
+    refetch: refetchFilterOptions
+  } = useQuery({
+    queryKey: ['financeiro-list-options', config.key],
+    queryFn: async () => {
+      const [pessoas, formas, contas] = await Promise.all([
+        config.loadPessoaOptions(),
+        config.loadFormaPagamentoOptions(),
+        config.loadContaBancariaOptions()
+      ]);
+
+      return {
+        pessoas: pessoas.map((item) => ({ label: item.label, value: item.value })),
+        formas: formas.map((item) => ({ label: item.label, value: item.value })),
+        contas
+      };
     }
-  }, [config, filters]);
+  });
+
+  const pessoaOptions = filterOptions?.pessoas ?? [];
+  const formaPagamentoOptions = filterOptions?.formas ?? [];
+  const errorMessage = error instanceof Error
+    ? error.message
+    : filterOptionsError instanceof Error
+      ? filterOptionsError.message
+      : undefined;
+  const loading = isLoading || isFetching;
 
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadFilterOptions() {
-      try {
-        const [pessoas, formas, contas] = await Promise.all([
-          config.loadPessoaOptions(),
-          config.loadFormaPagamentoOptions(),
-          config.loadContaBancariaOptions()
-        ]);
-
-        if (!cancelled) {
-          setPessoaOptions(pessoas.map((item) => ({ label: item.label, value: item.value })));
-          setFormaPagamentoOptions(formas.map((item) => ({ label: item.label, value: item.value })));
-          setContaBancariaId(contas[0]?.value ?? '');
-          setLiquidacaoFormaPagamentoId(formas[0]?.value ?? '');
-        }
-      } catch {
-        if (!cancelled) {
-          setPessoaOptions([]);
-          setFormaPagamentoOptions([]);
-        }
-      }
-    }
-
-    void loadFilterOptions();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [config]);
-
+    if (!filterOptions) return;
+    setContaBancariaId((current) => current || filterOptions.contas[0]?.value || '');
+    setLiquidacaoFormaPagamentoId((current) => current || filterOptions.formas[0]?.value || '');
+  }, [filterOptions]);
   const summary = data?.summary as ContaFinanceiraListSummary | FinanceiroResumo | undefined;
   const summaryItems = useMemo(() => {
     if (!summary) return [];
@@ -256,7 +250,7 @@ export function FinancialAccountListPage({
           formaPagamentoId: record.formaPagamentoId ?? liquidacaoFormaPagamentoId,
           atualizarValorConta: true
         });
-        await loadData();
+        await refetch();
       }
     });
   }
@@ -272,7 +266,7 @@ export function FinancialAccountListPage({
       cancelText: 'Cancelar',
       onOk: async () => {
         await config.estornar!(record.id);
-        await loadData();
+        await refetch();
       }
     });
   }
@@ -525,7 +519,7 @@ export function FinancialAccountListPage({
         loading={loading}
         errorMessage={errorMessage}
         emptyMessage={`Nenhuma ${config.singularTitle.toLowerCase()} encontrada.`}
-        onRetry={loadData}
+        onRetry={() => { void refetch(); void refetchFilterOptions(); }}
         dataSource={(data?.items ?? []) as FinancialRecord[]}
         columns={columns}
         onTableChange={(pagination, _tableFilters, sorter) => {

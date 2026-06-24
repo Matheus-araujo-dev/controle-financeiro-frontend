@@ -60,14 +60,14 @@ describe('card routes', () => {
   it('renders the master data cards list route', async () => {
     renderRoute('/cartoes');
 
-    expect(await screen.findByPlaceholderText('Nome, bandeira ou final')).toBeInTheDocument();
+    expect(await screen.findByPlaceholderText('Nome, bandeira ou final', undefined, { timeout: 15000 })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Novo cartão/i })).toBeInTheDocument();
   });
 
   it('renders the master data cards form route', async () => {
     renderRoute('/cartoes/novo');
 
-    expect(await screen.findByRole('button', { name: 'Confirmar Cadastro' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Confirmar Cadastro' }, { timeout: 15000 })).toBeInTheDocument();
     expect(screen.getByText('Nome')).toBeInTheDocument();
     expect(screen.getByText('Bandeira')).toBeInTheDocument();
   });

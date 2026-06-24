@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AxiosError } from 'axios';
 
@@ -8,9 +9,7 @@ import { applyServerValidationErrors } from '../../../services/forms/applyServer
 import type { ApiErrorResponse } from '../../../types/api';
 import type {
   FinanceiroModuleConfig,
-  FinanceiroFormValues,
-  FormaPagamentoOption,
-  SelectOption
+  FinanceiroFormValues
 } from '../module-config';
 import { calculateValorLiquido, resolveFormaPagamentoBehavior } from '../module-config';
 import { financialAccountFormSchema } from '../schemas';
@@ -39,11 +38,6 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(Boolean(id));
   const [errorMessage, setErrorMessage] = useState<string>();
-  const [pessoaOptions, setPessoaOptions] = useState<SelectOption[]>([]);
-  const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<FormaPagamentoOption[]>([]);
-  const [contaBancariaOptions, setContaBancariaOptions] = useState<SelectOption[]>([]);
-  const [cartaoOptions, setCartaoOptions] = useState<SelectOption[]>([]);
-  const [rateioOptions, setRateioOptions] = useState<SelectOption[]>([]);
   const [detailStatus, setDetailStatus] = useState<string>();
   const [actionLoading, setActionLoading] = useState(false);
   const [cardInvoicePreview, setCardInvoicePreview] = useState<CardInvoicePreview>();
@@ -54,7 +48,6 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     reset,
     setError,
     setValue,
-    watch,
     formState: { errors, isSubmitting, isValid, touchedFields }
   } = useForm<FinanceiroFormValues>({
     resolver: zodResolver(financialAccountFormSchema),
@@ -67,7 +60,120 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     name: 'rateios'
   });
 
-  const watchedValues = watch();
+  const [
+    valorOriginal,
+    valorDesconto,
+    valorJuros,
+    valorMulta,
+    quantidadeParcelas,
+    rateios,
+    formaPagamentoId,
+    origemCompraPlanejadaIdValue,
+    ehRecorrente,
+    recorrenciaDataInicio,
+    dataEmissao,
+    dataVencimento,
+    recorrenciaTipoDia,
+    recorrenciaDiaOrdemMensal
+  ] = useWatch({
+    control,
+    name: [
+      'valorOriginal',
+      'valorDesconto',
+      'valorJuros',
+      'valorMulta',
+      'quantidadeParcelas',
+      'rateios',
+      'formaPagamentoId',
+      'origemCompraPlanejadaId',
+      'ehRecorrente',
+      'recorrenciaDataInicio',
+      'dataEmissao',
+      'dataVencimento',
+      'recorrenciaTipoDia',
+      'recorrenciaDiaOrdemMensal'
+    ]
+  });
+  const watchedValues = useMemo(() => ({
+    valorOriginal,
+    valorDesconto,
+    valorJuros,
+    valorMulta,
+    quantidadeParcelas,
+    rateios: rateios ?? [],
+    formaPagamentoId,
+    origemCompraPlanejadaId: origemCompraPlanejadaIdValue,
+    ehRecorrente,
+    recorrenciaDataInicio,
+    dataEmissao,
+    dataVencimento,
+    recorrenciaTipoDia,
+    recorrenciaDiaOrdemMensal
+  }) as FinanceiroFormValues, [
+    valorOriginal,
+    valorDesconto,
+    valorJuros,
+    valorMulta,
+    quantidadeParcelas,
+    rateios,
+    formaPagamentoId,
+    origemCompraPlanejadaIdValue,
+    ehRecorrente,
+    recorrenciaDataInicio,
+    dataEmissao,
+    dataVencimento,
+    recorrenciaTipoDia,
+    recorrenciaDiaOrdemMensal
+  ]);
+
+  const {
+    data: pessoaOptions = [],
+    isLoading: pessoaOptionsLoading,
+    error: pessoaOptionsError,
+    refetch: refetchPessoaOptions
+  } = useQuery({
+    queryKey: ['financeiro-form-options', config.key, 'pessoas'],
+    queryFn: config.loadPessoaOptions
+  });
+  const {
+    data: formaPagamentoOptions = [],
+    isLoading: formaPagamentoOptionsLoading,
+    error: formaPagamentoOptionsError,
+    refetch: refetchFormaPagamentoOptions
+  } = useQuery({
+    queryKey: ['financeiro-form-options', config.key, 'formas-pagamento'],
+    queryFn: config.loadFormaPagamentoOptions
+  });
+  const {
+    data: contaBancariaOptions = [],
+    isLoading: contaBancariaOptionsLoading,
+    error: contaBancariaOptionsError,
+    refetch: refetchContaBancariaOptions
+  } = useQuery({
+    queryKey: ['financeiro-form-options', config.key, 'contas-bancarias'],
+    queryFn: config.loadContaBancariaOptions
+  });
+  const {
+    data: cartaoOptions = [],
+    isLoading: cartaoOptionsLoading,
+    error: cartaoOptionsError,
+    refetch: refetchCartaoOptions
+  } = useQuery({
+    queryKey: ['financeiro-form-options', config.key, 'cartoes'],
+    queryFn: config.loadCartaoOptions
+  });
+  const {
+    data: rateioOptions = [],
+    isLoading: rateioOptionsLoading,
+    error: rateioOptionsError,
+    refetch: refetchRateioOptions
+  } = useQuery({
+    queryKey: ['financeiro-form-options', config.key, 'rateios'],
+    queryFn: config.loadRateioOptions
+  });
+
+  const optionsLoading = pessoaOptionsLoading || formaPagamentoOptionsLoading || contaBancariaOptionsLoading || cartaoOptionsLoading || rateioOptionsLoading;
+  const optionsError = pessoaOptionsError ?? formaPagamentoOptionsError ?? contaBancariaOptionsError ?? cartaoOptionsError ?? rateioOptionsError;
 
   const valorLiquido = useMemo(() => calculateValorLiquido(watchedValues), [watchedValues]);
   const totalRateios = useMemo(
@@ -121,23 +227,6 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     setValue('rateios.0.valor', valorLiquido, { shouldValidate: true, shouldDirty: true });
   }, [setValue, valorLiquido, watchedValues.rateios]);
 
-  useEffect(() => {
-    async function loadOptions() {
-      const [pessoas, formas, contas, cartoes, rateios] = await Promise.all([
-        config.loadPessoaOptions(),
-        config.loadFormaPagamentoOptions(),
-        config.loadContaBancariaOptions(),
-        config.loadCartaoOptions(),
-        config.loadRateioOptions()
-      ]);
-      setPessoaOptions(pessoas);
-      setFormaPagamentoOptions(formas);
-      setContaBancariaOptions(contas);
-      setCartaoOptions(cartoes);
-      setRateioOptions(rateios);
-    }
-    void loadOptions();
-  }, [config]);
 
   useEffect(() => {
     const entityId = id;
@@ -255,29 +344,24 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   }, [id, config, reset]);
 
   const reloadPessoaOptions = useCallback(async () => {
-    const options = await config.loadPessoaOptions();
-    setPessoaOptions(options);
-  }, [config]);
+    await refetchPessoaOptions();
+  }, [refetchPessoaOptions]);
 
   const reloadFormaPagamentoOptions = useCallback(async () => {
-    const options = await config.loadFormaPagamentoOptions();
-    setFormaPagamentoOptions(options);
-  }, [config]);
+    await refetchFormaPagamentoOptions();
+  }, [refetchFormaPagamentoOptions]);
 
   const reloadContaBancariaOptions = useCallback(async () => {
-    const options = await config.loadContaBancariaOptions();
-    setContaBancariaOptions(options);
-  }, [config]);
+    await refetchContaBancariaOptions();
+  }, [refetchContaBancariaOptions]);
 
   const reloadCartaoOptions = useCallback(async () => {
-    const options = await config.loadCartaoOptions();
-    setCartaoOptions(options);
-  }, [config]);
+    await refetchCartaoOptions();
+  }, [refetchCartaoOptions]);
 
   const reloadRateioOptions = useCallback(async () => {
-    const options = await config.loadRateioOptions();
-    setRateioOptions(options);
-  }, [config]);
+    await refetchRateioOptions();
+  }, [refetchRateioOptions]);
 
   return {
     id,
@@ -298,8 +382,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     canEdit,
     recurringStartDatePreview,
     automaticRecurringStartPreview,
-    loading,
-    errorMessage,
+    loading: loading || optionsLoading,
+    errorMessage: errorMessage ?? (optionsError instanceof Error ? optionsError.message : undefined),
     detailStatus,
     actionLoading,
     cardInvoicePreview,

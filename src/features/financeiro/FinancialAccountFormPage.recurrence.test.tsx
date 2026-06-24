@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { FinancialAccountFormPage } from './FinancialAccountFormPage';
@@ -70,15 +71,26 @@ function createConfig() {
   } as const;
 }
 
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false }
+    }
+  });
+}
+
 function renderPage() {
   const config = createConfig();
 
   render(
-    <MemoryRouter initialEntries={['/contas-pagar/novo']}>
-      <Routes>
-        <Route path="/contas-pagar/novo" element={<FinancialAccountFormPage config={config as never} />} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <MemoryRouter initialEntries={['/contas-pagar/novo']}>
+        <Routes>
+          <Route path="/contas-pagar/novo" element={<FinancialAccountFormPage config={config as never} />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 
   return config;

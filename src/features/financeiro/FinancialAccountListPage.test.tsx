@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -90,10 +91,26 @@ function createConfig() {
   };
 }
 
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false }
+    }
+  });
+}
+
+function renderWithQueryClient(ui: Parameters<typeof render>[0]) {
+  return render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      {ui}
+    </QueryClientProvider>
+  );
+}
 describe('FinancialAccountListPage', () => {
   it('loads data, applies filters and renders navigation links', async () => {
     const { config, list } = createConfig();
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
       </MemoryRouter>
@@ -160,7 +177,7 @@ describe('FinancialAccountListPage', () => {
         totalPages: 0
       });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FinancialAccountListPage
           config={{
@@ -190,9 +207,9 @@ describe('FinancialAccountListPage', () => {
             pausarRecorrencia: vi.fn(),
             encerrarRecorrencia: vi.fn(),
             toFormValues: vi.fn(),
-            loadPessoaOptions: vi.fn(),
-            loadFormaPagamentoOptions: vi.fn(),
-            loadContaBancariaOptions: vi.fn(),
+            loadPessoaOptions: vi.fn().mockResolvedValue([]),
+            loadFormaPagamentoOptions: vi.fn().mockResolvedValue([]),
+            loadContaBancariaOptions: vi.fn().mockResolvedValue([]),
             loadCartaoOptions: vi.fn(),
             loadRateioOptions: vi.fn()
           }}
@@ -212,7 +229,7 @@ describe('FinancialAccountListPage', () => {
   it('liquidates a pending item directly from the grid', async () => {
     const { config } = createConfig();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
       </MemoryRouter>
@@ -262,7 +279,7 @@ describe('FinancialAccountListPage', () => {
       estornar: vi.fn().mockResolvedValue({ id: 'liq-1' })
     };
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
       </MemoryRouter>
@@ -286,7 +303,7 @@ describe('FinancialAccountListPage', () => {
   it('does not expose recurrence actions in the grid', async () => {
     const { config } = createConfig();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
       </MemoryRouter>
@@ -301,7 +318,7 @@ describe('FinancialAccountListPage', () => {
   it('applies status, recurrence, period, document, description and sort filters', async () => {
     const { config, list } = createConfig();
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
       </MemoryRouter>

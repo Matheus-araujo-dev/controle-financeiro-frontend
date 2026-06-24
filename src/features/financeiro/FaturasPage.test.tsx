@@ -1,4 +1,5 @@
-﻿import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { FaturasPage } from './FaturasPage';
@@ -27,6 +28,22 @@ vi.mock('../../services/http/cadastros-api', () => ({
   }
 }));
 
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false }
+    }
+  });
+}
+
+function renderWithQueryClient(ui: Parameters<typeof render>[0]) {
+  return render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      {ui}
+    </QueryClientProvider>
+  );
+}
 describe('FaturasPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -140,7 +157,7 @@ describe('FaturasPage', () => {
         }
       });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FaturasPage />
       </MemoryRouter>
@@ -225,15 +242,15 @@ describe('FaturasPage', () => {
       }
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FaturasPage />
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Total consolidado')).toBeInTheDocument();
+    await waitFor(() => expect(financeiroApi.faturas.listar).toHaveBeenCalledTimes(1));
 
-    await userEvent.click(screen.getByRole('columnheader', { name: /Cart/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /Cartão Principal/i }));
 
     await waitFor(() =>
       expect(financeiroApi.faturas.listar).toHaveBeenLastCalledWith(
@@ -262,7 +279,7 @@ describe('FaturasPage', () => {
         }
       });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter>
         <FaturasPage />
       </MemoryRouter>
@@ -292,7 +309,7 @@ describe('FaturasPage', () => {
       }
     });
 
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={['/faturas?cartaoId=c1&competencia=2026-05&origem=conta-cartao']}>
         <FaturasPage />
       </MemoryRouter>

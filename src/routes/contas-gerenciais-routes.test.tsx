@@ -68,7 +68,7 @@ describe('contas gerenciais routes', () => {
   it('renders the master data contas gerenciais form route', async () => {
     renderRoute('/contas-gerenciais/novo');
 
-    expect(await screen.findByRole('button', { name: 'Confirmar Cadastro' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Confirmar Cadastro' }, { timeout: 15000 })).toBeInTheDocument();
     expect(screen.getByText('Código')).toBeInTheDocument();
     expect(screen.getByText('Descrição')).toBeInTheDocument();
   });

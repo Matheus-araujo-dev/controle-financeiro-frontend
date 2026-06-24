@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DeleteOutlined, DownloadOutlined, InboxOutlined, PaperClipOutlined } from '@ant-design/icons';
 import { Alert, Button, List, Space, Typography, Upload } from 'antd';
 import type { UploadProps } from 'antd';
@@ -31,7 +31,7 @@ export function AttachmentsSection({
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
 
-  async function loadAttachments(targetId: string) {
+  const loadAttachments = useCallback(async (targetId: string) => {
     setLoading(true);
     setErrorMessage(undefined);
     try {
@@ -41,7 +41,7 @@ export function AttachmentsSection({
     } finally {
       setLoading(false);
     }
-  }
+  }, [tipoEntidade]);
 
   useEffect(() => {
     if (!entidadeId) {
@@ -50,7 +50,7 @@ export function AttachmentsSection({
     }
 
     void loadAttachments(entidadeId);
-  }, [entidadeId, tipoEntidade]);
+  }, [entidadeId, loadAttachments]);
 
   const beforeUpload: UploadProps['beforeUpload'] = async (file) => {
     const arquivo = file as File;

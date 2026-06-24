@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { FinancialAccountFormPage } from './FinancialAccountFormPage';
@@ -86,13 +87,24 @@ function createConfig() {
   } as any;
 }
 
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false }
+    }
+  });
+}
+
 function renderWithRoute(initialEntry: string, path: string, config: ReturnType<typeof createConfig>) {
   return render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <Routes>
-        <Route path={path} element={<FinancialAccountFormPage config={config} />} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <Routes>
+          <Route path={path} element={<FinancialAccountFormPage config={config} />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 

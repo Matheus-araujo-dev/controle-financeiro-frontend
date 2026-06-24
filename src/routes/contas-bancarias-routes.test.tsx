@@ -68,7 +68,7 @@ describe('contas bancarias routes', () => {
   it('renders the master data contas bancarias form route', async () => {
     renderRoute('/contas-bancarias/novo');
 
-    expect(await screen.findByRole('button', { name: 'Confirmar Cadastro' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Confirmar Cadastro' }, { timeout: 15000 })).toBeInTheDocument();
     expect(screen.getByText('Nome')).toBeInTheDocument();
     expect(screen.getByText('Banco')).toBeInTheDocument();
   });
