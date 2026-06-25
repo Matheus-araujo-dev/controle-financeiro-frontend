@@ -9,6 +9,7 @@ export default defineConfig(({ command }) => ({
   ...(command === 'build' ? { root } : {}),
   plugins: [react()],
   build: {
+    sourcemap: false,
     rollupOptions: {
       ...(command === 'build' ? { input } : {}),
       output: {
