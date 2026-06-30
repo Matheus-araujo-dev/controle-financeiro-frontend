@@ -1,7 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '../store/auth-store';
 import { appRoutes } from './router';
+
+function renderWithQuery(ui: React.ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+}
 
 const dashboardApiMock = vi.hoisted(() => ({
   obterResumo: vi.fn(),
@@ -127,7 +133,7 @@ describe('appRoutes', () => {
       initialEntries: ['/dashboard']
     });
 
-    render(<RouterProvider router={router} />);
+    renderWithQuery(<RouterProvider router={router} />);
 
     expect(await screen.findByTestId('admin-shell', undefined, { timeout: 15000 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
@@ -139,7 +145,7 @@ describe('appRoutes', () => {
       initialEntries: ['/rota-ainda-inexistente']
     });
 
-    render(<RouterProvider router={router} />);
+    renderWithQuery(<RouterProvider router={router} />);
 
     expect(await screen.findByText('Rota não encontrada')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Voltar ao dashboard' })).toHaveAttribute('href', '/dashboard');
@@ -150,7 +156,7 @@ describe('appRoutes', () => {
       initialEntries: ['/importacoes-whatsapp']
     });
 
-    render(<RouterProvider router={router} />);
+    renderWithQuery(<RouterProvider router={router} />);
 
     expect((await screen.findAllByText(/Importa(?:ções|coes) WhatsApp/i)).length).toBeGreaterThan(0);
   });
@@ -160,7 +166,7 @@ describe('appRoutes', () => {
       initialEntries: ['/contas-pagar']
     });
 
-    render(<RouterProvider router={router} />);
+    renderWithQuery(<RouterProvider router={router} />);
 
     expect((await screen.findAllByText(/Contas a pagar/i, undefined, { timeout: 15000 })).length).toBeGreaterThan(0);
   }, 30000);
@@ -170,7 +176,7 @@ describe('appRoutes', () => {
       initialEntries: ['/pessoas/novo']
     });
 
-    render(<RouterProvider router={router} />);
+    renderWithQuery(<RouterProvider router={router} />);
 
     expect(await screen.findByRole('heading', { name: 'Dados da Pessoa' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Confirmar Cadastro' })).toBeInTheDocument();
@@ -182,7 +188,7 @@ describe('appRoutes', () => {
       initialEntries: ['/faturas']
     });
 
-    render(<RouterProvider router={router} />);
+    renderWithQuery(<RouterProvider router={router} />);
 
     expect((await screen.findAllByRole('heading', { name: 'Faturas' })).length).toBeGreaterThan(0);
     expect(await screen.findByText('Total consolidado')).toBeInTheDocument();
@@ -193,7 +199,7 @@ describe('appRoutes', () => {
       initialEntries: ['/compras-planejadas']
     });
 
-    render(<RouterProvider router={router} />);
+    renderWithQuery(<RouterProvider router={router} />);
 
     expect((await screen.findAllByText(/Planejador de compras/i, undefined, { timeout: 15000 })).length).toBeGreaterThan(0);
   }, 30000);
@@ -203,7 +209,7 @@ describe('appRoutes', () => {
       initialEntries: ['/compras-planejadas/novo']
     });
 
-    render(<RouterProvider router={router} />);
+    renderWithQuery(<RouterProvider router={router} />);
 
     expect(await screen.findByText('Título da Compra', undefined, { timeout: 15000 })).toBeInTheDocument();
     expect(screen.getByText('Classificação Técnica')).toBeInTheDocument();

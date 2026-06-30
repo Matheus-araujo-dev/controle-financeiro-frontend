@@ -127,6 +127,13 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     return [...extraContasReceita, ...fromServer.filter((c) => !extraContasReceita.some((e) => e.value === c.value))];
   }, [extraContasReceita, receitaResult.data]);
 
+  const someQueryErrored = [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult].some((r) => r.isError);
+  useEffect(() => {
+    if (someQueryErrored) {
+      notify('error', 'Falha ao carregar opções do lançamento rápido');
+    }
+  }, [someQueryErrored]);
+
   // Scroll lock + inert no shell + foco na abertura + focus trap + Escape
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
