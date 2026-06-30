@@ -238,7 +238,7 @@ describe('RelatoriosPage', () => {
   it('loads all report sources and renders the overview', async () => {
     render(<RelatoriosPage />);
 
-    expect(await screen.findByRole('heading', { name: 'Relatórios' })).toBeInTheDocument();
+    expect(await screen.findByText(/Leitura gerencial do período/i)).toBeInTheDocument();
     expect(await screen.findByText('Conta vencida')).toBeInTheDocument();
 
     await waitFor(() => {
