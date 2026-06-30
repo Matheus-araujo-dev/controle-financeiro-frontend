@@ -2,9 +2,9 @@ name: frontend-ci
 
 on:
   push:
-    branches: [ dev, main ]
+    branches: [main, develop]
   pull_request:
-    branches: [ dev, main ]
+    branches: [main, develop]
 
 jobs:
   lint-and-security:
