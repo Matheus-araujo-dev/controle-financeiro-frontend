@@ -149,13 +149,13 @@ export function DashboardPage() {
         />
 
         {/* Middle Section: Graph and Agenda */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <DashboardCashPulse items={cashFlow?.itens ?? []} />
           <DashboardOperationalAgenda items={summary?.contasAVencer ?? []} />
         </div>
 
         {/* Bottom Section: Faturas e Transações */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <DashboardFaturasCartao />
           <div className="lg:col-span-2">
             <DashboardTransactionList movimentacoes={summary?.movimentacoesRecentes ?? []} onViewAll={() => {}} />

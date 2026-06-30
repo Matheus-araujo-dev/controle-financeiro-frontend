@@ -26,7 +26,7 @@ export function FinancialAccountFormPage({
   if (errorMessage && !id) return <PageState state="error" title="Falha ao carregar lançamento" subtitle={errorMessage} />;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="max-w-7xl mx-auto space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-28 lg:pb-0">
       <div className="flex justify-end">
         <span
           className={`inline-flex w-fit items-center gap-2 rounded-full px-4 py-2 text-xs font-bold ${

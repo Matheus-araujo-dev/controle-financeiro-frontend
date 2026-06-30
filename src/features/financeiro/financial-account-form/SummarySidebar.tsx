@@ -73,6 +73,28 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
 
   return (
     <div className="space-y-8 lg:col-span-5">
+      {/* Mobile: barra flutuante acima da nav inferior */}
+      <div className="fixed left-4 right-4 z-40 lg:hidden" style={{ bottom: '72px' }}>
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-surface-container-low/95 px-4 py-3 shadow-[0_-4px_32px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Valor Líquido</p>
+            <p className="truncate text-xl font-black" style={{ color: 'var(--color-primary)' }}>
+              {formatCurrencyBRL(valorLiquido)}
+            </p>
+          </div>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="shrink-0 rounded-xl"
+            disabled={isSubmitting || !isValid}
+            loading={isSubmitting}
+          >
+            {id && id !== 'novo' ? 'Atualizar' : 'Confirmar'}
+          </Button>
+        </div>
+      </div>
+
       <FormActionPanel
         title="Pronto para salvar?"
         eyebrow="Resumo Financeiro"

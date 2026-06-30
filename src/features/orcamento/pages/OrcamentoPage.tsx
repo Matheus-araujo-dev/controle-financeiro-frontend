@@ -78,7 +78,7 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
             )}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {item.estourado && (
             <span className="flex items-center gap-1 text-error text-xs font-bold uppercase tracking-wider">
               <span className="material-symbols-outlined text-sm">warning</span>
@@ -91,7 +91,7 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
             onChange={setDraftMeta}
             disabled={saving}
             placeholder="Definir meta"
-            style={{ width: 160 }}
+            className="w-36 min-w-[120px] flex-1 sm:flex-none"
           />
           <button
             type="button"
