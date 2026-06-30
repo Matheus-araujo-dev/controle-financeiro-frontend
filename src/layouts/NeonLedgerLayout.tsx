@@ -5,6 +5,7 @@ import { useAppShellStore } from '../store/app-shell-store';
 import { useAuthStore, useCurrentUser } from '../store/auth-store';
 import { logoutSession } from '../services/http/auth-api';
 import { QuickLaunchButton } from '../components/quick-launch/QuickLaunchButton';
+import { Tooltip } from '../components/ui/Tooltip';
 
 type RouteHandle = {
   title?: string;
@@ -32,7 +33,6 @@ const navIcons: Record<string, string> = {
   '/agente/whatsapp': 'phone_iphone'
 };
 
-// Cor primária e de erro em variável para consistência (garante herança mesmo com Material Symbols)
 const PRIMARY = '#2bf58e';
 const ERROR   = '#f0857f';
 
@@ -48,11 +48,6 @@ function readCollapsedGroups(): Set<string> {
   return new Set<string>();
 }
 
-interface TooltipState {
-  label: string;
-  y: number;
-}
-
 interface NeonLedgerLayoutProps {
   children?: React.ReactNode;
 }
@@ -66,7 +61,6 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(readSidebarCollapsed);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(readCollapsedGroups);
-  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
   const breadcrumbTitles = useMemo(
     () =>
@@ -94,7 +88,6 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
     setSidebarCollapsed((prev) => {
       const next = !prev;
       try { localStorage.setItem('sidebar-collapsed', String(next)); } catch { /* ignore */ }
-      setTooltip(null);
       return next;
     });
   }
@@ -106,12 +99,6 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
       try { localStorage.setItem('sidebar-collapsed-groups', JSON.stringify([...next])); } catch { /* ignore */ }
       return next;
     });
-  }
-
-  function handleNavItemMouseEnter(e: React.MouseEvent<HTMLDivElement>, label: string) {
-    if (!sidebarCollapsed) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    setTooltip({ label, y: rect.top + rect.height / 2 });
   }
 
   const handleLogout = async () => {
@@ -158,75 +145,61 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
               )}
             </div>
           )}
-          <Link
-            to="/familia"
-            title="Minha família"
-            className="w-10 h-10 rounded-full border-2 border-primary/30 bg-surface-container flex items-center justify-center overflow-hidden hover:border-primary transition-all"
-          >
-            {currentUser?.avatarUrl ? (
-              <img alt={currentUser.displayName} src={currentUser.avatarUrl} className="w-full h-full object-cover" />
-            ) : (
-              <span className="font-bold" style={{ color: PRIMARY }}>
-                {(currentUser?.displayName ?? '?').charAt(0).toUpperCase()}
+          <Tooltip content="Minha família" side="bottom">
+            <Link
+              to="/familia"
+              aria-label="Minha família"
+              className="w-10 h-10 rounded-full border-2 border-primary/30 bg-surface-container flex items-center justify-center overflow-hidden hover:border-primary transition-all"
+            >
+              {currentUser?.avatarUrl ? (
+                <img alt={currentUser.displayName} src={currentUser.avatarUrl} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-bold" style={{ color: PRIMARY }}>
+                  {(currentUser?.displayName ?? '?').charAt(0).toUpperCase()}
+                </span>
+              )}
+            </Link>
+          </Tooltip>
+          <Tooltip content="Sair" side="bottom">
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              aria-label="Sair"
+              className="flex items-center justify-center w-9 h-9 rounded-full bg-surface-container hover:bg-surface-container-highest cursor-pointer transition-all border-0"
+            >
+              <span className="material-symbols-outlined" style={{ color: ERROR, fontSize: '20px', lineHeight: 1 }}>
+                logout
               </span>
-            )}
-          </Link>
-          {/* Botão de sair — ícone centralizado, cor de erro */}
-          <button
-            type="button"
-            onClick={() => void handleLogout()}
-            title="Sair"
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-surface-container hover:bg-surface-container-highest cursor-pointer transition-all border-0"
-          >
-            <span className="material-symbols-outlined" style={{ color: ERROR, fontSize: '20px', lineHeight: 1 }}>
-              logout
-            </span>
-          </button>
+            </button>
+          </Tooltip>
         </div>
       </nav>
 
       {/* ── Botão handle de retrair/expandir (fixo, borda direita do sidebar) ── */}
-      <button
-        type="button"
-        onClick={toggleSidebar}
-        title={sidebarCollapsed ? 'Expandir menu' : 'Retrair menu'}
-        className="hidden lg:flex fixed z-[45] items-center justify-center rounded-r-xl transition-all duration-200 border border-l-0"
-        style={{
-          left: sidebarWidth,
-          top: '50vh',
-          transform: 'translateY(-50%)',
-          width: '16px',
-          height: '44px',
-          backgroundColor: 'rgba(43, 245, 142, 0.06)',
-          borderColor: 'rgba(43, 245, 142, 0.2)',
-          color: PRIMARY,
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(43, 245, 142, 0.14)'; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(43, 245, 142, 0.06)'; }}
-      >
-        <span className="material-symbols-outlined" style={{ fontSize: '13px', color: PRIMARY }}>
-          {sidebarCollapsed ? 'chevron_right' : 'chevron_left'}
-        </span>
-      </button>
-
-      {/* ── Tooltip fixo para modo retraído ───────────────────────────────── */}
-      {tooltip && sidebarCollapsed && (
-        <div
-          className="fixed z-[200] pointer-events-none"
-          style={{ left: sidebarWidth + 12, top: tooltip.y, transform: 'translateY(-50%)' }}
+      <Tooltip content={sidebarCollapsed ? 'Expandir menu' : 'Retrair menu'} side="right">
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label={sidebarCollapsed ? 'Expandir menu' : 'Retrair menu'}
+          className="hidden lg:flex fixed z-[45] items-center justify-center rounded-r-xl transition-all duration-200 border border-l-0"
+          style={{
+            left: sidebarWidth,
+            top: '50vh',
+            transform: 'translateY(-50%)',
+            width: '16px',
+            height: '44px',
+            backgroundColor: 'rgba(43, 245, 142, 0.06)',
+            borderColor: 'rgba(43, 245, 142, 0.2)',
+            color: PRIMARY,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(43, 245, 142, 0.14)'; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(43, 245, 142, 0.06)'; }}
         >
-          <span
-            className="block whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold text-on-surface"
-            style={{
-              backgroundColor: 'var(--color-surface-container-highest)',
-              border: '1px solid rgba(43, 245, 142, 0.25)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.4), 0 0 0 1px rgba(43,245,142,0.08)',
-            }}
-          >
-            {tooltip.label}
+          <span className="material-symbols-outlined" style={{ fontSize: '13px', color: PRIMARY }}>
+            {sidebarCollapsed ? 'chevron_right' : 'chevron_left'}
           </span>
-        </div>
-      )}
+        </button>
+      </Tooltip>
 
       {/* ── Navegação lateral ─────────────────────────────────────────────── */}
       <aside
@@ -272,11 +245,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
                       const icon = navIcons[item.key] ?? 'circle';
 
                       return (
-                        <div
-                          key={item.key}
-                          onMouseEnter={(e) => handleNavItemMouseEnter(e, item.label)}
-                          onMouseLeave={() => setTooltip(null)}
-                        >
+                        <Tooltip key={item.key} content={item.label} side="right" disabled={!sidebarCollapsed}>
                           <Link
                             to={item.key}
                             className={`flex items-center transition-all ${
@@ -297,7 +266,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
                               </span>
                             )}
                           </Link>
-                        </div>
+                        </Tooltip>
                       );
                     })}
                   </div>
