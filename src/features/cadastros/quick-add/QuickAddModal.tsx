@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '../../../components/ui/Button';
 
@@ -29,11 +30,71 @@ export function QuickAddModal({
   onClose,
   onSubmit
 }: QuickAddModalProps) {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    firstFocusable?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (!dialogRef.current) return;
+
+      if (event.key === 'Escape' && !loading) {
+        onClose();
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, [open, loading, onClose]);
+
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm" role="presentation">
-      <div role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-2xl rounded-3xl border border-outline-variant/10 bg-surface-container-low p-7 shadow-2xl">
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm"
+      onMouseDown={(event) => {
+        if (!loading && event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-2xl rounded-3xl border border-outline-variant/10 bg-surface-container-low p-7 shadow-2xl">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/5 bg-surface-container text-primary shadow">
             <span aria-hidden="true" className="material-symbols-outlined text-2xl">
@@ -42,14 +103,14 @@ export function QuickAddModal({
           </div>
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{eyebrow}</p>
-            <h3 className="font-headline text-lg font-bold text-on-surface">{title}</h3>
+            <h3 id={titleId} className="font-headline text-lg font-bold text-on-surface">{title}</h3>
           </div>
         </div>
 
         <div className="space-y-4">{children}</div>
 
         {error ? (
-          <div className="mt-5 flex items-center gap-3 rounded-2xl border border-error/20 bg-error/10 p-4 text-error">
+          <div role="alert" className="mt-5 flex items-center gap-3 rounded-2xl border border-error/20 bg-error/10 p-4 text-error">
             <span aria-hidden="true" className="material-symbols-outlined text-sm">
               warning
             </span>
@@ -66,8 +127,7 @@ export function QuickAddModal({
           </Button>
         </div>
       </div>
-    </div>
-    ,
+    </div>,
     document.body
   );
 }

@@ -175,7 +175,7 @@ export function DateInput({
     <div
       ref={popupRef}
       style={popupStyle}
-      className={`z-50 overflow-hidden rounded-xl border border-white/10 bg-surface-container-high shadow-2xl ${
+      className={`z-[9999] overflow-hidden rounded-xl border border-white/10 bg-surface-container-high shadow-2xl ${
         mode === 'month' ? 'min-w-[280px]' : ''
       }`}
     >

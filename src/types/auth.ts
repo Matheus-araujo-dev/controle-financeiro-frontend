@@ -17,7 +17,7 @@ export type AuthUser = {
 export type AuthTokens = {
   accessToken: string;
   expiresAtUtc: string;
-  refreshToken: string;
+  refreshToken?: string; // vazio quando backend usa HttpOnly Cookie
 };
 
 export type UsuarioAutenticadoResponse = {

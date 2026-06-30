@@ -1,8 +1,22 @@
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { MasterDataListPage } from './MasterDataListPage';
 import { estimateActionsColumnWidth } from './master-data-list-helpers';
+
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } });
+}
+
+function renderWithProviders(ui: Parameters<typeof render>[0], qc?: QueryClient) {
+  const queryClient = qc ?? createTestQueryClient();
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+  return render(ui, { wrapper: Wrapper });
+}
 
 describe('MasterDataListPage', () => {
   it('estimates a wider actions column for long labels', () => {
@@ -41,7 +55,7 @@ describe('MasterDataListPage', () => {
       });
     const onToggle = vi.fn().mockResolvedValue(undefined);
 
-    render(
+    renderWithProviders(
       <MemoryRouter>
         <MasterDataListPage
           config={{
@@ -89,7 +103,7 @@ describe('MasterDataListPage', () => {
   it('renders error state and supports link actions', async () => {
     const list = vi.fn().mockRejectedValue(new Error('Falha controlada'));
 
-    render(
+    renderWithProviders(
       <MemoryRouter>
         <MasterDataListPage
           config={{
@@ -136,7 +150,7 @@ describe('MasterDataListPage', () => {
       })
     );
 
-    const { rerender } = render(
+    const { rerender } = renderWithProviders(
       <MemoryRouter>
         <MasterDataListPage
           config={{

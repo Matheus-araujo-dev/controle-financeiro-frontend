@@ -7,7 +7,7 @@ import { FormSection } from '../../../components/layout';
 import { QuickAddCartaoModal } from '../../cadastros/quick-add/QuickAddCartaoModal';
 import { QuickAddContaBancariaModal } from '../../cadastros/quick-add/QuickAddContaBancariaModal';
 import { QuickAddFormaPagamentoModal } from '../../cadastros/quick-add/QuickAddFormaPagamentoModal';
-import { fieldLabelClass, nativeFieldWithPaddingClass } from './field-classes';
+import { fieldLabelClass } from './field-classes';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
 
 type QuickAddTarget = 'forma' | 'cartao' | 'conta' | null;
@@ -52,7 +52,6 @@ export function PaymentSection({ form }: { form: FinancialAccountFormApi }) {
               <ComboBox
                 {...field}
                 disabled={!canEdit}
-                className={nativeFieldWithPaddingClass}
                 onAddNew={canEdit ? () => setQuickAdd('forma') : undefined}
               >
                 <option value="">Selecionar...</option>
@@ -76,7 +75,6 @@ export function PaymentSection({ form }: { form: FinancialAccountFormApi }) {
                 <ComboBox
                   {...field}
                   disabled={!canEdit}
-                  className={nativeFieldWithPaddingClass}
                   onAddNew={canEdit ? () => setQuickAdd('cartao') : undefined}
                 >
                   <option value="">Selecionar cartão...</option>
@@ -102,7 +100,6 @@ export function PaymentSection({ form }: { form: FinancialAccountFormApi }) {
                   <ComboBox
                     {...field}
                     disabled={!canEdit}
-                    className={nativeFieldWithPaddingClass}
                     onAddNew={canEdit ? () => setQuickAdd('conta') : undefined}
                   >
                     <option value="">Selecionar conta...</option>

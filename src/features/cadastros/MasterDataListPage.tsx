@@ -1,4 +1,5 @@
-import { useCallback, useDeferredValue, useEffect, useState } from 'react';
+import { useDeferredValue, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   CheckCircleOutlined,
   EditOutlined,
@@ -159,50 +160,22 @@ export function MasterDataListPage({
   });
   const filters = filtersState.configKey === config.key ? filtersState.value : config.defaultFilters;
   const deferredFilters = useDeferredValue(filters);
-  const [dataState, setDataState] = useState<KeyedValue<Awaited<ReturnType<typeof config.list>>> | undefined>();
-  const data = dataState?.configKey === config.key ? dataState.value : undefined;
-  const [loading, setLoading] = useState(false);
-  const [errorState, setErrorState] = useState<KeyedValue<string> | undefined>();
-  const errorMessage = errorState?.configKey === config.key ? errorState.value : undefined;
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setErrorState(undefined);
+  const { data, isFetching, error, refetch } = useQuery({
+    queryKey: [config.key, 'list', deferredFilters],
+    queryFn: () => config.list(deferredFilters),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
 
-    try {
-      const response = await config.list(deferredFilters);
-      setDataState({
-        configKey: config.key,
-        value: response
-      });
-    } catch (error) {
-      setErrorState({
-        configKey: config.key,
-        value: error instanceof Error ? error.message : 'Falha ao carregar os dados.'
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [config, deferredFilters]);
+  const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar os dados.' : undefined;
 
-  useEffect(() => {
-    setFiltersState({
-      configKey: config.key,
-      value: config.defaultFilters
-    });
-    setDataState(undefined);
-    setErrorState(undefined);
-    setLoading(false);
-  }, [config.key, config.defaultFilters]);
-
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
+  const reload = async () => { await refetch(); };
 
   const columns = buildColumns(
     config.columns,
     config.rowActions,
-    loadData,
+    reload,
     config.actionsColumnWidth
   );
 
@@ -274,10 +247,10 @@ export function MasterDataListPage({
           columns={columns}
           dataSource={data?.items ?? []}
           rowKey="id"
-          loading={loading}
+          loading={isFetching}
           errorMessage={errorMessage}
           emptyMessage={config.emptyMessage}
-          onRetry={loadData}
+          onRetry={reload}
           onTableChange={(pagination, _f, sorter) => {
             const s = Array.isArray(sorter) ? sorter[0] : sorter;
             setFiltersState({

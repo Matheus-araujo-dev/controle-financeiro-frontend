@@ -1,4 +1,16 @@
-import { Children, isValidElement, type ReactElement, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import {
+  Children,
+  isValidElement,
+  type CSSProperties,
+  type ReactElement,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 
 export type ComboBoxOption = {
   label: ReactNode;
@@ -58,7 +70,7 @@ function readLegacyOptions(children: ReactNode) {
     const label = option.props.children;
 
     if (!value) {
-      placeholder = getTextFromNode(label) || placeholder;
+      placeholder = getTextFromNode(label);
       return;
     }
 
@@ -89,8 +101,10 @@ export function ComboBox({
 }: ComboBoxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [dropdownStyle, setDropdownStyle] = useState<CSSProperties>({});
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const parsed = useMemo(() => readLegacyOptions(children), [children]);
   const normalizedOptions = options ?? parsed.options;
@@ -101,7 +115,8 @@ export function ComboBox({
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !dropdownRef.current?.contains(target)) {
         setOpen(false);
         setQuery(selectedLabel);
       }
@@ -116,6 +131,24 @@ export function ComboBox({
       setQuery(selectedLabel);
     }
   }, [open, selectedLabel]);
+
+  useLayoutEffect(() => {
+    if (!open || !rootRef.current) return;
+
+    const rect = rootRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const estimatedHeight = 280;
+    const gap = 4;
+    const showAbove = rect.bottom + estimatedHeight + gap > viewportHeight && rect.top > estimatedHeight + gap;
+
+    setDropdownStyle({
+      position: 'fixed',
+      top: showAbove ? rect.top - estimatedHeight - gap : rect.bottom + gap,
+      left: rect.left,
+      width: rect.width,
+      zIndex: 9999
+    });
+  }, [open]);
 
   const filteredOptions = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -143,13 +176,46 @@ export function ComboBox({
     inputRef.current?.blur();
   }
 
+  const dropdown = open && !disabled ? createPortal(
+    <div
+      ref={dropdownRef}
+      style={dropdownStyle}
+      className="overflow-hidden rounded-xl border border-white/10 bg-surface-container-high shadow-2xl"
+    >
+      {filteredOptions.length === 0 ? (
+        <div className="px-4 py-3 text-sm font-medium text-on-surface-variant">Nenhuma opção disponível</div>
+      ) : (
+        <div className="max-h-60 overflow-auto p-2">
+          {filteredOptions.map((option) => {
+            const isSelected = option.value === value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                disabled={option.disabled}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => selectOption(option)}
+                className={`block w-full rounded-lg px-3 py-2 text-left text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                  isSelected ? 'bg-primary/20 text-primary' : 'text-on-surface hover:bg-primary/15 hover:text-primary'
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>,
+    document.body
+  ) : null;
+
   return (
-    <div ref={rootRef} className="relative w-full">
+    <div ref={rootRef} className={`relative w-full ${className ?? ''}`}>
       <input type="hidden" name={name} value={value ?? ''} />
       <div
         className={`flex h-[54px] items-stretch overflow-hidden rounded-xl bg-surface-container ring-1 ring-white/5 transition-all ${
           open ? 'ring-2 ring-primary/40' : ''
-        } ${disabled ? 'opacity-60' : ''} ${className ?? ''}`}
+        } ${disabled ? 'opacity-60' : ''}`}
       >
         <input
           ref={inputRef}
@@ -215,34 +281,7 @@ export function ComboBox({
           </button>
         )}
       </div>
-
-      {open && !disabled && (
-        <div className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded-xl border border-white/10 bg-surface-container-high shadow-2xl">
-          {filteredOptions.length === 0 ? (
-            <div className="px-4 py-3 text-sm font-medium text-on-surface-variant">Nenhuma opção disponível</div>
-          ) : (
-            <div className="max-h-60 overflow-auto p-2">
-              {filteredOptions.map((option) => {
-                const isSelected = option.value === value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    disabled={option.disabled}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => selectOption(option)}
-                    className={`block w-full rounded-lg px-3 py-2 text-left text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                      isSelected ? 'bg-primary/20 text-primary' : 'text-on-surface hover:bg-primary/15 hover:text-primary'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+      {dropdown}
     </div>
   );
 }

@@ -75,9 +75,9 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
   }, [breadcrumbTitles, setPageTitle]);
 
   const handleLogout = async () => {
-    const { refreshToken, clearSession } = useAuthStore.getState();
+    const { clearSession } = useAuthStore.getState();
     try {
-      await logoutSession(refreshToken);
+      await logoutSession();
     } catch {
       // Logout local sempre acontece, mesmo se a API estiver fora.
     }

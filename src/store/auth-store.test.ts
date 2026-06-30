@@ -7,7 +7,6 @@ describe('useAuthStore', () => {
       mode: 'development',
       currentUser: null,
       token: null,
-      refreshToken: null,
       permissions: []
     });
     window.localStorage.clear();
@@ -59,7 +58,6 @@ describe('useAuthStore', () => {
 
     expect(useAuthStore.getState()).toMatchObject({
       token: 'access-token',
-      refreshToken: 'refresh-token',
       currentUser: {
         userId: 'u1',
         displayName: 'Usuario Teste',
