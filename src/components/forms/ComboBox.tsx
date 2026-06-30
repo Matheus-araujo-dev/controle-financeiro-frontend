@@ -140,18 +140,17 @@ export function ComboBox({
 
     const rect = rootRef.current.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
-    const estimatedHeight = 280;
-    const gap = 4;
+    const gap = 6;
+    const optionCount = (options ?? parsed.options).length + (onAddNew ? 1 : 0);
+    const estimatedHeight = Math.min(optionCount * 44 + 24, 260);
     const showAbove = rect.bottom + estimatedHeight + gap > viewportHeight && rect.top > estimatedHeight + gap;
 
-    setDropdownStyle({
-      position: 'fixed',
-      top: showAbove ? rect.top - estimatedHeight - gap : rect.bottom + gap,
-      left: rect.left,
-      width: rect.width,
-      zIndex: 9999
-    });
-  }, [open]);
+    setDropdownStyle(
+      showAbove
+        ? { position: 'fixed', bottom: viewportHeight - rect.top + gap, top: 'auto', left: rect.left, width: rect.width, zIndex: 9999 }
+        : { position: 'fixed', top: rect.bottom + gap, bottom: 'auto', left: rect.left, width: rect.width, zIndex: 9999 }
+    );
+  }, [open, options, parsed.options, onAddNew]);
 
   const filteredOptions = useMemo(() => {
     const search = query.trim().toLowerCase();

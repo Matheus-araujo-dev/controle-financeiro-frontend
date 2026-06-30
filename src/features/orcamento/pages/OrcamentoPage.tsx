@@ -187,14 +187,9 @@ export function OrcamentoPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">
-            Orçamento mensal
-          </h1>
-          <p className="text-on-surface-variant font-body mt-1">
-            Metas por categoria de despesa em {formatCompetencia(competencia)}.
-          </p>
-        </div>
+        <p className="text-sm text-on-surface-variant">
+          Metas por categoria de despesa em {formatCompetencia(competencia)}.
+        </p>
         <DateInput
           compact
           mode="month"
