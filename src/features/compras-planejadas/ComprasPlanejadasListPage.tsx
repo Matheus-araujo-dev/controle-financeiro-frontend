@@ -338,6 +338,7 @@ export function ComprasPlanejadasListPage() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <FilterField label="Data desejada de">
               <DateInput
+                compact
                 ariaLabel="Data desejada de"
                 value={filters.dataDesejadaInicial ?? ''}
                 onChange={(value) => setFilters((prev) => ({ ...prev, page: 1, dataDesejadaInicial: value || undefined }))}
@@ -345,6 +346,7 @@ export function ComprasPlanejadasListPage() {
             </FilterField>
             <FilterField label="Data desejada até">
               <DateInput
+                compact
                 ariaLabel="Data desejada até"
                 value={filters.dataDesejadaFinal ?? ''}
                 onChange={(value) => setFilters((prev) => ({ ...prev, page: 1, dataDesejadaFinal: value || undefined }))}

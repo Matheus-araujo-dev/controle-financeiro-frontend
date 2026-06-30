@@ -293,6 +293,7 @@ export function FaturasPage() {
             </FilterField>
             <FilterField label="Vencimento de">
               <DateInput
+                compact
                 ariaLabel="Vencimento inicial"
                 value={filters.dataVencimentoInicial ?? ''}
                 onChange={(value) => setFilters((f) => ({ ...f, page: 1, dataVencimentoInicial: value || undefined }))}
@@ -300,6 +301,7 @@ export function FaturasPage() {
             </FilterField>
             <FilterField label="Vencimento até">
               <DateInput
+                compact
                 ariaLabel="Vencimento final"
                 value={filters.dataVencimentoFinal ?? ''}
                 onChange={(value) => setFilters((f) => ({ ...f, page: 1, dataVencimentoFinal: value || undefined }))}
@@ -307,6 +309,7 @@ export function FaturasPage() {
             </FilterField>
             <FilterField label="Fechamento de">
               <DateInput
+                compact
                 ariaLabel="Fechamento inicial"
                 value={filters.dataFechamentoInicial ?? ''}
                 onChange={(value) => setFilters((f) => ({ ...f, page: 1, dataFechamentoInicial: value || undefined }))}
@@ -314,6 +317,7 @@ export function FaturasPage() {
             </FilterField>
             <FilterField label="Fechamento até">
               <DateInput
+                compact
                 ariaLabel="Fechamento final"
                 value={filters.dataFechamentoFinal ?? ''}
                 onChange={(value) => setFilters((f) => ({ ...f, page: 1, dataFechamentoFinal: value || undefined }))}

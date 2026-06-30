@@ -176,6 +176,7 @@ export function MovimentacoesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <FilterField label="De">
             <DateInput
+              compact
               ariaLabel="Data inicial"
               value={filters.dataInicial ?? ''}
               onChange={(value) => setFilters((prev) => ({ ...prev, dataInicial: value || undefined, page: 1 }))}
@@ -184,6 +185,7 @@ export function MovimentacoesPage() {
 
           <FilterField label="Até">
             <DateInput
+              compact
               ariaLabel="Data final"
               value={filters.dataFinal ?? ''}
               onChange={(value) => setFilters((prev) => ({ ...prev, dataFinal: value || undefined, page: 1 }))}

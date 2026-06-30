@@ -121,18 +121,18 @@ export function RecurrenceListPage() {
             </FilterField>
             <FilterField label="Início de">
               <DateInput
+                compact
                 ariaLabel="Início de"
                 value={filters.dataReferenciaInicial ?? ''}
                 onChange={(value) => setFilters((f) => ({ ...f, page: 1, dataReferenciaInicial: value || undefined }))}
-                className="!h-10 !min-h-10 !px-3 !py-2"
               />
             </FilterField>
             <FilterField label="Início até">
               <DateInput
+                compact
                 ariaLabel="Início até"
                 value={filters.dataReferenciaFinal ?? ''}
                 onChange={(value) => setFilters((f) => ({ ...f, page: 1, dataReferenciaFinal: value || undefined }))}
-                className="!h-10 !min-h-10 !px-3 !py-2"
               />
             </FilterField>
           </div>

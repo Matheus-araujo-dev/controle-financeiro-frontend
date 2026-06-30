@@ -59,7 +59,7 @@ export function SelectFilter({ options, value, onChange, placeholder = 'Todos', 
         aria-label={ariaLabel}
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center gap-2 rounded-2xl border border-white/5 bg-surface-container px-3 py-2.5 text-left transition-colors hover:border-primary/30 hover:bg-surface-container-high focus:outline-none focus-visible:border-primary/60"
+        className="flex h-11 w-full items-center gap-2 rounded-2xl border border-white/5 bg-surface-container px-3 text-left transition-colors hover:border-primary/30 hover:bg-surface-container-high focus:outline-none focus-visible:border-primary/60"
       >
         {icon && <span className="shrink-0 text-sm text-on-surface-variant">{icon}</span>}
         <span className={`flex-1 truncate text-sm ${hasValue ? 'text-white' : 'text-on-surface-variant/70'}`}>
