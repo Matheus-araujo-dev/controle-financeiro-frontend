@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '../store/auth-store';
@@ -16,15 +17,21 @@ vi.mock('../services/http/api-client', () => ({
   apiClient: apiClientMock
 }));
 
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } });
+}
+
 function renderRoute(initialEntry: string) {
   const router = createMemoryRouter(appRoutes, {
     initialEntries: [initialEntry]
   });
 
   render(
-    <Suspense fallback={<div>Carregando...</div>}>
-      <RouterProvider router={router} />
-    </Suspense>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <Suspense fallback={<div>Carregando...</div>}>
+        <RouterProvider router={router} />
+      </Suspense>
+    </QueryClientProvider>
   );
 }
 

@@ -140,7 +140,6 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
               <ComboBox
                 {...field}
                 disabled={!canEdit}
-                className={nativeFieldWithPaddingClass}
                 onAddNew={canEdit ? () => setContaGerencialModalOpen(true) : undefined}
               >
                 <option value="">Selecionar categoria...</option>
@@ -188,7 +187,6 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
                 <ComboBox
                   {...field}
                   disabled={!canEdit}
-                  className={nativeFieldWithPaddingClass}
                   onAddNew={canEdit ? () => setPessoaModalTarget('pessoaId') : undefined}
                 >
                   <option value="">Selecionar...</option>
@@ -214,7 +212,6 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
                 <ComboBox
                   {...field}
                   disabled={!canEdit}
-                  className={nativeFieldWithPaddingClass}
                   onAddNew={canEdit ? () => setPessoaModalTarget('responsavelId') : undefined}
                 >
                   <option value="">Selecionar...</option>

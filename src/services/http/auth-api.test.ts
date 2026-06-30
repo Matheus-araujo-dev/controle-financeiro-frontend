@@ -23,7 +23,7 @@ import { loginWithGoogle, logoutSession, refreshSession } from './auth-api';
 const tokenResponse = {
   accessToken: 'access-token',
   expiresAtUtc: '2026-06-21T12:00:00Z',
-  refreshToken: 'refresh-token',
+  refreshToken: '',
   usuario: {
     id: 'u1',
     email: 'u1@example.com',
@@ -47,16 +47,16 @@ describe('auth-api', () => {
     apiPostMock.mockResolvedValue(undefined);
 
     await expect(loginWithGoogle('google-token')).resolves.toEqual(tokenResponse);
-    await expect(refreshSession('refresh-token')).resolves.toEqual(tokenResponse);
-    await expect(logoutSession('refresh-token')).resolves.toBeUndefined();
+    await expect(refreshSession()).resolves.toEqual(tokenResponse);
+    await expect(logoutSession()).resolves.toBeUndefined();
 
     expect(createMock).toHaveBeenCalledTimes(1);
     expect(createMock).toHaveBeenCalledWith({
       baseURL: 'http://localhost:5000/api/v1',
       timeout: 10000
     });
-    expect(barePostMock).toHaveBeenCalledWith('/auth/google', { idToken: 'google-token' });
-    expect(barePostMock).toHaveBeenCalledWith('/auth/refresh', { refreshToken: 'refresh-token' });
-    expect(apiPostMock).toHaveBeenCalledWith('/auth/logout', { refreshToken: 'refresh-token' });
+    expect(barePostMock).toHaveBeenCalledWith('/auth/google', { idToken: 'google-token' }, { withCredentials: true });
+    expect(barePostMock).toHaveBeenCalledWith('/auth/refresh', {}, { withCredentials: true });
+    expect(apiPostMock).toHaveBeenCalledWith('/auth/logout', {}, { withCredentials: true });
   });
 });

@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { DateInput } from '../forms/DateInput';
 import { ComboBox } from '../forms/ComboBox';
 import { Button } from '../ui/Button';
@@ -60,7 +61,13 @@ export function QuickLaunchButton({
   );
 }
 
+const BASE_QUERY = { page: 1, pageSize: 100, search: '' } as const;
+const STALE_5MIN = 5 * 60_000;
+
 function QuickLaunchModal({ onClose }: { onClose: () => void }) {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   const [tipo, setTipo] = useState<QuickLaunchTipo>('pagar');
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState(0);
@@ -72,36 +79,109 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [contaGerencialId, setContaGerencialId] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const [pessoas, setPessoas] = useState<Option[]>([]);
-  const [formas, setFormas] = useState<Array<Option & { ehCartao: boolean }>>([]);
-  const [cartoes, setCartoes] = useState<Option[]>([]);
-  const [contasDespesa, setContasDespesa] = useState<Option[]>([]);
-  const [contasReceita, setContasReceita] = useState<Option[]>([]);
+  // Itens adicionados via QuickAdd nesta sessão (aparecem no topo da lista)
+  const [extraPessoas, setExtraPessoas] = useState<Option[]>([]);
+  const [extraFormas, setExtraFormas] = useState<Array<Option & { ehCartao: boolean }>>([]);
+  const [extraCartoes, setExtraCartoes] = useState<Option[]>([]);
+  const [extraContasDespesa, setExtraContasDespesa] = useState<Option[]>([]);
+  const [extraContasReceita, setExtraContasReceita] = useState<Option[]>([]);
 
   const [quickAddPessoaTarget, setQuickAddPessoaTarget] = useState<QuickAddTarget>(null);
   const [quickAddFormaOpen, setQuickAddFormaOpen] = useState(false);
   const [quickAddContaOpen, setQuickAddContaOpen] = useState(false);
   const [quickAddCartaoOpen, setQuickAddCartaoOpen] = useState(false);
 
+  // React Query: cache com staleTime alto — re-abrir o modal não refaz chamadas
+  const [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult] = useQueries({
+    queries: [
+      { queryKey: ['ql-pessoas'], queryFn: () => cadastrosApi.pessoas.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-formas'], queryFn: () => cadastrosApi.formasPagamento.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-cartoes'], queryFn: () => cadastrosApi.cartoes.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-contas-despesa'], queryFn: () => cadastrosApi.contasGerenciais.listar({ ...BASE_QUERY, tipo: 'Despesa', ativo: true, aceitaLancamentos: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-contas-receita'], queryFn: () => cadastrosApi.contasGerenciais.listar({ ...BASE_QUERY, tipo: 'Receita', ativo: true, aceitaLancamentos: true }), staleTime: STALE_5MIN },
+    ],
+  });
+
+  const pessoas = useMemo<Option[]>(() => {
+    const fromServer = pessoasResult.data?.items.map((p) => ({ label: p.nome, value: p.id })) ?? [];
+    return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
+  }, [extraPessoas, pessoasResult.data]);
+
+  const formas = useMemo<Array<Option & { ehCartao: boolean }>>(() => {
+    const fromServer = formasResult.data?.items.map((f) => ({ label: f.nome, value: f.id, ehCartao: f.ehCartao })) ?? [];
+    return [...extraFormas, ...fromServer.filter((f) => !extraFormas.some((e) => e.value === f.value))];
+  }, [extraFormas, formasResult.data]);
+
+  const cartoes = useMemo<Option[]>(() => {
+    const fromServer = cartoesResult.data?.items.map((c) => ({ label: `${c.nome} - final ${c.numeroFinal}`, value: c.id })) ?? [];
+    return [...extraCartoes, ...fromServer.filter((c) => !extraCartoes.some((e) => e.value === c.value))];
+  }, [extraCartoes, cartoesResult.data]);
+
+  const contasDespesa = useMemo<Option[]>(() => {
+    const fromServer = mapContaGerencialSelectOptions(filterContaGerencialLancavel(despesaResult.data?.items ?? []));
+    return [...extraContasDespesa, ...fromServer.filter((c) => !extraContasDespesa.some((e) => e.value === c.value))];
+  }, [extraContasDespesa, despesaResult.data]);
+
+  const contasReceita = useMemo<Option[]>(() => {
+    const fromServer = mapContaGerencialSelectOptions(filterContaGerencialLancavel(receitaResult.data?.items ?? []));
+    return [...extraContasReceita, ...fromServer.filter((c) => !extraContasReceita.some((e) => e.value === c.value))];
+  }, [extraContasReceita, receitaResult.data]);
+
+  const someQueryErrored = [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult].some((r) => r.isError);
   useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        onClose();
-      }
+    if (someQueryErrored) {
+      notify('error', 'Falha ao carregar opções do lançamento rápido');
     }
+  }, [someQueryErrored]);
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
+  // Scroll lock + inert no shell + foco na abertura + focus trap + Escape
   useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
     const shell = document.querySelector<HTMLElement>('[data-testid="admin-shell"]');
     const previousAriaHidden = shell?.getAttribute('aria-hidden');
+
     document.body.style.overflow = 'hidden';
     document.body.classList.add('quick-launch-open');
     shell?.setAttribute('aria-hidden', 'true');
     shell?.setAttribute('inert', '');
+
+    // Foca o primeiro elemento focável do modal
+    const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    firstFocusable?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (!dialogRef.current) return;
+
+      if (event.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.body.style.overflow = previousOverflow;
@@ -114,29 +194,10 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
           shell.setAttribute('aria-hidden', previousAriaHidden);
         }
       }
+      document.removeEventListener('keydown', handleKeyDown);
+      previouslyFocused?.focus();
     };
-  }, []);
-
-  useEffect(() => {
-    async function loadOptions() {
-      const base = { page: 1, pageSize: 100, search: '' };
-      const [pessoasResp, formasResp, cartoesResp, despesaResp, receitaResp] = await Promise.all([
-        cadastrosApi.pessoas.listar({ ...base, ativo: true }),
-        cadastrosApi.formasPagamento.listar({ ...base, ativo: true }),
-        cadastrosApi.cartoes.listar({ ...base, ativo: true }),
-        cadastrosApi.contasGerenciais.listar({ ...base, tipo: 'Despesa', ativo: true, aceitaLancamentos: true }),
-        cadastrosApi.contasGerenciais.listar({ ...base, tipo: 'Receita', ativo: true, aceitaLancamentos: true })
-      ]);
-
-      setPessoas(pessoasResp.items.map((item) => ({ label: item.nome, value: item.id })));
-      setFormas(formasResp.items.map((item) => ({ label: item.nome, value: item.id, ehCartao: item.ehCartao })));
-      setCartoes(cartoesResp.items.map((item) => ({ label: `${item.nome} - final ${item.numeroFinal}`, value: item.id })));
-      setContasDespesa(mapContaGerencialSelectOptions(filterContaGerencialLancavel(despesaResp.items)));
-      setContasReceita(mapContaGerencialSelectOptions(filterContaGerencialLancavel(receitaResp.items)));
-    }
-
-    loadOptions().catch(() => notify('error', 'Falha ao carregar opções do lançamento rápido'));
-  }, []);
+  }, [onClose]);
 
   const formaSelecionada = useMemo(() => formas.find((forma) => forma.value === formaPagamentoId), [formas, formaPagamentoId]);
   const exigeCartao = tipo === 'pagar' && Boolean(formaSelecionada?.ehCartao);
@@ -212,18 +273,14 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   }
 
   function handlePessoaSuccess(target: QuickAddTarget, newId: string, label: string) {
-    setPessoas((current) => mergeOption(current, { value: newId, label }));
-    if (target === 'pessoaId') {
-      setPessoaId(newId);
-    }
-    if (target === 'responsavelId') {
-      setResponsavelId(newId);
-    }
+    setExtraPessoas((current) => mergeOption(current, { value: newId, label }));
+    if (target === 'pessoaId') setPessoaId(newId);
+    if (target === 'responsavelId') setResponsavelId(newId);
     setQuickAddPessoaTarget(null);
   }
 
   function handleFormaSuccess(newId: string, label: string) {
-    setFormas((current) => mergeOption(current, { value: newId, label, ehCartao: false }));
+    setExtraFormas((current) => mergeOption(current, { value: newId, label, ehCartao: false }));
     setFormaPagamentoId(newId);
     setQuickAddFormaOpen(false);
   }
@@ -231,16 +288,16 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   function handleContaGerencialSuccess(newId: string, label: string) {
     const nextOption = { value: newId, label };
     if (tipo === 'pagar') {
-      setContasDespesa((current) => mergeOption(current, nextOption));
+      setExtraContasDespesa((current) => mergeOption(current, nextOption));
     } else {
-      setContasReceita((current) => mergeOption(current, nextOption));
+      setExtraContasReceita((current) => mergeOption(current, nextOption));
     }
     setContaGerencialId(newId);
     setQuickAddContaOpen(false);
   }
 
   function handleCartaoSuccess(newId: string, label: string) {
-    setCartoes((current) => mergeOption(current, { value: newId, label }));
+    setExtraCartoes((current) => mergeOption(current, { value: newId, label }));
     setCartaoId(newId);
     setQuickAddCartaoOpen(false);
   }
@@ -249,9 +306,10 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-[1000] bg-black/75 px-4 py-6 backdrop-blur-md">
       <div className="flex h-full items-center justify-center">
         <div
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
-          aria-label="Lançamento rápido"
+          aria-labelledby={titleId}
           className="flex max-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-surface-container-low shadow-2xl"
         >
           <div className="overflow-y-auto p-7">
@@ -261,7 +319,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Operação rápida</p>
-                <h3 className="font-headline text-lg font-bold text-on-surface">Lançamento rápido</h3>
+                <h3 id={titleId} className="font-headline text-lg font-bold text-on-surface">Lançamento rápido</h3>
               </div>
             </div>
 
@@ -313,7 +371,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   onChange={setPessoaId}
                   options={pessoas}
                   placeholder="Selecionar pessoa..."
-                  className={formFieldClass}
                   onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
                   addNewLabel="Nova pessoa"
                 />
@@ -327,7 +384,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   onChange={setResponsavelId}
                   options={pessoas}
                   placeholder="Selecionar responsável..."
-                  className={formFieldClass}
                   onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
                   addNewLabel="Nova pessoa"
                 />
@@ -346,7 +402,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   }}
                   options={formas}
                   placeholder="Selecionar..."
-                  className={formFieldClass}
                   onAddNew={() => setQuickAddFormaOpen(true)}
                   addNewLabel="Nova forma de pagamento"
                 />
@@ -360,7 +415,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   onChange={setContaGerencialId}
                   options={contasGerenciais}
                   placeholder="Selecionar..."
-                  className={formFieldClass}
                   onAddNew={() => setQuickAddContaOpen(true)}
                   addNewLabel="Nova conta gerencial"
                 />
@@ -375,7 +429,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                     onChange={setCartaoId}
                     options={cartoes}
                     placeholder="Selecionar cartão..."
-                    className={formFieldClass}
                     onAddNew={() => setQuickAddCartaoOpen(true)}
                     addNewLabel="Novo cartão"
                   />

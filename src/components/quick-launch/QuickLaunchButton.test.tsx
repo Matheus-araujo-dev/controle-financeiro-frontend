@@ -1,5 +1,7 @@
+import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { QuickLaunchButton } from './QuickLaunchButton';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
@@ -205,13 +207,22 @@ function mockSuccessfulOptions() {
   );
 }
 
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+}
+
+function Wrapper({ children }: { children: React.ReactNode }) {
+  return <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>;
+}
+
 async function openQuickLaunch() {
   const user = userEvent.setup();
   render(
     <>
       <main data-testid="admin-shell" aria-hidden="false" />
       <QuickLaunchButton>Adicionar</QuickLaunchButton>
-    </>
+    </>,
+    { wrapper: Wrapper }
   );
 
   await user.click(screen.getByRole('button', { name: /lan.amento r.pido/i }));
