@@ -84,6 +84,7 @@ export function DashboardPage() {
       <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="flex flex-wrap items-center justify-end gap-3">
           <DateInput
+            compact
             mode="month"
             ariaLabel="Mês de referência do dashboard"
             value={referenceMonth}

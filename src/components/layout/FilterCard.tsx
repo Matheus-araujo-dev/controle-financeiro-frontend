@@ -36,8 +36,8 @@ interface FilterInputWrapperProps {
 
 export function FilterInputWrapper({ icon, children }: FilterInputWrapperProps) {
   return (
-    <div className="flex items-center gap-2 bg-surface-container px-3 py-2.5 rounded-2xl">
-      {icon && <span className="text-on-surface-variant text-sm shrink-0">{icon}</span>}
+    <div className="flex h-11 items-center gap-2 rounded-2xl bg-surface-container px-3">
+      {icon && <span className="shrink-0 text-sm text-on-surface-variant">{icon}</span>}
       {children}
     </div>
   );

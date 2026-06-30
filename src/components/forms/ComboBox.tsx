@@ -38,6 +38,8 @@ export type ComboBoxProps = {
   addNewLabel?: string;
   children?: ReactNode;
   className?: string;
+  /** Reduz a altura para h-11 (contexto de filtros) em vez de h-[54px] (formulários). */
+  compact?: boolean;
 };
 
 function getTextFromNode(node: ReactNode): string {
@@ -97,7 +99,8 @@ export function ComboBox({
   onAddNew,
   addNewLabel = 'Adicionar novo',
   children,
-  className
+  className,
+  compact = false
 }: ComboBoxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -213,7 +216,7 @@ export function ComboBox({
     <div ref={rootRef} className={`relative w-full ${className ?? ''}`}>
       <input type="hidden" name={name} value={value ?? ''} />
       <div
-        className={`flex h-[54px] items-stretch overflow-hidden rounded-xl bg-surface-container ring-1 ring-white/5 transition-all ${
+        className={`flex items-stretch overflow-hidden rounded-xl bg-surface-container ring-1 ring-white/5 transition-all ${compact ? 'h-11' : 'h-[54px]'} ${
           open ? 'ring-2 ring-primary/40' : ''
         } ${disabled ? 'opacity-60' : ''}`}
       >

@@ -273,6 +273,7 @@ export function RelatoriosPage() {
 
         <div className="report-actions flex flex-col gap-3 sm:flex-row sm:items-center">
           <DateInput
+            compact
             mode="month"
             ariaLabel="Mês de referência do relatório"
             value={referenceMonth}

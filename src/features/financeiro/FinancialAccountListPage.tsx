@@ -445,6 +445,7 @@ export function FinancialAccountListPage({
 
           <FilterField label="Recorrência">
             <ComboBox
+              compact
               aria-label="Recorrência"
               value={filters.ehRecorrente === true ? 'sim' : filters.ehRecorrente === false ? 'nao' : ''}
               options={[
@@ -458,6 +459,7 @@ export function FinancialAccountListPage({
 
           <FilterField label="Período de vencimento">
             <ComboBox
+              compact
               aria-label="Período de vencimento"
               value=""
               options={[

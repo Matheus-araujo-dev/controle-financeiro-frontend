@@ -12,6 +12,8 @@ export type DateInputProps = {
   placeholder?: string;
   className?: string;
   ariaLabel?: string;
+  /** Reduz a altura para h-11 (contexto de filtros) em vez de min-h-[54px] (formulários). */
+  compact?: boolean;
 };
 
 const monthLabels = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -81,7 +83,8 @@ export function DateInput({
   mode = 'date',
   placeholder = mode === 'date' ? 'dd/mm/aaaa' : 'mm/aaaa',
   className = '',
-  ariaLabel
+  ariaLabel,
+  compact = false
 }: DateInputProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -359,7 +362,7 @@ export function DateInput({
         onClick={() => {
           if (!disabled) setOpen((current) => !current);
         }}
-        className={`${className} flex min-h-[54px] w-full items-center justify-between gap-3 rounded-xl bg-surface-container px-4 py-3 text-left font-medium text-on-surface transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`${className} flex w-full items-center justify-between gap-3 rounded-xl bg-surface-container px-4 text-left font-medium text-on-surface transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${compact ? 'h-11 py-0' : 'min-h-[54px] py-3'} ${
           open ? 'ring-2 ring-primary/40' : 'ring-1 ring-white/5 hover:border-primary/30 hover:bg-surface-container-high'
         }`}
       >

@@ -196,6 +196,7 @@ export function OrcamentoPage() {
           </p>
         </div>
         <DateInput
+          compact
           mode="month"
           ariaLabel="Competência do orçamento"
           value={competencia}
