@@ -111,6 +111,39 @@ body {
   color: var(--color-on-surface);
 }
 
+/* ── Scrollbar personalizada ───────────────────────────────────────────── */
+
+/* Webkit: Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(43, 245, 142, 0.22);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(43, 245, 142, 0.48);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+html {
+  scrollbar-color: rgba(43, 245, 142, 0.22) transparent;
+  scrollbar-width: thin;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+
 body.quick-launch-open {
   overflow: hidden;
 }
