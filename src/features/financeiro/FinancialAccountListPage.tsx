@@ -398,10 +398,7 @@ export function FinancialAccountListPage({
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className={`flex flex-col gap-4 md:flex-row md:items-end ${embedded ? 'md:justify-end' : 'md:justify-between'}`}>
         {!embedded ? (
-          <div>
-            <h2 className="m-0 font-headline text-3xl font-extrabold text-on-surface">{config.title}</h2>
-            <p className="mt-1 text-sm text-on-surface-variant">{config.listDescription}</p>
-          </div>
+          <p className="text-sm text-on-surface-variant">{config.listDescription}</p>
         ) : null}
 
         <Button onClick={onCreate} icon={<PlusOutlined aria-hidden />}>

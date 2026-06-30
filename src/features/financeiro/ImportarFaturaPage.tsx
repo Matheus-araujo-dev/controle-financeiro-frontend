@@ -245,16 +245,9 @@ export function ImportarFaturaPage() {
     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {contextHolder}
 
-      {/* Header neon */}
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary mb-2">OPERAÇÕES FINANCEIRAS</p>
-        <h1 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface mb-2">
-          Importar <span className="text-primary">Fatura</span>
-        </h1>
-        <p className="text-on-surface-variant">
-          Importa CSV, PDF ou OFX de cartão de crédito. A IA categoriza automaticamente cada transação.
-        </p>
-      </div>
+      <p className="text-sm text-on-surface-variant">
+        Importa CSV, PDF ou OFX de cartão de crédito. A IA categoriza automaticamente cada transação.
+      </p>
 
       {/* Configuração */}
       <div className="bg-surface-container-low border border-white/5 rounded-3xl p-6 space-y-4">

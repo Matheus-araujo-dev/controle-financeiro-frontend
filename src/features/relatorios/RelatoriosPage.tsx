@@ -262,14 +262,10 @@ export function RelatoriosPage() {
 
   return (
     <div className="printable-report mx-auto max-w-7xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-primary">Análises financeiras</p>
-          <h1 className="m-0 font-headline text-4xl font-extrabold tracking-tight text-on-surface">Relatórios</h1>
-          <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">
-            Leitura gerencial do período com base em lançamentos, rateios, responsáveis, previsões, faturas e compras planejadas.
-          </p>
-        </div>
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <p className="max-w-2xl text-sm text-on-surface-variant">
+          Leitura gerencial do período com base em lançamentos, rateios, responsáveis, previsões, faturas e compras planejadas.
+        </p>
 
         <div className="report-actions flex flex-col gap-3 sm:flex-row sm:items-center">
           <DateInput
@@ -285,7 +281,7 @@ export function RelatoriosPage() {
             onClick={handleExportExcel}
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/15 px-4 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary/25"
           >
-            <span className="material-symbols-outlined text-base">table_view</span>
+            <span className="material-symbols-outlined text-base" style={{ color: '#2bf58e' }}>table_view</span>
             Excel
           </button>
           <button
@@ -293,7 +289,7 @@ export function RelatoriosPage() {
             onClick={exportarPdf}
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/15 px-4 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary/25"
           >
-            <span className="material-symbols-outlined text-base">picture_as_pdf</span>
+            <span className="material-symbols-outlined text-base" style={{ color: '#2bf58e' }}>picture_as_pdf</span>
             PDF
           </button>
         </div>
