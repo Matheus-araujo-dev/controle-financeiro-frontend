@@ -82,7 +82,7 @@ export function RecurrenceSection({ form }: RecurrenceSectionProps) {
                     {...field}
                     onChange={(event) => field.onChange(Number(event.target.value))}
                     disabled={!canEdit}
-                    className={nativeCompactFieldClass}
+                    className={`${nativeCompactFieldClass} [&::-webkit-outer-spin-button]:hidden [&::-webkit-inner-spin-button]:hidden`}
                   />
                 )}
               />

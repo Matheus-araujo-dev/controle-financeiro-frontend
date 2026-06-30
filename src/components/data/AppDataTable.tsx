@@ -437,9 +437,11 @@ export function AppDataTable<T extends object>({
                 </div>
 
                 {actionColumns.length ? (
-                  <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-white/5 pt-3">
+                  <div className="mt-4 flex flex-wrap justify-end gap-1 border-t border-white/5 pt-3">
                     {actionColumns.map((column) => (
-                      <div key={getColumnKey(column)}>{renderCell(column, record, rowIndex)}</div>
+                      <div key={getColumnKey(column)} className="flex min-h-[44px] min-w-[44px] items-center justify-center">
+                        {renderCell(column, record, rowIndex)}
+                      </div>
                     ))}
                   </div>
                 ) : null}
