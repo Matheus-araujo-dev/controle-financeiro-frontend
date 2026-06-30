@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, Outlet, useLocation, useMatches, useNavigate } from 'react-router-dom';
 import { navigationItems, navigationStructure } from '../constants/navigation';
 import { useAppShellStore } from '../store/app-shell-store';
@@ -19,6 +19,7 @@ const navIcons: Record<string, string> = {
   '/recorrencias': 'sync',
   '/movimentacoes': 'swap_horiz',
   '/faturas': 'credit_card',
+  '/faturas/importar': 'upload_file',
   '/importacoes-whatsapp': 'chat',
   '/pessoas': 'group',
   '/formas-pagamento': 'wallet',
@@ -31,10 +32,23 @@ const navIcons: Record<string, string> = {
   '/agente/whatsapp': 'phone_iphone'
 };
 
-const sideItemBase =
-  'py-2.5 px-6 flex items-center gap-3 transition-all font-body text-sm font-medium tracking-wide';
-const sideItemInactive = `${sideItemBase} text-primary/70 hover:bg-primary/10 hover:text-primary`;
-const sideItemActive = `${sideItemBase} bg-primary/12 text-primary shadow-[inset_0_0_10px_rgba(63,255,139,0.16)] border-r-4 border-primary/80`;
+function readSidebarCollapsed(): boolean {
+  try {
+    return localStorage.getItem('sidebar-collapsed') === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function readCollapsedGroups(): Set<string> {
+  try {
+    const stored = localStorage.getItem('sidebar-collapsed-groups');
+    if (stored) {
+      return new Set<string>(JSON.parse(stored) as string[]);
+    }
+  } catch { /* ignore */ }
+  return new Set<string>();
+}
 
 interface NeonLedgerLayoutProps {
   children?: React.ReactNode;
@@ -47,6 +61,9 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
   const currentUser = useCurrentUser();
   const { pageTitle, setPageTitle } = useAppShellStore();
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(readSidebarCollapsed);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(readCollapsedGroups);
+
   const breadcrumbTitles = useMemo(
     () =>
       matches
@@ -57,12 +74,9 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
 
   const selectedKey = useMemo(() => {
     const currentPath = location.pathname;
-
-    // Cada item pode casar pela própria key ou por aliases (ex.: abas de Movimentações que mudam a URL).
     const candidates = navigationItems
       .flatMap((item) => [item.key, ...(item.aliases ?? [])].map((prefix) => ({ key: item.key, prefix })))
       .sort((left, right) => right.prefix.length - left.prefix.length);
-
     return (
       candidates.find(
         ({ prefix }) => currentPath === prefix || currentPath.startsWith(`${prefix}/`)
@@ -73,6 +87,27 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
   useEffect(() => {
     setPageTitle(breadcrumbTitles.at(-1) ?? 'Dashboard');
   }, [breadcrumbTitles, setPageTitle]);
+
+  function toggleSidebar() {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try { localStorage.setItem('sidebar-collapsed', String(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }
+
+  function toggleGroup(groupKey: string) {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupKey)) {
+        next.delete(groupKey);
+      } else {
+        next.add(groupKey);
+      }
+      try { localStorage.setItem('sidebar-collapsed-groups', JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  }
 
   const handleLogout = async () => {
     const { clearSession } = useAuthStore.getState();
@@ -142,32 +177,108 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
       </nav>
 
       {/* Navegação lateral */}
-      <aside className="hidden lg:flex flex-col fixed left-0 top-[72px] bottom-0 w-64 bg-surface-container-low py-6 overflow-y-auto">
+      <aside
+        className={`hidden lg:flex flex-col fixed left-0 top-[72px] bottom-0 bg-surface-container-low py-4 overflow-y-auto overflow-x-hidden transition-all duration-200 z-40 ${
+          sidebarCollapsed ? 'w-16' : 'w-64'
+        }`}
+      >
+        {/* Botão retrair/expandir */}
+        <div className={`flex mb-4 px-3 ${sidebarCollapsed ? 'justify-center' : 'justify-end'}`}>
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            title={sidebarCollapsed ? 'Expandir menu' : 'Retrair menu'}
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-primary/60 hover:text-primary hover:bg-primary/10 transition-all"
+          >
+            <span className="material-symbols-outlined text-lg">
+              {sidebarCollapsed ? 'chevron_right' : 'chevron_left'}
+            </span>
+          </button>
+        </div>
+
         <nav className="flex-1">
-          {navigationStructure.map((group) => (
-            <div key={group.key} className="mb-6">
-              <h3 className="px-6 mb-2 text-primary/90 font-bold font-headline text-xs uppercase tracking-wider">
-                {group.label}
-              </h3>
-              <div className="space-y-1">
-                {group.items.map((item) => (
-                  <Link
-                    key={item.key}
-                    to={item.key}
-                    className={item.key === selectedKey ? sideItemActive : sideItemInactive}
+          {navigationStructure.map((group) => {
+            const isGroupCollapsed = collapsedGroups.has(group.key);
+
+            return (
+              <div key={group.key} className={`${sidebarCollapsed ? 'mb-4' : 'mb-5'}`}>
+                {/* Cabeçalho do grupo */}
+                {sidebarCollapsed ? (
+                  /* Em modo retraído: separador simples */
+                  <div className="mx-3 mb-2 h-px bg-white/8" />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.key)}
+                    className="w-full flex items-center justify-between px-4 mb-1 group/group-header"
                   >
-                    <span className="material-symbols-outlined text-xl">{navIcons[item.key] ?? 'circle'}</span>
-                    {item.label}
-                  </Link>
-                ))}
+                    <h3 className="text-primary font-bold font-headline text-xs uppercase tracking-wider">
+                      {group.label}
+                    </h3>
+                    <span
+                      className={`material-symbols-outlined text-sm text-primary/50 group-hover/group-header:text-primary transition-all duration-200 ${
+                        isGroupCollapsed ? 'rotate-0' : 'rotate-90'
+                      }`}
+                    >
+                      chevron_right
+                    </span>
+                  </button>
+                )}
+
+                {/* Itens do grupo */}
+                {(!isGroupCollapsed || sidebarCollapsed) && (
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => {
+                      const isActive = item.key === selectedKey;
+                      const icon = navIcons[item.key] ?? 'circle';
+
+                      return (
+                        <div key={item.key} className="relative group/nav-item">
+                          <Link
+                            to={item.key}
+                            className={`flex items-center transition-all font-body text-sm font-medium ${
+                              sidebarCollapsed
+                                ? `justify-center py-2.5 mx-2 rounded-xl ${
+                                    isActive
+                                      ? 'bg-primary/12 text-primary shadow-[inset_0_0_10px_rgba(63,255,139,0.16)]'
+                                      : 'text-primary hover:bg-primary/10'
+                                  }`
+                                : `gap-3 py-2.5 pl-4 pr-6 ${
+                                    isActive
+                                      ? 'bg-primary/12 text-primary shadow-[inset_0_0_10px_rgba(63,255,139,0.16)] border-r-4 border-primary/80'
+                                      : 'text-primary hover:bg-primary/10'
+                                  }`
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-xl shrink-0">{icon}</span>
+                            {!sidebarCollapsed && (
+                              <span className="truncate">{item.label}</span>
+                            )}
+                          </Link>
+
+                          {/* Tooltip em modo retraído */}
+                          {sidebarCollapsed && (
+                            <span className="pointer-events-none absolute left-full top-1/2 ml-3 -translate-y-1/2 z-50 whitespace-nowrap rounded-lg bg-surface-container-highest px-3 py-1.5 text-xs font-semibold text-white shadow-xl ring-1 ring-white/10 opacity-0 group-hover/nav-item:opacity-100 transition-opacity duration-150">
+                              {item.label}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
       </aside>
 
       {/* Conteúdo */}
-      <main className="lg:ml-64 pt-24 pb-28 lg:pb-12 px-4 md:px-8 min-h-screen">
+      <main
+        className={`pt-24 pb-28 lg:pb-12 px-4 md:px-8 min-h-screen transition-all duration-200 ${
+          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
+        }`}
+      >
         <header className="mb-6">
           <p className="text-[11px] text-on-surface-variant uppercase tracking-widest font-medium">
             Inteligência financeira
