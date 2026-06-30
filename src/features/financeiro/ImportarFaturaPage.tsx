@@ -7,9 +7,9 @@ import {
   Space,
   Spin,
   Tag,
-  Tooltip,
   message,
 } from 'antd';
+import { Tooltip } from '../../components/ui/Tooltip';
 import { InboxOutlined, CheckCircleOutlined, RobotOutlined } from '@ant-design/icons';
 import { Upload } from 'antd';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
@@ -196,7 +196,7 @@ export function ImportarFaturaPage() {
         return (
           <div className="flex flex-col gap-1">
             {cat && (
-              <Tooltip title={`Sugestão IA - confiança ${Math.round(cat.confianca * 100)}%`}>
+              <Tooltip content={`Sugestão IA — confiança ${Math.round(cat.confianca * 100)}%`}>
                 <Tag
                   color={cat.confianca >= 0.8 ? 'green' : 'orange'}
                   icon={<RobotOutlined />}

@@ -1,5 +1,6 @@
 import React, { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { Tooltip } from '../ui/Tooltip';
 
 type IconActionButtonProps = {
   label: string;
@@ -28,7 +29,7 @@ function IconActionButtonComponent({
 
   const style = danger ? undefined : { color: 'var(--color-primary)' };
 
-  const content = loading ? (
+  const iconContent = loading ? (
     <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent" />
   ) : (
     <span className="flex items-center justify-center [&>svg]:h-[18px] [&>svg]:w-[18px]">
@@ -36,26 +37,27 @@ function IconActionButtonComponent({
     </span>
   );
 
-  if (href && !disabled) {
-    return (
-      <Link to={href} aria-label={label} title={label} className={classes} style={style}>
-        {content}
-      </Link>
-    );
-  }
-
-  return (
+  const trigger = href && !disabled ? (
+    <Link to={href} aria-label={label} className={classes} style={style}>
+      {iconContent}
+    </Link>
+  ) : (
     <button
       type="button"
       aria-label={label}
-      title={label}
       disabled={disabled || loading}
       onClick={onClick}
       className={classes}
       style={style}
     >
-      {content}
+      {iconContent}
     </button>
+  );
+
+  return (
+    <Tooltip content={label} disabled={disabled}>
+      {trigger}
+    </Tooltip>
   );
 }
 
