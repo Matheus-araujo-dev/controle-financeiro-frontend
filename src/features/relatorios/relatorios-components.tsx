@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ComboBox } from '../../components/forms/ComboBox';
 import { PageState } from '../../components/states/PageState';
+import type { AlertItem } from './relatorios-helpers';
 
 export function FilterInput({
   label,
@@ -70,6 +71,24 @@ export function MetricCard({
       <span className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{label}</span>
       <span className={`block font-headline text-2xl font-extrabold ${toneClass}`}>{value}</span>
       {hint ? <span className="mt-2 block text-xs text-on-surface-variant">{hint}</span> : null}
+    </div>
+  );
+}
+
+export function AlertCard({ alerta }: { alerta: AlertItem }) {
+  const styles = {
+    danger: { border: 'border-error/40', bg: 'bg-error/8', icon: 'text-error', title: 'text-error' },
+    warning: { border: 'border-warning/40', bg: 'bg-warning/8', icon: 'text-warning', title: 'text-warning' },
+    info: { border: 'border-primary/30', bg: 'bg-primary/8', icon: 'text-primary', title: 'text-primary' }
+  }[alerta.severity];
+
+  return (
+    <div className={`flex items-start gap-4 rounded-2xl border p-5 ${styles.border} ${styles.bg}`}>
+      <span className={`material-symbols-outlined mt-0.5 shrink-0 text-2xl ${styles.icon}`}>{alerta.icon}</span>
+      <div className="min-w-0">
+        <p className={`font-bold ${styles.title}`}>{alerta.title}</p>
+        <p className="mt-1 text-sm text-on-surface-variant">{alerta.description}</p>
+      </div>
     </div>
   );
 }

@@ -11,7 +11,8 @@ vi.mock('../../services/http/dashboard-api', () => ({
     obterResumoPorResponsaveis: vi.fn(),
     obterResumoContasGerenciais: vi.fn(),
     obterFluxoCaixa: vi.fn(),
-    obterResumoCentralPrevisao: vi.fn()
+    obterResumoCentralPrevisao: vi.fn(),
+    obterComparativoMensal: vi.fn()
   }
 }));
 
@@ -201,6 +202,19 @@ function mockReports() {
         valorLiquido: 150,
         pessoaNome: 'Sempre Internet',
         responsavelNome: 'Matheus'
+      }
+    ]
+  } as never);
+  vi.mocked(dashboardApi.obterComparativoMensal).mockResolvedValue({
+    itens: [
+      {
+        competencia: '2026-06',
+        competenciaLabel: 'Jun/26',
+        receitas: 1200,
+        despesas: 500,
+        saldo: 700,
+        variacaoReceitas: null,
+        variacaoDespesas: null
       }
     ]
   } as never);

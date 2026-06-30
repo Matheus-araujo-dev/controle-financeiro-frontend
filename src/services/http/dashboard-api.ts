@@ -3,6 +3,8 @@ import type {
   DashboardCentralPrevisaoItensFilters,
   DashboardCentralPrevisaoResumo,
   DashboardCentralPrevisaoResumoFilters,
+  DashboardComparativoMensal,
+  DashboardComparativoMensalFilters,
   DashboardContaGerencialLancamentos,
   DashboardContaGerencialLancamentosFilters,
   DashboardContaGerencialResumo,
@@ -59,6 +61,10 @@ export const dashboardApi = {
     const response = await apiClient.get<DashboardCentralPrevisaoItens>('/dashboard/central-previsao/itens', {
       params
     });
+    return response.data;
+  },
+  async obterComparativoMensal(params: DashboardComparativoMensalFilters = {}) {
+    const response = await apiClient.get<DashboardComparativoMensal>('/dashboard/comparativo-mensal', { params });
     return response.data;
   }
 };

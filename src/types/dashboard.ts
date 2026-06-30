@@ -229,3 +229,21 @@ export type DashboardResponsavelResumo = {
   totalReceitas: number;
   itens: DashboardResponsavelItem[];
 };
+
+export type DashboardComparativoMensalFilters = {
+  meses?: number;
+};
+
+export type DashboardComparativoMensalItem = {
+  competencia: string;
+  competenciaLabel: string;
+  receitas: number;
+  despesas: number;
+  saldo: number;
+  variacaoReceitas: number | null;
+  variacaoDespesas: number | null;
+};
+
+export type DashboardComparativoMensal = {
+  itens: DashboardComparativoMensalItem[];
+};

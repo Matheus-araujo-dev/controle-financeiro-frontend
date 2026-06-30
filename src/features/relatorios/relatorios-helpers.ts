@@ -9,6 +9,103 @@ import {
 } from './relatorios-config';
 import type { ReportWorkbookDefinition } from './report-export';
 
+export type AlertSeverity = 'danger' | 'warning' | 'info';
+
+export type AlertItem = {
+  id: string;
+  severity: AlertSeverity;
+  title: string;
+  description: string;
+  icon: string;
+};
+
+export function buildAlertas(data: ReportState): AlertItem[] {
+  const alertas: AlertItem[] = [];
+
+  const contasVencidas = data.resumo?.contasVencidas ?? [];
+  if (contasVencidas.length > 0) {
+    const total = contasVencidas.reduce((s, i) => s + i.valor, 0);
+    alertas.push({
+      id: 'contas-vencidas',
+      severity: 'danger',
+      title: `${contasVencidas.length} conta(s) vencida(s)`,
+      description: `Total em aberto: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Regularize para evitar juros e negativação.`,
+      icon: 'warning'
+    });
+  } else {
+    alertas.push({
+      id: 'sem-contas-vencidas',
+      severity: 'info',
+      title: 'Nenhuma conta vencida',
+      description: 'Todas as contas do período estão em dia.',
+      icon: 'check_circle'
+    });
+  }
+
+  if ((data.resumo?.saldoAtual ?? 0) < 0) {
+    alertas.push({
+      id: 'saldo-negativo',
+      severity: 'danger',
+      title: 'Saldo atual negativo',
+      description: `Saldo atual de R$ ${(data.resumo?.saldoAtual ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Revise as movimentações.`,
+      icon: 'account_balance_wallet'
+    });
+  }
+
+  const fluxoDias = data.fluxoCaixa?.itens.filter((i) => i.riscoSaldoNegativo) ?? [];
+  if (fluxoDias.length > 0) {
+    alertas.push({
+      id: 'fluxo-risco',
+      severity: 'warning',
+      title: `Risco de saldo negativo em ${fluxoDias.length} dia(s)`,
+      description: 'A projeção de fluxo de caixa indica dias com saldo negativo nos próximos 30 dias. Antecipe receitas ou adie despesas.',
+      icon: 'trending_down'
+    });
+  }
+
+  const itensComparativo = data.comparativo?.itens ?? [];
+  if (itensComparativo.length >= 2) {
+    const atual = itensComparativo[itensComparativo.length - 1];
+    if (atual.variacaoDespesas !== null && atual.variacaoDespesas > 20) {
+      alertas.push({
+        id: 'despesa-alta',
+        severity: 'warning',
+        title: `Despesas ${atual.variacaoDespesas.toFixed(1)}% acima do mês anterior`,
+        description: `Em ${atual.competenciaLabel} as despesas subiram consideravelmente em relação ao período anterior. Verifique os lançamentos.`,
+        icon: 'arrow_upward'
+      });
+    }
+
+    if (atual.variacaoReceitas !== null && atual.variacaoReceitas < -20) {
+      alertas.push({
+        id: 'receita-queda',
+        severity: 'warning',
+        title: `Receitas ${Math.abs(atual.variacaoReceitas).toFixed(1)}% abaixo do mês anterior`,
+        description: `As receitas em ${atual.competenciaLabel} caíram em relação ao mês anterior. Monitore o fluxo de entrada.`,
+        icon: 'arrow_downward'
+      });
+    }
+  }
+
+  const recorrencias = data.recorrencias?.items ?? [];
+  const recorrenciasAtivas = recorrencias.filter((r) => r.ativa);
+  const totalRecorrencias = recorrenciasAtivas.reduce((s, r) => s + r.valorLiquido, 0);
+  if (totalRecorrencias > 0) {
+    alertas.push({
+      id: 'recorrencias-ativas',
+      severity: 'info',
+      title: `${recorrenciasAtivas.length} recorrência(s) ativa(s)`,
+      description: `Comprometimento mensal automático de R$ ${totalRecorrencias.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`,
+      icon: 'sync'
+    });
+  }
+
+  return alertas.sort((a, b) => {
+    const ordem: Record<AlertSeverity, number> = { danger: 0, warning: 1, info: 2 };
+    return ordem[a.severity] - ordem[b.severity];
+  });
+}
+
 export function getCurrentReferenceMonth() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -281,6 +378,75 @@ export function buildExportDefinition(
               Valor: item.valorEstimado,
               Link: item.link ?? ''
             })) ?? []
+        }
+      ]
+    };
+  }
+
+  if (activeReport === 'comparativo') {
+    return {
+      title: 'Relatório comparativo mensal',
+      filename: `relatorio-comparativo-mensal-${referenceMonth}`,
+      sheets: [
+        {
+          name: 'Comparativo',
+          title: 'Relatório comparativo mensal',
+          filters,
+          rows:
+            data.comparativo?.itens.map((item) => ({
+              Mês: item.competenciaLabel,
+              Receitas: item.receitas,
+              Despesas: item.despesas,
+              Saldo: item.saldo,
+              'Var. Receitas (%)': item.variacaoReceitas ?? '',
+              'Var. Despesas (%)': item.variacaoDespesas ?? ''
+            })) ?? []
+        }
+      ]
+    };
+  }
+
+  if (activeReport === 'dre') {
+    const receitas = data.contasGerenciais?.itens.filter((i) => i.tipo === 'Receita') ?? [];
+    const despesas = data.contasGerenciais?.itens.filter((i) => i.tipo === 'Despesa') ?? [];
+    return {
+      title: 'DRE Doméstica',
+      filename: `relatorio-dre-${referenceMonth}`,
+      sheets: [
+        {
+          name: 'DRE',
+          title: 'DRE Doméstica',
+          filters,
+          rows: [
+            { Categoria: 'RECEITAS', Conta: '', Valor: '' },
+            ...receitas.map((i) => ({ Categoria: '', Conta: i.descricao, Valor: i.valorTotal })),
+            { Categoria: 'Total Receitas', Conta: '', Valor: data.contasGerenciais?.totalReceitas ?? 0 },
+            { Categoria: '', Conta: '', Valor: '' },
+            { Categoria: 'DESPESAS', Conta: '', Valor: '' },
+            ...despesas.map((i) => ({ Categoria: '', Conta: i.descricao, Valor: i.valorTotal })),
+            { Categoria: 'Total Despesas', Conta: '', Valor: data.contasGerenciais?.totalDespesas ?? 0 },
+            { Categoria: '', Conta: '', Valor: '' },
+            { Categoria: 'RESULTADO', Conta: '', Valor: data.contasGerenciais?.saldo ?? 0 }
+          ]
+        }
+      ]
+    };
+  }
+
+  if (activeReport === 'alertas') {
+    return {
+      title: 'Alertas inteligentes',
+      filename: `relatorio-alertas-${referenceMonth}`,
+      sheets: [
+        {
+          name: 'Alertas',
+          title: 'Alertas inteligentes',
+          filters,
+          rows: buildAlertas(data).map((alerta) => ({
+            Severidade: alerta.severity === 'danger' ? 'Crítico' : alerta.severity === 'warning' ? 'Atenção' : 'Info',
+            Título: alerta.title,
+            Descrição: alerta.description
+          }))
         }
       ]
     };
