@@ -1,4 +1,5 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { IconActionButton } from '../../components/data/IconActionButton';
 import { StatusBadge } from '../../components/data/StatusBadge';
@@ -88,78 +89,32 @@ export function ComprasPlanejadasListPage() {
     sortDirection: 'Asc'
   });
   const deferredFilters = useDeferredValue(filters);
-  const [data, setData] = useState<PagedResult<CompraPlanejadaResumo, CompraPlanejadaListSummary>>();
-  const [contaGerencialOptions, setContaGerencialOptions] = useState<FilterOption[]>([]);
-  const [responsavelOptions, setResponsavelOptions] = useState<FilterOption[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>();
 
-  const loadData = useCallback(
-    async (targetFilters: CompraPlanejadaFilters = deferredFilters) => {
-      setLoading(true);
-      setError(undefined);
-      try {
-        const result = await comprasPlanejadasApi.listar(targetFilters);
-        setData(result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Falha ao carregar compras planejadas.');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [deferredFilters]
-  );
+  const { data, isFetching, error: queryError, refetch } = useQuery({
+    queryKey: ['compras-planejadas', 'list', deferredFilters],
+    queryFn: () => comprasPlanejadasApi.listar(deferredFilters),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
+  const { data: contasGerenciaisData } = useQuery({
+    queryKey: ['contas-gerenciais', 'options-despesa'],
+    queryFn: () => cadastrosApi.contasGerenciais.listar({ page: 1, pageSize: 200, search: '', tipo: 'Despesa', ativo: true, aceitaLancamentos: true }),
+    staleTime: 5 * 60_000
+  });
+  const contaGerencialOptions: FilterOption[] = (contasGerenciaisData?.items ?? []).map((item) => ({
+    label: item.codigo ? `${item.codigo} - ${item.descricao}` : item.descricao,
+    value: item.id
+  }));
 
-  useEffect(() => {
-    let mounted = true;
+  const { data: pessoasData } = useQuery({
+    queryKey: ['pessoas', 'options'],
+    queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 200, search: '', ativo: true }),
+    staleTime: 5 * 60_000
+  });
+  const responsavelOptions: FilterOption[] = (pessoasData?.items ?? []).map((item) => ({ label: item.nome, value: item.id }));
 
-    async function loadOptions() {
-      try {
-        const [contasGerenciais, pessoas] = await Promise.all([
-          cadastrosApi.contasGerenciais.listar({
-            page: 1,
-            pageSize: 200,
-            search: '',
-            tipo: 'Despesa',
-            ativo: true,
-            aceitaLancamentos: true
-          }),
-          cadastrosApi.pessoas.listar({
-            page: 1,
-            pageSize: 200,
-            search: '',
-            ativo: true
-          })
-        ]);
-
-        if (!mounted) {
-          return;
-        }
-
-        setContaGerencialOptions(
-          contasGerenciais.items.map((item) => ({
-            label: item.codigo ? `${item.codigo} - ${item.descricao}` : item.descricao,
-            value: item.id
-          }))
-        );
-        setResponsavelOptions(pessoas.items.map((item) => ({ label: item.nome, value: item.id })));
-      } catch {
-        if (mounted) {
-          setContaGerencialOptions([]);
-          setResponsavelOptions([]);
-        }
-      }
-    }
-
-    void loadOptions();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Falha ao carregar compras planejadas.' : undefined;
 
   const totalEstimado = useMemo(() => data?.summary?.valorTotalEstimado ?? 0, [data]);
 
@@ -410,10 +365,10 @@ export function ComprasPlanejadasListPage() {
     >
       <AppDataTable
         rowKey="id"
-        loading={loading}
+        loading={isFetching}
         errorMessage={error}
         emptyMessage="Nenhuma compra planejada encontrada."
-        onRetry={() => void loadData(filters)}
+        onRetry={() => void refetch()}
         dataSource={data?.items ?? []}
         columns={columns}
         onTableChange={(pagination, _f, sorter) => {

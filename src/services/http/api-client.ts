@@ -33,14 +33,10 @@ type RetriableRequestConfig = InternalAxiosRequestConfig & { _retried?: boolean 
 let refreshPromise: Promise<AuthTokenResponse | null> | null = null;
 
 async function tryRefreshSession(baseURL: string): Promise<AuthTokenResponse | null> {
-  const { refreshToken } = useAuthStore.getState();
-  if (!refreshToken) {
-    return null;
-  }
-
+  // Refresh token is sent automatically via HttpOnly cookie — no body needed.
   // Compartilha uma única renovação entre requisições concorrentes que tomaram 401.
   refreshPromise ??= axios
-    .post<AuthTokenResponse>(`${baseURL}/auth/refresh`, { refreshToken }, { timeout: 10000 })
+    .post<AuthTokenResponse>(`${baseURL}/auth/refresh`, {}, { timeout: 10000, withCredentials: true })
     .then((response) => {
       useAuthStore.getState().applyTokenResponse(response.data);
       return response.data;

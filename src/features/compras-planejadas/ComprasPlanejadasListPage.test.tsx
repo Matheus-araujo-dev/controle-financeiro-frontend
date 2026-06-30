@@ -1,3 +1,5 @@
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -23,13 +25,22 @@ vi.mock('../../services/http/cadastros-api', () => ({
   }
 }));
 
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } });
+}
+
 function renderPage() {
+  const queryClient = createTestQueryClient();
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
   return render(
     <MemoryRouter initialEntries={['/compras-planejadas']}>
       <Routes>
         <Route path="/compras-planejadas" element={<ComprasPlanejadasListPage />} />
       </Routes>
-    </MemoryRouter>
+    </MemoryRouter>,
+    { wrapper: Wrapper }
   );
 }
 
@@ -86,7 +97,7 @@ describe('ComprasPlanejadasListPage', () => {
     renderPage();
 
     expect(await screen.findByText('Nova compra planejada')).toBeInTheDocument();
-    expect(screen.getByText('Notebook novo')).toBeInTheDocument();
+    expect(await screen.findByText('Notebook novo')).toBeInTheDocument();
     expect(screen.getByText('Tecnologia')).toBeInTheDocument();
     expect(screen.getAllByText(/4\.500,00/).length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: /adquirir/i })).toHaveAttribute('href', '/compras-planejadas/cp-1/realizar');

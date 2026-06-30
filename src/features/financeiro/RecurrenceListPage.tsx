@@ -1,4 +1,5 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { CheckCircleFilled, EyeOutlined, PauseCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import { AppDataTable } from '../../components/data/AppDataTable';
 import { IconActionButton } from '../../components/data/IconActionButton';
@@ -34,25 +35,15 @@ type RecorrenciaDisplayItem = RecorrenciaListItem & {
 export function RecurrenceListPage() {
   const [filters, setFilters] = useState<RecorrenciaFilters>(defaultFilters);
   const deferredFilters = useDeferredValue(filters);
-  const [data, setData] = useState<Awaited<ReturnType<typeof financeiroApi.recorrencias.listar>>>();
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>();
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
-      setData(await financeiroApi.recorrencias.listar(deferredFilters));
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar recorrências.');
-    } finally {
-      setLoading(false);
-    }
-  }, [deferredFilters]);
+  const { data, isFetching, error, refetch } = useQuery({
+    queryKey: ['recorrencias', 'list', deferredFilters],
+    queryFn: () => financeiroApi.recorrencias.listar(deferredFilters),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
+  const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar recorrências.' : undefined;
 
   const recorrencias = useMemo(
     () =>
@@ -150,10 +141,10 @@ export function RecurrenceListPage() {
     >
       <AppDataTable
         rowKey="id"
-        loading={loading}
+        loading={isFetching}
         errorMessage={errorMessage}
         emptyMessage="Nenhuma recorrência encontrada."
-        onRetry={loadData}
+        onRetry={() => void refetch()}
         dataSource={recorrencias}
         columns={[
           {

@@ -1,3 +1,5 @@
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MovimentacoesPage } from './MovimentacoesPage';
@@ -24,6 +26,18 @@ vi.mock('../../services/http/financeiro-api', () => ({
     }
   }
 }));
+
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } });
+}
+
+function renderPage() {
+  const queryClient = createTestQueryClient();
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+  return render(<MovimentacoesPage />, { wrapper: Wrapper });
+}
 
 describe('MovimentacoesPage', () => {
   beforeEach(() => {
@@ -106,7 +120,7 @@ describe('MovimentacoesPage', () => {
       }
     });
 
-    render(<MovimentacoesPage />);
+    renderPage();
 
     expect(await screen.findByText('Recebimento do cliente')).toBeInTheDocument();
     expect((await screen.findAllByText('20/04/2026')).length).toBeGreaterThanOrEqual(1);
@@ -143,7 +157,7 @@ describe('MovimentacoesPage', () => {
       }
     });
 
-    render(<MovimentacoesPage />);
+    renderPage();
 
     await selectDateInDateInput('Data inicial', '2026-04-01');
     await selectDateInDateInput('Data final', '2026-04-30');
@@ -173,7 +187,7 @@ describe('MovimentacoesPage', () => {
       }
     });
 
-    render(<MovimentacoesPage />);
+    renderPage();
 
     await userEvent.click(screen.getByRole('button', { name: /Filtro de conta banc/i }));
     await userEvent.click(await screen.findByRole('button', { name: 'Conta principal - Banco Exemplo' }));
@@ -202,7 +216,7 @@ describe('MovimentacoesPage', () => {
       }
     });
 
-    render(<MovimentacoesPage />);
+    renderPage();
 
     await userEvent.click(screen.getByRole('button', { name: /Filtro de respons/i }));
     await userEvent.click(await screen.findByRole('button', { name: 'Michelle' }));
@@ -233,7 +247,7 @@ describe('MovimentacoesPage', () => {
         }
       });
 
-    render(<MovimentacoesPage />);
+    renderPage();
 
     expect(await screen.findByText('Falha ao carregar dados')).toBeInTheDocument();
     expect(screen.getByText(/Falha ao buscar movimenta/i)).toBeInTheDocument();

@@ -6,7 +6,6 @@ type AuthState = {
   mode: AuthMode;
   currentUser: AuthUser | null;
   token: string | null;
-  refreshToken: string | null;
   permissions: string[];
   setMode: (mode: AuthMode) => void;
   signIn: (user: AuthUser) => void;
@@ -24,14 +23,12 @@ export const useAuthStore = create<AuthState>()(
       mode: initialMode,
       currentUser: null,
       token: null,
-      refreshToken: null,
       permissions: [],
       setMode: (mode) => set({ mode }),
       signIn: (currentUser) => set({ currentUser }),
       applyTokenResponse: (response) =>
         set({
           token: response.accessToken,
-          refreshToken: response.refreshToken,
           currentUser: {
             userId: response.usuario.id,
             displayName: response.usuario.nome,
@@ -42,14 +39,13 @@ export const useAuthStore = create<AuthState>()(
         }),
       setToken: (token) => set({ token }),
       setPermissions: (permissions) => set({ permissions }),
-      clearSession: () => set({ currentUser: null, token: null, refreshToken: null, permissions: [] })
+      clearSession: () => set({ currentUser: null, token: null, permissions: [] })
     }),
     {
       name: 'controle-financeiro-auth',
       partialize: (state) => ({
         mode: state.mode,
-        currentUser: state.currentUser,
-        refreshToken: state.refreshToken
+        currentUser: state.currentUser
       })
     }
   )

@@ -1,4 +1,5 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
@@ -114,76 +115,35 @@ export function MovimentacoesPage() {
     natureza: undefined
   });
   const deferredFilters = useDeferredValue(filters);
-  const [data, setData] = useState<Awaited<ReturnType<typeof financeiroApi.movimentacoes.listar>>>();
-  const [contaBancariaOptions, setContaBancariaOptions] = useState<FilterOption[]>([]);
-  const [responsavelOptions, setResponsavelOptions] = useState<FilterOption[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>();
 
-  const loadData = useCallback(
-    async (targetFilters: MovimentacaoFilters = deferredFilters) => {
-      setLoading(true);
-      setErrorMessage(undefined);
+  const { data, isFetching, error, refetch } = useQuery({
+    queryKey: ['movimentacoes', 'list', deferredFilters],
+    queryFn: () => financeiroApi.movimentacoes.listar(deferredFilters),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
 
-      try {
-        setData(await financeiroApi.movimentacoes.listar(targetFilters));
-      } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar as movimentações.');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [deferredFilters]
-  );
+  const { data: contasBancariasData } = useQuery({
+    queryKey: ['contas-bancarias', 'options'],
+    queryFn: () => cadastrosApi.contasBancarias.listar({ page: 1, pageSize: 100, search: '', ativo: true }),
+    staleTime: 5 * 60_000
+  });
+  const contaBancariaOptions: FilterOption[] = (contasBancariasData?.items ?? []).map((item) => ({
+    label: `${item.nome} - ${item.banco}`,
+    value: item.id
+  }));
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
+  const { data: pessoasData } = useQuery({
+    queryKey: ['pessoas', 'options'],
+    queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 100, search: '', ativo: true }),
+    staleTime: 5 * 60_000
+  });
+  const responsavelOptions: FilterOption[] = (pessoasData?.items ?? []).map((item) => ({
+    label: item.nome,
+    value: item.id
+  }));
 
-  useEffect(() => {
-    async function loadContaBancariaOptions() {
-      try {
-        const response = await cadastrosApi.contasBancarias.listar({
-          page: 1,
-          pageSize: 100,
-          search: '',
-          ativo: true
-        });
-
-        setContaBancariaOptions(
-          response.items.map((item) => ({
-            label: `${item.nome} - ${item.banco}`,
-            value: item.id
-          }))
-        );
-      } catch {
-        setContaBancariaOptions([]);
-      }
-    }
-
-    async function loadResponsavelOptions() {
-      try {
-        const response = await cadastrosApi.pessoas.listar({
-          page: 1,
-          pageSize: 100,
-          search: '',
-          ativo: true
-        });
-
-        setResponsavelOptions(
-          response.items.map((item) => ({
-            label: item.nome,
-            value: item.id
-          }))
-        );
-      } catch {
-        setResponsavelOptions([]);
-      }
-    }
-
-    void loadContaBancariaOptions();
-    void loadResponsavelOptions();
-  }, []);
+  const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar as movimentações.' : undefined;
 
   const resumo = useMemo(() => {
     const totalEntradas = data?.summary?.totalEntradas ?? 0;
@@ -289,6 +249,7 @@ export function MovimentacoesPage() {
               />
               {filters.search && (
                 <button
+                  aria-label="Limpar busca"
                   onClick={() => setFilters(prev => ({ ...prev, search: '', page: 1 }))}
                   className="text-on-surface-variant hover:text-white text-xs shrink-0"
                 >×</button>
@@ -303,10 +264,10 @@ export function MovimentacoesPage() {
       <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-white/5">
         <AppDataTable
           rowKey="id"
-          loading={loading}
+          loading={isFetching}
           errorMessage={errorMessage}
           emptyMessage="Nenhuma movimentação encontrada."
-          onRetry={() => void loadData(filters)}
+          onRetry={() => void refetch()}
           dataSource={data?.items ?? []}
           columns={[
             {

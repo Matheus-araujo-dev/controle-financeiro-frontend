@@ -15,15 +15,17 @@ function getBareClient(): AxiosInstance {
 }
 
 export async function loginWithGoogle(idToken: string): Promise<AuthTokenResponse> {
-  const { data } = await getBareClient().post<AuthTokenResponse>('/auth/google', { idToken });
+  const { data } = await getBareClient().post<AuthTokenResponse>('/auth/google', { idToken }, { withCredentials: true });
   return data;
 }
 
-export async function refreshSession(refreshToken: string): Promise<AuthTokenResponse> {
-  const { data } = await getBareClient().post<AuthTokenResponse>('/auth/refresh', { refreshToken });
+export async function refreshSession(): Promise<AuthTokenResponse> {
+  // Refresh token é enviado automaticamente via HttpOnly Cookie.
+  const { data } = await getBareClient().post<AuthTokenResponse>('/auth/refresh', {}, { withCredentials: true });
   return data;
 }
 
-export async function logoutSession(refreshToken: string | null): Promise<void> {
-  await apiClient.post('/auth/logout', { refreshToken });
+export async function logoutSession(): Promise<void> {
+  // Cookie é limpado pelo backend; body vazio é suficiente.
+  await apiClient.post('/auth/logout', {}, { withCredentials: true });
 }

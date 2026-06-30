@@ -36,7 +36,7 @@ export function RateioSection({ form }: RateioSectionProps) {
           type="button"
           onClick={() => append({ contaGerencialId: '', valor: 0 })}
           disabled={!canEdit}
-          className="text-primary transition-colors hover:text-primary-container disabled:opacity-50"
+          className="rounded-lg p-1 text-primary transition-all hover:bg-primary/15 hover:text-primary disabled:opacity-50"
           title="Adicionar conta ao rateio"
         >
           <span className="material-symbols-outlined text-2xl">add_circle</span>
@@ -55,7 +55,6 @@ export function RateioSection({ form }: RateioSectionProps) {
                   <ComboBox
                     {...rField}
                     disabled={!canEdit}
-                    className={nativeCompactFieldClass}
                     onAddNew={canEdit ? () => setContaGerencialModalIndex(index) : undefined}
                   >
                     <option value="">Selecionar...</option>
