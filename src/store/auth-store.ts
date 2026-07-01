@@ -44,7 +44,6 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'controle-financeiro-auth',
       partialize: (state) => ({
-        mode: state.mode,
         currentUser: state.currentUser
       })
     }
