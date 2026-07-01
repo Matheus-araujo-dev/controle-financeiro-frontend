@@ -34,7 +34,8 @@ export const useAuthStore = create<AuthState>()(
             displayName: response.usuario.nome,
             email: response.usuario.email,
             avatarUrl: response.usuario.avatarUrl,
-            familia: response.usuario.familia
+            workspace: response.usuario.workspace ?? response.usuario.familia,
+            familia: response.usuario.familia ?? response.usuario.workspace
           }
         }),
       setToken: (token) => set({ token }),
@@ -53,4 +54,5 @@ export const useAuthStore = create<AuthState>()(
 export const useAuthMode = () => useAuthStore((state) => state.mode);
 export const useCurrentUser = () => useAuthStore((state) => state.currentUser);
 export const useIsAuthenticated = () => useAuthStore((state) => !!state.currentUser);
+export const useWorkspaceAtual = () => useAuthStore((state) => state.currentUser?.workspace ?? state.currentUser?.familia ?? null);
 export const useFamiliaAtual = () => useAuthStore((state) => state.currentUser?.familia ?? null);

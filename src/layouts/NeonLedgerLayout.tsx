@@ -1,11 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Outlet, useLocation, useMatches, useNavigate } from 'react-router-dom';
 import { navigationItems, navigationStructure } from '../constants/navigation';
 import { useAppShellStore } from '../store/app-shell-store';
-import { useAuthStore, useCurrentUser } from '../store/auth-store';
+import { useAuthStore, useCurrentUser, useWorkspaceAtual } from '../store/auth-store';
 import { logoutSession } from '../services/http/auth-api';
 import { QuickLaunchButton } from '../components/quick-launch/QuickLaunchButton';
 import { Tooltip } from '../components/ui/Tooltip';
+import { listarMinhasParticipacoes, selecionarWorkspace, type ParticipacaoWorkspaceResponse } from '../features/familia/familia-api';
+import { notify } from '../store/notification-store';
+import { getApiErrorMessage } from '../services/http/api-error';
 
 type RouteHandle = {
   title?: string;
@@ -50,6 +53,104 @@ function readCollapsedGroups(): Set<string> {
 
 interface NeonLedgerLayoutProps {
   children?: React.ReactNode;
+}
+
+function WorkspaceSwitcher() {
+  const workspace = useWorkspaceAtual();
+  const [open, setOpen] = useState(false);
+  const [participacoes, setParticipacoes] = useState<ParticipacaoWorkspaceResponse[]>([]);
+  const [switching, setSwitching] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    listarMinhasParticipacoes()
+      .then(setParticipacoes)
+      .catch(() => { /* silencioso */ });
+  }, [open]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const handleSelect = useCallback(async (id: string) => {
+    if (switching) return;
+    setSwitching(id);
+    try {
+      const resultado = await selecionarWorkspace(id);
+      useAuthStore.getState().applyTokenResponse(resultado.sessao);
+      setOpen(false);
+      window.location.reload();
+    } catch (err) {
+      notify('error', 'Não foi possível trocar de espaço', getApiErrorMessage(err));
+    } finally {
+      setSwitching(null);
+    }
+  }, [switching]);
+
+  if (!workspace) return null;
+
+  return (
+    <div ref={ref} className="relative hidden sm:block">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-surface-container hover:bg-surface-container-highest transition-all text-left"
+      >
+        <span className="material-symbols-outlined text-base shrink-0" style={{ color: PRIMARY }}>workspaces</span>
+        <span className="text-xs font-semibold text-white max-w-[120px] truncate">{workspace.nome}</span>
+        <span className="material-symbols-outlined text-sm text-on-surface-variant">{open ? 'expand_less' : 'expand_more'}</span>
+      </button>
+
+      {open && (
+        <div className="absolute top-full mt-1.5 right-0 min-w-[200px] rounded-xl border border-white/10 bg-[#141414] shadow-2xl z-[60] py-1 overflow-hidden">
+          <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Meus espaços</p>
+          {participacoes.length === 0 && (
+            <p className="px-3 py-2 text-xs text-on-surface-variant">Carregando...</p>
+          )}
+          {participacoes.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              disabled={p.ativa || switching === p.id}
+              onClick={() => void handleSelect(p.id)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
+                p.ativa ? 'opacity-60 cursor-default' : 'hover:bg-white/5 cursor-pointer'
+              }`}
+            >
+              <span
+                className="material-symbols-outlined text-base shrink-0"
+                style={{ color: p.ativa ? PRIMARY : 'var(--color-on-surface-variant)' }}
+              >
+                {p.ativa ? 'radio_button_checked' : 'radio_button_unchecked'}
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-white truncate">{p.nome}</p>
+                <p className="text-[10px] text-on-surface-variant">{p.meuPapel}</p>
+              </div>
+              {switching === p.id && (
+                <span className="material-symbols-outlined text-sm animate-spin ml-auto" style={{ color: PRIMARY }}>progress_activity</span>
+              )}
+            </button>
+          ))}
+          <div className="border-t border-white/5 mt-1 pt-1">
+            <Link
+              to="/familia"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-xs text-on-surface-variant hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <span className="material-symbols-outlined text-base">settings</span>
+              Gerenciar espaços
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
@@ -129,6 +230,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <WorkspaceSwitcher />
           <QuickLaunchButton
             className="hidden sm:inline-flex shadow-[0_0_12px_rgba(43,245,142,0.12)]"
             icon={<span className="material-symbols-outlined block text-lg leading-none">add</span>}
@@ -138,17 +240,12 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
           {currentUser && (
             <div className="hidden sm:flex flex-col items-end leading-tight">
               <span className="text-sm font-bold text-white">{currentUser.displayName}</span>
-              {currentUser.familia && (
-                <span className="text-[11px] text-on-surface-variant uppercase tracking-wider">
-                  {currentUser.familia.nome}
-                </span>
-              )}
             </div>
           )}
-          <Tooltip content="Minha família" side="bottom">
+          <Tooltip content="Minha conta" side="bottom">
             <Link
               to="/familia"
-              aria-label="Minha família"
+              aria-label="Minha conta"
               className="w-10 h-10 rounded-full border-2 border-primary/30 bg-surface-container flex items-center justify-center overflow-hidden hover:border-primary transition-all"
             >
               {currentUser?.avatarUrl ? (

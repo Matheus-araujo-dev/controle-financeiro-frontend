@@ -48,6 +48,11 @@ describe('useAuthStore', () => {
         nome: 'Usuario Teste',
         email: 'u1@example.com',
         avatarUrl: null,
+        workspace: {
+          id: 'fam1',
+          nome: 'Familia Teste',
+          papel: 'Administrador'
+        },
         familia: {
           id: 'fam1',
           nome: 'Familia Teste',
