@@ -28,6 +28,11 @@ declare global {
 function useGoogleSignIn(onCredential: (idToken: string) => void, enabled: boolean) {
   const buttonRef = useRef<HTMLDivElement>(null);
   const [scriptReady, setScriptReady] = useState(false);
+  const onCredentialRef = useRef(onCredential);
+
+  useEffect(() => {
+    onCredentialRef.current = onCredential;
+  });
 
   useEffect(() => {
     if (!enabled || !googleClientId) {
@@ -57,7 +62,7 @@ function useGoogleSignIn(onCredential: (idToken: string) => void, enabled: boole
 
     window.google.accounts.id.initialize({
       client_id: googleClientId,
-      callback: (response) => onCredential(response.credential)
+      callback: (response) => onCredentialRef.current(response.credential)
     });
 
     window.google.accounts.id.renderButton(buttonRef.current, {
@@ -67,7 +72,7 @@ function useGoogleSignIn(onCredential: (idToken: string) => void, enabled: boole
       text: 'signin_with',
       locale: 'pt-BR'
     });
-  }, [scriptReady, onCredential]);
+  }, [scriptReady]);
 
   return { buttonRef, scriptReady };
 }
