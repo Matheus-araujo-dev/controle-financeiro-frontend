@@ -1,4 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { DateInput } from '../../components/forms/DateInput';
 import { PageState } from '../../components/states/PageState';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
@@ -21,6 +22,7 @@ import type {
 import { downloadReportWorkbook } from './report-export';
 import {
   ativoOptions,
+  comparativoMesesOptions,
   compraPrioridadeOptions,
   compraStatusOptions,
   contaTipoOptions,
@@ -39,6 +41,7 @@ import {
 } from './relatorios-config';
 import {
   agingBucket,
+  buildAlertas,
   buildExportDefinition,
   buildInadimplenciaRows,
   emptyPaged,
@@ -47,7 +50,7 @@ import {
   getMonthRange,
   getRecorrenciaTipoLabel
 } from './relatorios-helpers';
-import { FilterCombo, FilterInput, MetricCard, ReportTable } from './relatorios-components';
+import { AlertCard, FilterCombo, FilterInput, MetricCard, ReportTable } from './relatorios-components';
 
 
 export function RelatoriosPage() {
@@ -66,6 +69,7 @@ export function RelatoriosPage() {
   const [compraSearch, setCompraSearch] = useState('');
   const [compraStatus, setCompraStatus] = useState('');
   const [compraPrioridade, setCompraPrioridade] = useState('');
+  const [comparativoMeses, setComparativoMeses] = useState('6');
   const [data, setData] = useState<ReportState>({});
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string>();
@@ -94,7 +98,8 @@ export function RelatoriosPage() {
           contasReceberVencidas,
           faturas,
           recorrencias,
-          compras
+          compras,
+          comparativo
         ] = await Promise.all([
           dashboardApi.obterResumo({ mesReferencia: referenceMonth }),
           dashboardApi.obterResumoPorResponsaveis({ mesReferencia: referenceMonth }),
@@ -162,7 +167,8 @@ export function RelatoriosPage() {
             dataDesejadaFinal: range.end,
             sortBy: 'dataDesejada',
             sortDirection: 'Asc'
-          })
+          }),
+          dashboardApi.obterComparativoMensal({ meses: Number(comparativoMeses) })
         ]);
 
         if (!cancelled) {
@@ -176,7 +182,8 @@ export function RelatoriosPage() {
             contasReceberVencidas,
             faturas,
             recorrencias,
-            compras
+            compras,
+            comparativo
           });
         }
       } catch (error) {
@@ -196,6 +203,7 @@ export function RelatoriosPage() {
       cancelled = true;
     };
   }, [
+    comparativoMeses,
     compraPrioridade,
     compraStatus,
     contaTipo,
@@ -312,7 +320,7 @@ export function RelatoriosPage() {
       </div>
 
       <div className="report-tabs rounded-2xl border border-white/5 bg-surface-container-low p-2">
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 xl:grid-cols-9">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-6">
           {reportTabs.map((tab) => (
             <button
               key={tab.key}
@@ -651,6 +659,148 @@ export function RelatoriosPage() {
                 ))
               : null}
           </ReportTable>
+        </div>
+      ) : null}
+      {activeReport === 'comparativo' ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <MetricCard
+              label="Receitas (mês atual)"
+              value={formatCurrencyBRL(data.comparativo?.itens.at(-1)?.receitas ?? 0)}
+              tone="success"
+            />
+            <MetricCard
+              label="Despesas (mês atual)"
+              value={formatCurrencyBRL(data.comparativo?.itens.at(-1)?.despesas ?? 0)}
+              tone="danger"
+            />
+            <MetricCard
+              label="Saldo (mês atual)"
+              value={formatCurrencyBRL(data.comparativo?.itens.at(-1)?.saldo ?? 0)}
+              tone={(data.comparativo?.itens.at(-1)?.saldo ?? 0) >= 0 ? 'neutral' : 'danger'}
+            />
+            <FilterCombo
+              label="Período"
+              value={comparativoMeses}
+              onChange={setComparativoMeses}
+              options={comparativoMesesOptions}
+              ariaLabel="Quantidade de meses do comparativo"
+            />
+          </div>
+
+          {(data.comparativo?.itens.length ?? 0) > 0 ? (
+            <div className="rounded-2xl border border-white/5 bg-surface-container-low p-5">
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={data.comparativo?.itens} margin={{ top: 4, right: 8, left: 8, bottom: 4 }} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <XAxis dataKey="competenciaLabel" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1a1f26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
+                    labelStyle={{ color: 'rgba(255,255,255,0.8)', fontWeight: 'bold' }}
+                    formatter={(value) => formatCurrencyBRL(value as number)}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
+                  <Bar dataKey="receitas" name="Receitas" fill="#2bf58e" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="despesas" name="Despesas" fill="#f0857f" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : null}
+
+          <ReportTable headers={['Mês', 'Receitas', 'Despesas', 'Saldo', 'Var. Receitas', 'Var. Despesas']} emptyText="Nenhum dado de comparativo disponível">
+            {(data.comparativo?.itens.length ?? 0) > 0
+              ? data.comparativo!.itens.map((item) => {
+                  const varR = item.variacaoReceitas;
+                  const varD = item.variacaoDespesas;
+                  return (
+                    <tr key={item.competencia} className="hover:bg-primary/5">
+                      <td className="px-5 py-4 font-bold">{item.competenciaLabel}</td>
+                      <td className="px-5 py-4 text-primary">{formatCurrencyBRL(item.receitas)}</td>
+                      <td className="px-5 py-4 text-error">{formatCurrencyBRL(item.despesas)}</td>
+                      <td className={`px-5 py-4 font-bold ${item.saldo >= 0 ? 'text-primary' : 'text-error'}`}>{formatCurrencyBRL(item.saldo)}</td>
+                      <td className={`px-5 py-4 text-sm ${varR === null ? 'text-on-surface-variant' : varR >= 0 ? 'text-primary' : 'text-error'}`}>
+                        {varR === null ? '—' : `${varR >= 0 ? '+' : ''}${varR.toFixed(1)}%`}
+                      </td>
+                      <td className={`px-5 py-4 text-sm ${varD === null ? 'text-on-surface-variant' : varD > 0 ? 'text-error' : 'text-primary'}`}>
+                        {varD === null ? '—' : `${varD >= 0 ? '+' : ''}${varD.toFixed(1)}%`}
+                      </td>
+                    </tr>
+                  );
+                })
+              : null}
+          </ReportTable>
+        </div>
+      ) : null}
+
+      {activeReport === 'dre' ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <MetricCard label="Receitas" value={formatCurrencyBRL(data.contasGerenciais?.totalReceitas ?? 0)} tone="success" />
+            <MetricCard label="Despesas" value={formatCurrencyBRL(data.contasGerenciais?.totalDespesas ?? 0)} tone="danger" />
+            <MetricCard
+              label="Resultado"
+              value={formatCurrencyBRL(data.contasGerenciais?.saldo ?? 0)}
+              tone={(data.contasGerenciais?.saldo ?? 0) >= 0 ? 'success' : 'danger'}
+            />
+          </div>
+
+          <div className="space-y-1 rounded-2xl border border-white/5 bg-surface-container-low overflow-hidden">
+            <div className="bg-surface-container px-6 py-3">
+              <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#2bf58e' }}>Receitas</span>
+            </div>
+            {(data.contasGerenciais?.itens.filter((i) => i.tipo === 'Receita') ?? []).map((item) => (
+              <div key={item.contaGerencialId} className="flex items-center justify-between px-6 py-3 hover:bg-primary/5">
+                <span className="text-sm text-on-surface">
+                  {item.codigo ? `${item.codigo} · ` : ''}{item.descricao}
+                </span>
+                <span className="font-bold text-primary">{formatCurrencyBRL(item.valorTotal)}</span>
+              </div>
+            ))}
+            {(data.contasGerenciais?.itens.filter((i) => i.tipo === 'Receita') ?? []).length === 0 && (
+              <p className="px-6 py-3 text-sm text-on-surface-variant italic">Nenhuma receita no período.</p>
+            )}
+            <div className="flex items-center justify-between border-t border-white/10 bg-surface-container px-6 py-3">
+              <span className="text-sm font-bold text-on-surface">Total Receitas</span>
+              <span className="font-headline text-lg font-extrabold text-primary">{formatCurrencyBRL(data.contasGerenciais?.totalReceitas ?? 0)}</span>
+            </div>
+
+            <div className="bg-surface-container px-6 py-3 mt-2">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-error">Despesas</span>
+            </div>
+            {(data.contasGerenciais?.itens.filter((i) => i.tipo === 'Despesa') ?? []).map((item) => (
+              <div key={item.contaGerencialId} className="flex items-center justify-between px-6 py-3 hover:bg-primary/5">
+                <span className="text-sm text-on-surface">
+                  {item.codigo ? `${item.codigo} · ` : ''}{item.descricao}
+                </span>
+                <span className="font-bold text-error">{formatCurrencyBRL(item.valorTotal)}</span>
+              </div>
+            ))}
+            {(data.contasGerenciais?.itens.filter((i) => i.tipo === 'Despesa') ?? []).length === 0 && (
+              <p className="px-6 py-3 text-sm text-on-surface-variant italic">Nenhuma despesa no período.</p>
+            )}
+            <div className="flex items-center justify-between border-t border-white/10 bg-surface-container px-6 py-3">
+              <span className="text-sm font-bold text-on-surface">Total Despesas</span>
+              <span className="font-headline text-lg font-extrabold text-error">{formatCurrencyBRL(data.contasGerenciais?.totalDespesas ?? 0)}</span>
+            </div>
+
+            <div className="flex items-center justify-between border-t-2 border-primary/30 px-6 py-4">
+              <span className="font-headline text-base font-black uppercase tracking-widest text-on-surface">Resultado do Período</span>
+              <span className={`font-headline text-2xl font-black ${(data.contasGerenciais?.saldo ?? 0) >= 0 ? 'text-primary' : 'text-error'}`}>
+                {formatCurrencyBRL(data.contasGerenciais?.saldo ?? 0)}
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {activeReport === 'alertas' ? (
+        <div className="space-y-4">
+          {buildAlertas(data).length === 0 ? (
+            <PageState state="empty" title="Nenhum alerta no momento" subtitle="Todos os indicadores estão dentro dos parâmetros normais." />
+          ) : (
+            buildAlertas(data).map((alerta) => <AlertCard key={alerta.id} alerta={alerta} />)
+          )}
         </div>
       ) : null}
     </div>

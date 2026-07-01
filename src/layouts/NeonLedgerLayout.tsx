@@ -279,7 +279,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
 
       {/* ── Conteúdo ──────────────────────────────────────────────────────── */}
       <main
-        className="pt-24 pb-28 lg:pb-12 px-4 md:px-8 min-h-screen transition-all duration-200"
+        className="pt-24 pb-28 lg:pb-12 px-4 md:px-8 min-h-screen transition-all duration-200 max-lg:!ml-0"
         style={{ marginLeft: `${sidebarWidth}px` }}
       >
         <header className="mb-6">
@@ -291,8 +291,10 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
         {children ?? <Outlet />}
       </main>
 
-      {/* ── Botão flutuante (mobile) ───────────────────────────────────────── */}
-      <QuickLaunchButton className="lg:hidden fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full bg-primary text-on-primary border-0 shadow-[0_10px_30px_rgba(43,245,142,0.35)] flex items-center justify-center cursor-pointer active:scale-95 transition-all" />
+      {/* ── Botão flutuante (mobile) — oculto em páginas de detalhe/formulário ── */}
+      {!/\/(contas-pagar|contas-receber|faturas)\/[^/]/.test(location.pathname) && (
+        <QuickLaunchButton className="lg:hidden fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full bg-primary text-on-primary border-0 shadow-[0_10px_30px_rgba(43,245,142,0.35)] flex items-center justify-center cursor-pointer active:scale-95 transition-all" />
+      )}
 
       {/* ── Navegação inferior (mobile) ────────────────────────────────────── */}
       <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-5 pt-2 lg:hidden bg-[#0e0e0e]/80 backdrop-blur-xl rounded-t-3xl border-t border-outline-variant/15 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">

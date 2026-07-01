@@ -7,6 +7,7 @@ import type {
   DashboardCentralPrevisaoOrigem,
   DashboardCentralPrevisaoResumo,
   DashboardCentralPrevisaoStatus,
+  DashboardComparativoMensal,
   DashboardContaGerencialResumo,
   DashboardFluxoCaixa,
   DashboardResponsavelResumo,
@@ -31,7 +32,10 @@ export type ReportKey =
   | 'inadimplencia'
   | 'faturas'
   | 'recorrencias'
-  | 'compras';
+  | 'compras'
+  | 'comparativo'
+  | 'dre'
+  | 'alertas';
 
 export type ReportState = {
   resumo?: DashboardResumo;
@@ -44,6 +48,7 @@ export type ReportState = {
   faturas?: PagedFinanceiro<FaturaResumo, FaturaListSummary>;
   recorrencias?: PagedFinanceiro<RecorrenciaListItem>;
   compras?: PagedCompraPlanejada<CompraPlanejadaResumo, CompraPlanejadaListSummary>;
+  comparativo?: DashboardComparativoMensal;
 };
 
 export type InadimplenciaTipo = 'todos' | 'pagar' | 'receber';
@@ -59,7 +64,16 @@ export const reportTabs: Array<{ key: ReportKey; label: string; icon: string }> 
   { key: 'inadimplencia', label: 'Inadimplência', icon: 'warning' },
   { key: 'faturas', label: 'Faturas', icon: 'credit_card' },
   { key: 'recorrencias', label: 'Recorrências', icon: 'sync' },
-  { key: 'compras', label: 'Compras planejadas', icon: 'shopping_cart' }
+  { key: 'compras', label: 'Compras planejadas', icon: 'shopping_cart' },
+  { key: 'comparativo', label: 'Comparativo mensal', icon: 'bar_chart' },
+  { key: 'dre', label: 'DRE doméstica', icon: 'receipt_long' },
+  { key: 'alertas', label: 'Alertas inteligentes', icon: 'notifications_active' }
+];
+
+export const comparativoMesesOptions = [
+  { value: '3', label: '3 meses' },
+  { value: '6', label: '6 meses' },
+  { value: '12', label: '12 meses' }
 ];
 
 export const contaTipoOptions = [

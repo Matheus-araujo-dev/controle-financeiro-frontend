@@ -13,7 +13,7 @@ type FormSectionProps = {
 export function FormSection({ title, eyebrow, icon, children, className = '', sticky = false, compact = false }: FormSectionProps) {
   return (
     <section
-      className={`bg-surface-container-low rounded-3xl p-8 border border-outline-variant/10 shadow-lg ${sticky ? 'sticky top-28' : ''} ${className}`}
+      className={`bg-surface-container-low rounded-3xl p-5 sm:p-8 border border-outline-variant/10 shadow-lg ${sticky ? 'sticky top-28' : ''} ${className}`}
     >
       {(title || eyebrow || icon) && (
         <div className={`mb-6 flex items-center gap-3 ${compact ? 'mb-5' : ''}`}>

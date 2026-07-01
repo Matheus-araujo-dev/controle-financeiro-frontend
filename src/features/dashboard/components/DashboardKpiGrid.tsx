@@ -32,7 +32,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
   };
 
   return (
-    <GlassCard className="p-6 h-40 flex flex-col justify-between group" hoverable>
+    <GlassCard className="p-5 sm:p-6 min-h-[148px] flex flex-col justify-between group" hoverable>
       <div className="flex justify-between items-start">
         <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">
           {label}
