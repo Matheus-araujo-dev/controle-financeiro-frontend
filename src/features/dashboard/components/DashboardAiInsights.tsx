@@ -58,7 +58,7 @@ export function DashboardAiInsights({ mesReferencia }: Props) {
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <span className="material-symbols-outlined text-base">psychology</span>
+            <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>psychology</span>
           </div>
           <div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
@@ -68,8 +68,9 @@ export function DashboardAiInsights({ mesReferencia }: Props) {
           </div>
         </div>
         <Link
-          to="/agente"
-          className="text-[11px] font-bold text-primary hover:text-primary/80 transition-colors"
+          to="/agente/chat"
+          className="text-[11px] font-bold transition-colors"
+          style={{ color: 'var(--color-primary)' }}
         >
           Perguntar ao agente →
         </Link>
@@ -88,7 +89,7 @@ export function DashboardAiInsights({ mesReferencia }: Props) {
         </div>
       ) : error ? (
         <div className="text-center py-6 text-on-surface-variant text-sm">
-          <span className="material-symbols-outlined block text-2xl mb-2 opacity-40">psychology_alt</span>
+          <span className="material-symbols-outlined block text-2xl mb-2 opacity-40" style={{ fontVariationSettings: "'FILL' 1" }}>psychology_alt</span>
           Análise indisponível no momento.{' '}
           <Link to="/agente" className="text-primary underline">
             Use o chat do agente
@@ -96,7 +97,7 @@ export function DashboardAiInsights({ mesReferencia }: Props) {
         </div>
       ) : insights.length === 0 ? (
         <div className="text-center py-6 text-on-surface-variant text-sm">
-          <span className="material-symbols-outlined block text-2xl mb-2 opacity-40">sentiment_satisfied</span>
+          <span className="material-symbols-outlined block text-2xl mb-2 opacity-40" style={{ fontVariationSettings: "'FILL' 1" }}>sentiment_satisfied</span>
           Sem alertas para este período.
         </div>
       ) : (
@@ -108,7 +109,7 @@ export function DashboardAiInsights({ mesReferencia }: Props) {
                 key={i}
                 className={`flex items-start gap-3 rounded-2xl border px-4 py-3 ${cfg.bg} ${cfg.border}`}
               >
-                <span className={`material-symbols-outlined text-base mt-0.5 shrink-0 ${cfg.color}`}>
+                <span className={`material-symbols-outlined text-base mt-0.5 shrink-0 ${cfg.color}`} style={{ fontVariationSettings: "'FILL' 1" }}>
                   {cfg.icon}
                 </span>
                 <div className="min-w-0 flex-1">

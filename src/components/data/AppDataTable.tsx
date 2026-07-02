@@ -374,7 +374,7 @@ export function AppDataTable<T extends object>({
     return (
       <div className="data-table-empty px-6 py-16 text-center" data-testid="data-table-empty">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-surface-container text-primary">
-          <span className="material-symbols-outlined text-2xl">database</span>
+          <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>database</span>
         </div>
         <p className="text-sm font-semibold text-on-surface">{emptyMessage}</p>
       </div>

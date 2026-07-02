@@ -13,9 +13,10 @@ export function NotificationCenter() {
     }
 
     notification[item.level]({
-      message: item.title,
+      title: item.title,
       description: item.description,
-      placement: 'topRight'
+      placement: 'topRight',
+      duration: 4,
     });
 
     shift();

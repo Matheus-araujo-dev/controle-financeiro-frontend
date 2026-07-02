@@ -211,7 +211,7 @@ export const financialRouteObjects: RouteObject[] = [
     path: 'movimentacoes',
     element: <MovimentacoesWorkspacePage initialTab="extrato" />,
     handle: {
-      title: 'Movimentacoes'
+      title: 'Movimentações'
     }
   },
   {
@@ -239,14 +239,14 @@ export const financialRouteObjects: RouteObject[] = [
     path: 'importacoes-whatsapp',
     element: <ImportacoesWhatsappPage />,
     handle: {
-      title: 'Importacoes WhatsApp'
+      title: 'Importações WhatsApp'
     }
   },
   {
     path: 'importacoes-whatsapp/:id',
     element: <ImportacaoWhatsappDetailPage />,
     handle: {
-      title: 'Revisao da importacao'
+      title: 'Revisão da importação'
     }
   },
   {

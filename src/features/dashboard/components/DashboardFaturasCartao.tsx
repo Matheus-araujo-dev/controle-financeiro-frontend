@@ -29,10 +29,10 @@ export function DashboardFaturasCartao() {
     <div className="bg-surface-container-low p-6 rounded-3xl border border-white/5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary">credit_card</span>
+          <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>credit_card</span>
           <h3 className="text-lg font-headline font-bold text-on-surface m-0">Faturas em aberto</h3>
         </div>
-        <Link to="/faturas" className="text-xs font-bold text-primary hover:underline uppercase tracking-wider">
+        <Link to="/faturas" className="text-xs font-bold hover:underline uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
           Ver todas
         </Link>
       </div>

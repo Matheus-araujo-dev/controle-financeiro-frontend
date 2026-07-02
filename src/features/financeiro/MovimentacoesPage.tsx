@@ -15,6 +15,7 @@ import {
 import { DateInput } from '../../components/forms/DateInput';
 import type { MovimentacaoFilters, MovimentacaoResumo, NaturezaMovimentacao, TipoMovimentacao } from '../../types/financeiro';
 import { AppDataTable } from '../../components/data/AppDataTable';
+import { ExportButton } from '../../components/data/ExportButton';
 import { StatusBadge, type StatusTone } from '../../components/data/StatusBadge';
 import {
   FilterCard,
@@ -161,12 +162,31 @@ export function MovimentacoesPage() {
     };
   }, [data]);
 
+  const exportColumns = [
+    { header: 'Data', value: (r: MovimentacaoResumo) => r.dataMovimentacao },
+    { header: 'Descrição', value: (r: MovimentacaoResumo) => r.observacao ?? '' },
+    { header: 'Tipo', value: (r: MovimentacaoResumo) => r.tipo },
+    { header: 'Natureza', value: (r: MovimentacaoResumo) => r.natureza },
+    { header: 'Conta bancária', value: (r: MovimentacaoResumo) => r.contaBancariaNome ?? '' },
+    { header: 'Responsável', value: (r: MovimentacaoResumo) => r.responsavelNome ?? '' },
+    { header: 'Valor', value: (r: MovimentacaoResumo) => r.valor },
+    { header: 'Status', value: (r: MovimentacaoResumo) => r.statusNome ?? '' }
+  ];
+
   return (
     <ListPageShell
+      actions={
+        <ExportButton
+          fetchPage={financeiroApi.movimentacoes.listar}
+          filters={filters}
+          columns={exportColumns}
+          filename="extrato"
+        />
+      }
       summary={
         <>
-          <SummaryCard label="Entradas" value={formatCurrencyBRL(resumo.totalEntradas)} accent="primary" icon={<ArrowDownOutlined />} />
-          <SummaryCard label="Saídas" value={formatCurrencyBRL(resumo.totalSaidas)} accent="error" icon={<ArrowUpOutlined />} />
+          <SummaryCard label="Entradas" value={formatCurrencyBRL(resumo.totalEntradas)} accent="primary" />
+          <SummaryCard label="Saídas" value={formatCurrencyBRL(resumo.totalSaidas)} accent="error" />
           <SummaryCard label="Saldo Líquido" value={formatCurrencyBRL(resumo.saldoLiquido)} accent={resumo.saldoLiquido >= 0 ? 'primary' : 'error'} highlight />
         </>
       }

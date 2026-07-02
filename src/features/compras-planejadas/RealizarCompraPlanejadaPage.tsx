@@ -20,10 +20,13 @@ import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api
 import { applyServerValidationErrors } from '../../services/forms/applyServerValidationErrors';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
+import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
 import type { ApiErrorResponse } from '../../types/api';
 import type { CartaoResumo, ContaBancariaResumo, FormaPagamentoResumo, PessoaResumo } from '../../types/cadastros';
 import type { CompraPlanejadaDetalhe } from '../../types/compras-planejadas';
 import { realizarCompraPlanejadaSchema } from './schemas';
+import { QuickAddFormaPagamentoModal } from '../cadastros/quick-add/QuickAddFormaPagamentoModal';
+import { QuickAddPessoaModal } from '../cadastros/quick-add/QuickAddPessoaModal';
 
 type RealizarCompraPlanejadaFormValues = {
   dataCompra: string;
@@ -86,6 +89,16 @@ function buildCartaoOption(item: CartaoResumo): CartaoOption {
   };
 }
 
+async function reloadPessoaOptions(setter: (options: SelectOption[]) => void) {
+  const pessoas = await cadastrosApi.pessoas.listar({ page: 1, pageSize: 200, search: '', ativo: true });
+  setter(pessoas.items.map(buildPessoaOption));
+}
+
+async function reloadFormaPagamentoOptions(setter: (options: FormaPagamentoOption[]) => void) {
+  const formas = await cadastrosApi.formasPagamento.listar({ page: 1, pageSize: 200, search: '', ativo: true });
+  setter(formas.items.map(buildFormaPagamentoOption));
+}
+
 function formatCompetenciaMes(data: string) {
   const [year, month] = data.split('-');
   return `${month}/${year}`;
@@ -146,6 +159,8 @@ export function RealizarCompraPlanejadaPage() {
   const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<FormaPagamentoOption[]>([]);
   const [contaBancariaOptions, setContaBancariaOptions] = useState<SelectOption[]>([]);
   const [cartaoOptions, setCartaoOptions] = useState<CartaoOption[]>([]);
+  const [recebedorModalOpen, setRecebedorModalOpen] = useState(false);
+  const [formaPagamentoModalOpen, setFormaPagamentoModalOpen] = useState(false);
 
   const {
     control,
@@ -363,7 +378,7 @@ export function RealizarCompraPlanejadaPage() {
       </div>
 
       {jaRealizada ? (
-        <FormSection className="items-center text-center" icon={<span className="material-symbols-outlined text-3xl">check_circle</span>}>
+        <FormSection className="items-center text-center" icon={<span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}>
           <div className="space-y-4">
             <div>
               <h2 className="font-headline text-2xl font-bold">Compra já realizada</h2>
@@ -381,7 +396,7 @@ export function RealizarCompraPlanejadaPage() {
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-7 lg:grid-cols-12">
           <div className="space-y-8 lg:col-span-7">
-            <FormSection title="Realizar Compra" eyebrow="Passo 1" icon={<span className="material-symbols-outlined text-2xl">shopping_bag</span>}>
+            <FormSection title="Realizar Compra" eyebrow="Passo 1" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_bag</span>}>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className={formLabelClass}>Data da Compra</label>
@@ -406,6 +421,8 @@ export function RealizarCompraPlanejadaPage() {
                         onBlur={field.onBlur}
                         options={formaPagamentoOptions}
                         placeholder="Selecione..."
+                        onAddNew={() => setFormaPagamentoModalOpen(true)}
+                        addNewLabel="Criar forma de pagamento"
                       />
                     )}
                   />
@@ -417,7 +434,7 @@ export function RealizarCompraPlanejadaPage() {
             <FormSection
               title="Liquidação e Beneficiário"
               eyebrow="Passo 2"
-              icon={<span className="material-symbols-outlined text-2xl">account_balance_wallet</span>}
+              icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>account_balance_wallet</span>}
             >
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {formaEhCartao ? (
@@ -448,12 +465,15 @@ export function RealizarCompraPlanejadaPage() {
                         name="quantidadeParcelas"
                         render={({ field }) => (
                           <input
-                            {...field}
+                            name={field.name}
+                            ref={field.ref}
                             aria-label="Parcelas"
-                            type="number"
-                            min={1}
-                            max={detail.parcelavel ? 48 : 1}
-                            onChange={(event) => field.onChange(Number(event.target.value))}
+                            inputMode="numeric"
+                            value={String(field.value ?? 1)}
+                            onBlur={field.onBlur}
+                            onKeyDown={preventScientificNotation}
+                            onPaste={handleIntegerPaste}
+                            onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
                             className={formFieldClass}
                           />
                         )}
@@ -509,6 +529,8 @@ export function RealizarCompraPlanejadaPage() {
                         onBlur={field.onBlur}
                         options={pessoaOptions}
                         placeholder="Selecione quem recebeu..."
+                        onAddNew={() => setRecebedorModalOpen(true)}
+                        addNewLabel="Criar recebedor"
                       />
                     )}
                   />
@@ -517,7 +539,7 @@ export function RealizarCompraPlanejadaPage() {
               </div>
             </FormSection>
 
-            <FormSection title="Dados Financeiros" eyebrow="Passo 3" icon={<span className="material-symbols-outlined text-2xl">receipt_long</span>}>
+            <FormSection title="Dados Financeiros" eyebrow="Passo 3" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>}>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className={formLabelClass}>Descrição Financeira</label>
@@ -563,7 +585,7 @@ export function RealizarCompraPlanejadaPage() {
               <FormSection
                 title="Planejamento da Fatura"
                 eyebrow={`Fechamento dia ${cartaoSelecionado.diaFechamentoFatura} - Vencimento dia ${cartaoSelecionado.diaVencimentoFatura}`}
-                icon={<span className="material-symbols-outlined text-2xl">calendar_month</span>}
+                icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_month</span>}
               >
                 <div className="mb-6 flex justify-end">
                   <span className="rounded-full bg-primary/20 px-3 py-1 text-[10px] font-black uppercase text-primary">{previsaoParcelasCartao.length}X Parcelado</span>
@@ -593,7 +615,7 @@ export function RealizarCompraPlanejadaPage() {
             <FormActionPanel
               title="Pronto para confirmar?"
               eyebrow="Checkout financeiro"
-              icon={<span className="material-symbols-outlined font-bold text-2xl">check_circle</span>}
+              icon={<span className="material-symbols-outlined font-bold text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}
               items={[
                 { label: 'Compra', value: detail.titulo },
                 { label: 'Valor Planejado', value: formatCurrencyBRL(detail.valorEstimado), accent: true },
@@ -609,6 +631,21 @@ export function RealizarCompraPlanejadaPage() {
           </div>
         </form>
       )}
+
+      <QuickAddPessoaModal
+        open={recebedorModalOpen}
+        onClose={() => setRecebedorModalOpen(false)}
+        onSuccess={(newId) => {
+          void reloadPessoaOptions(setPessoaOptions).then(() => setValue('recebedorId', newId, { shouldValidate: true }));
+        }}
+      />
+      <QuickAddFormaPagamentoModal
+        open={formaPagamentoModalOpen}
+        onClose={() => setFormaPagamentoModalOpen(false)}
+        onSuccess={(newId) => {
+          void reloadFormaPagamentoOptions(setFormaPagamentoOptions).then(() => setValue('formaPagamentoId', newId, { shouldValidate: true }));
+        }}
+      />
     </div>
   );
 }

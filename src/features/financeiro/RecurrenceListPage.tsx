@@ -2,6 +2,7 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircleFilled, EyeOutlined, PauseCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import { AppDataTable } from '../../components/data/AppDataTable';
+import { ExportButton } from '../../components/data/ExportButton';
 import { IconActionButton } from '../../components/data/IconActionButton';
 import { DateInput } from '../../components/forms/DateInput';
 import {
@@ -72,8 +73,28 @@ export function RecurrenceListPage() {
     };
   }, [data, recorrencias]);
 
+  const exportColumns = [
+    { header: 'Descrição', value: (r: RecorrenciaListItem) => r.descricao },
+    { header: 'Tipo', value: (r: RecorrenciaListItem) => r.contaOrigemTipo === 'ContaReceber' ? 'Receita' : 'Despesa' },
+    { header: 'Pessoa', value: (r: RecorrenciaListItem) => r.pessoaNome },
+    { header: 'Responsável', value: (r: RecorrenciaListItem) => r.responsavelNome ?? '' },
+    { header: 'Valor', value: (r: RecorrenciaListItem) => r.valorLiquido },
+    { header: 'Situação', value: (r: RecorrenciaListItem) => r.ativa ? 'Ativa' : 'Pausada' },
+    { header: 'Dia do mês', value: (r: RecorrenciaListItem) => r.diaOrdemMensal },
+    { header: 'Início', value: (r: RecorrenciaListItem) => r.dataInicio },
+    { header: 'Fim', value: (r: RecorrenciaListItem) => r.dataFim ?? '' },
+  ];
+
   return (
     <ListPageShell
+      actions={
+        <ExportButton
+          fetchPage={financeiroApi.recorrencias.listar as (f: RecorrenciaFilters) => Promise<{ items: RecorrenciaListItem[]; totalItems: number; totalPages: number }>}
+          filters={filters}
+          columns={exportColumns}
+          filename="recorrencias"
+        />
+      }
       summary={
         <>
           <SummaryCard label="Receitas mensais" value={formatCurrencyBRL(resumo.valorReceitas)} accent="primary" />

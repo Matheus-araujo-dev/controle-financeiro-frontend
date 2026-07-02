@@ -67,7 +67,7 @@ type SummaryItem = {
 export function FormActionPanel({
   title = 'Pronto para salvar?',
   eyebrow = 'Resumo',
-  icon = <span className="material-symbols-outlined font-bold text-2xl">rocket_launch</span>,
+  icon = <span className="material-symbols-outlined font-bold text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>rocket_launch</span>,
   items,
   submitLabel,
   cancelLabel = 'Cancelar e Voltar',
@@ -108,7 +108,7 @@ export function FormActionPanel({
 
       {error ? (
         <div className="mb-6 flex items-center gap-3 rounded-2xl border border-error/20 bg-error/10 p-4 text-error">
-          <span className="material-symbols-outlined text-sm">warning</span>
+          <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
           <p className="text-xs font-bold">{error}</p>
         </div>
       ) : null}

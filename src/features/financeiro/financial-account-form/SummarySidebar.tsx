@@ -24,7 +24,7 @@ function ConfirmDialog({ state, onClose }: { state: ConfirmState; onClose: () =>
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
         <div className="mb-6 flex items-start gap-3">
           <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${state.tone === 'danger' ? 'bg-error/12 text-error' : 'bg-warning/12 text-warning'}`}>
-            <span className="material-symbols-outlined text-2xl">warning</span>
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
           </div>
           <div>
             <h3 className="font-headline text-lg font-bold text-on-surface">{state.title}</h3>
@@ -51,6 +51,49 @@ function ConfirmDialog({ state, onClose }: { state: ConfirmState; onClose: () =>
   );
 }
 
+function PlannedPurchaseCancelDialog({
+  open,
+  onClose,
+  onKeepPlanning,
+  onCancelPlanning
+}: {
+  open: boolean;
+  onClose: () => void;
+  onKeepPlanning: () => void;
+  onCancelPlanning: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
+        <div className="mb-6 flex items-start gap-3">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-warning/12 text-warning">
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>sync_problem</span>
+          </div>
+          <div>
+            <h3 className="font-headline text-lg font-bold text-on-surface">Cancelar titulo originado de compra planejada</h3>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Esta conta nasceu de uma compra planejada. Ao cancelar o titulo, voce pode cancelar tambem o planejamento ou devolver a compra ao status planejada.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Voltar
+          </Button>
+          <Button type="button" variant="secondary" onClick={onKeepPlanning}>
+            Nao, manter planejamento
+          </Button>
+          <Button type="button" variant="danger" onClick={onCancelPlanning}>
+            Sim, cancelar planejamento
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SummarySidebar({ form }: SummarySidebarProps) {
   const {
     id,
@@ -62,22 +105,25 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     errorMessage,
     onCancel,
     cancelar,
-    estornar
+    estornar,
+    origemCompraPlanejadaId,
+    totalRateios
   } = form;
 
   const [confirm, setConfirm] = useState<ConfirmState>(null);
+  const [plannedPurchaseConfirmOpen, setPlannedPurchaseConfirmOpen] = useState(false);
 
   const valorOriginal = Number(watchedValues.valorOriginal) || 0;
   const valorDesconto = Number(watchedValues.valorDesconto) || 0;
   const valorJurosMulta = (Number(watchedValues.valorJuros) || 0) + (Number(watchedValues.valorMulta) || 0);
+  const hasPlannedPurchaseOrigin = Boolean(origemCompraPlanejadaId);
 
   return (
     <div className="space-y-8 lg:col-span-5">
-      {/* Mobile: barra flutuante acima da nav inferior */}
       <div className="fixed left-4 right-4 z-40 lg:hidden" style={{ bottom: '72px' }}>
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-surface-container-low/95 px-4 py-3 shadow-[0_-4px_32px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Valor Líquido</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Valor Liquido</p>
             <p className="truncate text-xl font-black" style={{ color: 'var(--color-primary)' }}>
               {formatCurrencyBRL(valorLiquido)}
             </p>
@@ -98,17 +144,18 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
       <FormActionPanel
         title="Pronto para salvar?"
         eyebrow="Resumo Financeiro"
-        submitLabel={id && id !== 'novo' ? 'Atualizar Lançamento' : 'Confirmar Lançamento'}
+        submitLabel={id && id !== 'novo' ? 'Atualizar Lancamento' : 'Confirmar Lancamento'}
         submitDisabled={isSubmitting || !isValid}
         submitting={isSubmitting}
         error={errorMessage}
         onCancel={onCancel}
-        cancelLabel="Descartar Alterações"
+        cancelLabel="Descartar Alteracoes"
         items={[
-          { label: 'Valor Líquido', value: formatCurrencyBRL(valorLiquido), accent: true },
+          { label: 'Valor Liquido', value: formatCurrencyBRL(valorLiquido), accent: true },
           { label: 'Valor Original', value: formatCurrencyBRL(valorOriginal) },
           { label: 'Desconto', value: formatCurrencyBRL(valorDesconto) },
           { label: 'Juros / Multa', value: formatCurrencyBRL(valorJurosMulta) },
+          { label: 'Total Rateado', value: formatCurrencyBRL(totalRateios), accent: Math.abs(totalRateios - valorLiquido) < 0.01 },
           { label: 'Parcelas', value: watchedValues.quantidadeParcelas || 1 }
         ]}
       >
@@ -119,17 +166,22 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
               variant="danger"
               size="lg"
               className="w-full rounded-2xl font-bold"
-              onClick={() =>
+              onClick={() => {
+                if (hasPlannedPurchaseOrigin) {
+                  setPlannedPurchaseConfirmOpen(true);
+                  return;
+                }
+
                 setConfirm({
                   title: 'Confirmar Cancelamento',
-                  message: 'Tem certeza que deseja cancelar este lançamento? Esta ação não pode ser desfeita.',
+                  message: 'Tem certeza que deseja cancelar este lancamento? Esta acao nao pode ser desfeita.',
                   confirmLabel: 'Sim, cancelar',
                   tone: 'danger',
                   onConfirm: () => void cancelar()
-                })
-              }
+                });
+              }}
             >
-              Cancelar Título
+              Cancelar Titulo
             </Button>
           ) : null}
 
@@ -141,8 +193,8 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
               className="w-full rounded-2xl border-warning/30! text-warning! font-bold"
               onClick={() =>
                 setConfirm({
-                  title: 'Estornar Liquidação',
-                  message: 'Deseja reverter o pagamento deste título?',
+                  title: 'Estornar Liquidacao',
+                  message: 'Deseja reverter o pagamento deste titulo?',
                   confirmLabel: 'Sim, estornar',
                   tone: 'warning',
                   onConfirm: () => void estornar()
@@ -156,6 +208,18 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
       </FormActionPanel>
 
       <ConfirmDialog state={confirm} onClose={() => setConfirm(null)} />
+      <PlannedPurchaseCancelDialog
+        open={plannedPurchaseConfirmOpen}
+        onClose={() => setPlannedPurchaseConfirmOpen(false)}
+        onKeepPlanning={() => {
+          void cancelar({ cancelarPlanejamentoRelacionado: false });
+          setPlannedPurchaseConfirmOpen(false);
+        }}
+        onCancelPlanning={() => {
+          void cancelar({ cancelarPlanejamentoRelacionado: true });
+          setPlannedPurchaseConfirmOpen(false);
+        }}
+      />
     </div>
   );
 }

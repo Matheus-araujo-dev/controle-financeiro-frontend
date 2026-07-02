@@ -17,6 +17,7 @@ import { applyServerValidationErrors } from '../../services/forms/applyServerVal
 import type { ApiErrorResponse } from '../../types/api';
 import type { CompraPlanejadaPayload } from '../../types/compras-planejadas';
 import { compraPlanejadaSchema } from './schemas';
+import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
 import { QuickAddContaGerencialModal } from '../cadastros/quick-add/QuickAddContaGerencialModal';
 import { QuickAddPessoaModal } from '../cadastros/quick-add/QuickAddPessoaModal';
 
@@ -178,7 +179,7 @@ export function NovaCompraPlanejadaPage() {
 
   if (loadError) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="px-4 py-10">
         <PageState state="error" title="Falha ao carregar" subtitle={loadError} />
       </div>
     );
@@ -186,12 +187,12 @@ export function NovaCompraPlanejadaPage() {
 
   return (
     <>
-      <div className="compra-planejada-form-page max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="compra-planejada-form-page space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-24">
           <div className="lg:col-span-7 space-y-8">
-            <FormSection className="relative overflow-hidden" icon={<span className="material-symbols-outlined text-2xl">shopping_bag</span>}>
+            <FormSection className="relative overflow-hidden" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_bag</span>}>
               <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                <span className="material-symbols-outlined text-8xl">shopping_bag</span>
+                <span className="material-symbols-outlined text-8xl" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_bag</span>
               </div>
               <div className="space-y-6 relative z-10">
                 <div className="grid grid-cols-1 gap-6">
@@ -266,7 +267,7 @@ export function NovaCompraPlanejadaPage() {
               </div>
             </FormSection>
 
-            <FormSection title="Classificação Técnica" icon={<span className="material-symbols-outlined text-2xl">analytics</span>}>
+            <FormSection title="Classificação Técnica" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>analytics</span>}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className={labelClassName}>Prioridade</label>
@@ -335,11 +336,11 @@ export function NovaCompraPlanejadaPage() {
               </div>
             </FormSection>
 
-            <FormSection title="Configurações de Fluxo" eyebrow="Fluxo" icon={<span className="material-symbols-outlined text-2xl">sync_alt</span>}>
+            <FormSection title="Configurações de Fluxo" eyebrow="Fluxo" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>sync_alt</span>}>
               <div className="space-y-6">
                 <div className="flex items-center justify-between p-4 bg-surface-container rounded-2xl ring-1 ring-white/5">
                   <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-primary">credit_score</span>
+                    <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>credit_score</span>
                     <div>
                       <p className="text-sm font-bold text-on-surface">Parcelável</p>
                       <p className="text-[10px] text-on-surface-variant uppercase tracking-tighter">Habilitar desdobramento</p>
@@ -373,11 +374,12 @@ export function NovaCompraPlanejadaPage() {
                         <input
                           aria-label="Parcelas Desejadas"
                           className={fieldClassName}
-                          type="number"
-                          min={2}
+                          inputMode="numeric"
                           placeholder="2"
-                          value={field.value ?? ''}
-                          onChange={(event) => field.onChange(event.target.value ? Number(event.target.value) : null)}
+                          value={field.value == null ? '' : String(field.value)}
+                          onKeyDown={preventScientificNotation}
+                          onPaste={handleIntegerPaste}
+                          onChange={(event) => field.onChange(parseIntegerInput(event.target.value, true))}
                         />
                       )}
                     />
@@ -436,7 +438,7 @@ export function NovaCompraPlanejadaPage() {
               className="sticky top-28"
               title="Pronto para salvar?"
               eyebrow="Resumo Estratégico"
-              icon={<span className="material-symbols-outlined font-bold text-2xl">rocket_launch</span>}
+              icon={<span className="material-symbols-outlined font-bold text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>rocket_launch</span>}
               compact
             >
               <div className="space-y-3 mb-8">
@@ -460,7 +462,7 @@ export function NovaCompraPlanejadaPage() {
 
               {submitError && (
                 <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-2xl flex items-center gap-3 text-error">
-                  <span className="material-symbols-outlined text-sm">warning</span>
+                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
                   <p className="text-xs font-bold">{submitError}</p>
                 </div>
               )}

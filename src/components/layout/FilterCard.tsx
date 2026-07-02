@@ -1,4 +1,7 @@
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
+import { Button } from '../ui/Button';
 
 interface FilterCardProps {
   children: ReactNode;
@@ -6,10 +9,72 @@ interface FilterCardProps {
 }
 
 export function FilterCard({ children, className = '' }: FilterCardProps) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className={`bg-surface-container-low rounded-3xl border border-white/5 p-5 ${className}`}>
-      {children}
-    </div>
+    <>
+      {/* Mobile: botão que abre bottom sheet */}
+      <div className="lg:hidden">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 h-9 px-4 rounded-xl bg-surface-container-low border border-white/8 text-sm font-semibold text-on-surface-variant hover:text-white transition-colors"
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '18px', lineHeight: 1 }}>tune</span>
+          Filtros
+        </button>
+
+        {open && createPortal(
+          <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="Filtros">
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setOpen(false)}
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-surface rounded-t-3xl border-t border-white/10 shadow-2xl max-h-[85vh] flex flex-col">
+              {/* Header fixo */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/5 shrink-0">
+                <h3 className="font-headline font-bold text-base m-0 flex items-center gap-2">
+                  <span
+                    className="material-symbols-outlined text-primary"
+                    style={{ fontSize: '20px', lineHeight: 1 }}
+                  >tune</span>
+                  Filtros
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/5 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '20px' }}>close</span>
+                </button>
+              </div>
+              {/* Conteúdo rolável */}
+              <div className="overflow-y-auto p-5 flex-1">
+                {children}
+              </div>
+              {/* Botão fixo no rodapé */}
+              <div className="px-5 pb-6 pt-3 border-t border-white/5 shrink-0 bg-surface">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => setOpen(false)}
+                >
+                  Aplicar filtros
+                </Button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+      </div>
+
+      {/* Desktop: card inline normal */}
+      <div className={`hidden lg:block bg-surface-container-low rounded-3xl border border-white/5 p-5 ${className}`}>
+        {children}
+      </div>
+    </>
   );
 }
 

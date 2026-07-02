@@ -1,4 +1,5 @@
 import { apiClient } from '../../services/http/api-client';
+import type { AuthTokenResponse } from '../../types/auth';
 
 export type MembroFamiliaResponse = {
   id: string;
@@ -25,6 +26,21 @@ export type FamiliaDetalheResponse = {
   convitesPendentes: ConviteFamiliaResponse[];
 };
 
+export type ParticipacaoWorkspaceResponse = {
+  id: string;
+  nome: string;
+  meuPapel: string;
+  ativa: boolean;
+};
+
+export type SelecionarWorkspaceResponse = {
+  sessao: AuthTokenResponse;
+};
+
+export type CriarWorkspaceRequest = {
+  nome?: string;
+};
+
 export type ConviteCriadoResponse = {
   id: string;
   emailConvidado: string;
@@ -39,6 +55,21 @@ export type ConviteDetalhePublicoResponse = {
   papel: string;
   valido: boolean;
 };
+
+export async function listarMinhasParticipacoes(): Promise<ParticipacaoWorkspaceResponse[]> {
+  const { data } = await apiClient.get<ParticipacaoWorkspaceResponse[]>('/familias');
+  return data;
+}
+
+export async function selecionarWorkspace(id: string): Promise<SelecionarWorkspaceResponse> {
+  const { data } = await apiClient.post<SelecionarWorkspaceResponse>(`/familias/${id}/selecionar`);
+  return data;
+}
+
+export async function criarWorkspace(payload: CriarWorkspaceRequest = {}): Promise<SelecionarWorkspaceResponse> {
+  const { data } = await apiClient.post<SelecionarWorkspaceResponse>('/familias', payload);
+  return data;
+}
 
 export async function obterMinhaFamilia(): Promise<FamiliaDetalheResponse> {
   const { data } = await apiClient.get<FamiliaDetalheResponse>('/familias/minha');

@@ -60,6 +60,7 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
 
   const percentual = item.percentualConsumido ?? 0;
   const progresso = item.valorMeta ? Math.min(percentual, 100) : 0;
+  const metaCalculada = !item.aceitaLancamentos;
 
   return (
     <div className="bg-surface-container-highest border border-outline-variant/10 rounded-2xl p-4 flex flex-col gap-3">
@@ -77,11 +78,16 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
               </>
             )}
           </p>
+          {metaCalculada && (
+            <p className="text-xs text-on-surface-variant mt-1 italic">
+              Conta estrutural: meta calculada automaticamente pela soma das contas filhas.
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {item.estourado && (
             <span className="flex items-center gap-1 text-error text-xs font-bold uppercase tracking-wider">
-              <span className="material-symbols-outlined text-sm">warning</span>
+              <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
               Estourou
             </span>
           )}
@@ -89,14 +95,14 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
             aria-label={`Meta de ${item.contaGerencialDescricao}`}
             value={draftMeta}
             onChange={setDraftMeta}
-            disabled={saving}
-            placeholder="Definir meta"
+            disabled={saving || metaCalculada}
+            placeholder={metaCalculada ? 'Calculada automaticamente' : 'Definir meta'}
             className="w-36 min-w-[120px] flex-1 sm:flex-none"
           />
           <button
             type="button"
             onClick={() => void onSalvarMeta(item, draftMeta)}
-            disabled={saving || draftMeta === item.valorMeta}
+            disabled={saving || metaCalculada || draftMeta === item.valorMeta}
             className="bg-primary/15 text-primary border border-primary/30 rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all hover:bg-primary/25 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Salvar
@@ -185,7 +191,7 @@ export function OrcamentoPage() {
   const saldoDisponivel = (orcamento?.totalMeta ?? 0) - (orcamento?.totalRealizado ?? 0);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <p className="text-sm text-on-surface-variant">
           Metas por categoria de despesa em {formatCompetencia(competencia)}.
@@ -202,20 +208,20 @@ export function OrcamentoPage() {
 
       {errorMessage && (
         <div className="bg-error-container/20 border border-error/20 p-4 rounded-2xl flex items-center gap-3 text-error animate-in fade-in slide-in-from-top-2">
-          <span className="material-symbols-outlined">warning</span>
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
           <span className="text-sm font-medium">{errorMessage}</span>
         </div>
       )}
 
       {orcamento && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-surface-container-highest border border-outline-variant/10 rounded-2xl p-5">
+          <div className="totalizador-card p-5">
             <p className="text-xs text-on-surface-variant uppercase tracking-widest font-medium">Total orçado</p>
             <p className="text-2xl font-headline font-extrabold text-on-surface mt-1">
               {formatCurrencyBRL(orcamento.totalMeta)}
             </p>
           </div>
-          <div className="bg-surface-container-highest border border-outline-variant/10 rounded-2xl p-5">
+          <div className="totalizador-card p-5">
             <p className="text-xs text-on-surface-variant uppercase tracking-widest font-medium">Total realizado</p>
             <p className={`text-2xl font-headline font-extrabold mt-1 ${getProgressTextColor(totalPercentual)}`}>
               {formatCurrencyBRL(orcamento.totalRealizado)}
@@ -226,7 +232,7 @@ export function OrcamentoPage() {
               </p>
             )}
           </div>
-          <div className="bg-surface-container-highest border border-outline-variant/10 rounded-2xl p-5">
+          <div className="totalizador-card p-5">
             <p className="text-xs text-on-surface-variant uppercase tracking-widest font-medium">Saldo disponível</p>
             <p className={`text-2xl font-headline font-extrabold mt-1 ${saldoDisponivel < 0 ? 'text-error' : 'text-primary'}`}>
               {formatCurrencyBRL(saldoDisponivel)}

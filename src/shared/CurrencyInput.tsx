@@ -27,7 +27,7 @@ export function CurrencyInput({ value, onChange, onBlur, onFocus, ...props }: Cu
   const handleFocus = useCallback(
     (event: React.FocusEvent<HTMLInputElement>) => {
       setIsFocused(true);
-      setDisplayValue(formatCurrencyEditable(value));
+      setDisplayValue(value ? formatCurrencyEditable(value) : '');
       onFocus?.(event);
     },
     [value, onFocus]

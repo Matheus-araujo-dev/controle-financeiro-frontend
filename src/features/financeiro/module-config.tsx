@@ -18,7 +18,8 @@ import type {
   ContaReceberPayload,
   ContaReceberResumo,
   RecorrenciaPayload,
-  StatusContaCodigo
+  StatusContaCodigo,
+  CancelarContaPagarPayload
 } from '../../types/financeiro';
 
 export type StatusCodigoConta = StatusContaCodigo;
@@ -113,7 +114,7 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   encerrarRecorrencia?: (id: string, values: { dataFim: string }) => Promise<TDetail>;
   liquidar?: (id: string, values: FinanceiroLiquidacaoFormValues) => Promise<TDetail>;
   estornar?: (id: string) => Promise<TDetail>;
-  cancelar?: (id: string) => Promise<TDetail>;
+  cancelar?: (id: string, options?: CancelarContaPagarPayload) => Promise<TDetail>;
   toFormValues: (detail: TDetail) => FinanceiroFormValues;
   loadPessoaOptions: () => Promise<SelectOption[]>;
   loadFormaPagamentoOptions: () => Promise<FormaPagamentoOption[]>;
@@ -459,7 +460,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
   singularTitle: 'Conta a pagar',
   routeBase: '/contas-pagar',
   personLabel: 'Recebedor',
-  listDescription: 'Controle financeiro das obrigações a pagar com rateio, parcelamento e ações de liquidação.',
+  listDescription: '',
   formDescription: 'Cadastre despesas e obrigações financeiras mantendo rateio e parcelamento coerentes com o backend.',
   columns: [
     { title: 'Descrição', dataIndex: 'descricao', key: 'descricao' },
@@ -569,7 +570,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
   singularTitle: 'Conta a receber',
   routeBase: '/contas-receber',
   personLabel: 'Pagador',
-  listDescription: 'Controle das entradas previstas e recebimentos efetivos com suporte a rateio e parcelamento.',
+  listDescription: '',
   formDescription: 'Cadastre receitas mantendo os contratos e a composição de rateio coerentes com o backend.',
   columns: [
     { title: 'Descrição', dataIndex: 'descricao', key: 'descricao' },

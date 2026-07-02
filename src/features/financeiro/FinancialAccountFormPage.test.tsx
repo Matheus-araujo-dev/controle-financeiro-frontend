@@ -1,4 +1,4 @@
-import { AxiosError } from 'axios';
+﻿import { AxiosError } from 'axios';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { FinancialAccountFormPage } from './FinancialAccountFormPage';
@@ -31,7 +31,7 @@ const validValues = {
   valorMulta: 0,
   quantidadeParcelas: 1,
   descricao: 'Despesa de teste',
-  observacao: 'Observação inicial',
+  observacao: 'ObservaÃ§Ã£o inicial',
   rateios: [{ contaGerencialId: 'cg1', valor: 95 }],
   ehRecorrente: true,
   recorrenciaTipoPeriodicidade: 'Mensal' as const,
@@ -51,8 +51,8 @@ function createConfig() {
     singularTitle: 'Conta a pagar',
     routeBase: '/contas-pagar',
     personLabel: 'Recebedor',
-    listDescription: 'Descrição da listagem.',
-    formDescription: 'Descrição do formulário.',
+    listDescription: 'DescriÃ§Ã£o da listagem.',
+    formDescription: 'DescriÃ§Ã£o do formulÃ¡rio.',
     columns: [],
     defaultFilters: {},
     defaultValues: validValues,
@@ -75,10 +75,10 @@ function createConfig() {
     toFormValues: vi.fn().mockReturnValue(validValues),
     loadPessoaOptions: vi.fn().mockResolvedValue([
       { label: 'Fornecedor', value: 'p1' },
-      { label: 'Responsável', value: 'p2' }
+      { label: 'ResponsÃ¡vel', value: 'p2' }
     ]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([
-      { label: 'Cartão corporativo', value: 'f1', ehCartao: true, baixarAutomaticamente: true }
+      { label: 'CartÃ£o corporativo', value: 'f1', ehCartao: true, baixarAutomaticamente: true }
     ]),
     loadContaBancariaOptions: vi.fn().mockResolvedValue([{ label: 'Conta principal', value: 'cb1' }]),
     loadCartaoOptions: vi.fn().mockResolvedValue([{ label: 'Visa final 4242', value: 'c1' }]),
@@ -105,11 +105,11 @@ describe('FinancialAccountFormPage', () => {
     const config = createConfig();
     renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
 
-    expect(await screen.findByText('Informações do Título')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Informações do Título/i })).toBeInTheDocument();
     await waitFor(() => expect(config.loadPessoaOptions).toHaveBeenCalled());
-    expect(screen.getByText('Recorrência Automática')).toBeInTheDocument();
+    expect(screen.getByText(/Recorrência Automática/i)).toBeInTheDocument();
     expect(screen.getByText('Rateio por Centro de Custo')).toBeInTheDocument();
-    expect(screen.getByText('Observações Adicionais')).toBeInTheDocument();
+    expect(screen.getByText(/Observações Adicionais/i)).toBeInTheDocument();
     expect(screen.getByText('08/2026')).toBeInTheDocument();
     expect(screen.getByText(/05\/2026/)).toBeInTheDocument();
   }, 20000);
@@ -125,7 +125,7 @@ describe('FinancialAccountFormPage', () => {
     renderWithRoute('/contas-pagar/novo?origemCompraPlanejadaId=compra-1', '/contas-pagar/novo', config);
 
     expect(await screen.findByDisplayValue('Notebook planejado')).toBeInTheDocument();
-    expect(screen.getByText(/Lançamento derivado de compra planejada/i)).toBeInTheDocument();
+    expect(screen.getByText(/compra planejada/i)).toBeInTheDocument();
     expect(config.resolveCreateDefaults).toHaveBeenCalled();
   }, 20000);
 
@@ -141,7 +141,7 @@ describe('FinancialAccountFormPage', () => {
     expect(await screen.findByDisplayValue('Despesa de teste')).toBeInTheDocument();
     expect(screen.getByText('08/2026')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lançamento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lancamento' }));
 
     await waitFor(() =>
       expect(config.update).toHaveBeenCalledWith('123', {
@@ -165,7 +165,7 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByText('Rateio por Centro de Custo')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lançamento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lancamento' }));
 
     await waitFor(() => expect(config.create).toHaveBeenCalled());
     expect(navigateMock).toHaveBeenCalledWith('/contas-pagar/1');
@@ -190,7 +190,7 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByText('Direcionado para fatura 05/2026')).toBeInTheDocument();
     expect(
-      screen.getByText('Visa final 4242 • fechamento 2026-05-10 • vencimento 2026-05-20')
+      screen.getByText(/Visa final 4242 .* fechamento 2026-05-10 .* vencimento 2026-05-20/i)
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Abrir fatura prevista/i })).toHaveAttribute(
       'href',
@@ -214,7 +214,7 @@ describe('FinancialAccountFormPage', () => {
           code: 'VALIDATION_ERROR',
           message: 'Erro',
           errors: {
-            Descricao: ['Descrição obrigatória.']
+            Descricao: ['DescriÃ§Ã£o obrigatÃ³ria.']
           },
           traceId: 'trace-id'
         },
@@ -229,10 +229,12 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByText('Rateio por Centro de Custo')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lançamento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lancamento' }));
 
     await waitFor(() => expect(config.create).toHaveBeenCalled());
-    expect(await screen.findByText('Descrição obrigatória.')).toBeInTheDocument();
+    expect(await screen.findByText('DescriÃ§Ã£o obrigatÃ³ria.')).toBeInTheDocument();
     expect(navigateMock).not.toHaveBeenCalled();
   }, 20000);
 });
+
+

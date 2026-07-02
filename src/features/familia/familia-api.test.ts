@@ -2,11 +2,14 @@ import {
   aceitarConvite,
   alterarPapelMembro,
   criarConvite,
+  criarWorkspace,
+  listarMinhasParticipacoes,
   obterConvite,
   obterMinhaFamilia,
   removerMembro,
   renomearFamilia,
-  revogarConvite
+  revogarConvite,
+  selecionarWorkspace
 } from './familia-api';
 import { apiClient } from '../../services/http/api-client';
 
@@ -25,6 +28,25 @@ const familia = {
   meuPapel: 'Administrador',
   membros: [],
   convitesPendentes: []
+};
+
+const participacoes = [
+  { id: 'fam1', nome: 'Espaco 1', meuPapel: 'Administrador', ativa: true },
+  { id: 'fam2', nome: 'Espaco 2', meuPapel: 'Membro', ativa: false }
+];
+
+const sessao = {
+  accessToken: 'new-token',
+  expiresAtUtc: '2026-08-01T00:00:00Z',
+  refreshToken: '',
+  usuario: {
+    id: 'u1',
+    nome: 'User',
+    email: 'u1@example.com',
+    avatarUrl: null,
+    workspace: { id: 'fam2', nome: 'Espaco 2', papel: 'Membro' },
+    familia: { id: 'fam2', nome: 'Espaco 2', papel: 'Membro' }
+  }
 };
 
 describe('familia-api', () => {
@@ -67,5 +89,32 @@ describe('familia-api', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/familias/convites/token1/aceitar');
     expect(apiClient.put).toHaveBeenCalledWith('/familias/membros/m1/papel', { papel: 'Administrador' });
     expect(apiClient.delete).toHaveBeenCalledWith('/familias/membros/m1');
+  });
+
+  it('lists workspace participacoes', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: participacoes } as never);
+
+    const result = await listarMinhasParticipacoes();
+
+    expect(result).toEqual(participacoes);
+    expect(apiClient.get).toHaveBeenCalledWith('/familias');
+  });
+
+  it('selects a workspace and returns the new session', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { sessao } } as never);
+
+    const result = await selecionarWorkspace('fam2');
+
+    expect(result).toEqual({ sessao });
+    expect(apiClient.post).toHaveBeenCalledWith('/familias/fam2/selecionar');
+  });
+
+  it('creates a workspace and returns the new session', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { sessao } } as never);
+
+    const result = await criarWorkspace();
+
+    expect(result).toEqual({ sessao });
+    expect(apiClient.post).toHaveBeenCalledWith('/familias', {});
   });
 });

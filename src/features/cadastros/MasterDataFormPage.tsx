@@ -22,6 +22,8 @@ import type { ApiErrorResponse } from '../../types/api';
 import type { FormFieldConfig, MasterDataModuleConfig, SelectOption } from './module-config';
 import { applyInputMask, extractDigits } from './input-masks';
 import { CurrencyInput } from '../../shared/CurrencyInput';
+import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
+import { QuickAddPessoaModal } from './quick-add/QuickAddPessoaModal';
 
 function buildFieldOptions(field: FormFieldConfig<Record<string, unknown>>, loadedOptions: Record<string, SelectOption[]>) {
   return [...(field.options ?? []), ...(loadedOptions[field.name] ?? [])];
@@ -180,7 +182,7 @@ function PessoaPixKeysSection({
   const pixErrors = (errors.chavesPix as Array<{ tipo?: { message?: string }; chave?: { message?: string } }> | undefined) ?? [];
 
   return (
-    <FormSection title="Chaves Pix" eyebrow="Dados bancários" icon={<span className="material-symbols-outlined text-2xl">key</span>}>
+    <FormSection title="Chaves Pix" eyebrow="Dados bancários" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>key</span>}>
       <div className="space-y-4">
         <p className="text-sm text-on-surface-variant">Cadastre uma ou mais chaves Pix para esta pessoa.</p>
 
@@ -253,6 +255,7 @@ export function MasterDataFormPage({
   const [loadError, setLoadError] = useState<string>();
   const [submitError, setSubmitError] = useState<string>();
   const [loadedOptions, setLoadedOptions] = useState<Record<string, SelectOption[]>>({});
+  const [responsavelModalOpen, setResponsavelModalOpen] = useState(false);
 
   const {
     control,
@@ -340,6 +343,16 @@ export function MasterDataFormPage({
     );
   }, [config.fields, config.key]);
 
+  async function reloadFieldOptions(fieldName: string) {
+    const field = config.fields.find((item) => item.name === fieldName);
+    if (!field?.loadOptions) {
+      return;
+    }
+
+    const options = await field.loadOptions();
+    setLoadedOptions((prev) => ({ ...prev, [fieldName]: options }));
+  }
+
   async function onSubmit(payload: TPayload) {
     setSubmitError(undefined);
     try {
@@ -420,6 +433,8 @@ export function MasterDataFormPage({
                   )}
                   placeholder="Selecione..."
                   onChange={(value) => controlledField.onChange(value)}
+                  onAddNew={isContaGerencial && field.name === 'responsavelPadraoId' ? () => setResponsavelModalOpen(true) : undefined}
+                  addNewLabel="Criar responsavel"
                 />
               );
             }
@@ -448,9 +463,11 @@ export function MasterDataFormPage({
 
               return (
                 <input
-                  type="number"
-                  value={typeof controlledField.value === 'number' ? controlledField.value : ''}
-                  onChange={(event) => controlledField.onChange(event.target.value === '' ? (field.nullable ? null : 0) : Number(event.target.value))}
+                  inputMode="numeric"
+                  value={typeof controlledField.value === 'number' ? String(controlledField.value) : ''}
+                  onKeyDown={preventScientificNotation}
+                  onPaste={handleIntegerPaste}
+                  onChange={(event) => controlledField.onChange(parseIntegerInput(event.target.value, field.nullable))}
                   className={formFieldClass}
                   min={field.min}
                   max={field.max}
@@ -484,8 +501,9 @@ export function MasterDataFormPage({
   const ativoValue = typeof watchedValues.ativo === 'boolean' ? (watchedValues.ativo ? 'Ativo' : 'Inativo') : 'Pronto';
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-8 pb-24 lg:grid-cols-12">
+    <>
+      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-8 pb-24 lg:grid-cols-12">
         <div className="space-y-8 lg:col-span-7">
           {sections.map((section) => {
             const fields = section.fields.map((fieldName) => fieldByName.get(fieldName)).filter((field): field is FormFieldConfig<TPayload> => Boolean(field));
@@ -523,7 +541,16 @@ export function MasterDataFormPage({
             ]}
           />
         </div>
-      </form>
-    </div>
+        </form>
+      </div>
+
+      <QuickAddPessoaModal
+        open={responsavelModalOpen}
+        onClose={() => setResponsavelModalOpen(false)}
+        onSuccess={(newId) => {
+          void reloadFieldOptions('responsavelPadraoId').then(() => setValue('responsavelPadraoId', newId, { shouldValidate: true }));
+        }}
+      />
+    </>
   );
 }

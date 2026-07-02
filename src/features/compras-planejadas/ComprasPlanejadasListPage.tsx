@@ -1,6 +1,7 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
+import { ExportButton } from '../../components/data/ExportButton';
 import { IconActionButton } from '../../components/data/IconActionButton';
 import { StatusBadge } from '../../components/data/StatusBadge';
 import { EyeOutlined, EditOutlined, ShoppingOutlined } from '@ant-design/icons';
@@ -221,12 +222,32 @@ export function ComprasPlanejadasListPage() {
     }
   ];
 
+  const exportColumns = [
+    { header: 'Título', value: (r: CompraPlanejadaResumo) => r.titulo },
+    { header: 'Valor estimado', value: (r: CompraPlanejadaResumo) => r.valorEstimado },
+    { header: 'Data desejada', value: (r: CompraPlanejadaResumo) => r.dataDesejada ?? '' },
+    { header: 'Prioridade', value: (r: CompraPlanejadaResumo) => prioridadeLabel(r.prioridade) },
+    { header: 'Status', value: (r: CompraPlanejadaResumo) => r.status },
+    { header: 'Conta gerencial', value: (r: CompraPlanejadaResumo) => r.contaGerencialDescricao ?? '' },
+    { header: 'Responsável', value: (r: CompraPlanejadaResumo) => r.responsavelNome ?? '' },
+    { header: 'Parcelas', value: (r: CompraPlanejadaResumo) => r.parcelavel ? (r.quantidadeParcelasDesejada ?? 1) : 1 },
+    { header: 'Link', value: (r: CompraPlanejadaResumo) => r.link ?? '' },
+  ];
+
   return (
     <ListPageShell
       actions={
-        <Button to="/compras-planejadas/novo" icon={<span className="material-symbols-outlined text-sm">add_circle</span>}>
-          Nova compra planejada
-        </Button>
+        <>
+          <ExportButton
+            fetchPage={comprasPlanejadasApi.listar}
+            filters={filters}
+            columns={exportColumns}
+            filename="compras-planejadas"
+          />
+          <Button to="/compras-planejadas/novo" icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>add_circle</span>}>
+            Nova compra planejada
+          </Button>
+        </>
       }
       summary={
         <SummaryCard

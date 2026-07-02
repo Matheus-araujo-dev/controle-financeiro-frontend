@@ -12,6 +12,7 @@ const RelatoriosPage = lazy(() => import('../features/relatorios/RelatoriosPage'
 const OrcamentoPage = lazy(() => import('../features/orcamento/pages/OrcamentoPage').then(m => ({ default: m.OrcamentoPage })));
 const AceitarConvitePage = lazy(() => import('../features/familia/AceitarConvitePage').then(m => ({ default: m.AceitarConvitePage })));
 const NotFoundPage = lazy(() => import('./NotFoundPage').then(m => ({ default: m.NotFoundPage })));
+const AuthCallbackPage = lazy(() => import('../pages/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })));
 const AgenteChatPage = lazy(() => import('../features/agente/AgenteChatPage').then(m => ({ default: m.AgenteChatPage })));
 const WhatsappVinculoPage = lazy(() => import('../features/agente/WhatsappVinculoPage').then(m => ({ default: m.WhatsappVinculoPage })));
 
@@ -24,7 +25,7 @@ export const appRoutes: RouteObject[] = [
       </ProtectedRoute>
     ),
     handle: {
-      title: 'Inicio'
+      title: 'Início'
     },
     children: [
       {
@@ -88,6 +89,10 @@ export const appRoutes: RouteObject[] = [
   {
     path: '/login',
     element: <LoginPage />
+  },
+  {
+    path: '/auth/callback',
+    element: <AuthCallbackPage />
   },
   {
     path: '/acesso-negado',
