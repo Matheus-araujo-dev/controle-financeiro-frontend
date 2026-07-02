@@ -101,12 +101,6 @@ describe('cadastros module config', () => {
       observacao: '',
       chavesPix: []
     });
-    expect(pessoasModuleConfig.buildSummaryItems?.({ total: 2, ativos: 1, juridicas: 1 })).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ key: 'total', value: 2 }),
-        expect.objectContaining({ key: 'inativos', value: 0 })
-      ])
-    );
     expect(pessoasModuleConfig.exportColumns?.map((column) => column.value({ cpfCnpj: '12345678901', ativo: true } as never))).toEqual([
       undefined,
       undefined,

@@ -27,3 +27,15 @@ export function handleIntegerPaste(event: ClipboardEvent<HTMLInputElement>) {
     event.preventDefault();
   }
 }
+
+
+export function keepOnlyDecimalCharacters(value: string) {
+  return value.replace(/[^\d,.]/g, '');
+}
+
+export function handleDecimalPaste(event: ClipboardEvent<HTMLInputElement>) {
+  const text = event.clipboardData.getData('text');
+  if (text && /[^\d,.]/.test(text)) {
+    event.preventDefault();
+  }
+}

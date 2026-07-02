@@ -119,6 +119,19 @@ describe('quick add modals', () => {
     expect(onSuccess).toHaveBeenCalledWith('card1', 'Cartao Teste - final 1234');
   });
 
+  it('shows a friendly validation message for invalid credit card days', async () => {
+    render(<QuickAddCartaoModal open onClose={vi.fn()} onSuccess={vi.fn()} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/Nubank Roxinho/i), { target: { value: 'Cartao Teste' } });
+    fireEvent.change(screen.getByPlaceholderText(/Visa/i), { target: { value: 'Visa' } });
+    fireEvent.change(screen.getByPlaceholderText('0000'), { target: { value: '1234' } });
+    fireEvent.change(screen.getByDisplayValue('1'), { target: { value: '0' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Cadastro' }));
+
+    expect(await screen.findByText('Dia de fechamento deve estar entre 1 e 31.')).toBeInTheDocument();
+    expect(cadastrosApi.cartoes.criar).not.toHaveBeenCalled();
+  });
+
   it('creates a bank account with the minimal payload', async () => {
     vi.mocked(cadastrosApi.contasBancarias.criar).mockResolvedValue({
       id: 'bank1',
