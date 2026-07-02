@@ -18,7 +18,8 @@ import type {
   ContaReceberPayload,
   ContaReceberResumo,
   RecorrenciaPayload,
-  StatusContaCodigo
+  StatusContaCodigo,
+  CancelarContaPagarPayload
 } from '../../types/financeiro';
 
 export type StatusCodigoConta = StatusContaCodigo;
@@ -113,7 +114,7 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   encerrarRecorrencia?: (id: string, values: { dataFim: string }) => Promise<TDetail>;
   liquidar?: (id: string, values: FinanceiroLiquidacaoFormValues) => Promise<TDetail>;
   estornar?: (id: string) => Promise<TDetail>;
-  cancelar?: (id: string) => Promise<TDetail>;
+  cancelar?: (id: string, options?: CancelarContaPagarPayload) => Promise<TDetail>;
   toFormValues: (detail: TDetail) => FinanceiroFormValues;
   loadPessoaOptions: () => Promise<SelectOption[]>;
   loadFormaPagamentoOptions: () => Promise<FormaPagamentoOption[]>;

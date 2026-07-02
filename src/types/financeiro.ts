@@ -306,6 +306,10 @@ export type LiquidacaoPayload = {
   atualizarValorConta: boolean;
 };
 
+export type CancelarContaPagarPayload = {
+  cancelarPlanejamentoRelacionado?: boolean | null;
+};
+
 export type GerarOcorrenciasPayload = {
   ateData: string;
 };

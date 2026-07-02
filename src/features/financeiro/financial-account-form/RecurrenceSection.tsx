@@ -11,6 +11,7 @@ import {
 } from './field-classes';
 import { FormSection } from '../../../components/layout';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
+import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../../shared/number-input';
 
 type RecurrenceSectionProps = {
   form: FinancialAccountFormApi;
@@ -76,11 +77,14 @@ export function RecurrenceSection({ form }: RecurrenceSectionProps) {
                 name="recorrenciaDiaOrdemMensal"
                 render={({ field }) => (
                   <input
-                    type="number"
-                    min={1}
-                    max={31}
-                    {...field}
-                    onChange={(event) => field.onChange(Number(event.target.value))}
+                    name={field.name}
+                    ref={field.ref}
+                    inputMode="numeric"
+                    value={String(field.value ?? 1)}
+                    onBlur={field.onBlur}
+                    onKeyDown={preventScientificNotation}
+                    onPaste={handleIntegerPaste}
+                    onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
                     disabled={!canEdit}
                     className={`${nativeCompactFieldClass} [&::-webkit-outer-spin-button]:hidden [&::-webkit-inner-spin-button]:hidden`}
                   />

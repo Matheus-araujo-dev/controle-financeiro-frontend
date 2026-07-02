@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AxiosError } from 'axios';
 
@@ -16,6 +16,7 @@ import { calculateValorLiquido, resolveFormaPagamentoBehavior } from '../module-
 import { financialAccountFormSchema } from '../schemas';
 import { formatMonthYearBR } from '../../../shared/date';
 import { extractCardInvoicePreview, type CardInvoicePreview } from './card-invoice';
+import type { CancelarContaPagarPayload } from '../../../types/financeiro';
 
 export function normalizeRecurringFormValues(values: FinanceiroFormValues): FinanceiroFormValues {
   if (!values.ehRecorrente || values.quantidadeParcelas === 1) {
@@ -64,11 +65,12 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   });
 
   const watchedValues = watch();
+  const watchedRateios = useWatch({ control, name: 'rateios' }) ?? [];
 
   const valorLiquido = useMemo(() => calculateValorLiquido(watchedValues), [watchedValues]);
   const totalRateios = useMemo(
-    () => (watchedValues.rateios.length === 1 ? valorLiquido : watchedValues.rateios.reduce((total, item) => total + (Number(item.valor) || 0), 0)),
-    [valorLiquido, watchedValues.rateios]
+    () => (watchedRateios.length === 1 ? valorLiquido : watchedRateios.reduce((total, item) => total + (Number(item?.valor) || 0), 0)),
+    [valorLiquido, watchedRateios]
   );
   const formaPagamentoBehavior = useMemo(
     () => resolveFormaPagamentoBehavior(watchedValues.formaPagamentoId, formaPagamentoOptions),
@@ -111,11 +113,11 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
 
   // With a single rateio line, its value always equals the net amount, so keep it in sync automatically.
   useEffect(() => {
-    if (watchedValues.rateios.length !== 1) return;
-    const current = Number(watchedValues.rateios[0]?.valor) || 0;
+    if (watchedRateios.length !== 1) return;
+    const current = Number(watchedRateios[0]?.valor) || 0;
     if (Math.abs(current - valorLiquido) < 0.005) return;
     setValue('rateios.0.valor', valorLiquido, { shouldValidate: true, shouldDirty: true });
-  }, [setValue, valorLiquido, watchedValues.rateios]);
+  }, [setValue, valorLiquido, watchedRateios]);
 
   useEffect(() => {
     async function loadOptions() {
@@ -216,15 +218,15 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     [id, config, navigate, setError]
   );
 
-  const cancelar = useCallback(async () => {
+  const cancelar = useCallback(async (options?: CancelarContaPagarPayload) => {
     if (!id || !config.cancelar) return;
     setActionLoading(true);
     setErrorMessage(undefined);
     try {
-      await config.cancelar(id);
+      await config.cancelar(id, options);
       navigate(config.routeBase);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao cancelar o lançamento.');
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao cancelar o lancamento.');
     } finally {
       setActionLoading(false);
     }

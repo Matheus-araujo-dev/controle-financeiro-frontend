@@ -17,6 +17,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import {
   alterarPapelMembro,
   criarConvite,
+  criarWorkspace,
   listarMinhasParticipacoes,
   obterMinhaFamilia,
   removerMembro,
@@ -50,6 +51,7 @@ function MinhasParticipacoes() {
   const [participacoes, setParticipacoes] = useState<ParticipacaoWorkspaceResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [switching, setSwitching] = useState<string | null>(null);
+  const [creatingWorkspace, setCreatingWorkspace] = useState(false);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -61,6 +63,21 @@ function MinhasParticipacoes() {
   }, []);
 
   useEffect(() => { void carregar(); }, [carregar]);
+
+  const handleCriarWorkspace = async () => {
+    if (creatingWorkspace || participacoes.length >= MAX_WORKSPACES) return;
+    setCreatingWorkspace(true);
+    try {
+      const resultado = await criarWorkspace();
+      useAuthStore.getState().applyTokenResponse(resultado.sessao);
+      notify('success', 'Novo espaco criado');
+      window.location.reload();
+    } catch (err) {
+      notify('error', 'Nao foi possivel criar o espaco', getApiErrorMessage(err));
+    } finally {
+      setCreatingWorkspace(false);
+    }
+  };
 
   const handleSelecionar = async (id: string) => {
     if (switching) return;

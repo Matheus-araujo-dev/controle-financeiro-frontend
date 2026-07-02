@@ -20,10 +20,13 @@ import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api
 import { applyServerValidationErrors } from '../../services/forms/applyServerValidationErrors';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
+import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
 import type { ApiErrorResponse } from '../../types/api';
 import type { CartaoResumo, ContaBancariaResumo, FormaPagamentoResumo, PessoaResumo } from '../../types/cadastros';
 import type { CompraPlanejadaDetalhe } from '../../types/compras-planejadas';
 import { realizarCompraPlanejadaSchema } from './schemas';
+import { QuickAddFormaPagamentoModal } from '../cadastros/quick-add/QuickAddFormaPagamentoModal';
+import { QuickAddPessoaModal } from '../cadastros/quick-add/QuickAddPessoaModal';
 
 type RealizarCompraPlanejadaFormValues = {
   dataCompra: string;
@@ -86,6 +89,16 @@ function buildCartaoOption(item: CartaoResumo): CartaoOption {
   };
 }
 
+async function reloadPessoaOptions(setter: (options: SelectOption[]) => void) {
+  const pessoas = await cadastrosApi.pessoas.listar({ page: 1, pageSize: 200, search: '', ativo: true });
+  setter(pessoas.items.map(buildPessoaOption));
+}
+
+async function reloadFormaPagamentoOptions(setter: (options: FormaPagamentoOption[]) => void) {
+  const formas = await cadastrosApi.formasPagamento.listar({ page: 1, pageSize: 200, search: '', ativo: true });
+  setter(formas.items.map(buildFormaPagamentoOption));
+}
+
 function formatCompetenciaMes(data: string) {
   const [year, month] = data.split('-');
   return `${month}/${year}`;
@@ -146,6 +159,8 @@ export function RealizarCompraPlanejadaPage() {
   const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<FormaPagamentoOption[]>([]);
   const [contaBancariaOptions, setContaBancariaOptions] = useState<SelectOption[]>([]);
   const [cartaoOptions, setCartaoOptions] = useState<CartaoOption[]>([]);
+  const [recebedorModalOpen, setRecebedorModalOpen] = useState(false);
+  const [formaPagamentoModalOpen, setFormaPagamentoModalOpen] = useState(false);
 
   const {
     control,
@@ -406,6 +421,8 @@ export function RealizarCompraPlanejadaPage() {
                         onBlur={field.onBlur}
                         options={formaPagamentoOptions}
                         placeholder="Selecione..."
+                        onAddNew={() => setFormaPagamentoModalOpen(true)}
+                        addNewLabel="Criar forma de pagamento"
                       />
                     )}
                   />
@@ -448,12 +465,15 @@ export function RealizarCompraPlanejadaPage() {
                         name="quantidadeParcelas"
                         render={({ field }) => (
                           <input
-                            {...field}
+                            name={field.name}
+                            ref={field.ref}
                             aria-label="Parcelas"
-                            type="number"
-                            min={1}
-                            max={detail.parcelavel ? 48 : 1}
-                            onChange={(event) => field.onChange(Number(event.target.value))}
+                            inputMode="numeric"
+                            value={String(field.value ?? 1)}
+                            onBlur={field.onBlur}
+                            onKeyDown={preventScientificNotation}
+                            onPaste={handleIntegerPaste}
+                            onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
                             className={formFieldClass}
                           />
                         )}
@@ -509,6 +529,8 @@ export function RealizarCompraPlanejadaPage() {
                         onBlur={field.onBlur}
                         options={pessoaOptions}
                         placeholder="Selecione quem recebeu..."
+                        onAddNew={() => setRecebedorModalOpen(true)}
+                        addNewLabel="Criar recebedor"
                       />
                     )}
                   />
@@ -609,6 +631,21 @@ export function RealizarCompraPlanejadaPage() {
           </div>
         </form>
       )}
+
+      <QuickAddPessoaModal
+        open={recebedorModalOpen}
+        onClose={() => setRecebedorModalOpen(false)}
+        onSuccess={(newId) => {
+          void reloadPessoaOptions(setPessoaOptions).then(() => setValue('recebedorId', newId, { shouldValidate: true }));
+        }}
+      />
+      <QuickAddFormaPagamentoModal
+        open={formaPagamentoModalOpen}
+        onClose={() => setFormaPagamentoModalOpen(false)}
+        onSuccess={(newId) => {
+          void reloadFormaPagamentoOptions(setFormaPagamentoOptions).then(() => setValue('formaPagamentoId', newId, { shouldValidate: true }));
+        }}
+      />
     </div>
   );
 }

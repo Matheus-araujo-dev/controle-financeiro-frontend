@@ -1,12 +1,14 @@
 export type OrcamentoItem = {
   metaId: string | null;
   contaGerencialId: string;
+  contaPaiId: string | null;
   contaGerencialCodigo: string | null;
   contaGerencialDescricao: string;
   valorMeta: number | null;
   valorRealizado: number;
   percentualConsumido: number | null;
   estourado: boolean;
+  aceitaLancamentos: boolean;
 };
 
 export type OrcamentoCompetencia = {

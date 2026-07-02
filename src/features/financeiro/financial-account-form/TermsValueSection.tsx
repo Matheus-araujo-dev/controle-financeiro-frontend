@@ -5,6 +5,7 @@ import { DateInput } from '../../../components/forms/DateInput';
 import { FormSection } from '../../../components/layout';
 import { errorTextClass, fieldLabelClass, nativeCompactFieldClass, nativeFieldWithPaddingClass } from './field-classes';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
+import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../../shared/number-input';
 
 type TermsValueSectionProps = {
   form: FinancialAccountFormApi;
@@ -43,9 +44,14 @@ export function TermsValueSection({ form }: TermsValueSectionProps) {
             name="quantidadeParcelas"
             render={({ field }) => (
               <input
-                type="number"
-                min={1}
-                {...field}
+                name={field.name}
+                ref={field.ref}
+                inputMode="numeric"
+                value={String(field.value ?? 1)}
+                onBlur={field.onBlur}
+                onKeyDown={preventScientificNotation}
+                onPaste={handleIntegerPaste}
+                onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
                 disabled={Boolean(id) || watchedValues.ehRecorrente || !canEdit}
                 className={nativeFieldWithPaddingClass}
               />

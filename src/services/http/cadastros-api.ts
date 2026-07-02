@@ -62,20 +62,26 @@ export const cadastrosApi = {
     obterPorId: (id: string) => getById<FormaPagamentoDetalhe>(`/formas-pagamento/${id}`),
     criar: (payload: FormaPagamentoPayload) => post<FormaPagamentoDetalhe>('/formas-pagamento', payload),
     atualizar: (id: string, payload: FormaPagamentoPayload) =>
-      put<FormaPagamentoDetalhe>(`/formas-pagamento/${id}`, payload)
+      put<FormaPagamentoDetalhe>(`/formas-pagamento/${id}`, payload),
+    ativar: (id: string) => patch<FormaPagamentoDetalhe>(`/formas-pagamento/${id}/ativar`),
+    inativar: (id: string) => patch<FormaPagamentoDetalhe>(`/formas-pagamento/${id}/inativar`)
   },
   contasBancarias: {
     listar: (params: ContaBancariaFilters) => getPaged<ContaBancariaResumo>('/contas-bancarias', params),
     obterPorId: (id: string) => getById<ContaBancariaDetalhe>(`/contas-bancarias/${id}`),
     criar: (payload: ContaBancariaPayload) => post<ContaBancariaDetalhe>('/contas-bancarias', payload),
     atualizar: (id: string, payload: ContaBancariaPayload) =>
-      put<ContaBancariaDetalhe>(`/contas-bancarias/${id}`, payload)
+      put<ContaBancariaDetalhe>(`/contas-bancarias/${id}`, payload),
+    ativar: (id: string) => patch<ContaBancariaDetalhe>(`/contas-bancarias/${id}/ativar`),
+    inativar: (id: string) => patch<ContaBancariaDetalhe>(`/contas-bancarias/${id}/inativar`)
   },
   cartoes: {
     listar: (params: CartaoFilters) => getPaged<CartaoResumo>('/cartoes', params),
     obterPorId: (id: string) => getById<CartaoDetalhe>(`/cartoes/${id}`),
     criar: (payload: CartaoPayload) => post<CartaoDetalhe>('/cartoes', payload),
-    atualizar: (id: string, payload: CartaoPayload) => put<CartaoDetalhe>(`/cartoes/${id}`, payload)
+    atualizar: (id: string, payload: CartaoPayload) => put<CartaoDetalhe>(`/cartoes/${id}`, payload),
+    ativar: (id: string) => patch<CartaoDetalhe>(`/cartoes/${id}/ativar`),
+    inativar: (id: string) => patch<CartaoDetalhe>(`/cartoes/${id}/inativar`)
   },
   contasGerenciais: {
     listar: (params: ContaGerencialFilters) => getPaged<ContaGerencialResumo>('/contas-gerenciais', params),
@@ -83,6 +89,8 @@ export const cadastrosApi = {
     criar: (payload: ContaGerencialPayload) => post<ContaGerencialDetalhe>('/contas-gerenciais', payload),
     atualizar: (id: string, payload: ContaGerencialPayload) =>
       put<ContaGerencialDetalhe>(`/contas-gerenciais/${id}`, payload),
+    ativar: (id: string) => patch<ContaGerencialDetalhe>(`/contas-gerenciais/${id}/ativar`),
+    inativar: (id: string) => patch<ContaGerencialDetalhe>(`/contas-gerenciais/${id}/inativar`),
     seedPlanoInicial: () => post<{ contasCriadas: number }>('/contas-gerenciais/seed-plano-inicial', {})
   }
 };

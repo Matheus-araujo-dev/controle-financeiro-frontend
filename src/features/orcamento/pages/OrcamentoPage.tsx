@@ -60,6 +60,7 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
 
   const percentual = item.percentualConsumido ?? 0;
   const progresso = item.valorMeta ? Math.min(percentual, 100) : 0;
+  const metaCalculada = !item.aceitaLancamentos;
 
   return (
     <div className="bg-surface-container-highest border border-outline-variant/10 rounded-2xl p-4 flex flex-col gap-3">
@@ -77,6 +78,11 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
               </>
             )}
           </p>
+          {metaCalculada && (
+            <p className="text-xs text-on-surface-variant mt-1 italic">
+              Conta estrutural: meta calculada automaticamente pela soma das contas filhas.
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {item.estourado && (
@@ -89,14 +95,14 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
             aria-label={`Meta de ${item.contaGerencialDescricao}`}
             value={draftMeta}
             onChange={setDraftMeta}
-            disabled={saving}
-            placeholder="Definir meta"
+            disabled={saving || metaCalculada}
+            placeholder={metaCalculada ? 'Calculada automaticamente' : 'Definir meta'}
             className="w-36 min-w-[120px] flex-1 sm:flex-none"
           />
           <button
             type="button"
             onClick={() => void onSalvarMeta(item, draftMeta)}
-            disabled={saving || draftMeta === item.valorMeta}
+            disabled={saving || metaCalculada || draftMeta === item.valorMeta}
             className="bg-primary/15 text-primary border border-primary/30 rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all hover:bg-primary/25 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Salvar

@@ -17,6 +17,7 @@ import { applyServerValidationErrors } from '../../services/forms/applyServerVal
 import type { ApiErrorResponse } from '../../types/api';
 import type { CompraPlanejadaPayload } from '../../types/compras-planejadas';
 import { compraPlanejadaSchema } from './schemas';
+import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
 import { QuickAddContaGerencialModal } from '../cadastros/quick-add/QuickAddContaGerencialModal';
 import { QuickAddPessoaModal } from '../cadastros/quick-add/QuickAddPessoaModal';
 
@@ -373,11 +374,12 @@ export function NovaCompraPlanejadaPage() {
                         <input
                           aria-label="Parcelas Desejadas"
                           className={fieldClassName}
-                          type="number"
-                          min={2}
+                          inputMode="numeric"
                           placeholder="2"
-                          value={field.value ?? ''}
-                          onChange={(event) => field.onChange(event.target.value ? Number(event.target.value) : null)}
+                          value={field.value == null ? '' : String(field.value)}
+                          onKeyDown={preventScientificNotation}
+                          onPaste={handleIntegerPaste}
+                          onChange={(event) => field.onChange(parseIntegerInput(event.target.value, true))}
                         />
                       )}
                     />
