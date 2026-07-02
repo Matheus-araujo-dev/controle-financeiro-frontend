@@ -19,6 +19,7 @@ import { Button } from '../../components/ui/Button';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 import { formatCurrencyBRL } from '../../shared/currency';
+import { handleDecimalPaste, keepOnlyDecimalCharacters, preventScientificNotation } from '../../shared/number-input';
 import { formatDateBR } from '../../shared/date';
 import type {
   CompraPlanejadaFilters,
@@ -340,7 +341,9 @@ export function ComprasPlanejadasListPage() {
                   className={filterInputClass}
                   inputMode="decimal"
                   value={filters.valorEstimadoMin ?? ''}
-                  onChange={(event) => setFilters((prev) => ({ ...prev, page: 1, valorEstimadoMin: event.target.value || undefined }))}
+                  onKeyDown={preventScientificNotation}
+                  onPaste={handleDecimalPaste}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, page: 1, valorEstimadoMin: keepOnlyDecimalCharacters(event.target.value) || undefined }))}
                 />
               </FilterInputWrapper>
             </FilterField>
@@ -350,7 +353,9 @@ export function ComprasPlanejadasListPage() {
                   className={filterInputClass}
                   inputMode="decimal"
                   value={filters.valorEstimadoMax ?? ''}
-                  onChange={(event) => setFilters((prev) => ({ ...prev, page: 1, valorEstimadoMax: event.target.value || undefined }))}
+                  onKeyDown={preventScientificNotation}
+                  onPaste={handleDecimalPaste}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, page: 1, valorEstimadoMax: keepOnlyDecimalCharacters(event.target.value) || undefined }))}
                 />
               </FilterInputWrapper>
             </FilterField>

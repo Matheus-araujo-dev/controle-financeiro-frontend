@@ -291,7 +291,7 @@ export function ImportarFaturaPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wide mb-1 block">Categoria padrão (fallback)</label>
+            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wide mb-1 block">Categoria padrao</label>
             <Select
               showSearch
               filterOption={(input, opt) => (opt?.label ?? '').toLowerCase().includes(input.toLowerCase())}

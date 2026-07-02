@@ -115,6 +115,28 @@ describe('ComprasPlanejadasListPage', () => {
     );
   });
 
+  it('sanitizes numeric value filters before sending the query', async () => {
+    renderPage();
+
+    expect(await screen.findByText('Notebook novo')).toBeInTheDocument();
+
+    const textboxes = screen.getAllByRole('textbox');
+    const valorMinimo = textboxes[1];
+    const valorMaximo = textboxes[2];
+
+    await userEvent.type(valorMinimo, '1e2');
+    await userEvent.type(valorMaximo, '3a4');
+
+    await waitFor(() =>
+      expect(comprasPlanejadasApi.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          valorEstimadoMin: '12',
+          valorEstimadoMax: '34'
+        })
+      )
+    );
+  }, 40000);
+
   it('applies filters and table sorting to the query', async () => {
     vi.mocked(cadastrosApi.contasGerenciais.listar).mockResolvedValue({
       items: [
