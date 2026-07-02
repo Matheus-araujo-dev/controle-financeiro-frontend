@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { formCompactFieldClass, formFieldClass, formLabelClass } from '../../../components/forms/FormPrimitives';
+import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../../shared/number-input';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
 import { QuickAddModal } from './QuickAddModal';
 
@@ -22,15 +23,23 @@ export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
 
   async function handleSave() {
     if (!nome.trim()) {
-      setError('Nome é obrigatório.');
+      setError('Nome e obrigatorio.');
       return;
     }
     if (!bandeira.trim()) {
-      setError('Bandeira é obrigatória.');
+      setError('Bandeira e obrigatoria.');
       return;
     }
     if (!finalValid) {
-      setError('Número final deve ter exatamente 4 dígitos.');
+      setError('Numero final deve ter exatamente 4 digitos.');
+      return;
+    }
+    if (diaFechamento < 1 || diaFechamento > 31) {
+      setError('Dia de fechamento deve estar entre 1 e 31.');
+      return;
+    }
+    if (diaVencimento < 1 || diaVencimento > 31) {
+      setError('Dia de vencimento deve estar entre 1 e 31.');
       return;
     }
     setLoading(true);
@@ -68,7 +77,7 @@ export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
   return (
     <QuickAddModal
       open={open}
-      title="Novo Cartão"
+      title="Novo Cartao"
       icon="credit_card"
       error={error}
       loading={loading}
@@ -77,7 +86,7 @@ export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
       onSubmit={handleSave}
     >
       <div className="space-y-2">
-        <label className={formLabelClass}>Nome do Cartão</label>
+        <label className={formLabelClass}>Nome do Cartao</label>
         <input autoFocus value={nome} onChange={(event) => setNome(event.target.value)} placeholder="Ex: Nubank Roxinho" className={formFieldClass} />
       </div>
 
@@ -87,7 +96,7 @@ export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
           <input value={bandeira} onChange={(event) => setBandeira(event.target.value)} placeholder="Visa, Mastercard..." className={formFieldClass} />
         </div>
         <div className="space-y-2">
-          <label className={formLabelClass}>4 Últimos Dígitos</label>
+          <label className={formLabelClass}>4 Ãšltimos DÃ­gitos</label>
           <input
             value={numeroFinal}
             onChange={(event) => setNumeroFinal(event.target.value.replace(/\D/g, '').slice(0, 4))}
@@ -102,22 +111,26 @@ export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
         <div className="space-y-2">
           <label className={formLabelClass}>Dia Fechamento</label>
           <input
-            type="number"
+            inputMode="numeric"
             min={1}
             max={31}
             value={diaFechamento}
-            onChange={(event) => setDiaFechamento(Number(event.target.value))}
+            onKeyDown={preventScientificNotation}
+            onPaste={handleIntegerPaste}
+            onChange={(event) => setDiaFechamento(parseIntegerInput(event.target.value) || 0)}
             className={formCompactFieldClass}
           />
         </div>
         <div className="space-y-2">
           <label className={formLabelClass}>Dia Vencimento</label>
           <input
-            type="number"
+            inputMode="numeric"
             min={1}
             max={31}
             value={diaVencimento}
-            onChange={(event) => setDiaVencimento(Number(event.target.value))}
+            onKeyDown={preventScientificNotation}
+            onPaste={handleIntegerPaste}
+            onChange={(event) => setDiaVencimento(parseIntegerInput(event.target.value) || 0)}
             className={formCompactFieldClass}
           />
         </div>

@@ -630,6 +630,93 @@ describe('MasterDataFormPage', () => {
     expect(await screen.findByText('Nome obrigatório.')).toBeInTheDocument();
   }, 20000);
 
+  it('loads payment method detail in edit mode and submits toggled switches', async () => {
+    const detail = vi.fn().mockResolvedValue({
+      nome: 'Cartao corporativo',
+      tipo: 'Credito',
+      ehCartao: true,
+      baixarAutomaticamente: false,
+      ativo: true
+    });
+    const update = vi.fn().mockResolvedValue({});
+
+    render(
+      <MemoryRouter initialEntries={['/formas-pagamento/fp-1']}>
+        <Routes>
+          <Route
+            path="/formas-pagamento/:id"
+            element={
+              <MasterDataFormPage
+                config={{
+                  key: 'formas-pagamento',
+                  title: 'Formas de pagamento',
+                  singularTitle: 'Forma de pagamento',
+                  routeBase: '/formas-pagamento',
+                  emptyMessage: 'Vazio',
+                  listDescription: 'Descricao',
+                  formDescription: 'Formulario',
+                  columns: [],
+                  filters: [],
+                  fields: [
+                    { name: 'nome', label: 'Nome', kind: 'text' },
+                    {
+                      name: 'tipo',
+                      label: 'Tipo',
+                      kind: 'select',
+                      options: [
+                        { label: 'Pix', value: 'Pix' },
+                        { label: 'Credito', value: 'Credito' }
+                      ]
+                    },
+                    { name: 'ehCartao', label: 'E cartao', kind: 'switch' },
+                    { name: 'baixarAutomaticamente', label: 'Baixar automaticamente', kind: 'switch' },
+                    { name: 'ativo', label: 'Ativo', kind: 'switch' }
+                  ],
+                  schema: z.object({
+                    nome: z.string().min(1),
+                    tipo: z.enum(['Pix', 'Credito']),
+                    ehCartao: z.boolean(),
+                    baixarAutomaticamente: z.boolean(),
+                    ativo: z.boolean()
+                  }),
+                  defaultFilters: {},
+                  defaultValues: {
+                    nome: '',
+                    tipo: 'Pix',
+                    ehCartao: false,
+                    baixarAutomaticamente: false,
+                    ativo: true
+                  },
+                  list: vi.fn(),
+                  detail,
+                  create: vi.fn(),
+                  update,
+                  toFormValues: (value) => value
+                }}
+              />
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByDisplayValue('Cartao corporativo')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /E cartao/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Baixar automaticamente/i }));
+    await submitUpdate();
+
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith('fp-1', {
+        nome: 'Cartao corporativo',
+        tipo: 'Credito',
+        ehCartao: false,
+        baixarAutomaticamente: true,
+        ativo: true
+      })
+    );
+  });
+
   it('loads detail in edit mode and submits updates', async () => {
     const detail = vi.fn().mockResolvedValue({ nome: 'Pessoa existente' });
     const update = vi.fn().mockResolvedValue({});
