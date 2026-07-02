@@ -83,10 +83,10 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
   }
 
   return (
-    <FormSection title="Informações do Título" eyebrow="Passo 1" icon={<span className="material-symbols-outlined text-2xl">description</span>}>
+    <FormSection title="Informações do Título" eyebrow="Passo 1" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>description</span>}>
       {origemCompraPlanejadaId ? (
         <div className="flex gap-3 rounded-2xl border border-tertiary/20 bg-tertiary/10 p-4 text-tertiary">
-          <span className="material-symbols-outlined mt-1">info</span>
+          <span className="material-symbols-outlined mt-1" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
           <div>
             <p className="text-sm font-bold">Lançamento derivado de compra planejada</p>
             <p className="text-xs opacity-80">Os campos foram pré-preenchidos. Complete os dados antes de salvar.</p>
@@ -97,7 +97,7 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
       {cardInvoicePreview ? (
         <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/10 p-4">
           <div className="flex gap-3 text-primary">
-            <span className="material-symbols-outlined mt-1 text-lg">credit_card</span>
+            <span className="material-symbols-outlined mt-1 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>credit_card</span>
             <div>
               <p className="text-sm font-bold">Direcionado para fatura {formatMonthYearBR(cardInvoicePreview.competencia)}</p>
               <p className="text-xs opacity-80">
@@ -154,7 +154,7 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
 
           {aiSugestao && !categoriaAtual ? (
             <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/8 px-3 py-2 animate-in fade-in duration-300">
-              <span className="material-symbols-outlined text-sm text-primary">smart_toy</span>
+              <span className="material-symbols-outlined text-sm text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
               <span className="flex-1 text-xs font-medium text-primary">
                 IA sugere: <strong>{aiSugestao.descricao}</strong>
                 <span className="ml-1 opacity-60">({Math.round(aiSugestao.confianca * 100)}%)</span>

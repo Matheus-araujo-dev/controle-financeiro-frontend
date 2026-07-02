@@ -14,7 +14,7 @@ export function TermsValueSection({ form }: TermsValueSectionProps) {
   const { id, control, errors, canEdit, watchedValues } = form;
 
   return (
-    <FormSection title="Prazos e Valor" eyebrow="Passo 2" icon={<span className="material-symbols-outlined text-2xl">calendar_month</span>}>
+    <FormSection title="Prazos e Valor" eyebrow="Passo 2" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_month</span>}>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-y-8">
         <div className="space-y-2.5">
           <label className={fieldLabelClass}>Data Emissão</label>

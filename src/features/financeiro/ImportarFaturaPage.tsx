@@ -242,7 +242,7 @@ export function ImportarFaturaPage() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {contextHolder}
 
       <p className="text-sm text-on-surface-variant">
@@ -253,7 +253,7 @@ export function ImportarFaturaPage() {
       <div className="bg-surface-container-low border border-white/5 rounded-3xl p-6 space-y-4">
         <div className="flex items-center gap-3 mb-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <span className="material-symbols-outlined text-base">settings</span>
+            <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>settings</span>
           </div>
           <span className="font-bold text-on-surface">1. Configuração</span>
         </div>
@@ -309,7 +309,7 @@ export function ImportarFaturaPage() {
       <div className="bg-surface-container-low border border-white/5 rounded-3xl p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <span className="material-symbols-outlined text-base">upload_file</span>
+            <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>upload_file</span>
           </div>
           <span className="font-bold text-on-surface">2. Arquivo da fatura</span>
         </div>
@@ -341,7 +341,7 @@ export function ImportarFaturaPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <span className="material-symbols-outlined text-base">fact_check</span>
+                <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>fact_check</span>
               </div>
               <span className="font-bold text-on-surface">3. Revisar e confirmar</span>
               {loadingCategorizacao && (

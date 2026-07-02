@@ -219,16 +219,6 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     { name: 'email', label: 'E-mail', kind: 'text', placeholder: 'E-mail' },
     { name: 'telefone', label: 'Telefone', kind: 'text', placeholder: 'Telefone' }
   ],
-  buildSummaryItems: (summary) => {
-    const data = summary as { total?: number; ativos?: number; inativos?: number; fisicas?: number; juridicas?: number } | undefined;
-    return [
-      { key: 'total', label: 'Total', value: data?.total ?? 0 },
-      { key: 'ativos', label: 'Ativos', value: data?.ativos ?? 0, tone: 'success' },
-      { key: 'inativos', label: 'Inativos', value: data?.inativos ?? 0 },
-      { key: 'fisicas', label: 'Físicas', value: data?.fisicas ?? 0 },
-      { key: 'juridicas', label: 'Jurídicas', value: data?.juridicas ?? 0 }
-    ];
-  },
   exportColumns: [
     { header: 'Nome', value: (p: PessoaResumo) => p.nome },
     { header: 'Tipo', value: (p: PessoaResumo) => p.tipoPessoa },
@@ -352,12 +342,32 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
     baixarAutomaticamente: detail.baixarAutomaticamente,
     ativo: detail.ativo
   }),
+  exportColumns: [
+    { header: 'Nome', value: (r: FormaPagamentoResumo) => r.nome },
+    { header: 'Tipo', value: (r: FormaPagamentoResumo) => r.tipo },
+    { header: 'É cartão', value: (r: FormaPagamentoResumo) => (r.ehCartao ? 'Sim' : 'Não') },
+    { header: 'Baixa automática', value: (r: FormaPagamentoResumo) => (r.baixarAutomaticamente ? 'Sim' : 'Não') },
+    { header: 'Status', value: (r: FormaPagamentoResumo) => (r.ativo ? 'Ativo' : 'Inativo') }
+  ],
   rowActions: [
     {
       key: 'editar',
       label: 'Editar',
       icon: <EditOutlined />,
       href: (record) => `/formas-pagamento/${record.id}`
+    },
+    {
+      key: 'toggle-status',
+      label: (record) => (record.ativo ? 'Inativar' : 'Ativar'),
+      icon: (record) => (record.ativo ? <PauseCircleOutlined /> : <PlayCircleOutlined />),
+      onClick: async (record) => {
+        if (record.ativo) {
+          await cadastrosApi.formasPagamento.inativar(record.id);
+          return;
+        }
+
+        await cadastrosApi.formasPagamento.ativar(record.id);
+      }
     }
   ]
 };
@@ -447,12 +457,35 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
     limiteCartoesCompartilhado: detail.limiteCartoesCompartilhado,
     ativo: detail.ativo
   }),
+  exportColumns: [
+    { header: 'Nome', value: (r: ContaBancariaResumo) => r.nome },
+    { header: 'Banco', value: (r: ContaBancariaResumo) => r.banco },
+    { header: 'Agência', value: (r: ContaBancariaResumo) => r.agencia ?? '' },
+    { header: 'Número da conta', value: (r: ContaBancariaResumo) => r.numeroConta ?? '' },
+    { header: 'Tipo da conta', value: (r: ContaBancariaResumo) => r.tipoConta ?? '' },
+    { header: 'Saldo inicial', value: (r: ContaBancariaResumo) => r.saldoInicial ?? 0 },
+    { header: 'Limite compartilhado', value: (r: ContaBancariaResumo) => r.limiteCartoesCompartilhado ?? '' },
+    { header: 'Status', value: (r: ContaBancariaResumo) => (r.ativo ? 'Ativo' : 'Inativo') }
+  ],
   rowActions: [
     {
       key: 'editar',
       label: 'Editar',
       icon: <EditOutlined />,
       href: (record) => `/contas-bancarias/${record.id}`
+    },
+    {
+      key: 'toggle-status',
+      label: (record) => (record.ativo ? 'Inativar' : 'Ativar'),
+      icon: (record) => (record.ativo ? <PauseCircleOutlined /> : <PlayCircleOutlined />),
+      onClick: async (record) => {
+        if (record.ativo) {
+          await cadastrosApi.contasBancarias.inativar(record.id);
+          return;
+        }
+
+        await cadastrosApi.contasBancarias.ativar(record.id);
+      }
     }
   ]
 };
@@ -512,7 +545,7 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
       kind: 'select',
       loadOptions: loadContaBancariaOptions
     },
-    { name: 'limiteCredito', label: 'Limite individual/fallback', kind: 'number', step: 0.01, nullable: true, numberFormat: 'currency' },
+    { name: 'limiteCredito', label: 'Limite individual', kind: 'number', step: 0.01, nullable: true, numberFormat: 'currency' },
     { name: 'ativo', label: 'Ativo', kind: 'switch' }
   ],
   schema: cartaoSchema,
@@ -549,12 +582,36 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
     limiteCredito: detail.limiteCredito,
     ativo: detail.ativo
   }),
+  exportColumns: [
+    { header: 'Nome', value: (r: CartaoResumo) => r.nome },
+    { header: 'Bandeira', value: (r: CartaoResumo) => r.bandeira },
+    { header: 'Final', value: (r: CartaoResumo) => r.numeroFinal },
+    { header: 'Dia fechamento', value: (r: CartaoResumo) => r.diaFechamentoFatura },
+    { header: 'Dia vencimento', value: (r: CartaoResumo) => r.diaVencimentoFatura },
+    { header: 'Origem limite', value: (r: CartaoResumo) => (r.usaLimiteCompartilhado ? 'Compartilhado' : 'Individual') },
+    { header: 'Limite efetivo', value: (r: CartaoResumo) => r.limiteEfetivo ?? '' },
+    { header: 'Disponível', value: (r: CartaoResumo) => r.limiteDisponivel ?? '' },
+    { header: 'Status', value: (r: CartaoResumo) => (r.ativo ? 'Ativo' : 'Inativo') }
+  ],
   rowActions: [
     {
       key: 'editar',
       label: 'Editar',
       icon: <EditOutlined />,
       href: (record) => `/cartoes/${record.id}`
+    },
+    {
+      key: 'toggle-status',
+      label: (record) => (record.ativo ? 'Inativar' : 'Ativar'),
+      icon: (record) => (record.ativo ? <PauseCircleOutlined /> : <PlayCircleOutlined />),
+      onClick: async (record) => {
+        if (record.ativo) {
+          await cadastrosApi.cartoes.inativar(record.id);
+          return;
+        }
+
+        await cadastrosApi.cartoes.ativar(record.id);
+      }
     }
   ]
 };
@@ -645,12 +702,34 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     ehPadraoRecebimentoFaturaCartao: detail.ehPadraoRecebimentoFaturaCartao,
     ativo: detail.ativo
   }),
+  exportColumns: [
+    { header: 'Código', value: (r: ContaGerencialResumo) => r.codigo ?? '' },
+    { header: 'Descrição', value: (r: ContaGerencialResumo) => r.descricao },
+    { header: 'Tipo', value: (r: ContaGerencialResumo) => r.tipo },
+    { header: 'Conta pai', value: (r: ContaGerencialResumo) => r.contaPaiDescricao ?? '' },
+    { header: 'Responsável padrão', value: (r: ContaGerencialResumo) => r.responsavelPadraoNome ?? '' },
+    { header: 'Uso', value: (r: ContaGerencialResumo) => (r.aceitaLancamentos ? 'Lançável' : 'Estrutural') },
+    { header: 'Status', value: (r: ContaGerencialResumo) => (r.ativo ? 'Ativo' : 'Inativo') }
+  ],
   rowActions: [
     {
       key: 'editar',
       label: 'Editar',
       icon: <EditOutlined />,
       href: (record) => `/contas-gerenciais/${record.id}`
+    },
+    {
+      key: 'toggle-status',
+      label: (record) => (record.ativo ? 'Inativar' : 'Ativar'),
+      icon: (record) => (record.ativo ? <PauseCircleOutlined /> : <PlayCircleOutlined />),
+      onClick: async (record) => {
+        if (record.ativo) {
+          await cadastrosApi.contasGerenciais.inativar(record.id);
+          return;
+        }
+
+        await cadastrosApi.contasGerenciais.ativar(record.id);
+      }
     }
   ]
 };

@@ -30,7 +30,10 @@ export function PageState(props: PageStateProps) {
 
   const icon =
     props.icon ?? (
-      <span className={`material-symbols-outlined text-5xl ${props.state === 'error' ? 'text-error' : 'text-primary'}`}>
+      <span
+        className={`material-symbols-outlined text-5xl ${props.state === 'error' ? 'text-error' : 'text-primary'}`}
+        style={{ fontVariationSettings: "'FILL' 1" }}
+      >
         {props.state === 'error' ? 'error' : 'inbox'}
       </span>
     );

@@ -24,7 +24,7 @@ function ConfirmDialog({ state, onClose }: { state: ConfirmState; onClose: () =>
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
         <div className="mb-6 flex items-start gap-3">
           <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${state.tone === 'danger' ? 'bg-error/12 text-error' : 'bg-warning/12 text-warning'}`}>
-            <span className="material-symbols-outlined text-2xl">warning</span>
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
           </div>
           <div>
             <h3 className="font-headline text-lg font-bold text-on-surface">{state.title}</h3>

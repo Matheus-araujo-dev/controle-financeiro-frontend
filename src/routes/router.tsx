@@ -25,7 +25,7 @@ export const appRoutes: RouteObject[] = [
       </ProtectedRoute>
     ),
     handle: {
-      title: 'Inicio'
+      title: 'Início'
     },
     children: [
       {

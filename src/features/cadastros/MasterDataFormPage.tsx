@@ -180,7 +180,7 @@ function PessoaPixKeysSection({
   const pixErrors = (errors.chavesPix as Array<{ tipo?: { message?: string }; chave?: { message?: string } }> | undefined) ?? [];
 
   return (
-    <FormSection title="Chaves Pix" eyebrow="Dados bancários" icon={<span className="material-symbols-outlined text-2xl">key</span>}>
+    <FormSection title="Chaves Pix" eyebrow="Dados bancários" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>key</span>}>
       <div className="space-y-4">
         <p className="text-sm text-on-surface-variant">Cadastre uma ou mais chaves Pix para esta pessoa.</p>
 
@@ -484,7 +484,7 @@ export function MasterDataFormPage({
   const ativoValue = typeof watchedValues.ativo === 'boolean' ? (watchedValues.ativo ? 'Ativo' : 'Inativo') : 'Pronto';
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-8 pb-24 lg:grid-cols-12">
         <div className="space-y-8 lg:col-span-7">
           {sections.map((section) => {

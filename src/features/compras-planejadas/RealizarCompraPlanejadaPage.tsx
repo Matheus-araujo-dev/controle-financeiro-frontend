@@ -363,7 +363,7 @@ export function RealizarCompraPlanejadaPage() {
       </div>
 
       {jaRealizada ? (
-        <FormSection className="items-center text-center" icon={<span className="material-symbols-outlined text-3xl">check_circle</span>}>
+        <FormSection className="items-center text-center" icon={<span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}>
           <div className="space-y-4">
             <div>
               <h2 className="font-headline text-2xl font-bold">Compra já realizada</h2>
@@ -381,7 +381,7 @@ export function RealizarCompraPlanejadaPage() {
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-7 lg:grid-cols-12">
           <div className="space-y-8 lg:col-span-7">
-            <FormSection title="Realizar Compra" eyebrow="Passo 1" icon={<span className="material-symbols-outlined text-2xl">shopping_bag</span>}>
+            <FormSection title="Realizar Compra" eyebrow="Passo 1" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_bag</span>}>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className={formLabelClass}>Data da Compra</label>
@@ -417,7 +417,7 @@ export function RealizarCompraPlanejadaPage() {
             <FormSection
               title="Liquidação e Beneficiário"
               eyebrow="Passo 2"
-              icon={<span className="material-symbols-outlined text-2xl">account_balance_wallet</span>}
+              icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>account_balance_wallet</span>}
             >
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {formaEhCartao ? (
@@ -517,7 +517,7 @@ export function RealizarCompraPlanejadaPage() {
               </div>
             </FormSection>
 
-            <FormSection title="Dados Financeiros" eyebrow="Passo 3" icon={<span className="material-symbols-outlined text-2xl">receipt_long</span>}>
+            <FormSection title="Dados Financeiros" eyebrow="Passo 3" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>}>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className={formLabelClass}>Descrição Financeira</label>
@@ -563,7 +563,7 @@ export function RealizarCompraPlanejadaPage() {
               <FormSection
                 title="Planejamento da Fatura"
                 eyebrow={`Fechamento dia ${cartaoSelecionado.diaFechamentoFatura} - Vencimento dia ${cartaoSelecionado.diaVencimentoFatura}`}
-                icon={<span className="material-symbols-outlined text-2xl">calendar_month</span>}
+                icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_month</span>}
               >
                 <div className="mb-6 flex justify-end">
                   <span className="rounded-full bg-primary/20 px-3 py-1 text-[10px] font-black uppercase text-primary">{previsaoParcelasCartao.length}X Parcelado</span>
@@ -593,7 +593,7 @@ export function RealizarCompraPlanejadaPage() {
             <FormActionPanel
               title="Pronto para confirmar?"
               eyebrow="Checkout financeiro"
-              icon={<span className="material-symbols-outlined font-bold text-2xl">check_circle</span>}
+              icon={<span className="material-symbols-outlined font-bold text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}
               items={[
                 { label: 'Compra', value: detail.titulo },
                 { label: 'Valor Planejado', value: formatCurrencyBRL(detail.valorEstimado), accent: true },

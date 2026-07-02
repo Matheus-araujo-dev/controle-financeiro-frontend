@@ -33,7 +33,7 @@ export function RecurrenceSection({ form }: RecurrenceSectionProps) {
   } = form;
 
   return (
-    <FormSection title="Recorrência Automática" eyebrow="Passo 4" icon={<span className="material-symbols-outlined text-2xl">sync</span>}>
+    <FormSection title="Recorrência Automática" eyebrow="Passo 4" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>sync</span>}>
       <Controller
         control={control}
         name="ehRecorrente"
