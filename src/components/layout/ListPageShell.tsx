@@ -1,22 +1,17 @@
 import type { ReactNode } from 'react';
 
 interface ListPageShellProps {
-  /** Botões de ação no canto superior direito (ex: "Nova conta", "Exportar") */
   actions?: ReactNode;
-  /** Cards de KPI — use <SummaryCard> aqui */
   summary?: ReactNode;
-  /** Área de filtros — use <FilterCard> aqui */
   filters?: ReactNode;
-  /** Tabela ou conteúdo principal */
   children: ReactNode;
-  /** Colunas do grid de summary (padrão: 3) */
   summaryColumns?: 2 | 3 | 4;
 }
 
 const summaryGridCols: Record<2 | 3 | 4, string> = {
-  2: 'md:grid-cols-2',
-  3: 'md:grid-cols-3',
-  4: 'md:grid-cols-2 xl:grid-cols-4'
+  2: 'grid-cols-2',
+  3: 'grid-cols-2 md:grid-cols-3',
+  4: 'grid-cols-2 xl:grid-cols-4'
 };
 
 export function ListPageShell({
@@ -27,16 +22,21 @@ export function ListPageShell({
   summaryColumns = 3
 }: ListPageShellProps) {
   return (
-    <div className="flex w-full min-w-0 flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {actions && (
-        <div className="flex flex-wrap items-center justify-end gap-3">{actions}</div>
+    <div className="flex w-full min-w-0 flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+      {(actions || filters) && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* FilterCard handles its own mobile/desktop split */}
+          {filters && <div className="flex-1 min-w-0">{filters}</div>}
+          {actions && (
+            <div className="flex flex-wrap items-center gap-3 shrink-0">{actions}</div>
+          )}
+        </div>
       )}
 
       {summary && (
-        <section className={`grid gap-4 ${summaryGridCols[summaryColumns]}`}>{summary}</section>
+        <section className={`grid gap-3 sm:gap-4 ${summaryGridCols[summaryColumns]}`}>{summary}</section>
       )}
-
-      {filters}
 
       {children}
     </div>

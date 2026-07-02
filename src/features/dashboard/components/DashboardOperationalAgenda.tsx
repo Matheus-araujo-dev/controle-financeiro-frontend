@@ -1,5 +1,4 @@
 import React from 'react';
-import { GlassCard } from '../../../components/neon-ledger/GlassCard';
 import { formatCurrencyBRL } from '../../../shared/currency';
 import { formatDateBR } from '../../../shared/date';
 import { DashboardContaResumo } from '../../../types/dashboard';
@@ -10,7 +9,7 @@ interface DashboardOperationalAgendaProps {
 
 export const DashboardOperationalAgenda: React.FC<DashboardOperationalAgendaProps> = ({ items }) => {
   return (
-    <GlassCard className="p-6 flex flex-col gap-6" hoverable>
+    <div className="p-6 flex flex-col gap-6 bg-surface-container-low rounded-2xl border border-white/6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-headline font-bold">Agenda</h3>
         <button className="p-1 hover:bg-surface-container-highest rounded transition-colors">
@@ -65,6 +64,6 @@ export const DashboardOperationalAgenda: React.FC<DashboardOperationalAgendaProp
       <button className="mt-2 text-[10px] font-bold text-primary hover:underline self-center uppercase tracking-[0.2em] transition-all">
         Ver calendário completo
       </button>
-    </GlassCard>
+    </div>
   );
 };
