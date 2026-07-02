@@ -39,7 +39,7 @@ export function RateioSection({ form }: RateioSectionProps) {
           className="rounded-lg p-1 text-primary transition-all hover:bg-primary/15 hover:text-primary disabled:opacity-50"
           title="Adicionar conta ao rateio"
         >
-          <span className="material-symbols-outlined text-2xl">add_circle</span>
+          <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>add_circle</span>
         </button>
       </div>
 

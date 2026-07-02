@@ -37,6 +37,10 @@ export type SelecionarWorkspaceResponse = {
   sessao: AuthTokenResponse;
 };
 
+export type CriarWorkspaceRequest = {
+  nome?: string;
+};
+
 export type ConviteCriadoResponse = {
   id: string;
   emailConvidado: string;
@@ -59,6 +63,11 @@ export async function listarMinhasParticipacoes(): Promise<ParticipacaoWorkspace
 
 export async function selecionarWorkspace(id: string): Promise<SelecionarWorkspaceResponse> {
   const { data } = await apiClient.post<SelecionarWorkspaceResponse>(`/familias/${id}/selecionar`);
+  return data;
+}
+
+export async function criarWorkspace(payload: CriarWorkspaceRequest = {}): Promise<SelecionarWorkspaceResponse> {
+  const { data } = await apiClient.post<SelecionarWorkspaceResponse>('/familias', payload);
   return data;
 }
 

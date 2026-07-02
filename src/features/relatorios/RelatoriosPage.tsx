@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Button } from '../../components/ui/Button';
 import { DateInput } from '../../components/forms/DateInput';
 import { PageState } from '../../components/states/PageState';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
@@ -269,7 +270,7 @@ export function RelatoriosPage() {
   }
 
   return (
-    <div className="printable-report mx-auto max-w-7xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="printable-report space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <p className="max-w-2xl text-sm text-on-surface-variant">
           Leitura gerencial do período com base em lançamentos, rateios, responsáveis, previsões, faturas e compras planejadas.
@@ -284,22 +285,22 @@ export function RelatoriosPage() {
             onChange={(value) => setReferenceMonth(value || getCurrentReferenceMonth())}
             className="min-w-[220px]"
           />
-          <button
+          <Button
             type="button"
+            variant="primary"
             onClick={handleExportExcel}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/15 px-4 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary/25"
+            icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>table_view</span>}
           >
-            <span className="material-symbols-outlined text-base" style={{ color: '#2bf58e' }}>table_view</span>
             Excel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="primary"
             onClick={exportarPdf}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/15 px-4 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary/25"
+            icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>picture_as_pdf</span>}
           >
-            <span className="material-symbols-outlined text-base" style={{ color: '#2bf58e' }}>picture_as_pdf</span>
             PDF
-          </button>
+          </Button>
         </div>
       </div>
 

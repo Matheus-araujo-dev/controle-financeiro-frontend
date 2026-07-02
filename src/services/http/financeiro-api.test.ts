@@ -109,7 +109,7 @@ describe('financeiroApi', () => {
       formaPagamentoId: 'f1',
       atualizarValorConta: true
     });
-    await financeiroApi.contasPagar.cancelar('1');
+    await financeiroApi.contasPagar.cancelar('1', { cancelarPlanejamentoRelacionado: true });
 
     await financeiroApi.contasReceber.listar({
       page: 1,
@@ -245,7 +245,7 @@ describe('financeiroApi', () => {
       formaPagamentoId: 'f1',
       atualizarValorConta: true
     });
-    expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/cancelar', undefined);
+    expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/cancelar', { cancelarPlanejamentoRelacionado: true });
 
     expect(apiClient.get).toHaveBeenCalledWith(
       '/contas-receber',

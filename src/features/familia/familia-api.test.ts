@@ -2,6 +2,7 @@ import {
   aceitarConvite,
   alterarPapelMembro,
   criarConvite,
+  criarWorkspace,
   listarMinhasParticipacoes,
   obterConvite,
   obterMinhaFamilia,
@@ -106,5 +107,14 @@ describe('familia-api', () => {
 
     expect(result).toEqual({ sessao });
     expect(apiClient.post).toHaveBeenCalledWith('/familias/fam2/selecionar');
+  });
+
+  it('creates a workspace and returns the new session', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { sessao } } as never);
+
+    const result = await criarWorkspace();
+
+    expect(result).toEqual({ sessao });
+    expect(apiClient.post).toHaveBeenCalledWith('/familias', {});
   });
 });

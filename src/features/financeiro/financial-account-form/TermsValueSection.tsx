@@ -5,6 +5,7 @@ import { DateInput } from '../../../components/forms/DateInput';
 import { FormSection } from '../../../components/layout';
 import { errorTextClass, fieldLabelClass, nativeCompactFieldClass, nativeFieldWithPaddingClass } from './field-classes';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
+import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../../shared/number-input';
 
 type TermsValueSectionProps = {
   form: FinancialAccountFormApi;
@@ -14,7 +15,7 @@ export function TermsValueSection({ form }: TermsValueSectionProps) {
   const { id, control, errors, canEdit, watchedValues } = form;
 
   return (
-    <FormSection title="Prazos e Valor" eyebrow="Passo 2" icon={<span className="material-symbols-outlined text-2xl">calendar_month</span>}>
+    <FormSection title="Prazos e Valor" eyebrow="Passo 2" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_month</span>}>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-y-8">
         <div className="space-y-2.5">
           <label className={fieldLabelClass}>Data Emissão</label>
@@ -43,9 +44,14 @@ export function TermsValueSection({ form }: TermsValueSectionProps) {
             name="quantidadeParcelas"
             render={({ field }) => (
               <input
-                type="number"
-                min={1}
-                {...field}
+                name={field.name}
+                ref={field.ref}
+                inputMode="numeric"
+                value={String(field.value ?? 1)}
+                onBlur={field.onBlur}
+                onKeyDown={preventScientificNotation}
+                onPaste={handleIntegerPaste}
+                onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
                 disabled={Boolean(id) || watchedValues.ehRecorrente || !canEdit}
                 className={nativeFieldWithPaddingClass}
               />

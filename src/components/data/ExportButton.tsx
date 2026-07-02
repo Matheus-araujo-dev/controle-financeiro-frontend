@@ -48,7 +48,7 @@ export function ExportButton<T, F extends PageQuery>({
   return (
     <Button
       type="button"
-      variant="secondary"
+      variant="primary"
       onClick={handleExport}
       disabled={loading || disabled}
       icon={<DownloadIcon className={loading ? 'animate-pulse' : ''} />}

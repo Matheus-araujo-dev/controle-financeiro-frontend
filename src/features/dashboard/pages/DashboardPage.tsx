@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '../../../components/ui/Button';
 import { DashboardKpiGrid } from '../components/DashboardKpiGrid';
 import { DashboardFaturasCartao } from '../components/DashboardFaturasCartao';
 import { DashboardCashPulse } from '../components/DashboardCashPulse';
@@ -81,26 +82,30 @@ export function DashboardPage() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <DateInput
-            compact
-            mode="month"
-            ariaLabel="Mês de referência do dashboard"
-            value={referenceMonth}
-            onChange={(value) => setReferenceMonth(value || getCurrentReferenceMonth())}
-            className="max-w-[220px]"
-          />
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="flex items-center justify-end gap-3">
+          <div className="w-[200px] shrink-0">
+            <DateInput
+              compact
+              mode="month"
+              ariaLabel="Mês de referência do dashboard"
+              value={referenceMonth}
+              onChange={(value) => setReferenceMonth(value || getCurrentReferenceMonth())}
+            />
+          </div>
 
-          <button className="bg-primary/15 hover:bg-primary/25 text-primary border border-primary/40 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 active:scale-95 transition-all shadow-[0_0_12px_rgba(63,255,139,0.15)]">
-            <span className="material-symbols-outlined text-sm">download</span>
+          <Button
+            type="button"
+            variant="primary"
+            icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>download</span>}
+          >
             Exportar
-          </button>
+          </Button>
         </div>
 
         {errorMessage && (
           <div className="bg-error-container/20 border border-error/20 p-4 rounded-2xl flex items-center gap-3 text-error animate-in fade-in slide-in-from-top-2">
-            <span className="material-symbols-outlined">warning</span>
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
             <span className="text-sm font-medium">{errorMessage}</span>
           </div>
         )}
@@ -112,7 +117,7 @@ export function DashboardPage() {
             className="bg-error/10 border border-error/30 p-4 rounded-2xl flex items-center justify-between gap-3 !text-error hover:bg-error/15 hover:!text-error transition-all animate-in fade-in slide-in-from-top-2"
           >
             <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined">savings</span>
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>savings</span>
               <span className="text-sm font-bold">
                 {categoriasEstouradas.length} categoria(s) estourou(aram) a meta de orçamento deste mês:{' '}
                 {categoriasEstouradas.map((item) => item.contaGerencialDescricao).join(', ')}
@@ -129,7 +134,7 @@ export function DashboardPage() {
             className="bg-error/10 border border-error/30 p-4 rounded-2xl flex items-center justify-between gap-3 !text-error hover:bg-error/15 hover:!text-error transition-all animate-in fade-in slide-in-from-top-2"
           >
             <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined">notification_important</span>
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>notification_important</span>
               <span className="text-sm font-bold">
                 {totalContasVencidias} conta(s) vencida(s) somando{' '}
                 {formatCurrencyBRL(summary?.contasVencidas.reduce((total, item) => total + item.valor, 0) ?? 0)}

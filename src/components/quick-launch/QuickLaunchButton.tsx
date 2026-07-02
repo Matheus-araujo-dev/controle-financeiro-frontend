@@ -315,7 +315,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
           <div className="overflow-y-auto p-7">
             <div className="mb-6 flex items-center gap-3">
               <div className="grid h-12 w-12 place-items-center rounded-xl border border-white/5 bg-surface-container text-primary shadow">
-                <span className="material-symbols-outlined text-2xl">bolt</span>
+                <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Operação rápida</p>
