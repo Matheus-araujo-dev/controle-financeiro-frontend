@@ -2,7 +2,6 @@ import { EyeOutlined } from '@ant-design/icons';
 import React from 'react';
 import { AppDataTable, type TableColumnsType } from '../../../components/data/AppDataTable';
 import { IconActionButton } from '../../../components/data/IconActionButton';
-import { GlassCard } from '../../../components/neon-ledger/GlassCard';
 import { formatCurrencyBRL } from '../../../shared/currency';
 import { formatDateBR } from '../../../shared/date';
 import { DashboardMovimentacaoResumo } from '../../../types/dashboard';
@@ -70,7 +69,7 @@ export const DashboardTransactionList: React.FC<DashboardTransactionListProps> =
   ];
 
   return (
-    <GlassCard className="overflow-hidden flex flex-col">
+    <div className="overflow-hidden flex flex-col bg-surface-container-low rounded-2xl border border-white/6">
       <div className="px-6 py-4 flex justify-between items-center border-b border-outline-variant/10">
         <h3 className="text-lg font-headline font-bold">Lançamentos Recentes</h3>
         <div className="flex gap-2">
@@ -97,11 +96,12 @@ export const DashboardTransactionList: React.FC<DashboardTransactionListProps> =
       <div className="p-4 border-t border-outline-variant/5 text-center">
         <button
           onClick={onViewAll}
-          className="text-xs font-bold text-primary hover:underline hover:glow-sm uppercase tracking-widest transition-all"
+          className="text-xs font-bold hover:underline uppercase tracking-widest transition-all"
+          style={{ color: 'var(--color-primary)' }}
         >
           Ver histórico completo
         </button>
       </div>
-    </GlassCard>
+    </div>
   );
 };

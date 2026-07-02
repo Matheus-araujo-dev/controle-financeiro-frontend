@@ -4,6 +4,7 @@ import { Modal } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { Button } from '../../components/ui/Button';
+import { ExportButton } from '../../components/data/ExportButton';
 import { IconActionButton } from '../../components/data/IconActionButton';
 import { ListSummaryCards } from '../../components/data/ListSummaryCards';
 import { StatusBadge, type StatusTone } from '../../components/data/StatusBadge';
@@ -373,7 +374,7 @@ export function FinancialAccountListPage({
             {canLiquidate ? (
               <IconActionButton
                 label="Liquidar"
-                icon={<span className="material-symbols-outlined text-[18px]">check_circle</span>}
+                icon={<span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}
                 onClick={() => void liquidarRapido(record)}
               />
             ) : null}
@@ -394,19 +395,39 @@ export function FinancialAccountListPage({
     }
   ];
 
+  const exportColumns = [
+    { header: 'Descrição', value: (r: FinancialRecord) => r.descricao ?? '' },
+    { header: 'Nº Documento', value: (r: FinancialRecord) => r.numeroDocumento ?? '' },
+    { header: config.personLabel, value: (r: FinancialRecord) => r.recebedorNome ?? r.pagadorNome ?? '' },
+    { header: 'Responsável', value: (r: FinancialRecord) => r.responsavelNome ?? '' },
+    { header: 'Vencimento', value: (r: FinancialRecord) => r.dataVencimento ?? '' },
+    { header: 'Status', value: (r: FinancialRecord) => r.statusNome ?? '' },
+    { header: 'Forma de pagamento', value: (r: FinancialRecord) => r.formaPagamentoNome ?? '' },
+    { header: 'Parcela', value: (r: FinancialRecord) => r.numeroParcela && r.quantidadeParcelas ? `${r.numeroParcela}/${r.quantidadeParcelas}` : '' },
+    { header: 'Valor', value: (r: FinancialRecord) => r.valorLiquido ?? 0 },
+  ];
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className={`flex flex-col gap-4 md:flex-row md:items-end ${embedded ? 'md:justify-end' : 'md:justify-between'}`}>
-        {!embedded ? (
+        {!embedded && config.listDescription ? (
           <p className="text-sm text-on-surface-variant">{config.listDescription}</p>
         ) : null}
 
-        <Button onClick={onCreate} icon={<PlusOutlined aria-hidden />}>
-          Nova {config.singularTitle.toLowerCase()}
-        </Button>
+        <div className="flex items-center gap-3">
+          <ExportButton
+            fetchPage={config.list as (f: typeof filters) => Promise<{ items: FinancialRecord[]; totalItems: number; totalPages: number }>}
+            filters={filters}
+            columns={exportColumns}
+            filename={config.routeBase.replace('/', '')}
+          />
+          <Button onClick={onCreate} icon={<PlusOutlined aria-hidden />}>
+            Nova {config.singularTitle.toLowerCase()}
+          </Button>
+        </div>
       </div>
 
-      <ListSummaryCards items={summaryItems} />
+      <ListSummaryCards items={summaryItems} columns={5} />
 
       <FilterCard>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -23,7 +23,7 @@ interface SummaryCardProps {
 export function SummaryCard({ label, value, accent = 'muted', icon, footer, highlight = false }: SummaryCardProps) {
   return (
     <article
-      className={`relative overflow-hidden rounded-2xl border bg-surface-container-low px-6 py-5 ${
+      className={`relative overflow-hidden rounded-2xl border bg-surface-container-low px-4 py-3 sm:px-6 sm:py-5 ${
         highlight ? 'border-primary/25' : 'border-white/6'
       }`}
     >
@@ -31,9 +31,9 @@ export function SummaryCard({ label, value, accent = 'muted', icon, footer, high
         <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
       )}
       <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant">{label}</p>
-      <p className={`mt-3 text-2xl font-black tracking-tight ${accentClasses[accent]}`}>{value}</p>
-      {icon && <div className="mt-2 flex items-center gap-1.5 text-xs text-on-surface-variant">{icon}</div>}
-      {footer && <div className="mt-3 text-xs text-on-surface-variant">{footer}</div>}
+      <p className={`mt-1.5 sm:mt-3 text-xl sm:text-2xl font-black tracking-tight ${accentClasses[accent]}`}>{value}</p>
+      {icon && <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 text-xs text-on-surface-variant">{icon}</div>}
+      {footer && <div className="mt-2 sm:mt-3 text-xs text-on-surface-variant">{footer}</div>}
     </article>
   );
 }

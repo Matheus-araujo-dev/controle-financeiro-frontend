@@ -1,5 +1,4 @@
 import React from 'react';
-import { GlassCard } from '../../../components/neon-ledger/GlassCard';
 import { formatCurrencyBRL } from '../../../shared/currency';
 
 interface KpiCardProps {
@@ -32,12 +31,15 @@ const KpiCard: React.FC<KpiCardProps> = ({
   };
 
   return (
-    <GlassCard className="p-5 sm:p-6 min-h-[148px] flex flex-col justify-between group" hoverable>
+    <div className="totalizador-card p-4 sm:p-6 min-h-[110px] sm:min-h-[148px] flex flex-col justify-between group">
       <div className="flex justify-between items-start">
         <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">
           {label}
         </span>
-        <span className={`material-symbols-outlined ${iconColors[color]} group-hover:scale-110 transition-transform`}>
+        <span
+          className={`material-symbols-outlined ${iconColors[color]} group-hover:scale-110 transition-transform`}
+          style={{ fontVariationSettings: "'FILL' 1" }}
+        >
           {icon}
         </span>
       </div>
@@ -70,7 +72,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
           </div>
         )}
       </div>
-    </GlassCard>
+    </div>
   );
 };
 
@@ -90,13 +92,12 @@ export const DashboardKpiGrid: React.FC<DashboardKpiGridProps> = ({
   numContasPendentes
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
       <KpiCard
         label="Saldo Atual"
         value={saldoAtual}
         icon="account_balance_wallet"
         color="primary"
-        trend={{ value: "+12.5% vs mês anterior", isUp: true }}
       />
       <KpiCard
         label="A Pagar (Hoje)"
@@ -110,7 +111,6 @@ export const DashboardKpiGrid: React.FC<DashboardKpiGridProps> = ({
         value={totalAReceber}
         icon="call_received"
         color="secondary"
-        trend={{ value: "Previsão para 5 dias", isUp: true }}
       />
       <KpiCard
         label="Projetado (Fim de Mês)"

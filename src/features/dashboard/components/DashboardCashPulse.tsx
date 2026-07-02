@@ -1,5 +1,4 @@
 import React from 'react';
-import { GlassCard } from '../../../components/neon-ledger/GlassCard';
 import { NeonBadge } from '../../../components/neon-ledger/NeonBadge';
 import { formatCurrencyBRL } from '../../../shared/currency';
 import { DashboardFluxoCaixaDia } from '../../../types/dashboard';
@@ -13,7 +12,7 @@ export const DashboardCashPulse: React.FC<DashboardCashPulseProps> = ({ items })
   const diasCriticos = items.filter(i => i.riscoSaldoNegativo).length;
 
   return (
-    <GlassCard className="lg:col-span-2 p-6 flex flex-col gap-6" hoverable>
+    <div className="lg:col-span-2 p-6 flex flex-col gap-6 bg-surface-container-low rounded-2xl border border-white/6">
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-headline font-bold">Cash Pulse</h3>
@@ -43,9 +42,9 @@ export const DashboardCashPulse: React.FC<DashboardCashPulseProps> = ({ items })
                 key={item.data}
                 className={`
                   flex-1 rounded-t-sm transition-all duration-300 cursor-pointer relative group/bar
-                  ${isToday 
-                    ? 'bg-primary shadow-[0_0_15px_rgba(63,255,139,0.3)] h-[95%]' 
-                    : item.riscoSaldoNegativo 
+                  ${isToday
+                    ? 'bg-primary/60 h-[95%]'
+                    : item.riscoSaldoNegativo
                       ? 'bg-error/40 hover:bg-error/60' 
                       : 'bg-surface-container-highest hover:bg-primary/20'}
                 `}
@@ -68,6 +67,6 @@ export const DashboardCashPulse: React.FC<DashboardCashPulseProps> = ({ items })
         <span>Início do Mês</span>
         <span>Projeção 30D</span>
       </div>
-    </GlassCard>
+    </div>
   );
 };

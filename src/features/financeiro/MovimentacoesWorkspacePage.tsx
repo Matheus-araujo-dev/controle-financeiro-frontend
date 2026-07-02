@@ -59,7 +59,7 @@ export function MovimentacoesWorkspacePage({ initialTab }: { initialTab: Movimen
               type="button"
               onClick={() => navigate(tab.route)}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all sm:flex-none ${
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 sm:px-5 py-2.5 text-sm font-bold transition-all whitespace-nowrap sm:flex-none ${
                 isActive
                   ? 'bg-primary/15 text-primary border border-primary/40'
                   : 'text-on-surface-variant hover:text-white border border-transparent'
