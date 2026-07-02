@@ -66,12 +66,12 @@ export const cartaoSchema = z.object({
   bandeira: requiredText('Bandeira'),
   numeroFinal: z.string().trim().regex(/^\d{4}$/, 'Número final deve possuir 4 dígitos.'),
   diaFechamentoFatura: z
-    .number({ invalid_type_error: 'Dia de fechamento deve ser numerico.' })
+    .number({ error: 'Dia de fechamento deve ser numerico.' })
     .int('Dia de fechamento deve ser numerico.')
     .min(1, 'Dia de fechamento deve estar entre 1 e 31.')
     .max(31, 'Dia de fechamento deve estar entre 1 e 31.'),
   diaVencimentoFatura: z
-    .number({ invalid_type_error: 'Dia de vencimento deve ser numerico.' })
+    .number({ error: 'Dia de vencimento deve ser numerico.' })
     .int('Dia de vencimento deve ser numerico.')
     .min(1, 'Dia de vencimento deve estar entre 1 e 31.')
     .max(31, 'Dia de vencimento deve estar entre 1 e 31.'),
