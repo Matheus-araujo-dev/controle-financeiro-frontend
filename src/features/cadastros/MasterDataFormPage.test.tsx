@@ -332,8 +332,8 @@ describe('MasterDataFormPage', () => {
       </MemoryRouter>
     );
 
-    await userEvent.type(screen.getByRole('textbox'), 'Notebook');
-    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '' } });
+    await userEvent.type(screen.getByDisplayValue(''), 'Notebook');
+    fireEvent.change(screen.getByDisplayValue('10'), { target: { value: '' } });
     await submitCreate();
 
     await waitFor(() =>
