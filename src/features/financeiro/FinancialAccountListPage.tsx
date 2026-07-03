@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Modal } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { ConfirmDialog } from '../../components/feedback/ConfirmDialog';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { Button } from '../../components/ui/Button';
 import { ExportButton } from '../../components/data/ExportButton';
@@ -132,6 +132,10 @@ export function FinancialAccountListPage({
   const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<Array<{ label: string; value: string }>>([]);
   const [contaBancariaId, setContaBancariaId] = useState('');
   const [liquidacaoFormaPagamentoId, setLiquidacaoFormaPagamentoId] = useState('');
+  const [pendingLiquidacao, setPendingLiquidacao] = useState<FinancialRecord | null>(null);
+  const [pendingEstorno, setPendingEstorno] = useState<FinancialRecord | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string>();
   const [filters, setFilters] = useState<ListFilters>({
     page: 1,
     pageSize: 10,
@@ -245,42 +249,52 @@ export function FinancialAccountListPage({
     }));
   }
 
-  async function liquidarRapido(record: FinancialRecord) {
+  function liquidarRapido(record: FinancialRecord) {
     if (!config.liquidar || !record.id) return;
-
-    Modal.confirm({
-      title: 'Liquidação rápida',
-      content: 'Deseja liquidar este lançamento agora com a data de hoje?',
-      centered: true,
-      okText: 'Sim, liquidar',
-      cancelText: 'Cancelar',
-      onOk: async () => {
-        await config.liquidar!(record.id, {
-          valorLiquidacao: record.valorLiquido ?? 0,
-          dataLiquidacao: todayIso(),
-          contaBancariaId,
-          formaPagamentoId: record.formaPagamentoId ?? liquidacaoFormaPagamentoId,
-          atualizarValorConta: true
-        });
-        await loadData();
-      }
-    });
+    setActionError(undefined);
+    setPendingLiquidacao(record);
   }
 
-  async function estornar(record: FinancialRecord) {
+  function estornar(record: FinancialRecord) {
     if (!config.estornar || !record.id) return;
+    setActionError(undefined);
+    setPendingEstorno(record);
+  }
 
-    Modal.confirm({
-      title: 'Estornar lançamento',
-      content: 'Deseja realmente estornar esta liquidação? O lançamento voltará para o status Pendente.',
-      centered: true,
-      okText: 'Sim, estornar',
-      cancelText: 'Cancelar',
-      onOk: async () => {
-        await config.estornar!(record.id);
-        await loadData();
-      }
-    });
+  async function confirmarLiquidacao() {
+    if (!pendingLiquidacao || !config.liquidar) return;
+    setActionLoading(true);
+    setActionError(undefined);
+    try {
+      await config.liquidar(pendingLiquidacao.id, {
+        valorLiquidacao: pendingLiquidacao.valorLiquido ?? 0,
+        dataLiquidacao: todayIso(),
+        contaBancariaId,
+        formaPagamentoId: pendingLiquidacao.formaPagamentoId ?? liquidacaoFormaPagamentoId,
+        atualizarValorConta: true
+      });
+      setPendingLiquidacao(null);
+      await loadData();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Falha ao liquidar o lançamento.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function confirmarEstorno() {
+    if (!pendingEstorno || !config.estornar) return;
+    setActionLoading(true);
+    setActionError(undefined);
+    try {
+      await config.estornar(pendingEstorno.id);
+      setPendingEstorno(null);
+      await loadData();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Falha ao estornar o lançamento.');
+    } finally {
+      setActionLoading(false);
+    }
   }
 
   const columns: TableColumnsType<FinancialRecord> = [
@@ -577,6 +591,48 @@ export function FinancialAccountListPage({
           showSizeChanger: true,
           onChange: (page, pageSize) => setFilters((current) => ({ ...current, page, pageSize }))
         }}
+      />
+
+      <ConfirmDialog
+        open={pendingLiquidacao !== null}
+        title="Liquidação rápida"
+        eyebrow="Confirmar ação"
+        icon="check_circle"
+        confirmLabel="Sim, liquidar"
+        cancelLabel="Cancelar"
+        confirmVariant="primary"
+        loading={actionLoading}
+        body={
+          <div className="space-y-3">
+            <p>Deseja liquidar <strong className="text-on-surface">{pendingLiquidacao?.descricao}</strong> com a data de hoje?</p>
+            {actionError ? (
+              <p className="text-sm font-medium text-error">{actionError}</p>
+            ) : null}
+          </div>
+        }
+        onClose={() => { if (!actionLoading) { setPendingLiquidacao(null); setActionError(undefined); } }}
+        onConfirm={() => void confirmarLiquidacao()}
+      />
+
+      <ConfirmDialog
+        open={pendingEstorno !== null}
+        title="Estornar lançamento"
+        eyebrow="Confirmar ação"
+        icon="undo"
+        confirmLabel="Sim, estornar"
+        cancelLabel="Cancelar"
+        confirmVariant="danger"
+        loading={actionLoading}
+        body={
+          <div className="space-y-3">
+            <p>Deseja estornar <strong className="text-on-surface">{pendingEstorno?.descricao}</strong>? O lançamento voltará para o status Pendente.</p>
+            {actionError ? (
+              <p className="text-sm font-medium text-error">{actionError}</p>
+            ) : null}
+          </div>
+        }
+        onClose={() => { if (!actionLoading) { setPendingEstorno(null); setActionError(undefined); } }}
+        onConfirm={() => void confirmarEstorno()}
       />
     </div>
   );
