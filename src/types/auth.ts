@@ -28,8 +28,8 @@ export type UsuarioAutenticadoResponse = {
   email: string;
   nome: string;
   avatarUrl: string | null;
-  workspace: WorkspaceResumo;
-  familia: FamiliaResumo;
+  workspace?: WorkspaceResumo | null;
+  familia?: FamiliaResumo | null;
 };
 
 export type AuthTokenResponse = AuthTokens & {

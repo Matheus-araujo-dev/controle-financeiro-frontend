@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+﻿import { lazy } from 'react';
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { financialRouteObjects, placeholderRouteObjects, supportRegistryRouteObjects, comprasPlanejadasRouteObjects } from './route-definitions';
@@ -43,21 +43,21 @@ export const appRoutes: RouteObject[] = [
         path: 'orcamento',
         element: <OrcamentoPage />,
         handle: {
-          title: 'Orçamento'
+          title: 'Orcamento'
         }
       },
       {
         path: 'relatorios',
         element: <RelatoriosPage />,
         handle: {
-          title: 'Relatórios'
+          title: 'Relatorios'
         }
       },
       {
         path: 'familia',
         element: <FamiliaPage />,
         handle: {
-          title: 'Família'
+          title: 'Espacos'
         }
       },
       {
@@ -75,7 +75,7 @@ export const appRoutes: RouteObject[] = [
       {
         path: 'agente/whatsapp',
         element: <WhatsappVinculoPage />,
-        handle: { title: 'Vínculo WhatsApp' }
+        handle: { title: 'Vinculo WhatsApp' }
       },
       ...supportRegistryRouteObjects,
       ...financialRouteObjects,
