@@ -24,6 +24,7 @@ import { applyInputMask, extractDigits } from './input-masks';
 import { CurrencyInput } from '../../shared/CurrencyInput';
 import { handleIntegerPaste, keepOnlyDigits, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
 import { QuickAddPessoaModal } from './quick-add/QuickAddPessoaModal';
+import { QuickAddContaBancariaModal } from './quick-add/QuickAddContaBancariaModal';
 
 function buildFieldOptions(field: FormFieldConfig<Record<string, unknown>>, loadedOptions: Record<string, SelectOption[]>) {
   return [...(field.options ?? []), ...(loadedOptions[field.name] ?? [])];
@@ -264,6 +265,7 @@ export function MasterDataFormPage({
   const [submitError, setSubmitError] = useState<string>();
   const [loadedOptions, setLoadedOptions] = useState<Record<string, SelectOption[]>>({});
   const [responsavelModalOpen, setResponsavelModalOpen] = useState(false);
+  const [contaBancariaModalOpen, setContaBancariaModalOpen] = useState(false);
 
   const {
     control,
@@ -388,7 +390,7 @@ export function MasterDataFormPage({
     const fullWidth = field.kind === 'textarea' || ['nome', 'descricao', 'observacao'].includes(field.name);
 
     return (
-      <div key={field.name} className={`space-y-2 ${fullWidth ? 'md:col-span-2' : ''}`}>
+      <div key={field.name} className={`space-y-2 ${fullWidth ? 'md:col-span-2' : ''} ${field.kind === 'switch' ? 'self-end' : ''}`}>
         {field.kind === 'switch' ? null : <label className={formLabelClass}>{field.label}</label>}
         <Controller
           control={control}
@@ -452,8 +454,16 @@ export function MasterDataFormPage({
                   )}
                   placeholder="Selecione..."
                   onChange={(value) => controlledField.onChange(value)}
-                  onAddNew={isContaGerencial && field.name === 'responsavelPadraoId' ? () => setResponsavelModalOpen(true) : undefined}
-                  addNewLabel="Criar responsavel"
+                  onAddNew={
+                    (isContaGerencial && field.name === 'responsavelPadraoId') ? () => setResponsavelModalOpen(true) :
+                    (config.key === 'cartoes' && field.name === 'contaBancariaPagamentoPadraoId') ? () => setContaBancariaModalOpen(true) :
+                    undefined
+                  }
+                  addNewLabel={
+                    config.key === 'cartoes' && field.name === 'contaBancariaPagamentoPadraoId'
+                      ? 'Nova conta bancária'
+                      : 'Criar responsável'
+                  }
                 />
               );
             }
@@ -567,6 +577,16 @@ export function MasterDataFormPage({
         onClose={() => setResponsavelModalOpen(false)}
         onSuccess={(newId) => {
           void reloadFieldOptions('responsavelPadraoId').then(() => setValue('responsavelPadraoId', newId, { shouldValidate: true }));
+        }}
+      />
+
+      <QuickAddContaBancariaModal
+        open={contaBancariaModalOpen}
+        onClose={() => setContaBancariaModalOpen(false)}
+        onSuccess={(id) => {
+          void reloadFieldOptions('contaBancariaPagamentoPadraoId').then(() =>
+            setValue('contaBancariaPagamentoPadraoId', id, { shouldValidate: true })
+          );
         }}
       />
     </>
