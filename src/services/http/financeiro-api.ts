@@ -145,6 +145,9 @@ export const financeiroApi = {
     listar: (params: RecorrenciaFilters) =>
       getPaged<RecorrenciaListItem>('/recorrencias', params),
     listarAtivas: () => getById<RecorrenciaListResponse>('/recorrencias'),
+    obter: (id: string) => getById<RecorrenciaListItem>(`/recorrencias/${id}`),
+    pausar: (id: string) => post<RecorrenciaListItem>(`/recorrencias/${id}/pausar`, {}),
+    retomar: (id: string) => post<RecorrenciaListItem>(`/recorrencias/${id}/retomar`, {}),
     encerrar: (tipoConta: 'ContaPagar' | 'ContaReceber', id: string) =>
       post<void>(`/${tipoConta === 'ContaPagar' ? 'contas-pagar' : 'contas-receber'}/${id}/encerrar-recorrencia`, {})
   }

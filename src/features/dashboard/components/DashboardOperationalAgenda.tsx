@@ -1,13 +1,22 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { formatCurrencyBRL } from '../../../shared/currency';
 import { formatDateBR } from '../../../shared/date';
 import { DashboardContaResumo } from '../../../types/dashboard';
 
 interface DashboardOperationalAgendaProps {
   items: DashboardContaResumo[];
+  referenceMonth?: string;
 }
 
-export const DashboardOperationalAgenda: React.FC<DashboardOperationalAgendaProps> = ({ items }) => {
+export const DashboardOperationalAgenda: React.FC<DashboardOperationalAgendaProps> = ({ items, referenceMonth }) => {
+  const navigate = useNavigate();
+
+  function handleVerCalendario() {
+    const mes = referenceMonth ?? '';
+    navigate(mes ? `/agenda?mes=${mes}` : '/agenda');
+  }
+
   return (
     <div className="p-6 flex flex-col gap-6 bg-surface-container-low rounded-2xl border border-white/6">
       <div className="flex justify-between items-center">
@@ -61,7 +70,10 @@ export const DashboardOperationalAgenda: React.FC<DashboardOperationalAgendaProp
         )}
       </div>
 
-      <button className="mt-2 text-[10px] font-bold text-primary hover:underline self-center uppercase tracking-[0.2em] transition-all">
+      <button
+        onClick={handleVerCalendario}
+        className="mt-2 text-[10px] font-bold text-primary hover:underline self-center uppercase tracking-[0.2em] transition-all"
+      >
         Ver calendário completo
       </button>
     </div>

@@ -101,15 +101,17 @@ function getMovementDescriptor(item: MovimentacaoResumo) {
 }
 
 export function MovimentacoesPage() {
-  // Link "ver extrato" das contas bancárias abre a página já filtrada pela conta.
-  const contaBancariaInicial = new URLSearchParams(window.location.search).get('contaBancariaId');
+  const urlParams = new URLSearchParams(window.location.search);
+  const contaBancariaInicial = urlParams.get('contaBancariaId');
+  const dataInicialParam = urlParams.get('dataInicial') ?? undefined;
+  const dataFinalParam = urlParams.get('dataFinal') ?? undefined;
 
   const [filters, setFilters] = useState<MovimentacaoFilters>({
     page: 1,
     pageSize: 20,
     search: '',
-    dataInicial: undefined,
-    dataFinal: undefined,
+    dataInicial: dataInicialParam,
+    dataFinal: dataFinalParam,
     contaBancariaIds: contaBancariaInicial ? [contaBancariaInicial] : undefined,
     responsavelIds: undefined,
     tipo: undefined,
