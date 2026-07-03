@@ -19,7 +19,7 @@ export default defineConfig(({ command }) => ({
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
-            urlPattern: /^https?:\/\/(localhost|127\.0\.0\.1):\d+\/api\//,
+            urlPattern: /\/api\//,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
