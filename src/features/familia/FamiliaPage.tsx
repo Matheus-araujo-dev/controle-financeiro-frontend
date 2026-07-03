@@ -107,9 +107,9 @@ function MinhasParticipacoes() {
         title={`Meus espaços (${participacoes.length}/${MAX_WORKSPACES})`}
         extra={
           <Space>
-            <Tag color={podeCriar ? 'green' : 'red'}>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${podeCriar ? 'text-primary border-primary/40 bg-primary/10' : 'text-error border-error/40 bg-error/10'}`}>
               {podeCriar ? `${MAX_WORKSPACES - participacoes.length} disponível(is)` : 'Limite atingido'}
-            </Tag>
+            </span>
             {podeCriar && (
               <Button size="sm" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
                 Criar espaço
@@ -274,13 +274,14 @@ export function FamiliaPage() {
       <MinhasParticipacoes />
 
       {error ? (
-        <Alert
-          type="warning"
-          showIcon
-          message="Espaço ativo indisponível"
-          description={error}
-          action={<Button onClick={() => void carregar()}>Tentar novamente</Button>}
-        />
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <span className="material-symbols-outlined text-amber-400 mt-0.5 text-base">warning</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-300">Espaço ativo indisponível</p>
+            <p className="text-xs text-on-surface-variant mt-0.5">{error}</p>
+          </div>
+          <Button size="sm" onClick={() => void carregar()}>Tentar novamente</Button>
+        </div>
       ) : (
         <>
           <Card loading={loading} title="Espaço ativo">
