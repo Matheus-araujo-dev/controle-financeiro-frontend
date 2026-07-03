@@ -107,7 +107,9 @@ describe('financeiroApi', () => {
       dataLiquidacao: '2026-04-05',
       contaBancariaId: 'cb1',
       formaPagamentoId: 'f1',
-      atualizarValorConta: true
+      atualizarValorConta: true,
+      atualizarRecorrencia: false,
+      cancelarValorRestante: false
     });
     await financeiroApi.contasPagar.cancelar('1', { cancelarPlanejamentoRelacionado: true });
 
@@ -196,7 +198,9 @@ describe('financeiroApi', () => {
       dataLiquidacao: '2026-04-08',
       contaBancariaId: 'cb1',
       formaPagamentoId: 'f1',
-      atualizarValorConta: true
+      atualizarValorConta: true,
+      atualizarRecorrencia: false,
+      cancelarValorRestante: false
     });
     await financeiroApi.contasReceber.cancelar('1');
 
@@ -243,7 +247,9 @@ describe('financeiroApi', () => {
       dataLiquidacao: '2026-04-05',
       contaBancariaId: 'cb1',
       formaPagamentoId: 'f1',
-      atualizarValorConta: true
+      atualizarValorConta: true,
+      atualizarRecorrencia: false,
+      cancelarValorRestante: false
     });
     expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/cancelar', { cancelarPlanejamentoRelacionado: true });
 
@@ -272,7 +278,9 @@ describe('financeiroApi', () => {
       dataLiquidacao: '2026-04-08',
       contaBancariaId: 'cb1',
       formaPagamentoId: 'f1',
-      atualizarValorConta: true
+      atualizarValorConta: true,
+      atualizarRecorrencia: false,
+      cancelarValorRestante: false
     });
     expect(apiClient.post).toHaveBeenCalledWith('/contas-receber/1/cancelar', undefined);
 
