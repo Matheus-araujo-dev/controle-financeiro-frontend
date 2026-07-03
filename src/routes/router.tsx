@@ -43,21 +43,21 @@ export const appRoutes: RouteObject[] = [
         path: 'orcamento',
         element: <OrcamentoPage />,
         handle: {
-          title: 'Orcamento'
+          title: 'Orçamento'
         }
       },
       {
         path: 'relatorios',
         element: <RelatoriosPage />,
         handle: {
-          title: 'Relatorios'
+          title: 'Relatórios'
         }
       },
       {
         path: 'familia',
         element: <FamiliaPage />,
         handle: {
-          title: 'Espacos'
+          title: 'Espaços'
         }
       },
       {
@@ -75,7 +75,7 @@ export const appRoutes: RouteObject[] = [
       {
         path: 'agente/whatsapp',
         element: <WhatsappVinculoPage />,
-        handle: { title: 'Vinculo WhatsApp' }
+        handle: { title: 'Vínculo WhatsApp' }
       },
       ...supportRegistryRouteObjects,
       ...financialRouteObjects,

@@ -369,7 +369,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
           { to: '/contas-pagar', icon: 'south_west', label: 'Pagar' },
           { to: '/contas-receber', icon: 'north_east', label: 'Receber' },
           { to: '/faturas', icon: 'credit_card', label: 'Cartoes' },
-          { to: '/familia', icon: 'menu', label: 'Espacos' }
+          { to: '/familia', icon: 'menu', label: 'Espaços' }
         ].map((item) => (
           <Link
             key={item.to}

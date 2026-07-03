@@ -17,16 +17,16 @@ export const navigationStructure: NavGroup[] = [
     label: 'Geral',
     items: [
       { key: '/dashboard', label: 'Dashboard' },
-      { key: '/orcamento', label: 'Orcamento' },
-      { key: '/relatorios', label: 'Relatorios' }
+      { key: '/orcamento', label: 'Orçamento' },
+      { key: '/relatorios', label: 'Relatórios' }
     ]
   },
   {
     key: 'lancamentos',
     label: 'Lancamentos',
     items: [
-      { key: '/movimentacoes', label: 'Movimentacoes', aliases: ['/contas-pagar', '/contas-receber'] },
-      { key: '/recorrencias', label: 'Recorrencias' },
+      { key: '/movimentacoes', label: 'Movimentações', aliases: ['/contas-pagar', '/contas-receber'] },
+      { key: '/recorrencias', label: 'Recorrências' },
       { key: '/faturas', label: 'Faturas' },
       { key: '/faturas/importar', label: 'Importar fatura CSV' },
       { key: '/importacoes-whatsapp', label: 'Importacoes WhatsApp' }
@@ -38,8 +38,8 @@ export const navigationStructure: NavGroup[] = [
     items: [
       { key: '/pessoas', label: 'Pessoas' },
       { key: '/formas-pagamento', label: 'Formas de pagamento' },
-      { key: '/contas-bancarias', label: 'Contas bancarias' },
-      { key: '/cartoes', label: 'Cartoes' },
+      { key: '/contas-bancarias', label: 'Contas bancárias' },
+      { key: '/cartoes', label: 'Cartões' },
       { key: '/contas-gerenciais', label: 'Contas gerenciais' },
       { key: '/compras-planejadas', label: 'Planejador de compras' }
     ]
@@ -49,14 +49,14 @@ export const navigationStructure: NavGroup[] = [
     label: 'Agente IA',
     items: [
       { key: '/agente/chat', label: 'Chat financeiro' },
-      { key: '/agente/whatsapp', label: 'Vinculo WhatsApp' }
+      { key: '/agente/whatsapp', label: 'Vínculo WhatsApp' }
     ]
   },
   {
     key: 'conta',
     label: 'Conta',
     items: [
-      { key: '/familia', label: 'Espacos' }
+      { key: '/familia', label: 'Espaços' }
     ]
   }
 ];
