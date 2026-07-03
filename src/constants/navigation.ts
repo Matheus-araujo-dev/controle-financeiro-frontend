@@ -26,6 +26,7 @@ export const navigationStructure: NavGroup[] = [
     label: 'Lançamentos',
     items: [
       { key: '/movimentacoes', label: 'Movimentações', aliases: ['/contas-pagar', '/contas-receber'] },
+      { key: '/agenda', label: 'Agenda' },
       { key: '/recorrencias', label: 'Recorrências' },
       { key: '/faturas', label: 'Faturas' },
       { key: '/faturas/importar', label: 'Importar fatura CSV' },

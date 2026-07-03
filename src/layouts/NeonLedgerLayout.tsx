@@ -23,6 +23,7 @@ const navIcons: Record<string, string> = {
   '/relatorios': 'monitoring',
   '/contas-pagar': 'arrow_upward',
   '/contas-receber': 'arrow_downward',
+  '/agenda': 'calendar_month',
   '/recorrencias': 'sync',
   '/movimentacoes': 'swap_horiz',
   '/faturas': 'credit_card',
