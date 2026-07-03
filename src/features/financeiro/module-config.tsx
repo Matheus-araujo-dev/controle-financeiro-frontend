@@ -84,6 +84,8 @@ export type FinanceiroLiquidacaoFormValues = {
   contaBancariaId: string;
   formaPagamentoId: string;
   atualizarValorConta: boolean;
+  atualizarRecorrencia: boolean;
+  cancelarValorRestante: boolean;
 };
 
 export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> = {
@@ -502,7 +504,9 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
       dataLiquidacao: values.dataLiquidacao,
       contaBancariaId: values.contaBancariaId,
       formaPagamentoId: values.formaPagamentoId,
-      atualizarValorConta: values.atualizarValorConta
+      atualizarValorConta: values.atualizarValorConta,
+      atualizarRecorrencia: values.atualizarRecorrencia,
+      cancelarValorRestante: values.cancelarValorRestante
     }),
   estornar: financeiroApi.contasPagar.estornar,
   cancelar: financeiroApi.contasPagar.cancelar,
@@ -612,7 +616,9 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
       dataLiquidacao: values.dataLiquidacao,
       contaBancariaId: values.contaBancariaId,
       formaPagamentoId: values.formaPagamentoId,
-      atualizarValorConta: values.atualizarValorConta
+      atualizarValorConta: values.atualizarValorConta,
+      atualizarRecorrencia: values.atualizarRecorrencia,
+      cancelarValorRestante: values.cancelarValorRestante
     }),
   estornar: financeiroApi.contasReceber.estornar,
   cancelar: financeiroApi.contasReceber.cancelar,

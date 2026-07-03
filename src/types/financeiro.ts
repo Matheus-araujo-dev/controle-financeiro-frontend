@@ -110,6 +110,7 @@ export type ContaPagarResumo = {
   formaPagamentoId: string;
   formaPagamentoNome: string;
   valorLiquido: number;
+  valorPago: number | null;
   statusCodigo: StatusContaCodigo;
   statusNome: string;
   quantidadeParcelas: number;
@@ -141,6 +142,7 @@ export type ContaPagarDetalhe = {
   valorJuros: number;
   valorMulta: number;
   valorLiquido: number;
+  valorPago: number | null;
   quantidadeParcelas: number;
   numeroParcela: number;
   grupoParcelamentoId: string | null;
@@ -213,6 +215,7 @@ export type ContaReceberResumo = {
   formaPagamentoId: string;
   formaPagamentoNome: string;
   valorLiquido: number;
+  valorPago: number | null;
   statusCodigo: StatusContaCodigo;
   statusNome: string;
   quantidadeParcelas: number;
@@ -244,6 +247,7 @@ export type ContaReceberDetalhe = {
   valorJuros: number;
   valorMulta: number;
   valorLiquido: number;
+  valorPago: number | null;
   quantidadeParcelas: number;
   numeroParcela: number;
   grupoParcelamentoId: string | null;
@@ -304,6 +308,8 @@ export type LiquidacaoPayload = {
   contaBancariaId: string;
   formaPagamentoId: string;
   atualizarValorConta: boolean;
+  atualizarRecorrencia: boolean;
+  cancelarValorRestante: boolean;
 };
 
 export type CancelarContaPagarPayload = {

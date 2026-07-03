@@ -200,7 +200,9 @@ describe('financeiro module config', () => {
       dataLiquidacao: '2026-06-21',
       contaBancariaId: 'banco-1',
       formaPagamentoId: 'forma-1',
-      atualizarValorConta: true
+      atualizarValorConta: true,
+      atualizarRecorrencia: false,
+      cancelarValorRestante: false
     });
 
     expect(financeiroApi.contasPagar.atualizar).toHaveBeenCalled();
@@ -210,7 +212,9 @@ describe('financeiro module config', () => {
       dataLiquidacao: '2026-06-21',
       contaBancariaId: 'banco-1',
       formaPagamentoId: 'forma-1',
-      atualizarValorConta: true
+      atualizarValorConta: true,
+      atualizarRecorrencia: false,
+      cancelarValorRestante: false
     });
 
     await expect(contasPagarModuleConfig.resolveCreateDefaults?.(new URLSearchParams())).resolves.toBeNull();

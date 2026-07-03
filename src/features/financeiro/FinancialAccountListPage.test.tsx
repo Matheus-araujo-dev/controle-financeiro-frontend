@@ -222,10 +222,11 @@ describe('FinancialAccountListPage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Liquidar' }));
 
-    const modalTitle = (await screen.findAllByText('Liquidação rápida'))[0];
-    const modal = (modalTitle.closest('[role="dialog"]') ?? document.body) as HTMLElement;
+    // Wait for the new LiquidarModal to appear
+    await screen.findByText('Liquidar lançamento');
 
-    await userEvent.click(within(modal).getByRole('button', { name: 'Sim, liquidar' }));
+    // The valor == original so button label is "Confirmar"
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
 
     const hoje = new Date().toISOString().split('T')[0];
 
@@ -235,7 +236,9 @@ describe('FinancialAccountListPage', () => {
         dataLiquidacao: hoje,
         contaBancariaId: 'cb1',
         formaPagamentoId: 'fp1',
-        atualizarValorConta: true
+        atualizarValorConta: false,
+        atualizarRecorrencia: false,
+        cancelarValorRestante: false
       })
     );
   }, 20000);
