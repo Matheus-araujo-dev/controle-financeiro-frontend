@@ -1,4 +1,7 @@
+import { useContext } from 'react';
+import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
+import { WorkspaceActionsSlotContext } from './WorkspaceActionsSlot';
 
 interface ListPageShellProps {
   actions?: ReactNode;
@@ -21,12 +24,20 @@ export function ListPageShell({
   children,
   summaryColumns = 3
 }: ListPageShellProps) {
+  const actionsSlot = useContext(WorkspaceActionsSlotContext);
+  const isInWorkspace = actionsSlot !== undefined;
+
+  const actionsContent = actions ? (
+    <div className="flex flex-wrap items-center justify-end gap-3">{actions}</div>
+  ) : null;
+
   return (
     <div className="flex w-full min-w-0 flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      {actions && (
-        <div className="flex flex-wrap items-center justify-end gap-3">{actions}</div>
-      )}
+      {/* When inside a workspace, portal actions to the tab-bar slot; otherwise render inline */}
+      {isInWorkspace
+        ? actionsSlot && actionsContent ? createPortal(actionsContent, actionsSlot) : null
+        : actionsContent}
 
       {summary && (
         <section className={`grid gap-3 sm:gap-4 ${summaryGridCols[summaryColumns]}`}>{summary}</section>

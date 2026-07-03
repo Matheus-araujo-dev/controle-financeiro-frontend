@@ -1,4 +1,5 @@
 export { ListPageShell } from './ListPageShell';
+export { WorkspaceActionsSlotContext } from './WorkspaceActionsSlot';
 export { SummaryCard } from './SummaryCard';
 export { FilterCard, FilterField, FilterInputWrapper, filterInputClass, filterSelectClass } from './FilterCard';
 export { FormSection } from './FormSection';

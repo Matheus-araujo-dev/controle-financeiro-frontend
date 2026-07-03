@@ -9,11 +9,14 @@ import { IconActionButton } from '../../components/data/IconActionButton';
 import { ListSummaryCards } from '../../components/data/ListSummaryCards';
 import { StatusBadge, type StatusTone } from '../../components/data/StatusBadge';
 import { ComboBox } from '../../components/forms/ComboBox';
+import { useContext } from 'react';
+import { createPortal } from 'react-dom';
 import {
   FilterCard,
   FilterField,
   FilterInputWrapper,
   MultiSelectFilter,
+  WorkspaceActionsSlotContext,
   filterInputClass
 } from '../../components/layout';
 import { formatCurrencyBRL } from '../../shared/currency';
@@ -116,6 +119,8 @@ export function FinancialAccountListPage({
   embedded?: boolean;
 }) {
   const navigate = useNavigate();
+  const actionsSlot = useContext(WorkspaceActionsSlotContext);
+  const isInWorkspace = actionsSlot !== undefined;
   const [searchParams] = useSearchParams();
   const statusInicial = searchParams.get('status') as StatusContaCodigo | null;
   const isPagar = config.routeBase.includes('pagar');
@@ -407,25 +412,33 @@ export function FinancialAccountListPage({
     { header: 'Valor', value: (r: FinancialRecord) => r.valorLiquido ?? 0 },
   ];
 
+  const actionButtons = (
+    <div className="flex items-center gap-3">
+      <ExportButton
+        fetchPage={config.list as (f: typeof filters) => Promise<{ items: FinancialRecord[]; totalItems: number; totalPages: number }>}
+        filters={filters}
+        columns={exportColumns}
+        filename={config.routeBase.replace('/', '')}
+      />
+      <Button onClick={onCreate} icon={<PlusOutlined aria-hidden />}>
+        Nova {config.singularTitle.toLowerCase()}
+      </Button>
+    </div>
+  );
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className={`flex flex-col gap-4 md:flex-row md:items-end ${embedded ? 'md:justify-end' : 'md:justify-between'}`}>
-        {!embedded && config.listDescription ? (
-          <p className="text-sm text-on-surface-variant">{config.listDescription}</p>
-        ) : null}
-
-        <div className="flex items-center gap-3">
-          <ExportButton
-            fetchPage={config.list as (f: typeof filters) => Promise<{ items: FinancialRecord[]; totalItems: number; totalPages: number }>}
-            filters={filters}
-            columns={exportColumns}
-            filename={config.routeBase.replace('/', '')}
-          />
-          <Button onClick={onCreate} icon={<PlusOutlined aria-hidden />}>
-            Nova {config.singularTitle.toLowerCase()}
-          </Button>
-        </div>
-      </div>
+      {isInWorkspace
+        ? actionsSlot ? createPortal(actionButtons, actionsSlot) : null
+        : (
+          <div className={`flex flex-col gap-4 md:flex-row md:items-end ${embedded ? 'md:justify-end' : 'md:justify-between'}`}>
+            {!embedded && config.listDescription ? (
+              <p className="text-sm text-on-surface-variant">{config.listDescription}</p>
+            ) : null}
+            {actionButtons}
+          </div>
+        )
+      }
 
       <ListSummaryCards items={summaryItems} columns={5} />
 
