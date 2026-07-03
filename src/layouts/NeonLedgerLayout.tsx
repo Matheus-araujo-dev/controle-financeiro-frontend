@@ -189,7 +189,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
             className="hidden sm:inline-flex shadow-[0_0_12px_rgba(43,245,142,0.12)]"
             icon={<span className="material-symbols-outlined block text-lg leading-none">add</span>}
           >
-            Lancar
+            Lançar
           </QuickLaunchButton>
           {currentUser && (
             <div className="hidden lg:flex flex-col items-end leading-tight min-w-[220px]">
