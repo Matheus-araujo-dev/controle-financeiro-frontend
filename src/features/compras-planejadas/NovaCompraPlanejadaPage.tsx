@@ -197,7 +197,7 @@ export function NovaCompraPlanejadaPage() {
               <div className="space-y-6 relative z-10">
                 <div className="grid grid-cols-1 gap-6">
                   <div className="space-y-2">
-                    <label className={labelClassName}>Título da Compra</label>
+                    <label className={labelClassName}>Título da Compra <span className="text-error normal-case">*</span></label>
                     <Controller
                       control={control}
                       name="titulo"
@@ -235,7 +235,7 @@ export function NovaCompraPlanejadaPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className={labelClassName}>Valor Estimado (R$)</label>
+                    <label className={labelClassName}>Valor Estimado (R$) <span className="text-error normal-case">*</span></label>
                     <Controller
                       control={control}
                       name="valorEstimado"
@@ -299,7 +299,7 @@ export function NovaCompraPlanejadaPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className={labelClassName}>Conta Gerencial</label>
+                  <label className={labelClassName}>Conta Gerencial <span className="text-error normal-case">*</span></label>
                   <Controller
                     control={control}
                     name="contaGerencialId"
@@ -317,7 +317,7 @@ export function NovaCompraPlanejadaPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className={labelClassName}>Responsável</label>
+                  <label className={labelClassName}>Responsável <span className="text-error normal-case">*</span></label>
                   <Controller
                     control={control}
                     name="responsavelId"
