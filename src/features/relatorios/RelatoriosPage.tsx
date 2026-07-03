@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Button } from '../../components/ui/Button';
+import { ComboBox } from '../../components/forms/ComboBox';
 import { DateInput } from '../../components/forms/DateInput';
 import { PageState } from '../../components/states/PageState';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
@@ -36,7 +37,6 @@ import {
   reportTabs,
   statusLabels,
   statusPrevisaoOptions,
-  type InadimplenciaTipo,
   type ReportKey,
   type ReportState
 } from './relatorios-config';
@@ -57,19 +57,19 @@ import { AlertCard, FilterCombo, FilterInput, MetricCard, ReportTable } from './
 export function RelatoriosPage() {
   const [activeReport, setActiveReport] = useState<ReportKey>('geral');
   const [referenceMonth, setReferenceMonth] = useState(getCurrentReferenceMonth());
-  const [contaTipo, setContaTipo] = useState('');
-  const [previsaoOrigem, setPrevisaoOrigem] = useState('');
-  const [previsaoStatus, setPrevisaoStatus] = useState('');
-  const [inadimplenciaTipo, setInadimplenciaTipo] = useState<InadimplenciaTipo>('todos');
+  const [contaTipo, setContaTipo] = useState<string[]>([]);
+  const [previsaoOrigem, setPrevisaoOrigem] = useState<string[]>([]);
+  const [previsaoStatus, setPrevisaoStatus] = useState<string[]>([]);
+  const [inadimplenciaTipo, setInadimplenciaTipo] = useState<string[]>([]);
   const [inadimplenciaSearch, setInadimplenciaSearch] = useState('');
   const [faturaSearch, setFaturaSearch] = useState('');
-  const [faturaStatus, setFaturaStatus] = useState('');
+  const [faturaStatus, setFaturaStatus] = useState<string[]>([]);
   const [recorrenciaSearch, setRecorrenciaSearch] = useState('');
-  const [recorrenciaTipo, setRecorrenciaTipo] = useState('');
-  const [recorrenciaAtiva, setRecorrenciaAtiva] = useState('');
+  const [recorrenciaTipo, setRecorrenciaTipo] = useState<string[]>([]);
+  const [recorrenciaAtiva, setRecorrenciaAtiva] = useState<string[]>([]);
   const [compraSearch, setCompraSearch] = useState('');
-  const [compraStatus, setCompraStatus] = useState('');
-  const [compraPrioridade, setCompraPrioridade] = useState('');
+  const [compraStatus, setCompraStatus] = useState<string[]>([]);
+  const [compraPrioridade, setCompraPrioridade] = useState<string[]>([]);
   const [comparativoMeses, setComparativoMeses] = useState('6');
   const [data, setData] = useState<ReportState>({});
   const [loading, setLoading] = useState(true);
@@ -106,15 +106,15 @@ export function RelatoriosPage() {
           dashboardApi.obterResumoPorResponsaveis({ mesReferencia: referenceMonth }),
           dashboardApi.obterResumoContasGerenciais({
             mesReferencia: referenceMonth,
-            tipo: contaTipo ? (contaTipo as DashboardContaGerencialTipo) : undefined
+            tipo: contaTipo[0] as DashboardContaGerencialTipo | undefined
           }),
           dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth }),
           dashboardApi.obterResumoCentralPrevisao({
             mesReferencia: referenceMonth,
-            origem: previsaoOrigem ? (previsaoOrigem as DashboardCentralPrevisaoOrigem) : undefined,
-            status: previsaoStatus ? (previsaoStatus as DashboardCentralPrevisaoStatus) : undefined
+            origem: previsaoOrigem[0] as DashboardCentralPrevisaoOrigem | undefined,
+            status: previsaoStatus[0] as DashboardCentralPrevisaoStatus | undefined
           }),
-          inadimplenciaTipo !== 'receber'
+          (!inadimplenciaTipo.length || inadimplenciaTipo.includes('pagar'))
             ? financeiroApi.contasPagar.listar({
                 page: 1,
                 pageSize: MAX_REPORT_ROWS,
@@ -126,7 +126,7 @@ export function RelatoriosPage() {
                 sortDirection: 'Asc'
               })
             : Promise.resolve(emptyPaged<ContaPagarResumo, ContaFinanceiraListSummary>()),
-          inadimplenciaTipo !== 'pagar'
+          (!inadimplenciaTipo.length || inadimplenciaTipo.includes('receber'))
             ? financeiroApi.contasReceber.listar({
                 page: 1,
                 pageSize: MAX_REPORT_ROWS,
@@ -143,7 +143,7 @@ export function RelatoriosPage() {
             pageSize: MAX_REPORT_ROWS,
             search: deferredFaturaSearch,
             competencia: referenceMonth,
-            statusCodigo: faturaStatus ? (faturaStatus as StatusFaturaCodigo) : undefined,
+            statusCodigo: faturaStatus[0] as StatusFaturaCodigo | undefined,
             sortBy: 'dataVencimento',
             sortDirection: 'Asc'
           }),
@@ -151,8 +151,8 @@ export function RelatoriosPage() {
             page: 1,
             pageSize: MAX_REPORT_ROWS,
             search: deferredRecorrenciaSearch,
-            tipo: recorrenciaTipo ? (recorrenciaTipo as 'Pagar' | 'Receber') : undefined,
-            ativa: recorrenciaAtiva ? recorrenciaAtiva === 'true' : undefined,
+            tipo: recorrenciaTipo[0] as 'Pagar' | 'Receber' | undefined,
+            ativa: recorrenciaAtiva[0] === 'true' ? true : recorrenciaAtiva[0] === 'false' ? false : undefined,
             dataReferenciaInicial: range.start,
             dataReferenciaFinal: range.end,
             sortBy: 'dataInicio',
@@ -162,8 +162,8 @@ export function RelatoriosPage() {
             page: 1,
             pageSize: MAX_REPORT_ROWS,
             search: deferredCompraSearch,
-            status: compraStatus ? (compraStatus as CompraPlanejadaStatus) : undefined,
-            prioridade: compraPrioridade ? (compraPrioridade as CompraPlanejadaPrioridade) : undefined,
+            status: compraStatus[0] as CompraPlanejadaStatus | undefined,
+            prioridade: compraPrioridade[0] as CompraPlanejadaPrioridade | undefined,
             dataDesejadaInicial: range.start,
             dataDesejadaFinal: range.end,
             sortBy: 'dataDesejada',
@@ -527,7 +527,7 @@ export function RelatoriosPage() {
             <FilterCombo
               label="Tipo"
               value={inadimplenciaTipo}
-              onChange={(value) => setInadimplenciaTipo(value as InadimplenciaTipo)}
+              onChange={setInadimplenciaTipo}
               options={inadimplenciaTipoOptions}
               ariaLabel="Tipo de inadimplência"
             />
@@ -684,13 +684,10 @@ export function RelatoriosPage() {
               value={formatCurrencyBRL(data.comparativo?.itens.at(-1)?.saldo ?? 0)}
               tone={(data.comparativo?.itens.at(-1)?.saldo ?? 0) >= 0 ? 'neutral' : 'danger'}
             />
-            <FilterCombo
-              label="Período"
-              value={comparativoMeses}
-              onChange={setComparativoMeses}
-              options={comparativoMesesOptions}
-              ariaLabel="Quantidade de meses do comparativo"
-            />
+            <div className="space-y-2">
+              <label className="px-1 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Período</label>
+              <ComboBox value={comparativoMeses} onChange={setComparativoMeses} options={comparativoMesesOptions} aria-label="Quantidade de meses do comparativo" />
+            </div>
           </div>
 
           {(data.comparativo?.itens.length ?? 0) > 0 ? (
