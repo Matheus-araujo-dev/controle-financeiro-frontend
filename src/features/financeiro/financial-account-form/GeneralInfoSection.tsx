@@ -184,18 +184,20 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
             name="pessoaId"
             render={({ field }) => (
               <div className="space-y-1">
-                <ComboBox
-                  {...field}
-                  disabled={!canEdit}
-                  onAddNew={canEdit ? () => setPessoaModalTarget('pessoaId') : undefined}
-                >
-                  <option value="">Selecionar...</option>
-                  {pessoaOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </ComboBox>
+                <div className={errors.pessoaId ? 'rounded-xl ring-1 ring-error' : ''}>
+                  <ComboBox
+                    {...field}
+                    disabled={!canEdit}
+                    onAddNew={canEdit ? () => setPessoaModalTarget('pessoaId') : undefined}
+                  >
+                    <option value="">Selecionar...</option>
+                    {pessoaOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </ComboBox>
+                </div>
                 {errors.pessoaId ? <span className={errorTextClass}>{errors.pessoaId.message}</span> : null}
               </div>
             )}
@@ -209,18 +211,20 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
             name="responsavelId"
             render={({ field }) => (
               <div className="space-y-1">
-                <ComboBox
-                  {...field}
-                  disabled={!canEdit}
-                  onAddNew={canEdit ? () => setPessoaModalTarget('responsavelId') : undefined}
-                >
-                  <option value="">Selecionar...</option>
-                  {pessoaOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </ComboBox>
+                <div className={errors.responsavelId ? 'rounded-xl ring-1 ring-error' : ''}>
+                  <ComboBox
+                    {...field}
+                    disabled={!canEdit}
+                    onAddNew={canEdit ? () => setPessoaModalTarget('responsavelId') : undefined}
+                  >
+                    <option value="">Selecionar...</option>
+                    {pessoaOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </ComboBox>
+                </div>
                 {errors.responsavelId ? <span className={errorTextClass}>{errors.responsavelId.message}</span> : null}
               </div>
             )}

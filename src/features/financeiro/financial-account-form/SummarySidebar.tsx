@@ -133,7 +133,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
             variant="primary"
             size="lg"
             className="shrink-0 rounded-xl"
-            disabled={isSubmitting || !isValid}
+            disabled={isSubmitting}
             loading={isSubmitting}
           >
             {id && id !== 'novo' ? 'Atualizar' : 'Confirmar'}
@@ -145,7 +145,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
         title="Pronto para salvar?"
         eyebrow="Resumo Financeiro"
         submitLabel={id && id !== 'novo' ? 'Atualizar Lancamento' : 'Confirmar Lancamento'}
-        submitDisabled={isSubmitting || !isValid}
+        submitDisabled={isSubmitting}
         submitting={isSubmitting}
         error={errorMessage}
         onCancel={onCancel}
@@ -160,7 +160,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
         ]}
       >
         <div className="space-y-3">
-          {id && (detailStatus === 'PENDENTE' || detailStatus === 'EM_FATURA') ? (
+          {id && (detailStatus === 'PENDENTE' || detailStatus === 'FUTURO' || detailStatus === 'EM_FATURA') ? (
             <Button
               type="button"
               variant="danger"

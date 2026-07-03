@@ -62,6 +62,7 @@ type ListFilters = {
 const statusOptions: Array<{ label: string; value: StatusContaCodigo }> = [
   { label: 'Pendente', value: 'PENDENTE' },
   { label: 'Vencida', value: 'VENCIDA' },
+  { label: 'Futuro', value: 'FUTURO' },
   { label: 'Parcial', value: 'PARCIAL' },
   { label: 'Liquidada', value: 'LIQUIDADA' },
   { label: 'Cancelada', value: 'CANCELADA' },
@@ -386,7 +387,7 @@ export function FinancialAccountListPage({
       align: 'center',
       render: (_value, record) => {
         const isLiquidated = record.statusCodigo === 'LIQUIDADA';
-        const canLiquidate = !isLiquidated && record.statusCodigo !== 'CANCELADA' && record.statusCodigo !== 'EM_FATURA';
+        const canLiquidate = !isLiquidated && record.statusCodigo !== 'CANCELADA' && record.statusCodigo !== 'EM_FATURA' && record.statusCodigo !== 'FUTURO';
 
         return (
           <div className="flex items-center justify-center gap-1">
