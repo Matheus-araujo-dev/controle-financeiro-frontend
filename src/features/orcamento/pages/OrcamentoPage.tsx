@@ -97,8 +97,8 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
             value={draftMeta}
             onChange={setDraftMeta}
             disabled={saving || metaCalculada}
-            placeholder={metaCalculada ? 'Calculada automaticamente' : 'Definir meta'}
-            className={`${formCompactFieldClass} !min-h-0 h-11 w-36 min-w-[120px] flex-1 sm:flex-none text-sm`}
+            placeholder={metaCalculada ? 'Calculada automaticamente' : 'R$ 0,00'}
+            className={`${formCompactFieldClass} !min-h-0 !bg-surface-container-high h-11 w-36 min-w-[120px] flex-1 sm:flex-none text-sm`}
           />
           <button
             type="button"
@@ -251,7 +251,7 @@ export function OrcamentoPage() {
       )}
 
       <div className="space-y-3">
-        {orcamento?.itens.map((item) => (
+        {[...(orcamento?.itens ?? [])].sort((a, b) => (a.contaGerencialCodigo ?? '').localeCompare(b.contaGerencialCodigo ?? '', 'pt-BR', { numeric: true })).map((item) => (
           <OrcamentoRow
             key={item.contaGerencialId}
             item={item}
