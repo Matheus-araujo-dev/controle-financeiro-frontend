@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+﻿import { lazy } from 'react';
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { financialRouteObjects, placeholderRouteObjects, supportRegistryRouteObjects, comprasPlanejadasRouteObjects } from './route-definitions';
@@ -57,7 +57,7 @@ export const appRoutes: RouteObject[] = [
         path: 'familia',
         element: <FamiliaPage />,
         handle: {
-          title: 'Família'
+          title: 'Espaços'
         }
       },
       {

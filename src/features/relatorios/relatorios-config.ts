@@ -51,8 +51,6 @@ export type ReportState = {
   comparativo?: DashboardComparativoMensal;
 };
 
-export type InadimplenciaTipo = 'todos' | 'pagar' | 'receber';
-
 export const MAX_REPORT_ROWS = 250;
 
 export const reportTabs: Array<{ key: ReportKey; label: string; icon: string }> = [
@@ -77,13 +75,11 @@ export const comparativoMesesOptions = [
 ];
 
 export const contaTipoOptions = [
-  { value: '', label: 'Todos' },
   { value: 'Receita', label: 'Receitas' },
   { value: 'Despesa', label: 'Despesas' }
 ];
 
 export const origemOptions = [
-  { value: '', label: 'Todas' },
   { value: 'Recorrencia', label: 'Recorrências' },
   { value: 'Parcela', label: 'Parcelas' },
   { value: 'CompraRecorrenteImportada', label: 'Compras importadas' },
@@ -92,45 +88,38 @@ export const origemOptions = [
 ];
 
 export const statusPrevisaoOptions = [
-  { value: '', label: 'Todos' },
   { value: 'Realizado', label: 'Realizado' },
   { value: 'Previsto', label: 'Previsto' },
   { value: 'Substituido', label: 'Substituído' }
 ];
 
 export const inadimplenciaTipoOptions = [
-  { value: 'todos', label: 'Pagar e receber' },
   { value: 'pagar', label: 'A pagar' },
   { value: 'receber', label: 'A receber' }
 ];
 
 export const faturaStatusOptions = [
-  { value: '', label: 'Todos' },
   { value: 'ABERTA', label: 'Abertas' },
   { value: 'PAGA', label: 'Pagas' }
 ];
 
 export const recorrenciaTipoOptions = [
-  { value: '', label: 'Todas' },
   { value: 'Pagar', label: 'A pagar' },
   { value: 'Receber', label: 'A receber' }
 ];
 
 export const ativoOptions = [
-  { value: '', label: 'Todas' },
   { value: 'true', label: 'Ativas' },
   { value: 'false', label: 'Pausadas/encerradas' }
 ];
 
 export const compraStatusOptions = [
-  { value: '', label: 'Todos' },
   { value: 'Planejada', label: 'Planejada' },
   { value: 'Comprada', label: 'Comprada' },
   { value: 'Cancelada', label: 'Cancelada' }
 ];
 
 export const compraPrioridadeOptions = [
-  { value: '', label: 'Todas' },
   { value: 'Baixa', label: 'Baixa' },
   { value: 'Media', label: 'Média' },
   { value: 'Alta', label: 'Alta' }

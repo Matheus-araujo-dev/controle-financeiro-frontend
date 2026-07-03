@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { PageHeaderActionsSlotContext } from '../components/layout/PageHeaderActionsSlot';
 import { Link, Outlet, useLocation, useMatches, useNavigate } from 'react-router-dom';
+import { Select } from 'antd';
 import { navigationItems, navigationStructure } from '../constants/navigation';
 import { useAppShellStore } from '../store/app-shell-store';
-import { useAuthStore, useCurrentUser, useWorkspaceAtual } from '../store/auth-store';
+import { useAuthStore, useCurrentUser } from '../store/auth-store';
 import { logoutSession } from '../services/http/auth-api';
 import { QuickLaunchButton } from '../components/quick-launch/QuickLaunchButton';
 import { Tooltip } from '../components/ui/Tooltip';
@@ -38,7 +39,7 @@ const navIcons: Record<string, string> = {
 };
 
 const PRIMARY = '#2bf58e';
-const ERROR   = '#f0857f';
+const ERROR = '#f0857f';
 
 function readSidebarCollapsed(): boolean {
   try { return localStorage.getItem('sidebar-collapsed') === 'true'; } catch { return false; }
@@ -56,104 +57,6 @@ interface NeonLedgerLayoutProps {
   children?: React.ReactNode;
 }
 
-function WorkspaceSwitcher() {
-  const workspace = useWorkspaceAtual();
-  const [open, setOpen] = useState(false);
-  const [participacoes, setParticipacoes] = useState<ParticipacaoWorkspaceResponse[]>([]);
-  const [switching, setSwitching] = useState<string | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    listarMinhasParticipacoes()
-      .then(setParticipacoes)
-      .catch(() => { /* silencioso */ });
-  }, [open]);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
-
-  const handleSelect = useCallback(async (id: string) => {
-    if (switching) return;
-    setSwitching(id);
-    try {
-      const resultado = await selecionarWorkspace(id);
-      useAuthStore.getState().applyTokenResponse(resultado.sessao);
-      setOpen(false);
-      window.location.reload();
-    } catch (err) {
-      notify('error', 'Não foi possível trocar de espaço', getApiErrorMessage(err));
-    } finally {
-      setSwitching(null);
-    }
-  }, [switching]);
-
-  if (!workspace) return null;
-
-  return (
-    <div ref={ref} className="relative hidden sm:block">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-surface-container hover:bg-surface-container-highest transition-all text-left"
-      >
-        <span className="material-symbols-outlined text-base shrink-0" style={{ color: PRIMARY, fontVariationSettings: "'FILL' 1" }}>workspaces</span>
-        <span className="text-xs font-semibold text-white max-w-[120px] truncate">{workspace.nome}</span>
-        <span className="material-symbols-outlined text-sm text-on-surface-variant">{open ? 'expand_less' : 'expand_more'}</span>
-      </button>
-
-      {open && (
-        <div className="absolute top-full mt-1.5 right-0 min-w-[200px] rounded-xl border border-white/10 bg-[#141414] shadow-2xl z-[60] py-1 overflow-hidden">
-          <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Meus espaços</p>
-          {participacoes.length === 0 && (
-            <p className="px-3 py-2 text-xs text-on-surface-variant">Carregando...</p>
-          )}
-          {participacoes.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              disabled={p.ativa || switching === p.id}
-              onClick={() => void handleSelect(p.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
-                p.ativa ? 'opacity-60 cursor-default' : 'hover:bg-white/5 cursor-pointer'
-              }`}
-            >
-              <span
-                className="material-symbols-outlined text-base shrink-0"
-                style={{ color: p.ativa ? PRIMARY : 'var(--color-on-surface-variant)' }}
-              >
-                {p.ativa ? 'radio_button_checked' : 'radio_button_unchecked'}
-              </span>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-white truncate">{p.nome}</p>
-                <p className="text-[10px] text-on-surface-variant">{p.meuPapel}</p>
-              </div>
-              {switching === p.id && (
-                <span className="material-symbols-outlined text-sm animate-spin ml-auto" style={{ color: PRIMARY }}>progress_activity</span>
-              )}
-            </button>
-          ))}
-          <div className="border-t border-white/5 mt-1 pt-1">
-            <Link
-              to="/familia"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-xs text-on-surface-variant hover:text-white hover:bg-white/5 transition-colors"
-            >
-              <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>settings</span>
-              Gerenciar espaços
-            </Link>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
   const matches = useMatches();
   const location = useLocation();
@@ -163,8 +66,11 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(readSidebarCollapsed);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(readCollapsedGroups);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerCollapsedGroups, setDrawerCollapsedGroups] = useState<Set<string>>(new Set());
+  const [participacoes, setParticipacoes] = useState<ParticipacaoWorkspaceResponse[]>([]);
+  const [headerActionsSlot, setHeaderActionsSlot] = useState<HTMLElement | null>(null);
+  const [loadingEspacos, setLoadingEspacos] = useState(false);
+  const activeWorkspaceId = currentUser?.workspace?.id ?? currentUser?.familia?.id;
+  const participacoesOptions = Array.isArray(participacoes) ? participacoes : [];
 
   const breadcrumbTitles = useMemo(
     () =>
@@ -184,14 +90,39 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
     );
   }, [location.pathname]);
 
-  const activeGroupLabel = useMemo(() => {
-    const group = navigationStructure.find(g => g.items.some(item => item.key === selectedKey));
-    return group?.label ?? 'Inteligência financeira';
-  }, [selectedKey]);
-
   useEffect(() => {
     setPageTitle(breadcrumbTitles.at(-1) ?? 'Dashboard');
   }, [breadcrumbTitles, setPageTitle]);
+
+  useEffect(() => {
+    if (!currentUser || !activeWorkspaceId) {
+      setParticipacoes([]);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingEspacos(true);
+    void listarMinhasParticipacoes()
+      .then((items) => {
+        if (!cancelled) {
+          setParticipacoes(Array.isArray(items) ? items : []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setParticipacoes([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingEspacos(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeWorkspaceId, currentUser?.userId]);
 
   function toggleSidebar() {
     setSidebarCollapsed((prev) => {
@@ -210,6 +141,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
     });
   }
 
+
   const handleLogout = async () => {
     const { clearSession } = useAuthStore.getState();
     try { await logoutSession(); } catch { /* logout local acontece de qualquer forma */ }
@@ -217,23 +149,29 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
     navigate('/login', { replace: true });
   };
 
+  const handleSelecionarEspaco = async (familiaId: string) => {
+    if (!familiaId || familiaId === activeWorkspaceId) {
+      return;
+    }
+
+    try {
+      setLoadingEspacos(true);
+      const response = await selecionarWorkspace(familiaId);
+      useAuthStore.getState().applyTokenResponse(response.sessao);
+      notify('success', 'Espaco ativo atualizado');
+      window.location.reload();
+    } catch (err) {
+      notify('error', 'Nao foi possivel trocar de espaco', getApiErrorMessage(err));
+      setLoadingEspacos(false);
+    }
+  };
+
   const sidebarWidth = sidebarCollapsed ? 64 : 256;
 
   return (
     <div className="bg-surface font-body text-white min-h-screen" data-testid="admin-shell">
-
-      {/* ── Barra superior ─────────────────────────────────────────────────── */}
       <nav className="fixed top-0 w-full z-50 flex items-center justify-between px-4 md:px-8 py-4 bg-surface/90 backdrop-blur-md border-b border-white/5">
-        <div className="flex items-center gap-3 min-w-0">
-          {/* Hamburguer — mobile only */}
-          <button
-            type="button"
-            onClick={() => setDrawerOpen(true)}
-            aria-label="Abrir menu"
-            className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl hover:bg-white/5 transition-colors shrink-0"
-          >
-            <span className="material-symbols-outlined text-on-surface-variant">menu</span>
-          </button>
+        <div className="flex items-center gap-6 min-w-0">
           <Link to="/dashboard" className="text-2xl font-black tracking-tighter font-headline whitespace-nowrap" style={{ color: PRIMARY }}>
             Controle<span className="text-white">Financeiro</span>
           </Link>
@@ -247,24 +185,33 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <WorkspaceSwitcher />
-          <div className="hidden lg:block">
-            <QuickLaunchButton
-              className="shadow-[0_0_12px_rgba(43,245,142,0.12)]"
-              icon={<span className="material-symbols-outlined block text-lg leading-none">add</span>}
-            >
-              Lançar
-            </QuickLaunchButton>
-          </div>
+          <QuickLaunchButton
+            className="hidden sm:inline-flex shadow-[0_0_12px_rgba(43,245,142,0.12)]"
+            icon={<span className="material-symbols-outlined block text-lg leading-none">add</span>}
+          >
+            Lancar
+          </QuickLaunchButton>
           {currentUser && (
-            <div className="hidden sm:flex flex-col items-end leading-tight">
+            <div className="hidden lg:flex flex-col items-end leading-tight min-w-[220px]">
               <span className="text-sm font-bold text-white">{currentUser.displayName}</span>
+              <Select
+                size="small"
+                value={activeWorkspaceId}
+                loading={loadingEspacos}
+                onChange={(value) => void handleSelecionarEspaco(value)}
+                style={{ width: '100%', marginTop: 6 }}
+                popupMatchSelectWidth={false}
+                options={participacoesOptions.map((item) => ({
+                  value: item.id,
+                  label: `${item.nome} - ${item.meuPapel}`
+                }))}
+              />
             </div>
           )}
-          <Tooltip content="Minha conta" side="bottom">
+          <Tooltip content="Espacos" side="bottom">
             <Link
               to="/familia"
-              aria-label="Minha conta"
+              aria-label="Espacos"
               className="w-10 h-10 rounded-full border-2 border-primary/30 bg-surface-container flex items-center justify-center overflow-hidden hover:border-primary transition-all"
             >
               {currentUser?.avatarUrl ? (
@@ -291,7 +238,6 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
         </div>
       </nav>
 
-      {/* ── Botão handle de retrair/expandir (fixo, borda direita do sidebar) ── */}
       <Tooltip content={sidebarCollapsed ? 'Expandir menu' : 'Retrair menu'} side="right">
         <button
           type="button"
@@ -317,7 +263,6 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
         </button>
       </Tooltip>
 
-      {/* ── Navegação lateral ─────────────────────────────────────────────── */}
       <aside
         className={`hidden lg:flex flex-col fixed left-0 top-[72px] bottom-0 py-5 overflow-y-auto transition-all duration-200 z-40 ${
           sidebarCollapsed ? 'w-16' : 'w-64'
@@ -360,29 +305,24 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
                       const isActive = item.key === selectedKey;
                       const icon = navIcons[item.key] ?? 'circle';
 
-                      const itemColor = isActive ? PRIMARY : 'rgba(43, 245, 142, 0.55)';
-
                       return (
                         <Tooltip key={item.key} content={item.label} side="right" disabled={!sidebarCollapsed}>
                           <Link
                             to={item.key}
-                            className={`flex items-center transition-all duration-150 ${
+                            className={`flex items-center transition-all ${
                               sidebarCollapsed
-                                ? `justify-center py-2.5 mx-1.5 rounded-xl ${isActive ? 'bg-primary/12 shadow-[inset_0_0_10px_rgba(43,245,142,0.18)]' : 'hover:bg-white/5'}`
-                                : `gap-3 py-2.5 pl-4 pr-6 font-body text-sm font-medium tracking-wide ${isActive ? 'bg-primary/12 shadow-[inset_0_0_10px_rgba(43,245,142,0.18)] border-r-2 border-primary' : 'hover:bg-white/5'}`
+                                ? `justify-center py-2.5 mx-1.5 rounded-xl ${isActive ? 'bg-primary/12 shadow-[inset_0_0_10px_rgba(43,245,142,0.18)]' : 'hover:bg-primary/10'}`
+                                : `gap-3 py-2.5 pl-4 pr-6 font-body text-sm font-medium tracking-wide ${isActive ? 'bg-primary/12 shadow-[inset_0_0_10px_rgba(43,245,142,0.18)] border-r-4 border-primary/80' : 'hover:bg-primary/10'}`
                             }`}
                           >
                             <span
-                              className="material-symbols-outlined text-xl shrink-0 transition-colors duration-150"
-                              style={{
-                                color: itemColor,
-                                fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0",
-                              }}
+                              className="material-symbols-outlined text-xl shrink-0"
+                              style={{ color: PRIMARY }}
                             >
                               {icon}
                             </span>
                             {!sidebarCollapsed && (
-                              <span className="truncate transition-colors duration-150" style={{ color: itemColor }}>
+                              <span className="truncate" style={{ color: PRIMARY }}>
                                 {item.label}
                               </span>
                             )}
@@ -398,196 +338,68 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
         </nav>
       </aside>
 
-      {/* ── Conteúdo ──────────────────────────────────────────────────────── */}
       <main
         className="pt-24 pb-28 lg:pb-12 px-4 md:px-8 min-h-screen transition-all duration-200 max-lg:!ml-0"
         style={{ marginLeft: `${sidebarWidth}px` }}
       >
         <header className="mb-6">
           <p className="text-[11px] text-on-surface-variant uppercase tracking-widest font-medium">
-            {activeGroupLabel}
+            Inteligencia financeira
           </p>
-          <h1 className="text-2xl md:text-3xl font-black font-headline text-white mt-1 mb-0">{pageTitle}</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
+            <h1 className="text-2xl md:text-3xl font-black font-headline text-white !mb-0">{pageTitle}</h1>
+            <div
+              ref={(el) => { if (el !== null) setHeaderActionsSlot(el); }}
+              className="flex items-center gap-3"
+            />
+          </div>
         </header>
-        {children ?? <Outlet />}
+        <PageHeaderActionsSlotContext.Provider value={headerActionsSlot}>
+          {children ?? <Outlet />}
+        </PageHeaderActionsSlotContext.Provider>
       </main>
 
-      {/* ── Botão flutuante (mobile) — oculto em páginas de detalhe/formulário ── */}
       {!/\/(contas-pagar|contas-receber|faturas)\/[^/]/.test(location.pathname) && (
         <QuickLaunchButton className="lg:hidden fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full bg-primary text-on-primary border-0 shadow-[0_10px_30px_rgba(43,245,142,0.35)] flex items-center justify-center cursor-pointer active:scale-95 transition-all" />
       )}
 
-      {/* ── Drawer lateral mobile ─────────────────────────────────────────── */}
-      {drawerOpen && createPortal(
-        <div className="fixed inset-0 z-[90] lg:hidden">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setDrawerOpen(false)}
-          />
-          {/* Panel */}
-          <div className="absolute left-0 top-0 bottom-0 w-72 flex flex-col bg-[#0f0f0f] shadow-2xl overflow-y-auto">
-            {/* Drawer header */}
-            <div className="flex items-center justify-between px-4 py-4 border-b border-white/5 shrink-0">
-              <Link
-                to="/dashboard"
-                className="text-xl font-black tracking-tighter font-headline whitespace-nowrap"
-                style={{ color: PRIMARY }}
-                onClick={() => setDrawerOpen(false)}
-              >
-                Controle<span className="text-white">Financeiro</span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => setDrawerOpen(false)}
-                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/5 transition-colors"
-              >
-                <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '20px' }}>close</span>
-              </button>
-            </div>
-
-            {/* User info */}
-            {currentUser && (
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 shrink-0">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-                  style={{ background: 'rgba(43,245,142,0.12)', border: '1.5px solid rgba(43,245,142,0.3)' }}
-                >
-                  {currentUser.avatarUrl ? (
-                    <img alt={currentUser.displayName} src={currentUser.avatarUrl} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="font-bold text-sm" style={{ color: PRIMARY }}>
-                      {currentUser.displayName.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-                <span className="text-sm font-semibold text-white truncate">{currentUser.displayName}</span>
-              </div>
-            )}
-
-            {/* Navigation */}
-            <nav className="flex-1 py-3 overflow-y-auto">
-              {navigationStructure.map((group) => {
-                const isGroupCollapsed = drawerCollapsedGroups.has(group.key);
-                return (
-                  <div key={group.key} className="mb-2">
-                    {/* Group header — clicável para expandir/retrair */}
-                    <button
-                      type="button"
-                      onClick={() => setDrawerCollapsedGroups((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(group.key)) next.delete(group.key); else next.add(group.key);
-                        return next;
-                      })}
-                      className="w-full flex items-center justify-between px-4 py-1.5 hover:opacity-100 opacity-80 transition-opacity"
-                    >
-                      <h3
-                        className="text-[10px] font-bold uppercase tracking-wider"
-                        style={{ color: PRIMARY }}
-                      >
-                        {group.label}
-                      </h3>
-                      <span
-                        className="material-symbols-outlined transition-transform duration-200"
-                        style={{
-                          fontSize: '16px',
-                          color: PRIMARY,
-                          transform: isGroupCollapsed ? 'rotate(0deg)' : 'rotate(90deg)',
-                        }}
-                      >
-                        chevron_right
-                      </span>
-                    </button>
-
-                    {/* Group items */}
-                    {!isGroupCollapsed && (
-                      <div className="mt-0.5">
-                        {group.items.map((item) => {
-                          const isActive = item.key === selectedKey;
-                          const icon = navIcons[item.key] ?? 'circle';
-                          return (
-                            <Link
-                              key={item.key}
-                              to={item.key}
-                              onClick={() => setDrawerOpen(false)}
-                              className={`flex items-center gap-3 py-2.5 pl-4 pr-5 text-sm font-medium transition-all ${
-                                isActive
-                                  ? 'bg-primary/12 border-r-2 border-primary'
-                                  : 'hover:bg-white/5'
-                              }`}
-                              style={{ color: isActive ? PRIMARY : 'rgba(43,245,142,0.55)' }}
-                            >
-                              <span
-                                className="material-symbols-outlined text-xl shrink-0"
-                                style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
-                              >
-                                {icon}
-                              </span>
-                              {item.label}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </nav>
-
-            {/* Logout */}
-            <div className="border-t border-white/5 px-4 py-4 shrink-0">
-              <button
-                type="button"
-                onClick={() => { setDrawerOpen(false); void handleLogout(); }}
-                className="flex items-center gap-3 w-full py-2.5 text-sm font-medium rounded-xl hover:bg-white/5 transition-colors px-2"
-                style={{ color: ERROR }}
-              >
-                <span className="material-symbols-outlined text-xl">logout</span>
-                Sair
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* ── Navegação inferior (mobile) ────────────────────────────────────── */}
       <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-5 pt-2 lg:hidden bg-[#0e0e0e]/80 backdrop-blur-xl rounded-t-3xl border-t border-outline-variant/15 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
         {[
           { to: '/dashboard', icon: 'grid_view', label: 'Home' },
           { to: '/contas-pagar', icon: 'south_west', label: 'Pagar' },
           { to: '/contas-receber', icon: 'north_east', label: 'Receber' },
           { to: '/faturas', icon: 'credit_card', label: 'Cartões' },
-          { to: '/familia', icon: 'menu', label: 'Conta' }
-        ].map((item) => {
-          const isTabActive = item.to === selectedKey;
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="flex flex-col items-center justify-center gap-0.5 min-w-[52px] transition-all"
-              style={{ color: isTabActive ? PRIMARY : 'var(--color-on-surface-variant)' }}
+          { to: '/familia', icon: 'menu', label: 'Espaços' }
+        ].map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            className={`flex flex-col items-center justify-center p-2 font-body text-[10px] font-bold uppercase transition-all ${
+              item.to === selectedKey ? 'rounded-xl scale-110' : 'text-on-surface-variant'
+            }`}
+            style={item.to === selectedKey ? { color: PRIMARY } : undefined}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={item.to === selectedKey ? { fontVariationSettings: "'FILL' 1", color: PRIMARY } : undefined}
             >
-              <span
-                className={`flex items-center justify-center w-14 h-7 rounded-full transition-all duration-200 ${
-                  isTabActive ? 'bg-primary/15' : 'bg-transparent'
-                }`}
-                style={{
-                  fontFamily: 'Material Symbols Outlined',
-                  fontSize: '22px',
-                  fontVariationSettings: isTabActive ? "'FILL' 1" : "'FILL' 0",
-                  lineHeight: 1,
-                }}
-              >
-                {item.icon}
-              </span>
-              <span className="font-body text-[10px] font-semibold uppercase tracking-wide">
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
+              {item.icon}
+            </span>
+            {item.label}
+          </Link>
+        ))}
       </nav>
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+

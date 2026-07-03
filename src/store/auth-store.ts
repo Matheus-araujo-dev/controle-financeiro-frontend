@@ -26,7 +26,9 @@ export const useAuthStore = create<AuthState>()(
       permissions: [],
       setMode: (mode) => set({ mode }),
       signIn: (currentUser) => set({ currentUser }),
-      applyTokenResponse: (response) =>
+      applyTokenResponse: (response) => {
+        const workspace = response.usuario.workspace ?? response.usuario.familia ?? null;
+
         set({
           token: response.accessToken,
           currentUser: {
@@ -34,10 +36,11 @@ export const useAuthStore = create<AuthState>()(
             displayName: response.usuario.nome,
             email: response.usuario.email,
             avatarUrl: response.usuario.avatarUrl,
-            workspace: response.usuario.workspace ?? response.usuario.familia,
+workspace: response.usuario.workspace ?? response.usuario.familia,
             familia: response.usuario.familia ?? response.usuario.workspace
           }
-        }),
+        });
+      },
       setToken: (token) => set({ token }),
       setPermissions: (permissions) => set({ permissions }),
       clearSession: () => set({ currentUser: null, token: null, permissions: [] })
