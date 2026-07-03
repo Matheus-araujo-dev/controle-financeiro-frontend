@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
+import { PageHeaderActionsSlotContext } from './PageHeaderActionsSlot';
 import { WorkspaceActionsSlotContext } from './WorkspaceActionsSlot';
 
 interface ListPageShellProps {
@@ -24,20 +25,24 @@ export function ListPageShell({
   children,
   summaryColumns = 3
 }: ListPageShellProps) {
-  const actionsSlot = useContext(WorkspaceActionsSlotContext);
-  const isInWorkspace = actionsSlot !== undefined;
+  const workspaceSlot = useContext(WorkspaceActionsSlotContext);
+  const headerSlot = useContext(PageHeaderActionsSlotContext);
+
+  // Workspace slot takes priority; header slot is the fallback for standalone pages.
+  // undefined = no context → render inline; null = context exists but not mounted yet → hide.
+  const activeSlot = workspaceSlot !== undefined ? workspaceSlot : headerSlot;
+  const renderInline = activeSlot === undefined;
 
   const actionsContent = actions ? (
-    <div className="flex flex-wrap items-center justify-end gap-3">{actions}</div>
+    <div className="flex flex-wrap items-center gap-3">{actions}</div>
   ) : null;
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      {/* When inside a workspace, portal actions to the tab-bar slot; otherwise render inline */}
-      {isInWorkspace
-        ? actionsSlot && actionsContent ? createPortal(actionsContent, actionsSlot) : null
-        : actionsContent}
+      {renderInline
+        ? actionsContent
+        : activeSlot && actionsContent ? createPortal(actionsContent, activeSlot) : null}
 
       {summary && (
         <section className={`grid gap-3 sm:gap-4 ${summaryGridCols[summaryColumns]}`}>{summary}</section>

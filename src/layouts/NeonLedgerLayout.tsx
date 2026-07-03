@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { PageHeaderActionsSlotContext } from '../components/layout/PageHeaderActionsSlot';
 import { Link, Outlet, useLocation, useMatches, useNavigate } from 'react-router-dom';
 import { Select } from 'antd';
 import { navigationItems, navigationStructure } from '../constants/navigation';
@@ -66,6 +67,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(readSidebarCollapsed);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(readCollapsedGroups);
   const [participacoes, setParticipacoes] = useState<ParticipacaoWorkspaceResponse[]>([]);
+  const [headerActionsSlot, setHeaderActionsSlot] = useState<HTMLElement | null>(null);
   const [loadingEspacos, setLoadingEspacos] = useState(false);
   const activeWorkspaceId = currentUser?.workspace?.id ?? currentUser?.familia?.id;
   const participacoesOptions = Array.isArray(participacoes) ? participacoes : [];
@@ -344,9 +346,17 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
           <p className="text-[11px] text-on-surface-variant uppercase tracking-widest font-medium">
             Inteligencia financeira
           </p>
-          <h1 className="text-2xl md:text-3xl font-black font-headline text-white mt-1 mb-0">{pageTitle}</h1>
+          <div className="flex flex-wrap items-end justify-between gap-3 mt-1">
+            <h1 className="text-2xl md:text-3xl font-black font-headline text-white mb-0">{pageTitle}</h1>
+            <div
+              ref={(el) => { if (el !== null) setHeaderActionsSlot(el); }}
+              className="flex items-center gap-3"
+            />
+          </div>
         </header>
-        {children ?? <Outlet />}
+        <PageHeaderActionsSlotContext.Provider value={headerActionsSlot}>
+          {children ?? <Outlet />}
+        </PageHeaderActionsSlotContext.Provider>
       </main>
 
       {!/\/(contas-pagar|contas-receber|faturas)\/[^/]/.test(location.pathname) && (
