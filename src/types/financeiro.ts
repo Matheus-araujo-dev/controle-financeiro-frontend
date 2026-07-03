@@ -314,6 +314,11 @@ export type LiquidacaoPayload = {
 
 export type CancelarContaPagarPayload = {
   cancelarPlanejamentoRelacionado?: boolean | null;
+  pausarRecorrenciaRelacionada?: boolean | null;
+};
+
+export type CancelarContaReceberPayload = {
+  pausarRecorrenciaRelacionada?: boolean | null;
 };
 
 export type GerarOcorrenciasPayload = {
