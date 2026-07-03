@@ -267,6 +267,7 @@ export function resolveStatusTone(statusCodigo: StatusContaCodigo) {
   if (statusCodigo === 'LIQUIDADA') return 'positive';
   if (statusCodigo === 'CANCELADA') return 'neutral';
   if (statusCodigo === 'EM_FATURA') return 'neutral';
+  if (statusCodigo === 'FUTURO') return 'neutral';
   if (statusCodigo === 'VENCIDA') return 'negative';
   return 'warning';
 }
@@ -343,7 +344,7 @@ function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload
   return {
     origemCompraPlanejadaId: normalizeNullableId(values.origemCompraPlanejadaId),
     numeroDocumento: normalizeNullableText(values.numeroDocumento),
-    dataEmissao: values.dataEmissao,
+    dataEmissao: values.dataEmissao || new Date().toISOString().split('T')[0],
     responsavelCompraId: values.responsavelId,
     recebedorId: values.pessoaId,
     dataVencimento: values.dataVencimento,
@@ -369,7 +370,7 @@ function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload
 function buildContaReceberPayload(values: FinanceiroFormValues): ContaReceberPayload {
   return {
     numeroDocumento: normalizeNullableText(values.numeroDocumento),
-    dataEmissao: values.dataEmissao,
+    dataEmissao: values.dataEmissao || new Date().toISOString().split('T')[0],
     responsavelId: values.responsavelId,
     pagadorId: values.pessoaId,
     dataVencimento: values.dataVencimento,

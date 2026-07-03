@@ -1,7 +1,7 @@
 import type { PagedResult } from './api';
 
 export type LancamentoOrigem = 'Manual' | 'Recorrencia' | 'Importacao';
-export type StatusContaCodigo = 'PENDENTE' | 'LIQUIDADA' | 'VENCIDA' | 'CANCELADA' | 'PARCIAL' | 'EM_FATURA';
+export type StatusContaCodigo = 'PENDENTE' | 'LIQUIDADA' | 'VENCIDA' | 'CANCELADA' | 'PARCIAL' | 'EM_FATURA' | 'FUTURO';
 export type StatusFaturaCodigo = 'ABERTA' | 'PAGA';
 export type TipoMovimentacao = 'Entrada' | 'Saida';
 export type NaturezaMovimentacao = 'Prevista' | 'Realizada' | 'Economica';

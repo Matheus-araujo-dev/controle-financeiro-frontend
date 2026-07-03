@@ -12,7 +12,7 @@ export const financialAccountFormSchema = z
     numeroDocumento: z.string(),
     pessoaId: z.string().min(1, 'Selecione a pessoa'),
     responsavelId: z.string().min(1, 'Selecione o responsável'),
-    dataEmissao: z.string().min(1, 'Informe a data de emissão'),
+    dataEmissao: z.string(),
     dataVencimento: z.string().min(1, 'Informe a data de vencimento'),
     formaPagamentoId: z.string().min(1, 'Selecione a forma de pagamento'),
     cartaoId: z.string(),
