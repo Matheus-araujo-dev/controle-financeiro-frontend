@@ -1,4 +1,4 @@
-﻿import { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { FinancialAccountFormPage } from './FinancialAccountFormPage';
@@ -31,7 +31,7 @@ const validValues = {
   valorMulta: 0,
   quantidadeParcelas: 1,
   descricao: 'Despesa de teste',
-  observacao: 'ObservaÃ§Ã£o inicial',
+  observacao: 'Observação inicial',
   rateios: [{ contaGerencialId: 'cg1', valor: 95 }],
   ehRecorrente: true,
   recorrenciaTipoPeriodicidade: 'Mensal' as const,
@@ -51,8 +51,8 @@ function createConfig() {
     singularTitle: 'Conta a pagar',
     routeBase: '/contas-pagar',
     personLabel: 'Recebedor',
-    listDescription: 'DescriÃ§Ã£o da listagem.',
-    formDescription: 'DescriÃ§Ã£o do formulÃ¡rio.',
+    listDescription: 'Descrição da listagem.',
+    formDescription: 'Descrição do formulário.',
     columns: [],
     defaultFilters: {},
     defaultValues: validValues,
@@ -75,10 +75,10 @@ function createConfig() {
     toFormValues: vi.fn().mockReturnValue(validValues),
     loadPessoaOptions: vi.fn().mockResolvedValue([
       { label: 'Fornecedor', value: 'p1' },
-      { label: 'ResponsÃ¡vel', value: 'p2' }
+      { label: 'Responsável', value: 'p2' }
     ]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([
-      { label: 'CartÃ£o corporativo', value: 'f1', ehCartao: true, baixarAutomaticamente: true }
+      { label: 'Cartão corporativo', value: 'f1', ehCartao: true, baixarAutomaticamente: true }
     ]),
     loadContaBancariaOptions: vi.fn().mockResolvedValue([{ label: 'Conta principal', value: 'cb1' }]),
     loadCartaoOptions: vi.fn().mockResolvedValue([{ label: 'Visa final 4242', value: 'c1' }]),
@@ -214,7 +214,7 @@ describe('FinancialAccountFormPage', () => {
           code: 'VALIDATION_ERROR',
           message: 'Erro',
           errors: {
-            Descricao: ['DescriÃ§Ã£o obrigatÃ³ria.']
+            Descricao: ['Descrição obrigatória.']
           },
           traceId: 'trace-id'
         },
@@ -232,7 +232,7 @@ describe('FinancialAccountFormPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lancamento' }));
 
     await waitFor(() => expect(config.create).toHaveBeenCalled());
-    expect(await screen.findByText('DescriÃ§Ã£o obrigatÃ³ria.')).toBeInTheDocument();
+    expect(await screen.findByText('Descrição obrigatória.')).toBeInTheDocument();
     expect(navigateMock).not.toHaveBeenCalled();
   }, 20000);
 });

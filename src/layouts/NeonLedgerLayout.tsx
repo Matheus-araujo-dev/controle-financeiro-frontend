@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { PageHeaderActionsSlotContext } from '../components/layout/PageHeaderActionsSlot';
 import { Link, Outlet, useLocation, useMatches, useNavigate } from 'react-router-dom';
 import { Select } from 'antd';
@@ -66,6 +67,8 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(readSidebarCollapsed);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(readCollapsedGroups);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerCollapsedGroups, setDrawerCollapsedGroups] = useState<Set<string>>(new Set());
   const [participacoes, setParticipacoes] = useState<ParticipacaoWorkspaceResponse[]>([]);
   const [headerActionsSlot, setHeaderActionsSlot] = useState<HTMLElement | null>(null);
   const [loadingEspacos, setLoadingEspacos] = useState(false);
@@ -171,7 +174,16 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
   return (
     <div className="bg-surface font-body text-white min-h-screen" data-testid="admin-shell">
       <nav className="fixed top-0 w-full z-50 flex items-center justify-between px-4 md:px-8 py-4 bg-surface/90 backdrop-blur-md border-b border-white/5">
-        <div className="flex items-center gap-6 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Hamburguer — mobile only */}
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Abrir menu"
+            className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl hover:bg-white/5 transition-colors shrink-0"
+          >
+            <span className="material-symbols-outlined text-on-surface-variant">menu</span>
+          </button>
           <Link to="/dashboard" className="text-2xl font-black tracking-tighter font-headline whitespace-nowrap" style={{ color: PRIMARY }}>
             Controle<span className="text-white">Financeiro</span>
           </Link>
@@ -185,12 +197,14 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <QuickLaunchButton
-            className="hidden sm:inline-flex shadow-[0_0_12px_rgba(43,245,142,0.12)]"
-            icon={<span className="material-symbols-outlined block text-lg leading-none">add</span>}
-          >
-            Lancar
-          </QuickLaunchButton>
+          <div className="hidden lg:flex">
+            <QuickLaunchButton
+              className="shadow-[0_0_12px_rgba(43,245,142,0.12)]"
+              icon={<span className="material-symbols-outlined block text-lg leading-none">add</span>}
+            >
+              Lançar
+            </QuickLaunchButton>
+          </div>
           {currentUser && (
             <div className="hidden lg:flex flex-col items-end leading-tight min-w-[220px]">
               <span className="text-sm font-bold text-white">{currentUser.displayName}</span>
@@ -344,7 +358,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
       >
         <header className="mb-6">
           <p className="text-[11px] text-on-surface-variant uppercase tracking-widest font-medium">
-            Inteligencia financeira
+            Inteligência financeira
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
             <h1 className="text-2xl md:text-3xl font-black font-headline text-white !mb-0">{pageTitle}</h1>
@@ -361,6 +375,123 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
 
       {!/\/(contas-pagar|contas-receber|faturas)\/[^/]/.test(location.pathname) && (
         <QuickLaunchButton className="lg:hidden fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full bg-primary text-on-primary border-0 shadow-[0_10px_30px_rgba(43,245,142,0.35)] flex items-center justify-center cursor-pointer active:scale-95 transition-all" />
+      )}
+
+      {/* ── Drawer lateral mobile ─────────────────────────────────────────── */}
+      {drawerOpen && createPortal(
+        <div className="fixed inset-0 z-[90] lg:hidden">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <div className="absolute left-0 top-0 bottom-0 w-72 flex flex-col bg-[#0f0f0f] shadow-2xl overflow-y-auto">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-white/5 shrink-0">
+              <Link
+                to="/dashboard"
+                className="text-xl font-black tracking-tighter font-headline whitespace-nowrap"
+                style={{ color: PRIMARY }}
+                onClick={() => setDrawerOpen(false)}
+              >
+                Controle<span className="text-white">Financeiro</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(false)}
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '20px' }}>close</span>
+              </button>
+            </div>
+
+            {currentUser && (
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 shrink-0">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+                  style={{ background: 'rgba(43,245,142,0.12)', border: '1.5px solid rgba(43,245,142,0.3)' }}
+                >
+                  {currentUser.avatarUrl ? (
+                    <img alt={currentUser.displayName} src={currentUser.avatarUrl} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="font-bold text-sm" style={{ color: PRIMARY }}>
+                      {currentUser.displayName.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm font-semibold text-white truncate">{currentUser.displayName}</span>
+              </div>
+            )}
+
+            <nav className="flex-1 py-3 overflow-y-auto">
+              {navigationStructure.map((group) => {
+                const isGroupCollapsed = drawerCollapsedGroups.has(group.key);
+                return (
+                  <div key={group.key} className="mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setDrawerCollapsedGroups((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(group.key)) next.delete(group.key); else next.add(group.key);
+                        return next;
+                      })}
+                      className="w-full flex items-center justify-between px-4 py-1.5 hover:opacity-100 opacity-80 transition-opacity"
+                    >
+                      <h3 className="text-[10px] font-bold uppercase tracking-wider" style={{ color: PRIMARY }}>
+                        {group.label}
+                      </h3>
+                      <span
+                        className="material-symbols-outlined transition-transform duration-200"
+                        style={{ fontSize: '16px', color: PRIMARY, transform: isGroupCollapsed ? 'rotate(0deg)' : 'rotate(90deg)' }}
+                      >
+                        chevron_right
+                      </span>
+                    </button>
+
+                    {!isGroupCollapsed && (
+                      <div className="mt-0.5">
+                        {group.items.map((item) => {
+                          const isActive = item.key === selectedKey;
+                          const icon = navIcons[item.key] ?? 'circle';
+                          return (
+                            <Link
+                              key={item.key}
+                              to={item.key}
+                              onClick={() => setDrawerOpen(false)}
+                              className={`flex items-center gap-3 py-2.5 pl-4 pr-5 text-sm font-medium transition-all ${
+                                isActive ? 'bg-primary/12 border-r-2 border-primary' : 'hover:bg-white/5'
+                              }`}
+                              style={{ color: isActive ? PRIMARY : 'rgba(43,245,142,0.55)' }}
+                            >
+                              <span
+                                className="material-symbols-outlined text-xl shrink-0"
+                                style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                              >
+                                {icon}
+                              </span>
+                              {item.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+
+            <div className="border-t border-white/5 px-4 py-4 shrink-0">
+              <button
+                type="button"
+                onClick={() => { setDrawerOpen(false); void handleLogout(); }}
+                className="flex items-center gap-3 w-full py-2.5 text-sm font-medium rounded-xl hover:bg-white/5 transition-colors px-2"
+                style={{ color: ERROR }}
+              >
+                <span className="material-symbols-outlined text-xl">logout</span>
+                Sair
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-5 pt-2 lg:hidden bg-[#0e0e0e]/80 backdrop-blur-xl rounded-t-3xl border-t border-outline-variant/15 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">

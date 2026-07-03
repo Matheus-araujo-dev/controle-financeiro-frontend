@@ -22,8 +22,9 @@ import type { ApiErrorResponse } from '../../types/api';
 import type { FormFieldConfig, MasterDataModuleConfig, SelectOption } from './module-config';
 import { applyInputMask, extractDigits } from './input-masks';
 import { CurrencyInput } from '../../shared/CurrencyInput';
-import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
+import { handleIntegerPaste, keepOnlyDigits, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
 import { QuickAddPessoaModal } from './quick-add/QuickAddPessoaModal';
+import { QuickAddContaBancariaModal } from './quick-add/QuickAddContaBancariaModal';
 
 function buildFieldOptions(field: FormFieldConfig<Record<string, unknown>>, loadedOptions: Record<string, SelectOption[]>) {
   return [...(field.options ?? []), ...(loadedOptions[field.name] ?? [])];
@@ -121,7 +122,7 @@ function sectionPlanFor(key: string) {
     ],
     'formas-pagamento': [
       { title: 'Dados da Forma', eyebrow: 'Cadastro', icon: 'payments', fields: ['nome', 'tipo'] },
-      { title: 'Configurações Operacionais', eyebrow: 'Regras', icon: 'tune', fields: ['ehCartao', 'baixarAutomaticamente', 'ativo'] }
+      { title: 'Configurações Operacionais', eyebrow: 'Regras', icon: 'tune', fields: ['baixarAutomaticamente', 'ativo'] }
     ],
     'contas-bancarias': [
       {
@@ -264,6 +265,7 @@ export function MasterDataFormPage({
   const [submitError, setSubmitError] = useState<string>();
   const [loadedOptions, setLoadedOptions] = useState<Record<string, SelectOption[]>>({});
   const [responsavelModalOpen, setResponsavelModalOpen] = useState(false);
+  const [contaBancariaModalOpen, setContaBancariaModalOpen] = useState(false);
 
   const {
     control,
@@ -388,8 +390,8 @@ export function MasterDataFormPage({
     const fullWidth = field.kind === 'textarea' || ['nome', 'descricao', 'observacao'].includes(field.name);
 
     return (
-      <div key={field.name} className={`space-y-2 ${fullWidth ? 'md:col-span-2' : ''}`}>
-        <label className={formLabelClass}>{field.label}</label>
+      <div key={field.name} className={`space-y-2 ${fullWidth ? 'md:col-span-2' : ''} ${field.kind === 'switch' ? 'self-end' : ''}`}>
+        {field.kind === 'switch' ? null : <label className={formLabelClass}>{field.label}</label>}
         <Controller
           control={control}
           name={field.name as never}
@@ -402,12 +404,23 @@ export function MasterDataFormPage({
               return (
                 <input
                   {...controlledField}
+                  inputMode={config.key === 'cartoes' && field.name === 'numeroFinal' ? 'numeric' : undefined}
+                  maxLength={config.key === 'cartoes' && field.name === 'numeroFinal' ? 4 : undefined}
+                  onKeyDown={config.key === 'cartoes' && field.name === 'numeroFinal' ? preventScientificNotation : undefined}
+                  onPaste={config.key === 'cartoes' && field.name === 'numeroFinal' ? handleIntegerPaste : undefined}
                   value={
                     field.mask
                       ? applyInputMask(field.mask, String(controlledField.value ?? ''))
                       : String(controlledField.value ?? '')
                   }
-                  onChange={(event) => controlledField.onChange(field.mask ? extractDigits(event.target.value) : event.target.value)}
+                  onChange={(event) => {
+                    if (config.key === 'cartoes' && field.name === 'numeroFinal') {
+                      controlledField.onChange(keepOnlyDigits(event.target.value).slice(0, 4));
+                      return;
+                    }
+
+                    controlledField.onChange(field.mask ? extractDigits(event.target.value) : event.target.value);
+                  }}
                   className={formFieldClass}
                   placeholder={field.placeholder}
                 />
@@ -441,8 +454,16 @@ export function MasterDataFormPage({
                   )}
                   placeholder="Selecione..."
                   onChange={(value) => controlledField.onChange(value)}
-                  onAddNew={isContaGerencial && field.name === 'responsavelPadraoId' ? () => setResponsavelModalOpen(true) : undefined}
-                  addNewLabel="Criar responsavel"
+                  onAddNew={
+                    (isContaGerencial && field.name === 'responsavelPadraoId') ? () => setResponsavelModalOpen(true) :
+                    (config.key === 'cartoes' && field.name === 'contaBancariaPagamentoPadraoId') ? () => setContaBancariaModalOpen(true) :
+                    undefined
+                  }
+                  addNewLabel={
+                    config.key === 'cartoes' && field.name === 'contaBancariaPagamentoPadraoId'
+                      ? 'Nova conta bancária'
+                      : 'Criar responsável'
+                  }
                 />
               );
             }
@@ -452,8 +473,7 @@ export function MasterDataFormPage({
                 <ToggleField
                   checked={Boolean(controlledField.value)}
                   onChange={controlledField.onChange}
-                  label={controlledField.value ? 'Ativo' : 'Inativo'}
-                  description={field.label}
+                  label={field.label}
                 />
               );
             }
@@ -462,7 +482,7 @@ export function MasterDataFormPage({
               if (field.numberFormat === 'currency') {
                 return (
                   <CurrencyInput
-                    value={typeof controlledField.value === 'number' ? controlledField.value : null}
+                    value={typeof controlledField.value === 'number' ? controlledField.value : field.name === 'limiteCartoesCompartilhado' || field.name === 'limiteCredito' ? 0 : null}
                     onChange={(value) => controlledField.onChange(value ?? (field.nullable ? null : 0))}
                     className={formFieldClass}
                   />
@@ -505,7 +525,7 @@ export function MasterDataFormPage({
   if (loading) return <PageState state="loading" title="Carregando cadastro..." />;
   if (loadError) return <PageState state="error" title="Falha ao carregar cadastro" subtitle={loadError} />;
 
-  const summaryTitle = getSummaryTitle(watchedValues, `Novo ${config.singularTitle.toLowerCase()}`);
+  const summaryTitle = getSummaryTitle(watchedValues, id ? config.singularTitle : config.createLabel ?? `Novo ${config.singularTitle.toLowerCase()}`);
   const ativoValue = typeof watchedValues.ativo === 'boolean' ? (watchedValues.ativo ? 'Ativo' : 'Inativo') : 'Pronto';
 
   return (
@@ -557,6 +577,16 @@ export function MasterDataFormPage({
         onClose={() => setResponsavelModalOpen(false)}
         onSuccess={(newId) => {
           void reloadFieldOptions('responsavelPadraoId').then(() => setValue('responsavelPadraoId', newId, { shouldValidate: true }));
+        }}
+      />
+
+      <QuickAddContaBancariaModal
+        open={contaBancariaModalOpen}
+        onClose={() => setContaBancariaModalOpen(false)}
+        onSuccess={(id) => {
+          void reloadFieldOptions('contaBancariaPagamentoPadraoId').then(() =>
+            setValue('contaBancariaPagamentoPadraoId', id, { shouldValidate: true })
+          );
         }}
       />
     </>

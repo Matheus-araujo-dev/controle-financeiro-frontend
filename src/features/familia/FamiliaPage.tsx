@@ -1,5 +1,4 @@
 import {
-  Alert,
   Avatar,
   Card,
   Form,
@@ -9,10 +8,9 @@ import {
   Popconfirm,
   Select,
   Space,
-  Tag,
   Typography
 } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import {
   alterarPapelMembro,
@@ -40,11 +38,19 @@ const papelOptions = [
   { value: 'Visualizador', label: 'Visualizador' }
 ];
 
-const papelColors: Record<string, string> = {
-  Administrador: 'green',
-  Membro: 'gold',
-  Visualizador: 'default'
+const papelClass: Record<string, string> = {
+  Administrador: 'text-primary border-primary/40 bg-primary/10',
+  Membro: 'text-amber-400 border-amber-400/40 bg-amber-400/10',
+  Visualizador: 'text-on-surface-variant border-white/10 bg-white/5'
 };
+
+function PapelBadge({ papel }: { papel: string }) {
+  return (
+    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${papelClass[papel] ?? papelClass['Visualizador']}`}>
+      {papel}
+    </span>
+  );
+}
 
 function MinhasParticipacoes() {
   const workspaceAtual = useWorkspaceAtual();
@@ -52,6 +58,8 @@ function MinhasParticipacoes() {
   const [loading, setLoading] = useState(true);
   const [switching, setSwitching] = useState<string | null>(null);
   const [creatingWorkspace, setCreatingWorkspace] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [nomeWorkspace, setNomeWorkspace] = useState('');
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -68,12 +76,14 @@ function MinhasParticipacoes() {
     if (creatingWorkspace || participacoes.length >= MAX_WORKSPACES) return;
     setCreatingWorkspace(true);
     try {
-      const resultado = await criarWorkspace();
+      const resultado = await criarWorkspace(nomeWorkspace.trim() ? { nome: nomeWorkspace.trim() } : {});
       useAuthStore.getState().applyTokenResponse(resultado.sessao);
-      notify('success', 'Novo espaco criado');
+      notify('success', 'Novo espaço criado');
+      setModalOpen(false);
+      setNomeWorkspace('');
       window.location.reload();
     } catch (err) {
-      notify('error', 'Nao foi possivel criar o espaco', getApiErrorMessage(err));
+      notify('error', 'Não foi possível criar o espaço', getApiErrorMessage(err));
     } finally {
       setCreatingWorkspace(false);
     }
@@ -94,57 +104,140 @@ function MinhasParticipacoes() {
     }
   };
 
+  const podeCriar = participacoes.length < MAX_WORKSPACES;
+
   return (
-    <Card
-      loading={loading}
-      title={`Meus espaços (${participacoes.length}/${MAX_WORKSPACES})`}
-      extra={
-        <Tag color={participacoes.length >= MAX_WORKSPACES ? 'red' : 'green'}>
-          {participacoes.length >= MAX_WORKSPACES ? 'Limite atingido' : `${MAX_WORKSPACES - participacoes.length} disponível(is)`}
-        </Tag>
-      }
-    >
-      <List
-        dataSource={participacoes}
-        locale={{ emptyText: 'Nenhum espaço encontrado.' }}
-        renderItem={(p) => {
-          const ativo = p.id === workspaceAtual?.id || p.ativa;
-          return (
-            <List.Item
-              actions={[
-                ativo ? (
-                  <Tag key="ativo" color="green">Ativo</Tag>
-                ) : (
-                  <Button
-                    key="selecionar"
-                    size="sm"
-                    loading={switching === p.id}
-                    onClick={() => void handleSelecionar(p.id)}
-                  >
-                    Usar este espaço
-                  </Button>
-                )
-              ]}
-            >
-              <List.Item.Meta
-                avatar={
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20">
-                    <span className="material-symbols-outlined text-base" style={{ color: '#2bf58e' }}>workspaces</span>
-                  </div>
-                }
-                title={<span className={ativo ? 'font-bold' : undefined}>{p.nome}</span>}
-                description={<Tag color={papelColors[p.meuPapel]}>{p.meuPapel}</Tag>}
-              />
-            </List.Item>
-          );
-        }}
-      />
-      {participacoes.length < MAX_WORKSPACES && (
-        <Typography.Text type="secondary" className="text-xs mt-2 block">
-          Você pode participar de até {MAX_WORKSPACES} espaços. Novos espaços são criados via convite.
-        </Typography.Text>
+    <>
+      <Card
+        loading={loading}
+        title={`Meus espaços (${participacoes.length}/${MAX_WORKSPACES})`}
+        extra={
+          <Space>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${podeCriar ? 'text-primary border-primary/40 bg-primary/10' : 'text-error border-error/40 bg-error/10'}`}>
+              {podeCriar ? `${MAX_WORKSPACES - participacoes.length} disponível(is)` : 'Limite atingido'}
+            </span>
+            {podeCriar && (
+              <Button size="sm" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
+                Criar espaço
+              </Button>
+            )}
+          </Space>
+        }
+      >
+        <List
+          dataSource={participacoes}
+          locale={{ emptyText: 'Nenhum espaço encontrado.' }}
+          renderItem={(p) => {
+            const ativo = p.id === workspaceAtual?.id || p.ativa;
+            return (
+              <List.Item
+                actions={[
+                  ativo ? (
+                    <span key="ativo" className="text-xs font-semibold px-2 py-0.5 rounded-full border text-primary border-primary/40 bg-primary/10">
+                      Ativo
+                    </span>
+                  ) : (
+                    <Button
+                      key="selecionar"
+                      size="sm"
+                      loading={switching === p.id}
+                      onClick={() => void handleSelecionar(p.id)}
+                    >
+                      Usar este espaço
+                    </Button>
+                  )
+                ]}
+              >
+                <List.Item.Meta
+                  avatar={
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20">
+                      <span className="material-symbols-outlined text-base" style={{ color: '#2bf58e' }}>workspaces</span>
+                    </div>
+                  }
+                  title={<span className={ativo ? 'font-bold' : undefined}>{p.nome}</span>}
+                  description={<PapelBadge papel={p.meuPapel} />}
+                />
+              </List.Item>
+            );
+          }}
+        />
+        {podeCriar && (
+          <p className="text-xs text-on-surface-variant mt-3">
+            Você pode criar um novo espaço ou ser convidado para um existente. Limite: {MAX_WORKSPACES} espaços.
+          </p>
+        )}
+      </Card>
+
+      <Modal
+        open={modalOpen}
+        title="Criar novo espaço"
+        onCancel={() => { setModalOpen(false); setNomeWorkspace(''); }}
+        onOk={() => void handleCriarWorkspace()}
+        okText="Criar"
+        cancelText="Cancelar"
+        confirmLoading={creatingWorkspace}
+        okButtonProps={{ disabled: creatingWorkspace }}
+      >
+        <Space direction="vertical" style={{ width: '100%', marginTop: 8 }}>
+          <Typography.Text>Escolha um nome para o seu novo espaço de trabalho.</Typography.Text>
+          <Input
+            autoFocus
+            placeholder="Ex: Finanças pessoais, Família Silva..."
+            value={nomeWorkspace}
+            onChange={(e) => setNomeWorkspace(e.target.value)}
+            onPressEnter={() => void handleCriarWorkspace()}
+            maxLength={100}
+          />
+        </Space>
+      </Modal>
+    </>
+  );
+}
+
+function EspacoAtivoNome({ nome, isAdmin, onRenomear }: { nome: string; isAdmin: boolean; onRenomear: (v: string) => void }) {
+  const [editando, setEditando] = useState(false);
+  const [valor, setValor] = useState(nome);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setValor(nome); }, [nome]);
+
+  const confirmar = () => {
+    setEditando(false);
+    if (valor.trim() && valor.trim() !== nome) onRenomear(valor.trim());
+    else setValor(nome);
+  };
+
+  if (editando) {
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          ref={inputRef}
+          autoFocus
+          className="text-2xl font-bold bg-transparent border-b border-primary outline-none text-on-surface w-full"
+          value={valor}
+          onChange={(e) => setValor(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') confirmar(); if (e.key === 'Escape') { setEditando(false); setValor(nome); } }}
+          onBlur={confirmar}
+        />
+        <button onClick={confirmar} className="text-primary hover:opacity-70">
+          <span className="material-symbols-outlined text-base">check</span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 group">
+      <h3 className="text-2xl font-bold text-on-surface m-0">{nome}</h3>
+      {isAdmin && (
+        <button
+          onClick={() => setEditando(true)}
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"
+        >
+          <span className="material-symbols-outlined text-base">edit</span>
+        </button>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -217,12 +310,8 @@ export function FamiliaPage() {
   };
 
   const handleRenomear = async (nome: string) => {
-    if (!nome.trim() || nome.trim() === familia?.nome) {
-      return;
-    }
-
     try {
-      setFamilia(await renomearFamilia(nome.trim()));
+      setFamilia(await renomearFamilia(nome));
       notify('success', 'Espaço renomeado');
     } catch (err) {
       notify('error', 'Não foi possível renomear o espaço', getApiErrorMessage(err));
@@ -236,29 +325,24 @@ export function FamiliaPage() {
       <MinhasParticipacoes />
 
       {error ? (
-        <Alert
-          type="warning"
-          showIcon
-          message="Espaço ativo indisponível"
-          description={error}
-          action={<Button onClick={() => void carregar()}>Tentar novamente</Button>}
-        />
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <span className="material-symbols-outlined text-amber-400 mt-0.5 text-base">warning</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-300">Espaço ativo indisponível</p>
+            <p className="text-xs text-on-surface-variant mt-0.5">{error}</p>
+          </div>
+          <Button size="sm" onClick={() => void carregar()}>Tentar novamente</Button>
+        </div>
       ) : (
         <>
           <Card loading={loading} title="Espaço ativo">
             {familia ? (
-              <Space direction="vertical" orientation="vertical" size={16} style={{ width: '100%' }}>
-                <Typography.Title
-                  level={3}
-                  editable={isAdmin ? { onChange: (value) => void handleRenomear(value) } : false}
-                  style={{ marginTop: 0 }}
-                >
-                  {familia.nome}
-                </Typography.Title>
-                <Typography.Text type="secondary">
-                  Seu papel: <Tag color={papelColors[familia.meuPapel]}>{familia.meuPapel}</Tag>
-                </Typography.Text>
-              </Space>
+              <div className="flex flex-col gap-3">
+                <EspacoAtivoNome nome={familia.nome} isAdmin={isAdmin} onRenomear={(v) => void handleRenomear(v)} />
+                <p className="text-sm text-on-surface-variant">
+                  Seu papel: <PapelBadge papel={familia.meuPapel} />
+                </p>
+              </div>
             ) : null}
           </Card>
 
@@ -288,7 +372,7 @@ export function FamiliaPage() {
                             </Button>
                           </Popconfirm>
                         ]
-                      : [<Tag key="papel" color={papelColors[membro.papel]}>{membro.papel}</Tag>]
+                      : [<PapelBadge key="papel" papel={membro.papel} />]
                   }
                 >
                   <List.Item.Meta
@@ -303,13 +387,13 @@ export function FamiliaPage() {
 
           {isAdmin ? (
             <Card title="Convidar para o espaço">
-              <Alert
-                type="info"
-                showIcon
-                message="Limite de participações"
-                description="O convidado só pode aceitar se ainda não estiver em 3 espaços."
-                style={{ marginBottom: 16 }}
-              />
+              <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 mb-4">
+                <span className="material-symbols-outlined text-primary mt-0.5 text-base">info</span>
+                <div>
+                  <p className="text-sm font-semibold text-on-surface">Limite de participações</p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">O convidado só pode aceitar se ainda não estiver em 3 espaços.</p>
+                </div>
+              </div>
               <Form form={conviteForm} layout="inline" onFinish={(values) => void handleCriarConvite(values)}>
                 <Form.Item
                   name="email"

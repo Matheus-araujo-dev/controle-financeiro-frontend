@@ -465,7 +465,7 @@ export function AppDataTable<T extends object>({
                       scope="col"
                       style={width ? { width } : undefined}
                       onClick={sortable ? () => handleSort(column) : undefined}
-                      className={`border-b border-white/5 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-on-surface-variant ${
+                      className={`whitespace-nowrap border-b border-white/5 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-on-surface-variant ${
                         alignClass[isActionColumn(column) ? 'center' : column.align ?? 'left']
                       } ${sortable ? 'cursor-pointer' : ''} ${isActionColumn(column) ? 'tracking-normal' : ''} ${
                         column.fixed === 'right' ? 'sticky right-0 z-10 bg-surface-container' : ''
@@ -506,7 +506,7 @@ export function AppDataTable<T extends object>({
                   {flatColumns.map((column) => (
                     <td
                       key={getColumnKey(column)}
-                      className={`px-4 py-4 text-sm text-on-surface ${alignClass[column.align ?? 'left']} ${
+                      className={`whitespace-nowrap px-4 py-4 text-sm text-on-surface ${alignClass[column.align ?? 'left']} ${
                         column.fixed === 'right' ? 'sticky right-0 z-10 bg-transparent' : ''
                       } ${column.className ?? ''}`}
                     >
