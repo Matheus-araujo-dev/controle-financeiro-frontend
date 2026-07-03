@@ -83,7 +83,7 @@ const pessoaPixTipoOptions: ComboBoxOption[] = [
   { label: 'CPF/CNPJ', value: 'CpfCnpj' },
   { label: 'Email', value: 'Email' },
   { label: 'Telefone', value: 'Telefone' },
-  { label: 'AleatÃ³ria', value: 'Aleatoria' }
+  { label: 'Aleatória', value: 'Aleatoria' }
 ];
 
 function getPixMaskKind(tipo?: string) {
@@ -96,7 +96,7 @@ function getPixPlaceholder(tipo?: string) {
   if (tipo === 'CpfCnpj') return 'CPF ou CNPJ da chave Pix';
   if (tipo === 'Email') return 'email@exemplo.com';
   if (tipo === 'Telefone') return '(00) 00000-0000';
-  return 'Chave aleatÃ³ria';
+  return 'Chave aleatória';
 }
 
 function toComboOptions(options: SelectOption[], includeEmpty = false): ComboBoxOption[] {
@@ -105,7 +105,7 @@ function toComboOptions(options: SelectOption[], includeEmpty = false): ComboBox
     value: String(option.value)
   }));
 
-  return includeEmpty ? [{ label: 'Sem seleÃ§Ã£o', value: '' }, ...normalized] : normalized;
+  return includeEmpty ? [{ label: 'Sem seleção', value: '' }, ...normalized] : normalized;
 }
 
 function isOptionalSelect(fieldName: string) {
@@ -116,8 +116,8 @@ function sectionPlanFor(key: string) {
   const sections: Record<string, Array<{ title: string; eyebrow: string; icon: string; fields: string[] }>> = {
     pessoas: [
       { title: 'Dados da Pessoa', eyebrow: 'Cadastro', icon: 'badge', fields: ['nome', 'tipoPessoa', 'cpfCnpj'] },
-      { title: 'Contato', eyebrow: 'ComunicaÃ§Ã£o', icon: 'alternate_email', fields: ['email', 'telefone'] },
-      { title: 'ObservaÃ§Ãµes', eyebrow: 'Notas', icon: 'notes', fields: ['observacao'] }
+      { title: 'Contato', eyebrow: 'Comunicação', icon: 'alternate_email', fields: ['email', 'telefone'] },
+      { title: 'Observações', eyebrow: 'Notas', icon: 'notes', fields: ['observacao'] }
     ],
     'formas-pagamento': [
       { title: 'Dados da Forma', eyebrow: 'Cadastro', icon: 'payments', fields: ['nome', 'tipo'] },
@@ -125,7 +125,7 @@ function sectionPlanFor(key: string) {
     ],
     'contas-bancarias': [
       {
-        title: 'Dados BancÃ¡rios',
+        title: 'Dados Bancários',
         eyebrow: 'Cadastro',
         icon: 'account_balance',
         fields: ['nome', 'banco', 'agencia', 'numeroConta', 'tipoConta']
@@ -136,10 +136,10 @@ function sectionPlanFor(key: string) {
         icon: 'savings',
         fields: ['saldoInicial', 'dataSaldoInicial', 'limiteCartoesCompartilhado']
       },
-      { title: 'ConfiguraÃ§Ãµes', eyebrow: 'Status', icon: 'toggle_on', fields: ['ativo'] }
+      { title: 'Configurações', eyebrow: 'Status', icon: 'toggle_on', fields: ['ativo'] }
     ],
     cartoes: [
-      { title: 'Dados do CartÃ£o', eyebrow: 'Cadastro', icon: 'credit_card', fields: ['nome', 'bandeira', 'numeroFinal'] },
+      { title: 'Dados do Cartão', eyebrow: 'Cadastro', icon: 'credit_card', fields: ['nome', 'bandeira', 'numeroFinal'] },
       {
         title: 'Fechamento e Pagamento',
         eyebrow: 'Ciclo',
@@ -152,7 +152,7 @@ function sectionPlanFor(key: string) {
       { title: 'Estrutura Gerencial', eyebrow: 'Cadastro', icon: 'account_tree', fields: ['contaPaiId', 'codigo', 'descricao', 'tipo'] },
       {
         title: 'Responsabilidade e Regras',
-        eyebrow: 'GovernanÃ§a',
+        eyebrow: 'Governança',
         icon: 'admin_panel_settings',
         fields: ['responsavelPadraoId', 'ehPadraoRecebimentoFaturaCartao', 'ativo']
       }
@@ -182,7 +182,7 @@ function PessoaPixKeysSection({
   const pixErrors = (errors.chavesPix as Array<{ tipo?: { message?: string }; chave?: { message?: string } }> | undefined) ?? [];
 
   return (
-    <FormSection title="Chaves Pix" eyebrow="Dados bancÃ¡rios" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>key</span>}>
+    <FormSection title="Chaves Pix" eyebrow="Dados bancários" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>key</span>}>
       <div className="space-y-4">
         <p className="text-sm text-on-surface-variant">Cadastre uma ou mais chaves Pix para esta pessoa.</p>
 

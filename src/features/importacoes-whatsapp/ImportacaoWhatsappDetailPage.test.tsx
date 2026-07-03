@@ -688,7 +688,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
       caminhoArquivo: 'importacoes/fatura.pdf',
       mimeType: 'application/pdf',
       statusCodigo: 'PENDENTE_REVISAO',
-      statusNome: 'Pendente revisÃ£o',
+      statusNome: 'Pendente revisão',
       confiancaExtracao: 0.94,
       mensagemErro: null,
       recebidoEmUtc: '2026-04-05T12:00:00Z',
@@ -700,7 +700,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
           id: 'item-autofill',
           importacaoWhatsappId: 'iw3',
           tipoSugestaoCodigo: 'COMPRA_CARTAO',
-          tipoSugestaoNome: 'Compra em cartÃ£o',
+          tipoSugestaoNome: 'Compra em cartão',
           payloadSugeridoJson:
             '{"descricao":"Restaurante","valor":89.9,"dataIdentificada":"2026-04-05","tipoMovimentacaoSugerido":"Saida"}',
           statusCodigo: 'SUGERIDO',
@@ -729,7 +729,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
           descricao: 'Restaurantes',
           tipo: 'Despesa',
           contaPaiId: 'cg-alim',
-          contaPaiDescricao: 'AlimentaÃ§Ã£o',
+          contaPaiDescricao: 'Alimentação',
           ativo: true,
           aceitaLancamentos: true,
           ehPadraoRecebimentoFaturaCartao: false,
@@ -778,7 +778,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
       caminhoArquivo: 'importacoes/fatura.pdf',
       mimeType: 'application/pdf',
       statusCodigo: 'PENDENTE_REVISAO',
-      statusNome: 'Pendente revisÃ£o',
+      statusNome: 'Pendente revisão',
       confiancaExtracao: 0.94,
       mensagemErro: null,
       recebidoEmUtc: '2026-04-05T12:00:00Z',
@@ -790,7 +790,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
           id: 'item-autofill',
           importacaoWhatsappId: 'iw3',
           tipoSugestaoCodigo: 'COMPRA_CARTAO',
-          tipoSugestaoNome: 'Compra em cartÃ£o',
+          tipoSugestaoNome: 'Compra em cartão',
           payloadSugeridoJson:
             '{"descricao":"Restaurante","valor":89.9,"dataIdentificada":"2026-04-05","tipoMovimentacaoSugerido":"Saida"}',
           statusCodigo: 'CONFIRMADO',
@@ -1245,7 +1245,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
           id: 'item-card',
           importacaoWhatsappId: 'iw7',
           tipoSugestaoCodigo: 'COMPRA_CARTAO',
-          tipoSugestaoNome: 'Compra em cartÃ£o',
+          tipoSugestaoNome: 'Compra em cartão',
           payloadSugeridoJson:
             '{"descricao":"Petlove - Parcela 1/3","valor":218.56,"dataIdentificada":"2026-03-25","dataVencimento":"2026-04-13","tipoMovimentacaoSugerido":"Saida","emissor":"NUBANK","cartaoFinal":"8082","portador":"Michelle"}',
           statusCodigo: 'CONFIRMADO',
@@ -1303,7 +1303,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
       items: [
         {
           id: 'card1',
-          nome: 'CartÃ£o Nubank',
+          nome: 'Cartão Nubank',
           bandeira: 'Mastercard',
           numeroFinal: '8082',
           diaFechamentoFatura: 6,
@@ -1345,7 +1345,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
           id: 'item-card',
           importacaoWhatsappId: 'iw7',
           tipoSugestaoCodigo: 'COMPRA_CARTAO',
-          tipoSugestaoNome: 'Compra em cartÃ£o',
+          tipoSugestaoNome: 'Compra em cartão',
           payloadSugeridoJson:
             '{"descricao":"Petlove - Parcela 1/3","valor":218.56,"dataIdentificada":"2026-03-25","dataVencimento":"2026-04-13","tipoMovimentacaoSugerido":"Saida","emissor":"NUBANK","cartaoFinal":"8082","portador":"Michelle"}',
           statusCodigo: 'CONFIRMADO',
