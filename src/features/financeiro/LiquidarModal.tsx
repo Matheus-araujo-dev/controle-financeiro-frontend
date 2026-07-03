@@ -1,0 +1,350 @@
+import { useEffect, useState } from 'react';
+import { Button } from '../../components/ui/Button';
+import { CurrencyInput } from '../../shared/CurrencyInput';
+import { ComboBox } from '../../components/forms/ComboBox';
+import { DateInput } from '../../components/forms/DateInput';
+import { formatCurrencyBRL } from '../../shared/currency';
+import type { FinanceiroLiquidacaoFormValues, SelectOption } from './module-config';
+
+type Props = {
+  open: boolean;
+  descricao: string;
+  valorLiquido: number;
+  valorPago?: number | null;
+  formaPagamentoId?: string | null;
+  ehRecorrente: boolean;
+  contaBancariaOptions: SelectOption[];
+  formaPagamentoOptions: SelectOption[];
+  defaultContaBancariaId?: string;
+  loading: boolean;
+  error?: string;
+  onClose: () => void;
+  onConfirmar: (values: FinanceiroLiquidacaoFormValues) => void;
+};
+
+function todayIso() {
+  return new Date().toISOString().split('T')[0];
+}
+
+type Step = 'form' | 'opcoes';
+
+export function LiquidarModal({
+  open,
+  descricao,
+  valorLiquido,
+  valorPago,
+  formaPagamentoId,
+  ehRecorrente,
+  contaBancariaOptions,
+  formaPagamentoOptions,
+  defaultContaBancariaId,
+  loading,
+  error,
+  onClose,
+  onConfirmar
+}: Props) {
+  const valorRestante = valorPago != null ? valorLiquido - valorPago : valorLiquido;
+
+  const [step, setStep] = useState<Step>('form');
+  const [valorLiq, setValorLiq] = useState(valorRestante);
+  const [data, setData] = useState(todayIso());
+  const [contaBancariaId, setContaBancariaId] = useState(defaultContaBancariaId ?? '');
+  const [formaPagId, setFormaPagId] = useState(formaPagamentoId ?? '');
+
+  // opções step 2
+  const [atualizarValorConta, setAtualizarValorConta] = useState(true);
+  const [atualizarRecorrencia, setAtualizarRecorrencia] = useState(false);
+  const [cancelarValorRestante, setCancelarValorRestante] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setStep('form');
+      setValorLiq(valorRestante);
+      setData(todayIso());
+      setContaBancariaId(defaultContaBancariaId ?? '');
+      setFormaPagId(formaPagamentoId ?? '');
+      setAtualizarValorConta(true);
+      setAtualizarRecorrencia(false);
+      setCancelarValorRestante(false);
+    }
+  }, [open, valorRestante, defaultContaBancariaId, formaPagamentoId]);
+
+  if (!open) return null;
+
+  const valorFinal = (valorPago ?? 0) + valorLiq;
+  const diferenca = valorLiq - valorRestante;
+  const isIgual = Math.abs(diferenca) < 0.01;
+  const isMaior = diferenca > 0.01;
+  const isMenor = diferenca < -0.01;
+
+  function avancarOuConfirmar() {
+    if (!contaBancariaId) return;
+    if (isIgual) {
+      submitLiquidacao();
+    } else {
+      setStep('opcoes');
+    }
+  }
+
+  function submitLiquidacao() {
+    onConfirmar({
+      valorLiquidacao: valorLiq,
+      dataLiquidacao: data,
+      contaBancariaId,
+      formaPagamentoId: formaPagId,
+      atualizarValorConta: isMaior ? atualizarValorConta : false,
+      atualizarRecorrencia,
+      cancelarValorRestante: isMenor ? cancelarValorRestante : false
+    });
+  }
+
+  const fieldLabel = 'text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-1 block';
+  const fieldClass =
+    'w-full rounded-xl border border-white/10 bg-surface-container px-4 py-3 text-sm text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/60';
+
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
+        {/* Header */}
+        <div className="mb-6 flex items-start gap-3">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/12 text-primary">
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+              payments
+            </span>
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Liquidar lançamento</p>
+            <h3 className="font-headline text-lg font-bold text-on-surface leading-tight">{descricao}</h3>
+            {valorPago != null && (
+              <p className="mt-0.5 text-xs text-on-surface-variant">
+                Já pago: <strong className="text-primary">{formatCurrencyBRL(valorPago)}</strong>
+                {' · '}Restante: <strong>{formatCurrencyBRL(valorRestante)}</strong>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {step === 'form' ? (
+          <div className="space-y-4">
+            <div>
+              <label className={fieldLabel}>Valor pago</label>
+              <CurrencyInput
+                value={valorLiq}
+                onChange={(v) => setValorLiq(v ?? 0)}
+                className={fieldClass}
+              />
+              {!isIgual && (
+                <p className={`mt-1 text-xs font-medium ${isMaior ? 'text-warning' : 'text-on-surface-variant'}`}>
+                  {isMaior
+                    ? `${formatCurrencyBRL(diferenca)} acima do valor original`
+                    : `${formatCurrencyBRL(Math.abs(diferenca))} abaixo do valor original`}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className={fieldLabel}>Data do pagamento</label>
+              <DateInput
+                mode="date"
+                value={data}
+                onChange={(v) => { if (v && v <= todayIso()) setData(v); }}
+              />
+            </div>
+
+            <div>
+              <label className={fieldLabel}>Conta bancária</label>
+              <ComboBox
+                value={contaBancariaId}
+                placeholder="Selecionar conta..."
+                options={contaBancariaOptions.map((o) => ({ value: o.value, label: o.label }))}
+                onChange={setContaBancariaId}
+              />
+            </div>
+
+            {formaPagamentoOptions.length > 0 && (
+              <div>
+                <label className={fieldLabel}>Forma de pagamento</label>
+                <ComboBox
+                  value={formaPagId}
+                  placeholder="Selecionar..."
+                  options={formaPagamentoOptions.map((o) => ({ value: o.value, label: o.label }))}
+                  onChange={setFormaPagId}
+                />
+              </div>
+            )}
+
+            {error ? <p className="text-sm font-medium text-error">{error}</p> : null}
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button>
+              <Button
+                type="button"
+                variant="primary"
+                disabled={!contaBancariaId || valorLiq <= 0 || loading}
+                loading={loading && isIgual}
+                onClick={avancarOuConfirmar}
+              >
+                {isIgual ? 'Confirmar' : 'Próximo'}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {/* Resumo */}
+            <div className="rounded-2xl bg-surface-container p-4 space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-on-surface-variant">Valor pago agora</span>
+                <span className="font-bold text-on-surface">{formatCurrencyBRL(valorLiq)}</span>
+              </div>
+              {valorPago != null && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-on-surface-variant">Total já liquidado</span>
+                  <span className="font-bold text-primary">{formatCurrencyBRL(valorFinal)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm">
+                <span className="text-on-surface-variant">Valor original</span>
+                <span className="font-bold text-on-surface">{formatCurrencyBRL(valorLiquido)}</span>
+              </div>
+            </div>
+
+            {/* Opções para valor MAIOR */}
+            {isMaior && (
+              <div className="space-y-3">
+                <p className={fieldLabel}>O valor pago é maior que o original</p>
+                <ToggleOption
+                  checked={atualizarValorConta}
+                  onChange={setAtualizarValorConta}
+                  label="Atualizar valor da conta"
+                  description={`Conta passa a valer ${formatCurrencyBRL(valorLiq)}`}
+                />
+                {ehRecorrente && atualizarValorConta && (
+                  <ToggleOption
+                    checked={atualizarRecorrencia}
+                    onChange={setAtualizarRecorrencia}
+                    label="Atualizar valor da recorrência"
+                    description="Próximas parcelas geradas usarão o novo valor"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Opções para valor MENOR */}
+            {isMenor && (
+              <div className="space-y-3">
+                <p className={fieldLabel}>O que fazer com o restante?</p>
+                <div className="space-y-2">
+                  <RadioOption
+                    checked={!cancelarValorRestante}
+                    onChange={() => setCancelarValorRestante(false)}
+                    label="Manter em aberto"
+                    description={`Conta fica com ${formatCurrencyBRL(valorLiquido - valorFinal)} em aberto (status Parcial)`}
+                  />
+                  <RadioOption
+                    checked={cancelarValorRestante}
+                    onChange={() => setCancelarValorRestante(true)}
+                    label="Cancelar o restante"
+                    description={`Conta é dada como quitada por ${formatCurrencyBRL(valorFinal)}`}
+                  />
+                </div>
+                {ehRecorrente && cancelarValorRestante && (
+                  <ToggleOption
+                    checked={atualizarRecorrencia}
+                    onChange={setAtualizarRecorrencia}
+                    label="Atualizar valor da recorrência"
+                    description="Próximas parcelas geradas usarão o valor pago"
+                  />
+                )}
+              </div>
+            )}
+
+            {error ? <p className="text-sm font-medium text-error">{error}</p> : null}
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="secondary" onClick={() => setStep('form')}>Voltar</Button>
+              <Button
+                type="button"
+                variant="primary"
+                loading={loading}
+                disabled={loading}
+                onClick={submitLiquidacao}
+              >
+                Confirmar liquidação
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ToggleOption({
+  checked,
+  onChange,
+  label,
+  description
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+  description: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`w-full flex items-start gap-3 rounded-xl border p-3 text-left transition-colors ${
+        checked
+          ? 'border-primary/40 bg-primary/8'
+          : 'border-white/10 bg-surface-container hover:border-white/20'
+      }`}
+    >
+      <span
+        className={`material-symbols-outlined text-xl mt-0.5 ${checked ? 'text-primary' : 'text-on-surface-variant'}`}
+        style={{ fontVariationSettings: checked ? "'FILL' 1" : "'FILL' 0" }}
+      >
+        {checked ? 'toggle_on' : 'toggle_off'}
+      </span>
+      <div>
+        <p className={`text-sm font-bold ${checked ? 'text-primary' : 'text-on-surface'}`}>{label}</p>
+        <p className="text-xs text-on-surface-variant">{description}</p>
+      </div>
+    </button>
+  );
+}
+
+function RadioOption({
+  checked,
+  onChange,
+  label,
+  description
+}: {
+  checked: boolean;
+  onChange: () => void;
+  label: string;
+  description: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      className={`w-full flex items-start gap-3 rounded-xl border p-3 text-left transition-colors ${
+        checked
+          ? 'border-primary/40 bg-primary/8'
+          : 'border-white/10 bg-surface-container hover:border-white/20'
+      }`}
+    >
+      <span
+        className={`material-symbols-outlined text-xl mt-0.5 ${checked ? 'text-primary' : 'text-on-surface-variant'}`}
+        style={{ fontVariationSettings: "'FILL' 1" }}
+      >
+        {checked ? 'radio_button_checked' : 'radio_button_unchecked'}
+      </span>
+      <div>
+        <p className={`text-sm font-bold ${checked ? 'text-primary' : 'text-on-surface'}`}>{label}</p>
+        <p className="text-xs text-on-surface-variant">{description}</p>
+      </div>
+    </button>
+  );
+}

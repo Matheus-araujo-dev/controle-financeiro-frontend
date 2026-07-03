@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { ConfirmDialog } from '../../components/feedback/ConfirmDialog';
+import { LiquidarModal } from './LiquidarModal';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { Button } from '../../components/ui/Button';
 import { ExportButton } from '../../components/data/ExportButton';
@@ -36,10 +37,12 @@ type FinancialRecord = {
   statusCodigo?: StatusContaCodigo;
   statusNome?: string | null;
   valorLiquido?: number;
+  valorPago?: number | null;
   formaPagamentoNome?: string | null;
   formaPagamentoId?: string | null;
   numeroParcela?: number;
   quantidadeParcelas?: number;
+  ehRecorrente?: boolean;
 };
 
 type ListFilters = {
@@ -131,6 +134,7 @@ export function FinancialAccountListPage({
   const [errorMessage, setErrorMessage] = useState<string>();
   const [pessoaOptions, setPessoaOptions] = useState<Array<{ label: string; value: string }>>([]);
   const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<Array<{ label: string; value: string }>>([]);
+  const [contaBancariaOptions, setContaBancariaOptions] = useState<Array<{ label: string; value: string }>>([]);
   const [contaBancariaId, setContaBancariaId] = useState('');
   const [liquidacaoFormaPagamentoId, setLiquidacaoFormaPagamentoId] = useState('');
   const [pendingLiquidacao, setPendingLiquidacao] = useState<FinancialRecord | null>(null);
@@ -179,6 +183,7 @@ export function FinancialAccountListPage({
         if (!cancelled) {
           setPessoaOptions(pessoas.map((item) => ({ label: item.label, value: item.value })));
           setFormaPagamentoOptions(formas.map((item) => ({ label: item.label, value: item.value })));
+          setContaBancariaOptions(contas.map((item) => ({ label: item.label, value: item.value })));
           setContaBancariaId(contas[0]?.value ?? '');
           setLiquidacaoFormaPagamentoId(formas[0]?.value ?? '');
         }
@@ -262,18 +267,12 @@ export function FinancialAccountListPage({
     setPendingEstorno(record);
   }
 
-  async function confirmarLiquidacao() {
+  async function confirmarLiquidacao(values: import('./module-config').FinanceiroLiquidacaoFormValues) {
     if (!pendingLiquidacao || !config.liquidar) return;
     setActionLoading(true);
     setActionError(undefined);
     try {
-      await config.liquidar(pendingLiquidacao.id, {
-        valorLiquidacao: pendingLiquidacao.valorLiquido ?? 0,
-        dataLiquidacao: todayIso(),
-        contaBancariaId,
-        formaPagamentoId: pendingLiquidacao.formaPagamentoId ?? liquidacaoFormaPagamentoId,
-        atualizarValorConta: true
-      });
+      await config.liquidar(pendingLiquidacao.id, values);
       setPendingLiquidacao(null);
       await loadData();
     } catch (error) {
@@ -363,11 +362,26 @@ export function FinancialAccountListPage({
       key: 'valorLiquido',
       align: 'right',
       sorter: true,
-      render: (value, record) => (
-        <span className={`font-bold ${record.statusCodigo === 'VENCIDA' ? 'text-error' : 'text-on-surface'}`}>
-          {formatCurrencyBRL(Number(value ?? 0))}
-        </span>
-      )
+      render: (value, record) => {
+        const isParcial = record.statusCodigo === 'PARCIAL';
+        const valorPago = record.valorPago;
+        const valorRestante = isParcial && valorPago != null ? Number(value ?? 0) - valorPago : null;
+        return (
+          <div className="text-right">
+            <span className={`font-bold ${record.statusCodigo === 'VENCIDA' ? 'text-error' : 'text-on-surface'}`}>
+              {formatCurrencyBRL(Number(value ?? 0))}
+            </span>
+            {isParcial && valorPago != null && (
+              <div className="text-xs text-on-surface-variant leading-tight">
+                <span className="text-primary">{formatCurrencyBRL(valorPago)} pago</span>
+                {valorRestante != null && valorRestante > 0 && (
+                  <> · {formatCurrencyBRL(valorRestante)} restante</>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       title: 'Status',
@@ -387,28 +401,32 @@ export function FinancialAccountListPage({
       align: 'center',
       render: (_value, record) => {
         const isLiquidated = record.statusCodigo === 'LIQUIDADA';
+        const isParcial = record.statusCodigo === 'PARCIAL';
+        const canEstornar = isLiquidated || isParcial;
         const canLiquidate = !isLiquidated && record.statusCodigo !== 'CANCELADA' && record.statusCodigo !== 'EM_FATURA' && record.statusCodigo !== 'FUTURO';
 
         return (
           <div className="flex items-center justify-center gap-1">
             {canLiquidate ? (
               <IconActionButton
-                label="Liquidar"
+                label={isParcial ? 'Liquidar restante' : 'Liquidar'}
                 icon={<span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}
                 onClick={() => void liquidarRapido(record)}
               />
             ) : null}
-            <IconActionButton
-              label={isLiquidated ? 'Estornar' : 'Detalhes/Editar'}
-              icon={<span className="material-symbols-outlined text-[18px]">{isLiquidated ? 'undo' : 'edit'}</span>}
-              onClick={() => {
-                if (isLiquidated) {
-                  void estornar(record);
-                  return;
-                }
-                onEdit(record.id);
-              }}
-            />
+            {canEstornar ? (
+              <IconActionButton
+                label="Estornar"
+                icon={<span className="material-symbols-outlined text-[18px]">undo</span>}
+                onClick={() => void estornar(record)}
+              />
+            ) : (
+              <IconActionButton
+                label="Detalhes/Editar"
+                icon={<span className="material-symbols-outlined text-[18px]">edit</span>}
+                onClick={() => onEdit(record.id)}
+              />
+            )}
           </div>
         );
       }
@@ -594,25 +612,20 @@ export function FinancialAccountListPage({
         }}
       />
 
-      <ConfirmDialog
+      <LiquidarModal
         open={pendingLiquidacao !== null}
-        title="Liquidação rápida"
-        eyebrow="Confirmar ação"
-        icon="check_circle"
-        confirmLabel="Sim, liquidar"
-        cancelLabel="Cancelar"
-        confirmVariant="primary"
+        descricao={pendingLiquidacao?.descricao ?? ''}
+        valorLiquido={pendingLiquidacao?.valorLiquido ?? 0}
+        valorPago={pendingLiquidacao?.valorPago}
+        formaPagamentoId={pendingLiquidacao?.formaPagamentoId ?? liquidacaoFormaPagamentoId}
+        ehRecorrente={pendingLiquidacao?.ehRecorrente ?? false}
+        contaBancariaOptions={contaBancariaOptions}
+        formaPagamentoOptions={formaPagamentoOptions}
+        defaultContaBancariaId={contaBancariaId}
         loading={actionLoading}
-        body={
-          <div className="space-y-3">
-            <p>Deseja liquidar <strong className="text-on-surface">{pendingLiquidacao?.descricao}</strong> com a data de hoje?</p>
-            {actionError ? (
-              <p className="text-sm font-medium text-error">{actionError}</p>
-            ) : null}
-          </div>
-        }
+        error={actionError}
         onClose={() => { if (!actionLoading) { setPendingLiquidacao(null); setActionError(undefined); } }}
-        onConfirm={() => void confirmarLiquidacao()}
+        onConfirmar={(values) => void confirmarLiquidacao(values)}
       />
 
       <ConfirmDialog
