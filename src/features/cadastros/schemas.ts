@@ -7,7 +7,10 @@ export const pessoaSchema = z.object({
   nome: requiredText('Nome'),
   tipoPessoa: z.enum(['Fisica', 'Juridica']),
   cpfCnpj: z.string().trim(),
-  email: z.string().trim(),
+  email: z.string().trim().refine(
+    (v) => v === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+    { message: 'E-mail inválido.' }
+  ),
   telefone: z.string().trim(),
   observacao: z.string().trim(),
   chavesPix: z
@@ -19,8 +22,18 @@ export const pessoaSchema = z.object({
     )
     .superRefine((items, context) => {
       const vistos = new Set<string>();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
       items.forEach((item, index) => {
+        if (item.tipo === 'Email' && item.chave && !emailRegex.test(item.chave)) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'E-mail inválido.',
+            path: [index, 'chave']
+          });
+          return;
+        }
+
         const chaveNormalizada =
           item.tipo === 'CpfCnpj' || item.tipo === 'Telefone'
             ? item.chave.replace(/\D/g, '')

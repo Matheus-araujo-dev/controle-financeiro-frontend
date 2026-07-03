@@ -192,44 +192,52 @@ function PessoaPixKeysSection({
           const fieldError = pixErrors[index];
 
           return (
-            <div key={item.id} className="grid grid-cols-1 items-end gap-4 md:grid-cols-[220px_minmax(0,1fr)_auto]">
-              <div className="space-y-2">
-                {index === 0 ? <label className={formLabelClass}>Tipo da Chave Pix</label> : null}
-                <Controller
-                  control={control}
-                  name={`chavesPix.${index}.tipo`}
-                  render={({ field }) => (
-                    <ComboBox
-                      aria-label={`Tipo da chave Pix ${index + 1}`}
-                      value={field.value ?? 'CpfCnpj'}
-                      onChange={field.onChange}
-                      options={pessoaPixTipoOptions}
-                    />
-                  )}
-                />
-                <FieldError message={fieldError?.tipo?.message} />
+            <div key={item.id} className="space-y-1">
+              <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-[220px_minmax(0,1fr)_auto]">
+                <div className="space-y-2">
+                  {index === 0 ? <label className={formLabelClass}>Tipo da Chave Pix</label> : null}
+                  <Controller
+                    control={control}
+                    name={`chavesPix.${index}.tipo`}
+                    render={({ field }) => (
+                      <ComboBox
+                        aria-label={`Tipo da chave Pix ${index + 1}`}
+                        value={field.value ?? 'CpfCnpj'}
+                        onChange={field.onChange}
+                        options={pessoaPixTipoOptions}
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  {index === 0 ? <label className={formLabelClass}>Chave Pix</label> : null}
+                  <Controller
+                    control={control}
+                    name={`chavesPix.${index}.chave`}
+                    render={({ field }) => (
+                      <input
+                        value={mask ? applyInputMask(mask, String(field.value ?? '')) : String(field.value ?? '')}
+                        onChange={(event) => field.onChange(mask ? extractDigits(event.target.value) : event.target.value)}
+                        className={formFieldClass}
+                        placeholder={getPixPlaceholder(tipo)}
+                      />
+                    )}
+                  />
+                </div>
+
+                <Button type="button" variant="danger" size="lg" icon={<span className="material-symbols-outlined text-base">delete</span>} onClick={() => remove(index)}>
+                  Remover
+                </Button>
               </div>
 
-              <div className="space-y-2">
-                {index === 0 ? <label className={formLabelClass}>Chave Pix</label> : null}
-                <Controller
-                  control={control}
-                  name={`chavesPix.${index}.chave`}
-                  render={({ field }) => (
-                    <input
-                      value={mask ? applyInputMask(mask, String(field.value ?? '')) : String(field.value ?? '')}
-                      onChange={(event) => field.onChange(mask ? extractDigits(event.target.value) : event.target.value)}
-                      className={formFieldClass}
-                      placeholder={getPixPlaceholder(tipo)}
-                    />
-                  )}
-                />
-                <FieldError message={fieldError?.chave?.message} />
-              </div>
-
-              <Button type="button" variant="danger" size="lg" icon={<span className="material-symbols-outlined text-base">delete</span>} onClick={() => remove(index)}>
-                Remover
-              </Button>
+              {(fieldError?.tipo?.message || fieldError?.chave?.message) ? (
+                <div className="grid grid-cols-1 gap-x-4 md:grid-cols-[220px_minmax(0,1fr)_auto]">
+                  <FieldError message={fieldError?.tipo?.message} />
+                  <FieldError message={fieldError?.chave?.message} />
+                  <div />
+                </div>
+              ) : null}
             </div>
           );
         })}
