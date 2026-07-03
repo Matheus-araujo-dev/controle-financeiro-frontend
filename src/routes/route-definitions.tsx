@@ -21,6 +21,8 @@ const MovimentacoesWorkspacePage = lazy(() => import('../features/financeiro/Mov
 const ImportacaoWhatsappDetailPage = lazy(() => import('../features/importacoes-whatsapp/ImportacaoWhatsappDetailPage').then((m) => ({ default: m.ImportacaoWhatsappDetailPage })));
 const ImportacoesWhatsappPage = lazy(() => import('../features/importacoes-whatsapp/ImportacoesWhatsappPage').then((m) => ({ default: m.ImportacoesWhatsappPage })));
 const RecurrenceListPage = lazy(() => import('../features/financeiro/RecurrenceListPage'));
+const RecurrenceDetailPage = lazy(() => import('../features/financeiro/RecurrenceDetailPage'));
+const AgendaPage = lazy(() => import('../features/agenda/AgendaPage'));
 const ImportarFaturaPage = lazy(() => import('../features/financeiro/ImportarFaturaPage').then((m) => ({ default: m.ImportarFaturaPage })));
 
 export const placeholderRouteObjects: RouteObject[] = [];
@@ -254,6 +256,20 @@ export const financialRouteObjects: RouteObject[] = [
     element: <RecurrenceListPage />,
     handle: {
       title: 'Gestão de recorrências'
+    }
+  },
+  {
+    path: 'recorrencias/:id',
+    element: <RecurrenceDetailPage />,
+    handle: {
+      title: 'Detalhe de recorrência'
+    }
+  },
+  {
+    path: 'agenda',
+    element: <AgendaPage />,
+    handle: {
+      title: 'Agenda financeira'
     }
   }
 ];

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { DashboardKpiGrid } from '../components/DashboardKpiGrid';
 import { DashboardFaturasCartao } from '../components/DashboardFaturasCartao';
@@ -21,6 +21,7 @@ function getCurrentReferenceMonth() {
 }
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState<DashboardResumo>();
   const [cashFlow, setCashFlow] = useState<DashboardFluxoCaixa>();
   const [referenceMonth, setReferenceMonth] = useState<string>(getCurrentReferenceMonth());
@@ -156,14 +157,21 @@ export function DashboardPage() {
         {/* Middle Section: Graph and Agenda */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <DashboardCashPulse items={cashFlow?.itens ?? []} />
-          <DashboardOperationalAgenda items={summary?.contasAVencer ?? []} />
+          <DashboardOperationalAgenda items={summary?.contasAVencer ?? []} referenceMonth={referenceMonth} />
         </div>
 
         {/* Bottom Section: Faturas e Transações */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <DashboardFaturasCartao />
           <div className="lg:col-span-2">
-            <DashboardTransactionList movimentacoes={summary?.movimentacoesRecentes ?? []} onViewAll={() => {}} />
+            <DashboardTransactionList
+              movimentacoes={summary?.movimentacoesRecentes ?? []}
+              onViewAll={() => {
+                const [year, month] = referenceMonth.split('-');
+                const lastDay = new Date(Number(year), Number(month), 0).getDate();
+                navigate(`/movimentacoes?dataInicial=${referenceMonth}-01&dataFinal=${referenceMonth}-${lastDay}`);
+              }}
+            />
           </div>
         </div>
 
