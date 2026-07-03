@@ -348,7 +348,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'geral' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             <MetricCard
               label="Contas vencidas"
               value={data.resumo?.contasVencidas.length ?? 0}
@@ -414,7 +414,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'contas-gerenciais' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Receitas" value={formatCurrencyBRL(data.contasGerenciais?.totalReceitas ?? 0)} tone="success" />
             <MetricCard label="Despesas" value={formatCurrencyBRL(data.contasGerenciais?.totalDespesas ?? 0)} tone="danger" />
             <MetricCard label="Saldo" value={formatCurrencyBRL(data.contasGerenciais?.saldo ?? 0)} />
@@ -460,7 +460,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'fluxo-caixa' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             <MetricCard label="Dias projetados" value={data.fluxoCaixa?.dias ?? 0} />
             <MetricCard label="Dias com risco" value={fluxosComRisco} tone={fluxosComRisco > 0 ? 'danger' : 'success'} />
             <MetricCard
@@ -491,7 +491,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'previsoes' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
             <MetricCard label="Entradas previstas" value={formatCurrencyBRL(previsaoResumo.entradas)} tone="success" />
             <MetricCard label="Saídas previstas" value={formatCurrencyBRL(previsaoResumo.saidas)} tone="danger" />
             <MetricCard label="Saldo previsto" value={formatCurrencyBRL(previsaoResumo.entradas - previsaoResumo.saidas)} />
@@ -520,7 +520,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'inadimplencia' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Total vencido" value={formatCurrencyBRL(inadimplenciaResumo.valor)} tone="danger" />
             <MetricCard label="Títulos vencidos" value={inadimplenciaRows.length} tone={inadimplenciaRows.length ? 'danger' : 'success'} />
             <MetricCard label="Maior atraso" value={`${inadimplenciaResumo.maiorAtraso} dia(s)`} />
@@ -565,7 +565,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'faturas' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Faturas" value={data.faturas?.totalItems ?? 0} />
             <MetricCard label="Valor total" value={formatCurrencyBRL(data.faturas?.summary?.valorTotal ?? faturas.reduce((total, item) => total + item.valorTotal, 0))} />
             <FilterCombo label="Status" value={faturaStatus} onChange={setFaturaStatus} options={faturaStatusOptions} ariaLabel="Status da fatura" />
@@ -592,7 +592,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'recorrencias' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Recorrências" value={data.recorrencias?.totalItems ?? 0} />
             <MetricCard label="Valor mensal" value={formatCurrencyBRL(recorrencias.reduce((total, item) => total + item.valorLiquido, 0))} />
             <FilterCombo label="Tipo" value={recorrenciaTipo} onChange={setRecorrenciaTipo} options={recorrenciaTipoOptions} ariaLabel="Tipo de recorrência" />
@@ -624,7 +624,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'compras' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Compras" value={data.compras?.totalItems ?? 0} />
             <MetricCard
               label="Total estimado"
@@ -668,7 +668,7 @@ export function RelatoriosPage() {
       ) : null}
       {activeReport === 'comparativo' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard
               label="Receitas (mês atual)"
               value={formatCurrencyBRL(data.comparativo?.itens.at(-1)?.receitas ?? 0)}
@@ -740,7 +740,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'dre' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             <MetricCard label="Receitas" value={formatCurrencyBRL(data.contasGerenciais?.totalReceitas ?? 0)} tone="success" />
             <MetricCard label="Despesas" value={formatCurrencyBRL(data.contasGerenciais?.totalDespesas ?? 0)} tone="danger" />
             <MetricCard
