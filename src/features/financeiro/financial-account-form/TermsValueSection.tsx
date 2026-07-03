@@ -32,7 +32,11 @@ export function TermsValueSection({ form }: TermsValueSectionProps) {
           <Controller
             control={control}
             name="dataVencimento"
-            render={({ field }) => <DateInput mode="date" value={field.value} onChange={field.onChange} disabled={!canEdit} />}
+            render={({ field }) => (
+              <div className={errors.dataVencimento ? 'rounded-xl ring-1 ring-error' : ''}>
+                <DateInput mode="date" value={field.value} onChange={field.onChange} disabled={!canEdit} />
+              </div>
+            )}
           />
           {errors.dataVencimento ? <span className={errorTextClass}>{errors.dataVencimento.message}</span> : null}
         </div>
@@ -53,7 +57,7 @@ export function TermsValueSection({ form }: TermsValueSectionProps) {
                 onPaste={handleIntegerPaste}
                 onChange={(event) => field.onChange(parseIntegerInput(event.target.value))}
                 disabled={Boolean(id) || watchedValues.ehRecorrente || !canEdit}
-                className={nativeFieldWithPaddingClass}
+                className={`${nativeFieldWithPaddingClass} ${errors.quantidadeParcelas ? 'ring-1 ring-error' : ''}`}
               />
             )}
           />

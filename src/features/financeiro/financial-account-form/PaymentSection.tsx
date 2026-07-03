@@ -7,7 +7,7 @@ import { FormSection } from '../../../components/layout';
 import { QuickAddCartaoModal } from '../../cadastros/quick-add/QuickAddCartaoModal';
 import { QuickAddContaBancariaModal } from '../../cadastros/quick-add/QuickAddContaBancariaModal';
 import { QuickAddFormaPagamentoModal } from '../../cadastros/quick-add/QuickAddFormaPagamentoModal';
-import { fieldLabelClass } from './field-classes';
+import { errorTextClass, fieldLabelClass } from './field-classes';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
 
 type QuickAddTarget = 'forma' | 'cartao' | 'conta' | null;
@@ -15,6 +15,7 @@ type QuickAddTarget = 'forma' | 'cartao' | 'conta' | null;
 export function PaymentSection({ form }: { form: FinancialAccountFormApi }) {
   const {
     control,
+    errors,
     canEdit,
     formaPagamentoBehavior,
     formaPagamentoOptions,
@@ -49,18 +50,23 @@ export function PaymentSection({ form }: { form: FinancialAccountFormApi }) {
             control={control}
             name="formaPagamentoId"
             render={({ field }) => (
-              <ComboBox
-                {...field}
-                disabled={!canEdit}
-                onAddNew={canEdit ? () => setQuickAdd('forma') : undefined}
-              >
-                <option value="">Selecionar...</option>
-                {formaPagamentoOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </ComboBox>
+              <div className="space-y-1">
+                <div className={errors.formaPagamentoId ? 'rounded-xl ring-1 ring-error' : ''}>
+                  <ComboBox
+                    {...field}
+                    disabled={!canEdit}
+                    onAddNew={canEdit ? () => setQuickAdd('forma') : undefined}
+                  >
+                    <option value="">Selecionar...</option>
+                    {formaPagamentoOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </ComboBox>
+                </div>
+                {errors.formaPagamentoId ? <span className={errorTextClass}>{errors.formaPagamentoId.message}</span> : null}
+              </div>
             )}
           />
         </div>

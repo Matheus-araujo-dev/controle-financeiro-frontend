@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { formCompactFieldClass } from '../../../components/forms/FormPrimitives';
 import { DateInput } from '../../../components/forms/DateInput';
 import { PageState } from '../../../components/states/PageState';
 import { orcamentosApi } from '../../../services/http/orcamentos-api';
@@ -63,7 +64,7 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
   const metaCalculada = !item.aceitaLancamentos;
 
   return (
-    <div className="bg-surface-container-highest border border-outline-variant/10 rounded-2xl p-4 flex flex-col gap-3">
+    <div className="bg-surface-container border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-bold text-on-surface truncate">
@@ -97,7 +98,7 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
             onChange={setDraftMeta}
             disabled={saving || metaCalculada}
             placeholder={metaCalculada ? 'Calculada automaticamente' : 'Definir meta'}
-            className="w-36 min-w-[120px] flex-1 sm:flex-none"
+            className={`${formCompactFieldClass} !min-h-0 h-11 w-36 min-w-[120px] flex-1 sm:flex-none text-sm`}
           />
           <button
             type="button"
