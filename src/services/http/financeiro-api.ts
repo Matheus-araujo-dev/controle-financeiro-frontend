@@ -18,6 +18,7 @@ import type {
   GerarOcorrenciasPayload,
   LiquidacaoPayload,
   CancelarContaPagarPayload,
+  CancelarContaReceberPayload,
   MovimentacaoDetalhe,
   MovimentacaoFilters,
   MovimentacaoListSummary,
@@ -115,7 +116,7 @@ export const financeiroApi = {
       post<ContaReceberDetalhe>(`/contas-receber/${id}/encerrar-recorrencia`, payload),
     liquidar: (id: string, payload: LiquidacaoPayload) => post<ContaReceberDetalhe>(`/contas-receber/${id}/liquidar`, payload),
     estornar: (id: string) => post<ContaReceberDetalhe>(`/contas-receber/${id}/estornar`),
-    cancelar: (id: string) => post<ContaReceberDetalhe>(`/contas-receber/${id}/cancelar`)
+    cancelar: (id: string, payload?: CancelarContaReceberPayload) => post<ContaReceberDetalhe>(`/contas-receber/${id}/cancelar`, payload)
   },
   movimentacoes: {
     listar: (params: MovimentacaoFilters) =>

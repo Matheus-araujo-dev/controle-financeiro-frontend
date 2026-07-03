@@ -51,6 +51,49 @@ function ConfirmDialog({ state, onClose }: { state: ConfirmState; onClose: () =>
   );
 }
 
+function RecorrenciaCancelDialog({
+  open,
+  onClose,
+  onCancelarApenas,
+  onCancelarEPausar
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCancelarApenas: () => void;
+  onCancelarEPausar: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
+        <div className="mb-6 flex items-start gap-3">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-error/12 text-error">
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>repeat</span>
+          </div>
+          <div>
+            <h3 className="font-headline text-lg font-bold text-on-surface">Cancelar lancamento recorrente</h3>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Este lancamento esta vinculado a uma recorrencia ativa. Deseja pausar a recorrencia para que novas contas nao sejam geradas?
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Voltar
+          </Button>
+          <Button type="button" variant="secondary" onClick={onCancelarApenas}>
+            Nao, manter recorrencia
+          </Button>
+          <Button type="button" variant="danger" onClick={onCancelarEPausar}>
+            Sim, pausar recorrencia
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PlannedPurchaseCancelDialog({
   open,
   onClose,
@@ -107,16 +150,19 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     cancelar,
     estornar,
     origemCompraPlanejadaId,
+    exibeRecorrencia,
     totalRateios
   } = form;
 
   const [confirm, setConfirm] = useState<ConfirmState>(null);
   const [plannedPurchaseConfirmOpen, setPlannedPurchaseConfirmOpen] = useState(false);
+  const [recorrenciaConfirmOpen, setRecorrenciaConfirmOpen] = useState(false);
 
   const valorOriginal = Number(watchedValues.valorOriginal) || 0;
   const valorDesconto = Number(watchedValues.valorDesconto) || 0;
   const valorJurosMulta = (Number(watchedValues.valorJuros) || 0) + (Number(watchedValues.valorMulta) || 0);
   const hasPlannedPurchaseOrigin = Boolean(origemCompraPlanejadaId);
+  const hasRecorrenciaOrigin = Boolean(id) && Boolean(exibeRecorrencia);
 
   return (
     <div className="space-y-8 lg:col-span-5">
@@ -171,7 +217,10 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
                   setPlannedPurchaseConfirmOpen(true);
                   return;
                 }
-
+                if (hasRecorrenciaOrigin) {
+                  setRecorrenciaConfirmOpen(true);
+                  return;
+                }
                 setConfirm({
                   title: 'Confirmar Cancelamento',
                   message: 'Tem certeza que deseja cancelar este lancamento? Esta acao nao pode ser desfeita.',
@@ -208,6 +257,18 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
       </FormActionPanel>
 
       <ConfirmDialog state={confirm} onClose={() => setConfirm(null)} />
+      <RecorrenciaCancelDialog
+        open={recorrenciaConfirmOpen}
+        onClose={() => setRecorrenciaConfirmOpen(false)}
+        onCancelarApenas={() => {
+          void cancelar({ pausarRecorrenciaRelacionada: false });
+          setRecorrenciaConfirmOpen(false);
+        }}
+        onCancelarEPausar={() => {
+          void cancelar({ pausarRecorrenciaRelacionada: true });
+          setRecorrenciaConfirmOpen(false);
+        }}
+      />
       <PlannedPurchaseCancelDialog
         open={plannedPurchaseConfirmOpen}
         onClose={() => setPlannedPurchaseConfirmOpen(false)}
