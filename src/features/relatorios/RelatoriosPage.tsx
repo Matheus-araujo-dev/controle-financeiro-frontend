@@ -276,7 +276,7 @@ export function RelatoriosPage() {
           Leitura gerencial do período com base em lançamentos, rateios, responsáveis, previsões, faturas e compras planejadas.
         </p>
 
-        <div className="report-actions flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="report-actions flex flex-col gap-3">
           <DateInput
             compact
             mode="month"
@@ -285,22 +285,26 @@ export function RelatoriosPage() {
             onChange={(value) => setReferenceMonth(value || getCurrentReferenceMonth())}
             className="min-w-[220px]"
           />
-          <Button
-            type="button"
-            variant="primary"
-            onClick={handleExportExcel}
-            icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>table_view</span>}
-          >
-            Excel
-          </Button>
-          <Button
-            type="button"
-            variant="primary"
-            onClick={exportarPdf}
-            icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>picture_as_pdf</span>}
-          >
-            PDF
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="primary"
+              className="flex-1"
+              onClick={handleExportExcel}
+              icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>table_view</span>}
+            >
+              Excel
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              className="flex-1"
+              onClick={exportarPdf}
+              icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>picture_as_pdf</span>}
+            >
+              PDF
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -308,7 +312,7 @@ export function RelatoriosPage() {
         <div className="rounded-2xl border border-error/30 bg-error/10 p-4 text-sm font-bold text-error">{errorMessage}</div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <MetricCard label="Saldo atual" value={formatCurrencyBRL(data.resumo?.saldoAtual ?? 0)} tone="success" />
         <MetricCard label="A pagar" value={formatCurrencyBRL(data.resumo?.totalAPagar ?? 0)} tone="danger" />
         <MetricCard label="A receber" value={formatCurrencyBRL(data.resumo?.totalAReceber ?? 0)} tone="success" />
