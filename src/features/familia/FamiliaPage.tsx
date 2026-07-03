@@ -52,6 +52,8 @@ function MinhasParticipacoes() {
   const [loading, setLoading] = useState(true);
   const [switching, setSwitching] = useState<string | null>(null);
   const [creatingWorkspace, setCreatingWorkspace] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [nomeWorkspace, setNomeWorkspace] = useState('');
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -68,12 +70,14 @@ function MinhasParticipacoes() {
     if (creatingWorkspace || participacoes.length >= MAX_WORKSPACES) return;
     setCreatingWorkspace(true);
     try {
-      const resultado = await criarWorkspace();
+      const resultado = await criarWorkspace(nomeWorkspace.trim() ? { nome: nomeWorkspace.trim() } : {});
       useAuthStore.getState().applyTokenResponse(resultado.sessao);
-      notify('success', 'Novo espaco criado');
+      notify('success', 'Novo espaço criado');
+      setModalOpen(false);
+      setNomeWorkspace('');
       window.location.reload();
     } catch (err) {
-      notify('error', 'Nao foi possivel criar o espaco', getApiErrorMessage(err));
+      notify('error', 'Não foi possível criar o espaço', getApiErrorMessage(err));
     } finally {
       setCreatingWorkspace(false);
     }
@@ -94,57 +98,91 @@ function MinhasParticipacoes() {
     }
   };
 
+  const podeCriar = participacoes.length < MAX_WORKSPACES;
+
   return (
-    <Card
-      loading={loading}
-      title={`Meus espaços (${participacoes.length}/${MAX_WORKSPACES})`}
-      extra={
-        <Tag color={participacoes.length >= MAX_WORKSPACES ? 'red' : 'green'}>
-          {participacoes.length >= MAX_WORKSPACES ? 'Limite atingido' : `${MAX_WORKSPACES - participacoes.length} disponível(is)`}
-        </Tag>
-      }
-    >
-      <List
-        dataSource={participacoes}
-        locale={{ emptyText: 'Nenhum espaço encontrado.' }}
-        renderItem={(p) => {
-          const ativo = p.id === workspaceAtual?.id || p.ativa;
-          return (
-            <List.Item
-              actions={[
-                ativo ? (
-                  <Tag key="ativo" color="green">Ativo</Tag>
-                ) : (
-                  <Button
-                    key="selecionar"
-                    size="sm"
-                    loading={switching === p.id}
-                    onClick={() => void handleSelecionar(p.id)}
-                  >
-                    Usar este espaço
-                  </Button>
-                )
-              ]}
-            >
-              <List.Item.Meta
-                avatar={
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20">
-                    <span className="material-symbols-outlined text-base" style={{ color: '#2bf58e' }}>workspaces</span>
-                  </div>
-                }
-                title={<span className={ativo ? 'font-bold' : undefined}>{p.nome}</span>}
-                description={<Tag color={papelColors[p.meuPapel]}>{p.meuPapel}</Tag>}
-              />
-            </List.Item>
-          );
-        }}
-      />
-      {participacoes.length < MAX_WORKSPACES && (
-        <Typography.Text type="secondary" className="text-xs mt-2 block">
-          Você pode participar de até {MAX_WORKSPACES} espaços. Novos espaços são criados via convite.
-        </Typography.Text>
-      )}
-    </Card>
+    <>
+      <Card
+        loading={loading}
+        title={`Meus espaços (${participacoes.length}/${MAX_WORKSPACES})`}
+        extra={
+          <Space>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${podeCriar ? 'text-primary border-primary/40 bg-primary/10' : 'text-error border-error/40 bg-error/10'}`}>
+              {podeCriar ? `${MAX_WORKSPACES - participacoes.length} disponível(is)` : 'Limite atingido'}
+            </span>
+            {podeCriar && (
+              <Button size="sm" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
+                Criar espaço
+              </Button>
+            )}
+          </Space>
+        }
+      >
+        <List
+          dataSource={participacoes}
+          locale={{ emptyText: 'Nenhum espaço encontrado.' }}
+          renderItem={(p) => {
+            const ativo = p.id === workspaceAtual?.id || p.ativa;
+            return (
+              <List.Item
+                actions={[
+                  ativo ? (
+                    <Tag key="ativo" color="green">Ativo</Tag>
+                  ) : (
+                    <Button
+                      key="selecionar"
+                      size="sm"
+                      loading={switching === p.id}
+                      onClick={() => void handleSelecionar(p.id)}
+                    >
+                      Usar este espaço
+                    </Button>
+                  )
+                ]}
+              >
+                <List.Item.Meta
+                  avatar={
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20">
+                      <span className="material-symbols-outlined text-base" style={{ color: '#2bf58e' }}>workspaces</span>
+                    </div>
+                  }
+                  title={<span className={ativo ? 'font-bold' : undefined}>{p.nome}</span>}
+                  description={<Tag color={papelColors[p.meuPapel]}>{p.meuPapel}</Tag>}
+                />
+              </List.Item>
+            );
+          }}
+        />
+        {podeCriar && (
+          <Typography.Text type="secondary" className="text-xs mt-2 block">
+            Você pode criar um novo espaço ou ser convidado para um existente. Limite: {MAX_WORKSPACES} espaços.
+          </Typography.Text>
+        )}
+      </Card>
+
+      <Modal
+        open={modalOpen}
+        title="Criar novo espaço"
+        onCancel={() => { setModalOpen(false); setNomeWorkspace(''); }}
+        onOk={() => void handleCriarWorkspace()}
+        okText="Criar"
+        cancelText="Cancelar"
+        confirmLoading={creatingWorkspace}
+        okButtonProps={{ disabled: creatingWorkspace }}
+      >
+        <Space direction="vertical" style={{ width: '100%', marginTop: 8 }}>
+          <Typography.Text>Escolha um nome para o seu novo espaço de trabalho.</Typography.Text>
+          <Input
+            autoFocus
+            placeholder="Ex: Finanças pessoais, Família Silva..."
+            value={nomeWorkspace}
+            onChange={(e) => setNomeWorkspace(e.target.value)}
+            onPressEnter={() => void handleCriarWorkspace()}
+            maxLength={100}
+          />
+        </Space>
+      </Modal>
+    </>
   );
 }
 
@@ -236,13 +274,14 @@ export function FamiliaPage() {
       <MinhasParticipacoes />
 
       {error ? (
-        <Alert
-          type="warning"
-          showIcon
-          message="Espaço ativo indisponível"
-          description={error}
-          action={<Button onClick={() => void carregar()}>Tentar novamente</Button>}
-        />
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <span className="material-symbols-outlined text-amber-400 mt-0.5 text-base">warning</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-300">Espaço ativo indisponível</p>
+            <p className="text-xs text-on-surface-variant mt-0.5">{error}</p>
+          </div>
+          <Button size="sm" onClick={() => void carregar()}>Tentar novamente</Button>
+        </div>
       ) : (
         <>
           <Card loading={loading} title="Espaço ativo">
