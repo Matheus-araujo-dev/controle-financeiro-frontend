@@ -318,7 +318,6 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
   fields: [
     { name: 'nome', label: 'Nome', kind: 'text' },
     { name: 'tipo', label: 'Tipo', kind: 'select', options: formaPagamentoTipoOptions },
-    { name: 'ehCartao', label: 'É cartão', kind: 'switch' },
     { name: 'baixarAutomaticamente', label: 'Baixar automaticamente', kind: 'switch' },
     { name: 'ativo', label: 'Ativo', kind: 'switch' }
   ],
@@ -333,8 +332,14 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
   },
   list: cadastrosApi.formasPagamento.listar,
   detail: cadastrosApi.formasPagamento.obterPorId,
-  create: cadastrosApi.formasPagamento.criar,
-  update: cadastrosApi.formasPagamento.atualizar,
+  create: (payload) => cadastrosApi.formasPagamento.criar({
+    ...payload,
+    ehCartao: payload.tipo === 'Credito' || payload.tipo === 'Debito'
+  }),
+  update: (id, payload) => cadastrosApi.formasPagamento.atualizar(id, {
+    ...payload,
+    ehCartao: payload.tipo === 'Credito' || payload.tipo === 'Debito'
+  }),
   toFormValues: (detail) => ({
     nome: detail.nome,
     tipo: detail.tipo,

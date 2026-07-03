@@ -23,13 +23,13 @@ export const navigationStructure: NavGroup[] = [
   },
   {
     key: 'lancamentos',
-    label: 'Lancamentos',
+    label: 'Lançamentos',
     items: [
       { key: '/movimentacoes', label: 'Movimentações', aliases: ['/contas-pagar', '/contas-receber'] },
       { key: '/recorrencias', label: 'Recorrências' },
       { key: '/faturas', label: 'Faturas' },
       { key: '/faturas/importar', label: 'Importar fatura CSV' },
-      { key: '/importacoes-whatsapp', label: 'Importacoes WhatsApp' }
+      { key: '/importacoes-whatsapp', label: 'Importações WhatsApp' }
     ]
   },
   {
