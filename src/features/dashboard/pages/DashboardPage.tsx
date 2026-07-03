@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
+import { MultiSelectFilter } from '../../../components/layout';
 import { DashboardKpiGrid } from '../components/DashboardKpiGrid';
 import { DashboardFaturasCartao } from '../components/DashboardFaturasCartao';
 import { DashboardCashPulse } from '../components/DashboardCashPulse';
@@ -9,6 +10,7 @@ import { DashboardTransactionList } from '../components/DashboardTransactionList
 import { DashboardAiInsights } from '../components/DashboardAiInsights';
 import { DateInput } from '../../../components/forms/DateInput';
 import { PageState } from '../../../components/states/PageState';
+import { cadastrosApi } from '../../../services/http/cadastros-api';
 import { dashboardApi } from '../../../services/http/dashboard-api';
 import { orcamentosApi } from '../../../services/http/orcamentos-api';
 import { formatCurrencyBRL } from '../../../shared/currency';
@@ -28,15 +30,27 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
   const [categoriasEstouradas, setCategoriasEstouradas] = useState<OrcamentoItem[]>([]);
+  const [contaBancariaOptions, setContaBancariaOptions] = useState<{ label: string; value: string }[]>([]);
+  const [selectedContasBancarias, setSelectedContasBancarias] = useState<string[]>([]);
+
+  useEffect(() => {
+    cadastrosApi.contasBancarias
+      .listar({ page: 1, pageSize: 200, search: '', ativo: true })
+      .then((res) => {
+        setContaBancariaOptions(res.items.map((c) => ({ label: c.nome, value: c.id })));
+      })
+      .catch(() => {});
+  }, []);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     setErrorMessage(undefined);
+    const contaBancariaIds = selectedContasBancarias.length > 0 ? selectedContasBancarias : undefined;
 
     try {
       const [summaryResponse, cashFlowResponse] = await Promise.all([
-        dashboardApi.obterResumo({ mesReferencia: referenceMonth }),
-        dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth })
+        dashboardApi.obterResumo({ mesReferencia: referenceMonth, contaBancariaIds }),
+        dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth, contaBancariaIds })
       ]);
 
       setSummary(summaryResponse);
@@ -46,7 +60,7 @@ export function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [referenceMonth]);
+  }, [referenceMonth, selectedContasBancarias]);
 
   useEffect(() => {
     void loadDashboard();
@@ -84,7 +98,20 @@ export function DashboardPage() {
   return (
     <>
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          {contaBancariaOptions.length > 0 && (
+            <div className="w-[220px] shrink-0">
+              <MultiSelectFilter
+                ariaLabel="Filtrar por conta bancária"
+                placeholder="Todas as contas"
+                options={contaBancariaOptions}
+                value={selectedContasBancarias}
+                onChange={setSelectedContasBancarias}
+                icon={<span className="material-symbols-outlined text-sm">account_balance</span>}
+              />
+            </div>
+          )}
+
           <div className="w-[200px] shrink-0">
             <DateInput
               compact
