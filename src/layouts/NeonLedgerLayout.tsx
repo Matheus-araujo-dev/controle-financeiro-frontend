@@ -346,8 +346,8 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
           <p className="text-[11px] text-on-surface-variant uppercase tracking-widest font-medium">
             Inteligencia financeira
           </p>
-          <div className="flex flex-wrap items-end justify-between gap-3 mt-1">
-            <h1 className="text-2xl md:text-3xl font-black font-headline text-white mb-0">{pageTitle}</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
+            <h1 className="text-2xl md:text-3xl font-black font-headline text-white !mb-0">{pageTitle}</h1>
             <div
               ref={(el) => { if (el !== null) setHeaderActionsSlot(el); }}
               className="flex items-center gap-3"
