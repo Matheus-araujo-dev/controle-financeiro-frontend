@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ComboBox } from '../../components/forms/ComboBox';
+import { MultiSelectFilter } from '../../components/layout/MultiSelectFilter';
 import { PageState } from '../../components/states/PageState';
 import type { AlertItem } from './relatorios-helpers';
 
@@ -21,7 +21,7 @@ export function FilterInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="cf-form-control min-h-[54px] w-full rounded-xl border border-white/5 bg-surface-container px-4 py-3 text-sm font-semibold text-on-surface outline-none transition-colors placeholder:text-on-surface-variant focus:border-primary/40"
+        className="cf-form-control h-11 w-full rounded-xl border border-white/5 bg-surface-container px-4 text-sm font-semibold text-on-surface outline-none transition-colors placeholder:text-on-surface-variant focus:border-primary/40"
       />
     </div>
   );
@@ -35,15 +35,15 @@ export function FilterCombo({
   ariaLabel
 }: {
   label: string;
-  value: string;
-  onChange: (value: string) => void;
+  value: string[];
+  onChange: (value: string[]) => void;
   options: Array<{ value: string; label: string }>;
   ariaLabel?: string;
 }) {
   return (
     <div className="space-y-2">
       <label className="px-1 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{label}</label>
-      <ComboBox value={value} onChange={onChange} options={options} aria-label={ariaLabel ?? label} />
+      <MultiSelectFilter value={value} onChange={onChange} options={options} ariaLabel={ariaLabel ?? label} />
     </div>
   );
 }

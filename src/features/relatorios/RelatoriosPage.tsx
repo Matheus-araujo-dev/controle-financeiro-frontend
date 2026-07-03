@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Button } from '../../components/ui/Button';
+import { ComboBox } from '../../components/forms/ComboBox';
 import { DateInput } from '../../components/forms/DateInput';
 import { PageState } from '../../components/states/PageState';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
@@ -36,7 +37,6 @@ import {
   reportTabs,
   statusLabels,
   statusPrevisaoOptions,
-  type InadimplenciaTipo,
   type ReportKey,
   type ReportState
 } from './relatorios-config';
@@ -57,19 +57,19 @@ import { AlertCard, FilterCombo, FilterInput, MetricCard, ReportTable } from './
 export function RelatoriosPage() {
   const [activeReport, setActiveReport] = useState<ReportKey>('geral');
   const [referenceMonth, setReferenceMonth] = useState(getCurrentReferenceMonth());
-  const [contaTipo, setContaTipo] = useState('');
-  const [previsaoOrigem, setPrevisaoOrigem] = useState('');
-  const [previsaoStatus, setPrevisaoStatus] = useState('');
-  const [inadimplenciaTipo, setInadimplenciaTipo] = useState<InadimplenciaTipo>('todos');
+  const [contaTipo, setContaTipo] = useState<string[]>([]);
+  const [previsaoOrigem, setPrevisaoOrigem] = useState<string[]>([]);
+  const [previsaoStatus, setPrevisaoStatus] = useState<string[]>([]);
+  const [inadimplenciaTipo, setInadimplenciaTipo] = useState<string[]>([]);
   const [inadimplenciaSearch, setInadimplenciaSearch] = useState('');
   const [faturaSearch, setFaturaSearch] = useState('');
-  const [faturaStatus, setFaturaStatus] = useState('');
+  const [faturaStatus, setFaturaStatus] = useState<string[]>([]);
   const [recorrenciaSearch, setRecorrenciaSearch] = useState('');
-  const [recorrenciaTipo, setRecorrenciaTipo] = useState('');
-  const [recorrenciaAtiva, setRecorrenciaAtiva] = useState('');
+  const [recorrenciaTipo, setRecorrenciaTipo] = useState<string[]>([]);
+  const [recorrenciaAtiva, setRecorrenciaAtiva] = useState<string[]>([]);
   const [compraSearch, setCompraSearch] = useState('');
-  const [compraStatus, setCompraStatus] = useState('');
-  const [compraPrioridade, setCompraPrioridade] = useState('');
+  const [compraStatus, setCompraStatus] = useState<string[]>([]);
+  const [compraPrioridade, setCompraPrioridade] = useState<string[]>([]);
   const [comparativoMeses, setComparativoMeses] = useState('6');
   const [data, setData] = useState<ReportState>({});
   const [loading, setLoading] = useState(true);
@@ -106,15 +106,15 @@ export function RelatoriosPage() {
           dashboardApi.obterResumoPorResponsaveis({ mesReferencia: referenceMonth }),
           dashboardApi.obterResumoContasGerenciais({
             mesReferencia: referenceMonth,
-            tipo: contaTipo ? (contaTipo as DashboardContaGerencialTipo) : undefined
+            tipo: contaTipo[0] as DashboardContaGerencialTipo | undefined
           }),
           dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth }),
           dashboardApi.obterResumoCentralPrevisao({
             mesReferencia: referenceMonth,
-            origem: previsaoOrigem ? (previsaoOrigem as DashboardCentralPrevisaoOrigem) : undefined,
-            status: previsaoStatus ? (previsaoStatus as DashboardCentralPrevisaoStatus) : undefined
+            origem: previsaoOrigem[0] as DashboardCentralPrevisaoOrigem | undefined,
+            status: previsaoStatus[0] as DashboardCentralPrevisaoStatus | undefined
           }),
-          inadimplenciaTipo !== 'receber'
+          (!inadimplenciaTipo.length || inadimplenciaTipo.includes('pagar'))
             ? financeiroApi.contasPagar.listar({
                 page: 1,
                 pageSize: MAX_REPORT_ROWS,
@@ -126,7 +126,7 @@ export function RelatoriosPage() {
                 sortDirection: 'Asc'
               })
             : Promise.resolve(emptyPaged<ContaPagarResumo, ContaFinanceiraListSummary>()),
-          inadimplenciaTipo !== 'pagar'
+          (!inadimplenciaTipo.length || inadimplenciaTipo.includes('receber'))
             ? financeiroApi.contasReceber.listar({
                 page: 1,
                 pageSize: MAX_REPORT_ROWS,
@@ -143,7 +143,7 @@ export function RelatoriosPage() {
             pageSize: MAX_REPORT_ROWS,
             search: deferredFaturaSearch,
             competencia: referenceMonth,
-            statusCodigo: faturaStatus ? (faturaStatus as StatusFaturaCodigo) : undefined,
+            statusCodigo: faturaStatus[0] as StatusFaturaCodigo | undefined,
             sortBy: 'dataVencimento',
             sortDirection: 'Asc'
           }),
@@ -151,8 +151,8 @@ export function RelatoriosPage() {
             page: 1,
             pageSize: MAX_REPORT_ROWS,
             search: deferredRecorrenciaSearch,
-            tipo: recorrenciaTipo ? (recorrenciaTipo as 'Pagar' | 'Receber') : undefined,
-            ativa: recorrenciaAtiva ? recorrenciaAtiva === 'true' : undefined,
+            tipo: recorrenciaTipo[0] as 'Pagar' | 'Receber' | undefined,
+            ativa: recorrenciaAtiva[0] === 'true' ? true : recorrenciaAtiva[0] === 'false' ? false : undefined,
             dataReferenciaInicial: range.start,
             dataReferenciaFinal: range.end,
             sortBy: 'dataInicio',
@@ -162,8 +162,8 @@ export function RelatoriosPage() {
             page: 1,
             pageSize: MAX_REPORT_ROWS,
             search: deferredCompraSearch,
-            status: compraStatus ? (compraStatus as CompraPlanejadaStatus) : undefined,
-            prioridade: compraPrioridade ? (compraPrioridade as CompraPlanejadaPrioridade) : undefined,
+            status: compraStatus[0] as CompraPlanejadaStatus | undefined,
+            prioridade: compraPrioridade[0] as CompraPlanejadaPrioridade | undefined,
             dataDesejadaInicial: range.start,
             dataDesejadaFinal: range.end,
             sortBy: 'dataDesejada',
@@ -276,7 +276,7 @@ export function RelatoriosPage() {
           Leitura gerencial do período com base em lançamentos, rateios, responsáveis, previsões, faturas e compras planejadas.
         </p>
 
-        <div className="report-actions flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="report-actions flex flex-col gap-3">
           <DateInput
             compact
             mode="month"
@@ -285,22 +285,26 @@ export function RelatoriosPage() {
             onChange={(value) => setReferenceMonth(value || getCurrentReferenceMonth())}
             className="min-w-[220px]"
           />
-          <Button
-            type="button"
-            variant="primary"
-            onClick={handleExportExcel}
-            icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>table_view</span>}
-          >
-            Excel
-          </Button>
-          <Button
-            type="button"
-            variant="primary"
-            onClick={exportarPdf}
-            icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>picture_as_pdf</span>}
-          >
-            PDF
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="primary"
+              className="flex-1"
+              onClick={handleExportExcel}
+              icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>table_view</span>}
+            >
+              Excel
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              className="flex-1"
+              onClick={exportarPdf}
+              icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>picture_as_pdf</span>}
+            >
+              PDF
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -308,7 +312,7 @@ export function RelatoriosPage() {
         <div className="rounded-2xl border border-error/30 bg-error/10 p-4 text-sm font-bold text-error">{errorMessage}</div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <MetricCard label="Saldo atual" value={formatCurrencyBRL(data.resumo?.saldoAtual ?? 0)} tone="success" />
         <MetricCard label="A pagar" value={formatCurrencyBRL(data.resumo?.totalAPagar ?? 0)} tone="danger" />
         <MetricCard label="A receber" value={formatCurrencyBRL(data.resumo?.totalAReceber ?? 0)} tone="success" />
@@ -344,7 +348,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'geral' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             <MetricCard
               label="Contas vencidas"
               value={data.resumo?.contasVencidas.length ?? 0}
@@ -410,7 +414,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'contas-gerenciais' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Receitas" value={formatCurrencyBRL(data.contasGerenciais?.totalReceitas ?? 0)} tone="success" />
             <MetricCard label="Despesas" value={formatCurrencyBRL(data.contasGerenciais?.totalDespesas ?? 0)} tone="danger" />
             <MetricCard label="Saldo" value={formatCurrencyBRL(data.contasGerenciais?.saldo ?? 0)} />
@@ -456,7 +460,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'fluxo-caixa' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             <MetricCard label="Dias projetados" value={data.fluxoCaixa?.dias ?? 0} />
             <MetricCard label="Dias com risco" value={fluxosComRisco} tone={fluxosComRisco > 0 ? 'danger' : 'success'} />
             <MetricCard
@@ -487,7 +491,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'previsoes' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
             <MetricCard label="Entradas previstas" value={formatCurrencyBRL(previsaoResumo.entradas)} tone="success" />
             <MetricCard label="Saídas previstas" value={formatCurrencyBRL(previsaoResumo.saidas)} tone="danger" />
             <MetricCard label="Saldo previsto" value={formatCurrencyBRL(previsaoResumo.entradas - previsaoResumo.saidas)} />
@@ -516,14 +520,14 @@ export function RelatoriosPage() {
 
       {activeReport === 'inadimplencia' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Total vencido" value={formatCurrencyBRL(inadimplenciaResumo.valor)} tone="danger" />
             <MetricCard label="Títulos vencidos" value={inadimplenciaRows.length} tone={inadimplenciaRows.length ? 'danger' : 'success'} />
             <MetricCard label="Maior atraso" value={`${inadimplenciaResumo.maiorAtraso} dia(s)`} />
             <FilterCombo
               label="Tipo"
               value={inadimplenciaTipo}
-              onChange={(value) => setInadimplenciaTipo(value as InadimplenciaTipo)}
+              onChange={setInadimplenciaTipo}
               options={inadimplenciaTipoOptions}
               ariaLabel="Tipo de inadimplência"
             />
@@ -561,7 +565,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'faturas' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Faturas" value={data.faturas?.totalItems ?? 0} />
             <MetricCard label="Valor total" value={formatCurrencyBRL(data.faturas?.summary?.valorTotal ?? faturas.reduce((total, item) => total + item.valorTotal, 0))} />
             <FilterCombo label="Status" value={faturaStatus} onChange={setFaturaStatus} options={faturaStatusOptions} ariaLabel="Status da fatura" />
@@ -588,7 +592,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'recorrencias' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Recorrências" value={data.recorrencias?.totalItems ?? 0} />
             <MetricCard label="Valor mensal" value={formatCurrencyBRL(recorrencias.reduce((total, item) => total + item.valorLiquido, 0))} />
             <FilterCombo label="Tipo" value={recorrenciaTipo} onChange={setRecorrenciaTipo} options={recorrenciaTipoOptions} ariaLabel="Tipo de recorrência" />
@@ -620,7 +624,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'compras' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Compras" value={data.compras?.totalItems ?? 0} />
             <MetricCard
               label="Total estimado"
@@ -664,7 +668,7 @@ export function RelatoriosPage() {
       ) : null}
       {activeReport === 'comparativo' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard
               label="Receitas (mês atual)"
               value={formatCurrencyBRL(data.comparativo?.itens.at(-1)?.receitas ?? 0)}
@@ -680,13 +684,10 @@ export function RelatoriosPage() {
               value={formatCurrencyBRL(data.comparativo?.itens.at(-1)?.saldo ?? 0)}
               tone={(data.comparativo?.itens.at(-1)?.saldo ?? 0) >= 0 ? 'neutral' : 'danger'}
             />
-            <FilterCombo
-              label="Período"
-              value={comparativoMeses}
-              onChange={setComparativoMeses}
-              options={comparativoMesesOptions}
-              ariaLabel="Quantidade de meses do comparativo"
-            />
+            <div className="space-y-2">
+              <label className="px-1 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Período</label>
+              <ComboBox value={comparativoMeses} onChange={setComparativoMeses} options={comparativoMesesOptions} aria-label="Quantidade de meses do comparativo" />
+            </div>
           </div>
 
           {(data.comparativo?.itens.length ?? 0) > 0 ? (
@@ -736,7 +737,7 @@ export function RelatoriosPage() {
 
       {activeReport === 'dre' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             <MetricCard label="Receitas" value={formatCurrencyBRL(data.contasGerenciais?.totalReceitas ?? 0)} tone="success" />
             <MetricCard label="Despesas" value={formatCurrencyBRL(data.contasGerenciais?.totalDespesas ?? 0)} tone="danger" />
             <MetricCard

@@ -1,8 +1,7 @@
-export type NavItem = {
+﻿export type NavItem = {
   key: string;
   label: string;
   icon?: string;
-  // Rotas adicionais que devem destacar este item no menu (ex.: abas que mudam a URL).
   aliases?: string[];
 };
 
@@ -24,13 +23,13 @@ export const navigationStructure: NavGroup[] = [
   },
   {
     key: 'lancamentos',
-    label: 'Lançamentos',
+    label: 'Lancamentos',
     items: [
       { key: '/movimentacoes', label: 'Movimentações', aliases: ['/contas-pagar', '/contas-receber'] },
       { key: '/recorrencias', label: 'Recorrências' },
       { key: '/faturas', label: 'Faturas' },
       { key: '/faturas/importar', label: 'Importar fatura CSV' },
-      { key: '/importacoes-whatsapp', label: 'Importações WhatsApp' }
+      { key: '/importacoes-whatsapp', label: 'Importacoes WhatsApp' }
     ]
   },
   {
@@ -57,10 +56,9 @@ export const navigationStructure: NavGroup[] = [
     key: 'conta',
     label: 'Conta',
     items: [
-      { key: '/familia', label: 'Família' }
+      { key: '/familia', label: 'Espaços' }
     ]
   }
 ];
 
-// Para compatibilidade com quem usa o array flat
 export const navigationItems = navigationStructure.flatMap(g => g.items);
