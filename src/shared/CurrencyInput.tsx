@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { formatCurrencyBRL, formatCurrencyEditable, parseEditableCurrencyInput } from './currency';
+import { handleDecimalPaste, keepOnlyDecimalCharacters, preventScientificNotation } from './number-input';
 
 type CurrencyInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & {
   value?: number | null;
@@ -35,7 +36,7 @@ export function CurrencyInput({ value, onChange, onBlur, onFocus, ...props }: Cu
 
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const nextDisplayValue = event.target.value;
+      const nextDisplayValue = keepOnlyDecimalCharacters(event.target.value);
       setDisplayValue(nextDisplayValue);
       onChange?.(parseEditableCurrencyInput(nextDisplayValue));
     },
@@ -57,6 +58,8 @@ export function CurrencyInput({ value, onChange, onBlur, onFocus, ...props }: Cu
     <input
       {...props}
       inputMode="decimal"
+      onKeyDown={preventScientificNotation}
+      onPaste={handleDecimalPaste}
       value={displayValue}
       onFocus={handleFocus}
       onChange={handleChange}

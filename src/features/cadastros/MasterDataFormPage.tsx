@@ -22,7 +22,7 @@ import type { ApiErrorResponse } from '../../types/api';
 import type { FormFieldConfig, MasterDataModuleConfig, SelectOption } from './module-config';
 import { applyInputMask, extractDigits } from './input-masks';
 import { CurrencyInput } from '../../shared/CurrencyInput';
-import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
+import { handleIntegerPaste, keepOnlyDigits, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
 import { QuickAddPessoaModal } from './quick-add/QuickAddPessoaModal';
 
 function buildFieldOptions(field: FormFieldConfig<Record<string, unknown>>, loadedOptions: Record<string, SelectOption[]>) {
@@ -83,7 +83,7 @@ const pessoaPixTipoOptions: ComboBoxOption[] = [
   { label: 'CPF/CNPJ', value: 'CpfCnpj' },
   { label: 'Email', value: 'Email' },
   { label: 'Telefone', value: 'Telefone' },
-  { label: 'Aleatória', value: 'Aleatoria' }
+  { label: 'AleatÃ³ria', value: 'Aleatoria' }
 ];
 
 function getPixMaskKind(tipo?: string) {
@@ -96,7 +96,7 @@ function getPixPlaceholder(tipo?: string) {
   if (tipo === 'CpfCnpj') return 'CPF ou CNPJ da chave Pix';
   if (tipo === 'Email') return 'email@exemplo.com';
   if (tipo === 'Telefone') return '(00) 00000-0000';
-  return 'Chave aleatória';
+  return 'Chave aleatÃ³ria';
 }
 
 function toComboOptions(options: SelectOption[], includeEmpty = false): ComboBoxOption[] {
@@ -105,7 +105,7 @@ function toComboOptions(options: SelectOption[], includeEmpty = false): ComboBox
     value: String(option.value)
   }));
 
-  return includeEmpty ? [{ label: 'Sem seleção', value: '' }, ...normalized] : normalized;
+  return includeEmpty ? [{ label: 'Sem seleÃ§Ã£o', value: '' }, ...normalized] : normalized;
 }
 
 function isOptionalSelect(fieldName: string) {
@@ -116,16 +116,16 @@ function sectionPlanFor(key: string) {
   const sections: Record<string, Array<{ title: string; eyebrow: string; icon: string; fields: string[] }>> = {
     pessoas: [
       { title: 'Dados da Pessoa', eyebrow: 'Cadastro', icon: 'badge', fields: ['nome', 'tipoPessoa', 'cpfCnpj'] },
-      { title: 'Contato', eyebrow: 'Comunicação', icon: 'alternate_email', fields: ['email', 'telefone'] },
-      { title: 'Observações', eyebrow: 'Notas', icon: 'notes', fields: ['observacao'] }
+      { title: 'Contato', eyebrow: 'ComunicaÃ§Ã£o', icon: 'alternate_email', fields: ['email', 'telefone'] },
+      { title: 'ObservaÃ§Ãµes', eyebrow: 'Notas', icon: 'notes', fields: ['observacao'] }
     ],
     'formas-pagamento': [
       { title: 'Dados da Forma', eyebrow: 'Cadastro', icon: 'payments', fields: ['nome', 'tipo'] },
-      { title: 'Configurações Operacionais', eyebrow: 'Regras', icon: 'tune', fields: ['ehCartao', 'baixarAutomaticamente', 'ativo'] }
+      { title: 'Configurações Operacionais', eyebrow: 'Regras', icon: 'tune', fields: ['baixarAutomaticamente', 'ativo'] }
     ],
     'contas-bancarias': [
       {
-        title: 'Dados Bancários',
+        title: 'Dados BancÃ¡rios',
         eyebrow: 'Cadastro',
         icon: 'account_balance',
         fields: ['nome', 'banco', 'agencia', 'numeroConta', 'tipoConta']
@@ -136,10 +136,10 @@ function sectionPlanFor(key: string) {
         icon: 'savings',
         fields: ['saldoInicial', 'dataSaldoInicial', 'limiteCartoesCompartilhado']
       },
-      { title: 'Configurações', eyebrow: 'Status', icon: 'toggle_on', fields: ['ativo'] }
+      { title: 'ConfiguraÃ§Ãµes', eyebrow: 'Status', icon: 'toggle_on', fields: ['ativo'] }
     ],
     cartoes: [
-      { title: 'Dados do Cartão', eyebrow: 'Cadastro', icon: 'credit_card', fields: ['nome', 'bandeira', 'numeroFinal'] },
+      { title: 'Dados do CartÃ£o', eyebrow: 'Cadastro', icon: 'credit_card', fields: ['nome', 'bandeira', 'numeroFinal'] },
       {
         title: 'Fechamento e Pagamento',
         eyebrow: 'Ciclo',
@@ -152,7 +152,7 @@ function sectionPlanFor(key: string) {
       { title: 'Estrutura Gerencial', eyebrow: 'Cadastro', icon: 'account_tree', fields: ['contaPaiId', 'codigo', 'descricao', 'tipo'] },
       {
         title: 'Responsabilidade e Regras',
-        eyebrow: 'Governança',
+        eyebrow: 'GovernanÃ§a',
         icon: 'admin_panel_settings',
         fields: ['responsavelPadraoId', 'ehPadraoRecebimentoFaturaCartao', 'ativo']
       }
@@ -182,7 +182,7 @@ function PessoaPixKeysSection({
   const pixErrors = (errors.chavesPix as Array<{ tipo?: { message?: string }; chave?: { message?: string } }> | undefined) ?? [];
 
   return (
-    <FormSection title="Chaves Pix" eyebrow="Dados bancários" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>key</span>}>
+    <FormSection title="Chaves Pix" eyebrow="Dados bancÃ¡rios" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>key</span>}>
       <div className="space-y-4">
         <p className="text-sm text-on-surface-variant">Cadastre uma ou mais chaves Pix para esta pessoa.</p>
 
@@ -389,7 +389,7 @@ export function MasterDataFormPage({
 
     return (
       <div key={field.name} className={`space-y-2 ${fullWidth ? 'md:col-span-2' : ''}`}>
-        <label className={formLabelClass}>{field.label}</label>
+        {field.kind === 'switch' ? null : <label className={formLabelClass}>{field.label}</label>}
         <Controller
           control={control}
           name={field.name as never}
@@ -402,12 +402,23 @@ export function MasterDataFormPage({
               return (
                 <input
                   {...controlledField}
+                  inputMode={config.key === 'cartoes' && field.name === 'numeroFinal' ? 'numeric' : undefined}
+                  maxLength={config.key === 'cartoes' && field.name === 'numeroFinal' ? 4 : undefined}
+                  onKeyDown={config.key === 'cartoes' && field.name === 'numeroFinal' ? preventScientificNotation : undefined}
+                  onPaste={config.key === 'cartoes' && field.name === 'numeroFinal' ? handleIntegerPaste : undefined}
                   value={
                     field.mask
                       ? applyInputMask(field.mask, String(controlledField.value ?? ''))
                       : String(controlledField.value ?? '')
                   }
-                  onChange={(event) => controlledField.onChange(field.mask ? extractDigits(event.target.value) : event.target.value)}
+                  onChange={(event) => {
+                    if (config.key === 'cartoes' && field.name === 'numeroFinal') {
+                      controlledField.onChange(keepOnlyDigits(event.target.value).slice(0, 4));
+                      return;
+                    }
+
+                    controlledField.onChange(field.mask ? extractDigits(event.target.value) : event.target.value);
+                  }}
                   className={formFieldClass}
                   placeholder={field.placeholder}
                 />
@@ -452,8 +463,7 @@ export function MasterDataFormPage({
                 <ToggleField
                   checked={Boolean(controlledField.value)}
                   onChange={controlledField.onChange}
-                  label={controlledField.value ? 'Ativo' : 'Inativo'}
-                  description={field.label}
+                  label={field.label}
                 />
               );
             }
@@ -462,7 +472,7 @@ export function MasterDataFormPage({
               if (field.numberFormat === 'currency') {
                 return (
                   <CurrencyInput
-                    value={typeof controlledField.value === 'number' ? controlledField.value : null}
+                    value={typeof controlledField.value === 'number' ? controlledField.value : field.name === 'limiteCartoesCompartilhado' || field.name === 'limiteCredito' ? 0 : null}
                     onChange={(value) => controlledField.onChange(value ?? (field.nullable ? null : 0))}
                     className={formFieldClass}
                   />
@@ -505,7 +515,7 @@ export function MasterDataFormPage({
   if (loading) return <PageState state="loading" title="Carregando cadastro..." />;
   if (loadError) return <PageState state="error" title="Falha ao carregar cadastro" subtitle={loadError} />;
 
-  const summaryTitle = getSummaryTitle(watchedValues, `Novo ${config.singularTitle.toLowerCase()}`);
+  const summaryTitle = getSummaryTitle(watchedValues, id ? config.singularTitle : config.createLabel ?? `Novo ${config.singularTitle.toLowerCase()}`);
   const ativoValue = typeof watchedValues.ativo === 'boolean' ? (watchedValues.ativo ? 'Ativo' : 'Inativo') : 'Pronto';
 
   return (

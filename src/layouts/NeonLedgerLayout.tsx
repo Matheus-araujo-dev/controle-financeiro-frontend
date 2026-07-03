@@ -344,7 +344,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
       >
         <header className="mb-6">
           <p className="text-[11px] text-on-surface-variant uppercase tracking-widest font-medium">
-            Inteligencia financeira
+            Inteligência financeira
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
             <h1 className="text-2xl md:text-3xl font-black font-headline text-white !mb-0">{pageTitle}</h1>
