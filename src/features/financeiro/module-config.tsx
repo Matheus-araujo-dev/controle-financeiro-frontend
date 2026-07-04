@@ -121,6 +121,7 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   cancelar?: (id: string, options?: CancelarContaPagarPayload) => Promise<TDetail>;
   toFormValues: (detail: TDetail) => FinanceiroFormValues;
   loadPessoaOptions: () => Promise<SelectOption[]>;
+  loadResponsavelOptions: () => Promise<SelectOption[]>;
   loadFormaPagamentoOptions: () => Promise<FormaPagamentoOption[]>;
   loadContaBancariaOptions: () => Promise<SelectOption[]>;
   loadCartaoOptions: () => Promise<SelectOption[]>;
@@ -282,6 +283,18 @@ async function loadPessoaOptions() {
     pageSize: 100,
     search: '',
     ativo: true
+  });
+
+  return response.items.map((item) => ({ label: item.nome, value: item.id }));
+}
+
+async function loadResponsavelOptions() {
+  const response = await cadastrosApi.pessoas.listar({
+    page: 1,
+    pageSize: 100,
+    search: '',
+    ativo: true,
+    ehResponsavel: true
   });
 
   return response.items.map((item) => ({ label: item.nome, value: item.id }));
@@ -546,6 +559,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
     formaPagamentoId: detail.formaPagamentoId
   }),
   loadPessoaOptions,
+  loadResponsavelOptions,
   loadFormaPagamentoOptions,
   loadContaBancariaOptions,
   loadCartaoOptions,
@@ -658,6 +672,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
     formaPagamentoId: detail.formaPagamentoId
   }),
   loadPessoaOptions,
+  loadResponsavelOptions,
   loadFormaPagamentoOptions,
   loadContaBancariaOptions,
   loadCartaoOptions,

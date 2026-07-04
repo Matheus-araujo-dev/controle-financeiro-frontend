@@ -28,9 +28,11 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
     origemCompraPlanejadaId,
     cardInvoicePreview,
     pessoaOptions,
+    responsavelOptions,
     rateioOptions,
     setValue,
     reloadPessoaOptions,
+    reloadResponsavelOptions,
     reloadRateioOptions
   } = form;
 
@@ -72,9 +74,13 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
 
   function handlePessoaSuccess(newId: string) {
     const target = pessoaModalTarget;
-    void reloadPessoaOptions().then(() => {
-      if (target) setValue(target, newId);
-    });
+    if (target === 'responsavelId') {
+      void reloadResponsavelOptions().then(() => setValue(target, newId));
+    } else {
+      void reloadPessoaOptions().then(() => {
+        if (target) setValue(target, newId);
+      });
+    }
   }
 
   function handleContaGerencialSuccess(newId: string) {
@@ -214,7 +220,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
                     onAddNew={canEdit ? () => setPessoaModalTarget('responsavelId') : undefined}
                   >
                     <option value="">Selecionar...</option>
-                    {pessoaOptions.map((opt) => (
+                    {responsavelOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
                       </option>
