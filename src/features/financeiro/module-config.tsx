@@ -95,6 +95,7 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   singularTitle: string;
   routeBase: string;
   personLabel: string;
+  personRole: 'pagador' | 'recebedor';
   listDescription: string;
   formDescription: string;
   columns: TableColumnsType<TSummary>;
@@ -472,6 +473,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
   singularTitle: 'Conta a pagar',
   routeBase: '/contas-pagar',
   personLabel: 'Recebedor',
+  personRole: 'recebedor',
   listDescription: '',
   formDescription: 'Cadastre despesas e obrigações financeiras mantendo rateio e parcelamento coerentes com o backend.',
   columns: [
@@ -584,6 +586,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
   singularTitle: 'Conta a receber',
   routeBase: '/contas-receber',
   personLabel: 'Pagador',
+  personRole: 'pagador',
   listDescription: '',
   formDescription: 'Cadastre receitas mantendo os contratos e a composição de rateio coerentes com o backend.',
   columns: [

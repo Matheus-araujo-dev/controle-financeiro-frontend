@@ -15,11 +15,12 @@ import { QuickAddContaGerencialModal } from '../../cadastros/quick-add/QuickAddC
 type GeneralInfoSectionProps = {
   form: FinancialAccountFormApi;
   personLabel: string;
+  personRole: 'pagador' | 'recebedor';
 };
 
 type PessoaTarget = 'pessoaId' | 'responsavelId' | null;
 
-export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProps) {
+export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInfoSectionProps) {
   const {
     control,
     errors,
@@ -238,7 +239,12 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
         </div>
       </div>
 
-      <QuickAddPessoaModal open={pessoaModalTarget !== null} onClose={() => setPessoaModalTarget(null)} onSuccess={handlePessoaSuccess} />
+      <QuickAddPessoaModal
+        open={pessoaModalTarget !== null}
+        onClose={() => setPessoaModalTarget(null)}
+        onSuccess={handlePessoaSuccess}
+        defaultRole={pessoaModalTarget === 'responsavelId' ? 'responsavel' : personRole}
+      />
       <QuickAddContaGerencialModal open={contaGerencialModalOpen} onClose={() => setContaGerencialModalOpen(false)} onSuccess={handleContaGerencialSuccess} />
     </FormSection>
   );

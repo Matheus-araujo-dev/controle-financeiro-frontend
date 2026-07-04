@@ -38,6 +38,9 @@ describe('quick add modals', () => {
       observacao: '',
       chavesPix: [],
       ativo: true,
+      ehPagador: true,
+      ehRecebedor: true,
+      ehResponsavel: true,
       createdAtUtc: '2026-06-21T00:00:00Z',
       updatedAtUtc: '2026-06-21T00:00:00Z'
     });

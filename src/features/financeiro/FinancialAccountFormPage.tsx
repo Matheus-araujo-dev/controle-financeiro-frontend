@@ -40,7 +40,7 @@ export function FinancialAccountFormPage({
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-7">
           <div className="lg:col-span-7 space-y-8">
-            <GeneralInfoSection form={form} personLabel={config.personLabel} />
+            <GeneralInfoSection form={form} personLabel={config.personLabel} personRole={config.personRole} />
             <TermsValueSection form={form} />
             <PaymentSection form={form} />
             <RecurrenceSection form={form} />

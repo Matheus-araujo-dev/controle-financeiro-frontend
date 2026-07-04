@@ -51,7 +51,10 @@ export const pessoaSchema = z.object({
 
         vistos.add(chaveComposta);
       });
-    })
+    }),
+  ehPagador: z.boolean(),
+  ehRecebedor: z.boolean(),
+  ehResponsavel: z.boolean()
 });
 
 export const formaPagamentoSchema = z.object({
