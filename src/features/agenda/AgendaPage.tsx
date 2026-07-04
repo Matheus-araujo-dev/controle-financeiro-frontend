@@ -132,7 +132,7 @@ export function AgendaPage() {
   const isLoading = loadingPagar || loadingReceber;
 
   const items = useMemo<AgendaItem[]>(() => {
-    const pagar: AgendaItem[] = (contasPagarData?.items ?? []).map((c: ContaPagarResumo) => ({
+    const pagar: AgendaItem[] = (contasPagarData?.items ?? []).filter((c: ContaPagarResumo) => c.statusCodigo !== 'CANCELADA').map((c: ContaPagarResumo) => ({
       id: c.id,
       tipo: 'ContaPagar',
       descricao: c.descricao,
@@ -142,7 +142,7 @@ export function AgendaPage() {
       statusCodigo: c.statusCodigo,
       statusNome: c.statusNome
     }));
-    const receber: AgendaItem[] = (contasReceberData?.items ?? []).map((c: ContaReceberResumo) => ({
+    const receber: AgendaItem[] = (contasReceberData?.items ?? []).filter((c: ContaReceberResumo) => c.statusCodigo !== 'CANCELADA').map((c: ContaReceberResumo) => ({
       id: c.id,
       tipo: 'ContaReceber',
       descricao: c.descricao,
