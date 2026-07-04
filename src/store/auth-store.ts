@@ -15,7 +15,15 @@ type AuthState = {
   clearSession: () => void;
 };
 
-const initialMode = (import.meta.env.VITE_AUTH_MODE as AuthMode | undefined) ?? 'development';
+// Fail-safe: sem VITE_AUTH_MODE explícito, assume 'google' (nunca o bypass de desenvolvimento).
+// O modo 'development' faz o front enviar o header X-Debug-User e exibe um login local sem
+// verificação — útil apenas em máquina de dev. Em builds de produção ele é PROIBIDO: mesmo que
+// configurado por engano, é coagido para 'google', de modo que o bundle publicado nunca exponha
+// o login de desenvolvimento. (A barreira real de segurança é o backend, que sob Auth:Mode=SelfJwt
+// ignora o X-Debug-User; isto é defesa em profundidade.)
+const configuredMode = (import.meta.env.VITE_AUTH_MODE as AuthMode | undefined) ?? 'google';
+const initialMode: AuthMode =
+  import.meta.env.PROD && configuredMode === 'development' ? 'google' : configuredMode;
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -28,6 +36,7 @@ export const useAuthStore = create<AuthState>()(
       signIn: (currentUser) => set({ currentUser }),
       applyTokenResponse: (response) => {
         const workspace = response.usuario.workspace ?? response.usuario.familia ?? null;
+        const familia = response.usuario.familia ?? response.usuario.workspace ?? null;
 
         set({
           token: response.accessToken,
@@ -36,8 +45,8 @@ export const useAuthStore = create<AuthState>()(
             displayName: response.usuario.nome,
             email: response.usuario.email,
             avatarUrl: response.usuario.avatarUrl,
-workspace: response.usuario.workspace ?? response.usuario.familia,
-            familia: response.usuario.familia ?? response.usuario.workspace
+            workspace,
+            familia
           }
         });
       },
