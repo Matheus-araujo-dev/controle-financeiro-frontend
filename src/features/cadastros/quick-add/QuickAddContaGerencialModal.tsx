@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ComboBox } from '../../../components/forms/ComboBox';
 import { formFieldClass, formLabelClass } from '../../../components/forms/FormPrimitives';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
+import { mapContaGerencialSelectOptions } from '../../../shared/conta-gerencial';
 import type { ContaGerencialTipo } from '../../../types/cadastros';
 import { QuickAddModal } from './QuickAddModal';
 
@@ -20,8 +21,18 @@ const tipoOptions: Array<{ label: string; value: ContaGerencialTipo }> = [
 export function QuickAddContaGerencialModal({ open, onClose, onSuccess, defaultTipo = 'Despesa' }: Props) {
   const [descricao, setDescricao] = useState('');
   const [tipo, setTipo] = useState<ContaGerencialTipo>(defaultTipo);
+  const [contaPaiId, setContaPaiId] = useState<string>('');
+  const [contaPaiOptions, setContaPaiOptions] = useState<Array<{ label: string; value: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    if (!open) return;
+    cadastrosApi.contasGerenciais
+      .listar({ page: 1, pageSize: 500, search: '', tipo, ativo: true })
+      .then((res) => setContaPaiOptions(mapContaGerencialSelectOptions(res.items)))
+      .catch(() => setContaPaiOptions([]));
+  }, [open, tipo]);
 
   async function handleSave() {
     if (!descricao.trim()) {
@@ -35,7 +46,7 @@ export function QuickAddContaGerencialModal({ open, onClose, onSuccess, defaultT
         codigo: '',
         descricao: descricao.trim(),
         tipo,
-        contaPaiId: null,
+        contaPaiId: contaPaiId || null,
         responsavelPadraoId: null,
         ativo: true,
         ehPadraoRecebimentoFaturaCartao: false
@@ -53,6 +64,7 @@ export function QuickAddContaGerencialModal({ open, onClose, onSuccess, defaultT
   function handleClose() {
     setDescricao('');
     setTipo(defaultTipo);
+    setContaPaiId('');
     setError(undefined);
     onClose();
   }
@@ -84,9 +96,16 @@ export function QuickAddContaGerencialModal({ open, onClose, onSuccess, defaultT
         <ComboBox aria-label="Natureza" value={tipo} onChange={(value) => setTipo(value as ContaGerencialTipo)} options={tipoOptions} />
       </div>
 
-      <p className="text-[11px] text-on-surface-variant">
-        Será criada como conta analítica, apta para lançamentos. Configure a hierarquia depois em <strong>Cadastros → Contas Gerenciais</strong>.
-      </p>
+      <div className="space-y-2">
+        <label className={formLabelClass}>Conta pai <span className="text-on-surface-variant/50 font-normal">(opcional)</span></label>
+        <ComboBox
+          aria-label="Conta pai"
+          value={contaPaiId}
+          onChange={(value) => setContaPaiId(value)}
+          options={contaPaiOptions}
+          placeholder="Selecionar conta pai..."
+        />
+      </div>
     </QuickAddModal>
   );
 }

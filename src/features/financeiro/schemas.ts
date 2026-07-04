@@ -48,6 +48,18 @@ export const financialAccountFormSchema = z
       });
     }
 
+    if (
+      values.dataEmissao.trim() !== '' &&
+      values.dataVencimento.trim() !== '' &&
+      values.dataVencimento < values.dataEmissao
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dataVencimento'],
+        message: 'A data de vencimento não pode ser anterior à data de emissão.'
+      });
+    }
+
     if (values.ehRecorrente) {
       if (values.quantidadeParcelas !== 1) {
         context.addIssue({

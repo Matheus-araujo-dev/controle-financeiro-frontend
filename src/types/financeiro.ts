@@ -315,6 +315,7 @@ export type LiquidacaoPayload = {
 export type CancelarContaPagarPayload = {
   cancelarPlanejamentoRelacionado?: boolean | null;
   pausarRecorrenciaRelacionada?: boolean | null;
+  cancelarParcelasFuturas?: boolean | null;
 };
 
 export type CancelarContaReceberPayload = {

@@ -12,6 +12,7 @@ import type {
   FormaPagamentoOption,
   SelectOption
 } from '../module-config';
+import type { ComboBoxOption } from '../../../components/forms/ComboBox';
 import { calculateValorLiquido, resolveFormaPagamentoBehavior } from '../module-config';
 import { financialAccountFormSchema } from '../schemas';
 import { formatMonthYearBR } from '../../../shared/date';
@@ -40,10 +41,12 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<FormaPagamentoOption[]>([]);
   const [contaBancariaOptions, setContaBancariaOptions] = useState<SelectOption[]>([]);
   const [cartaoOptions, setCartaoOptions] = useState<SelectOption[]>([]);
-  const [rateioOptions, setRateioOptions] = useState<SelectOption[]>([]);
+  const [rateioOptions, setRateioOptions] = useState<ComboBoxOption[]>([]);
   const [detailStatus, setDetailStatus] = useState<string>();
   const [actionLoading, setActionLoading] = useState(false);
   const [cardInvoicePreview, setCardInvoicePreview] = useState<CardInvoicePreview>();
+  const [grupoParcelamentoId, setGrupoParcelamentoId] = useState<string | null | undefined>(undefined);
+  const [numeroParcela, setNumeroParcela] = useState<number | undefined>(undefined);
 
   const {
     control,
@@ -120,6 +123,13 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   }, [setValue, valorLiquido, watchedRateios]);
 
   useEffect(() => {
+    if (!formaPagamentoBehavior.ehCartao) return;
+    if (!watchedValues.dataLiquidacao) {
+      setValue('dataLiquidacao', new Date().toISOString().split('T')[0], { shouldValidate: false, shouldDirty: false });
+    }
+  }, [formaPagamentoBehavior.ehCartao, setValue]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     async function loadOptions() {
       const [pessoas, formas, contas, cartoes, rateios] = await Promise.all([
         config.loadPessoaOptions(),
@@ -154,6 +164,10 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         reset(normalizeRecurringFormValues(config.toFormValues(detail)));
         setDetailStatus(detail.statusCodigo);
         setCardInvoicePreview(extractCardInvoicePreview(detail));
+        if ('grupoParcelamentoId' in detail) {
+          setGrupoParcelamentoId((detail as Record<string, unknown>).grupoParcelamentoId as string | null);
+          setNumeroParcela((detail as Record<string, unknown>).numeroParcela as number | undefined);
+        }
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar o lançamento.');
       } finally {
@@ -305,6 +319,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     setValue,
     onCancel,
     onSubmit,
+    grupoParcelamentoId,
+    numeroParcela,
     cancelar,
     estornar,
     reloadPessoaOptions,
