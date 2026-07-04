@@ -45,6 +45,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [detailStatus, setDetailStatus] = useState<string>();
   const [actionLoading, setActionLoading] = useState(false);
   const [cardInvoicePreview, setCardInvoicePreview] = useState<CardInvoicePreview>();
+  const [grupoParcelamentoId, setGrupoParcelamentoId] = useState<string | null | undefined>(undefined);
+  const [numeroParcela, setNumeroParcela] = useState<number | undefined>(undefined);
 
   const {
     control,
@@ -162,6 +164,10 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         reset(normalizeRecurringFormValues(config.toFormValues(detail)));
         setDetailStatus(detail.statusCodigo);
         setCardInvoicePreview(extractCardInvoicePreview(detail));
+        if ('grupoParcelamentoId' in detail) {
+          setGrupoParcelamentoId((detail as Record<string, unknown>).grupoParcelamentoId as string | null);
+          setNumeroParcela((detail as Record<string, unknown>).numeroParcela as number | undefined);
+        }
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar o lançamento.');
       } finally {
@@ -313,6 +319,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     setValue,
     onCancel,
     onSubmit,
+    grupoParcelamentoId,
+    numeroParcela,
     cancelar,
     estornar,
     reloadPessoaOptions,

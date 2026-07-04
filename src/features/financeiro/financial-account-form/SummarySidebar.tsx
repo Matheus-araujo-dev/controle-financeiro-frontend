@@ -94,6 +94,49 @@ function RecorrenciaCancelDialog({
   );
 }
 
+function ParcelasCancelDialog({
+  open,
+  onClose,
+  onCancelarApenas,
+  onCancelarFuturas
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCancelarApenas: () => void;
+  onCancelarFuturas: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
+        <div className="mb-6 flex items-start gap-3">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-error/12 text-error">
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
+          </div>
+          <div>
+            <h3 className="font-headline text-lg font-bold text-on-surface">Cancelar parcela</h3>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Este titulo faz parte de um parcelamento. Deseja cancelar tambem as parcelas futuras pendentes?
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Voltar
+          </Button>
+          <Button type="button" variant="secondary" onClick={onCancelarApenas}>
+            Nao, apenas esta
+          </Button>
+          <Button type="button" variant="danger" onClick={onCancelarFuturas}>
+            Sim, cancelar futuras
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PlannedPurchaseCancelDialog({
   open,
   onClose,
@@ -151,18 +194,23 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     estornar,
     origemCompraPlanejadaId,
     exibeRecorrencia,
+    grupoParcelamentoId,
+    numeroParcela,
     totalRateios
   } = form;
 
   const [confirm, setConfirm] = useState<ConfirmState>(null);
   const [plannedPurchaseConfirmOpen, setPlannedPurchaseConfirmOpen] = useState(false);
   const [recorrenciaConfirmOpen, setRecorrenciaConfirmOpen] = useState(false);
+  const [parcelasConfirmOpen, setParcelasConfirmOpen] = useState(false);
 
   const valorOriginal = Number(watchedValues.valorOriginal) || 0;
   const valorDesconto = Number(watchedValues.valorDesconto) || 0;
   const valorJurosMulta = (Number(watchedValues.valorJuros) || 0) + (Number(watchedValues.valorMulta) || 0);
   const hasPlannedPurchaseOrigin = Boolean(origemCompraPlanejadaId);
   const hasRecorrenciaOrigin = Boolean(id) && Boolean(exibeRecorrencia);
+  // Não-origem de parcelamento: tem grupo mas não é a parcela 1
+  const isNonOriginParcela = Boolean(grupoParcelamentoId) && numeroParcela !== undefined && numeroParcela > 1;
 
   return (
     <div className="space-y-8 lg:col-span-5">
@@ -219,6 +267,10 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
                 }
                 if (hasRecorrenciaOrigin) {
                   setRecorrenciaConfirmOpen(true);
+                  return;
+                }
+                if (isNonOriginParcela) {
+                  setParcelasConfirmOpen(true);
                   return;
                 }
                 setConfirm({
@@ -279,6 +331,18 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
         onCancelPlanning={() => {
           void cancelar({ cancelarPlanejamentoRelacionado: true });
           setPlannedPurchaseConfirmOpen(false);
+        }}
+      />
+      <ParcelasCancelDialog
+        open={parcelasConfirmOpen}
+        onClose={() => setParcelasConfirmOpen(false)}
+        onCancelarApenas={() => {
+          void cancelar({ cancelarParcelasFuturas: false });
+          setParcelasConfirmOpen(false);
+        }}
+        onCancelarFuturas={() => {
+          void cancelar({ cancelarParcelasFuturas: true });
+          setParcelasConfirmOpen(false);
         }}
       />
     </div>

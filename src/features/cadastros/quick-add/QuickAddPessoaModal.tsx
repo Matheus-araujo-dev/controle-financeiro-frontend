@@ -4,10 +4,13 @@ import { formFieldClass, formLabelClass } from '../../../components/forms/FormPr
 import { cadastrosApi } from '../../../services/http/cadastros-api';
 import { QuickAddModal } from './QuickAddModal';
 
+type PessoaRole = 'pagador' | 'recebedor' | 'responsavel';
+
 type Props = {
   open: boolean;
   onClose: () => void;
   onSuccess: (id: string, label: string) => void;
+  defaultRole?: PessoaRole;
 };
 
 const tipoPessoaOptions = [
@@ -15,7 +18,7 @@ const tipoPessoaOptions = [
   { label: 'Pessoa Jurídica', value: 'Juridica' }
 ];
 
-export function QuickAddPessoaModal({ open, onClose, onSuccess }: Props) {
+export function QuickAddPessoaModal({ open, onClose, onSuccess, defaultRole }: Props) {
   const [nome, setNome] = useState('');
   const [tipoPessoa, setTipoPessoa] = useState<'Fisica' | 'Juridica'>('Fisica');
   const [loading, setLoading] = useState(false);
@@ -36,7 +39,10 @@ export function QuickAddPessoaModal({ open, onClose, onSuccess }: Props) {
         email: '',
         telefone: '',
         observacao: '',
-        chavesPix: []
+        chavesPix: [],
+        ehPagador: !defaultRole || defaultRole === 'pagador',
+        ehRecebedor: !defaultRole || defaultRole === 'recebedor',
+        ehResponsavel: !defaultRole || defaultRole === 'responsavel'
       });
       onSuccess(result.id, result.nome);
       handleClose();
