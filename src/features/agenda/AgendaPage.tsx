@@ -6,7 +6,6 @@ import { PageState } from '../../components/states/PageState';
 import { SummaryCard } from '../../components/layout';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
-import { formatDateBR } from '../../shared/date';
 import type { ContaPagarResumo, ContaReceberResumo } from '../../types/financeiro';
 
 function getCurrentMonth() {
