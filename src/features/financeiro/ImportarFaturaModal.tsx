@@ -3,13 +3,12 @@ import {
   Alert,
   Button,
   Checkbox,
+  Modal,
   Select,
   Space,
   Spin,
   Tag,
-  message,
 } from 'antd';
-import { Tooltip } from '../../components/ui/Tooltip';
 import { InboxOutlined, CheckCircleOutlined, RobotOutlined } from '@ant-design/icons';
 import { Upload } from 'antd';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
@@ -20,6 +19,7 @@ import { agenteApi } from '../../services/http/agente-api';
 import type { CartaoResumo, ContaGerencialResumo, PessoaResumo } from '../../types/cadastros';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
+import { Tooltip } from '../../components/ui/Tooltip';
 
 const { Dragger } = Upload;
 
@@ -30,12 +30,19 @@ interface ItemCategoria {
   fonte: 'ia' | 'usuario';
 }
 
-export function ImportarFaturaPage() {
+interface ImportarFaturaModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  initialCartaoId?: string;
+}
+
+export function ImportarFaturaModal({ open, onClose, onSuccess, initialCartaoId }: ImportarFaturaModalProps) {
   const [cartoes, setCartoes] = useState<CartaoResumo[]>([]);
   const [pessoas, setPessoas] = useState<PessoaResumo[]>([]);
   const [contasGerenciais, setContasGerenciais] = useState<ContaGerencialResumo[]>([]);
 
-  const [cartaoId, setCartaoId] = useState<string | undefined>();
+  const [cartaoId, setCartaoId] = useState<string | undefined>(initialCartaoId);
   const [recebedorPadraoId, setRecebedorPadraoId] = useState<string | undefined>();
 
   const [arquivo, setArquivo] = useState<File | null>(null);
@@ -48,11 +55,12 @@ export function ImportarFaturaPage() {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingConfirmar, setLoadingConfirmar] = useState(false);
   const [resultado, setResultado] = useState<{ criadas: number; duplicadas: number } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const [msgApi, contextHolder] = message.useMessage();
   const tableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!open) return;
     Promise.all([
       cadastrosApi.cartoes.listar({ page: 1, pageSize: 100, ativo: true }),
       cadastrosApi.pessoas.listar({ page: 1, pageSize: 200, ativo: true }),
@@ -63,21 +71,36 @@ export function ImportarFaturaPage() {
       setCartoes(c.items ?? []);
       setPessoas(p.items ?? []);
       setContasGerenciais(cg.items ?? []);
-    });
-  }, []);
+    }).catch(() => {});
+  }, [open]);
 
-  const configCompleta = !!cartaoId && !!recebedorPadraoId;
+  useEffect(() => {
+    if (open) setCartaoId(initialCartaoId);
+  }, [open, initialCartaoId]);
+
+  function resetState() {
+    setArquivo(null);
+    setPreview(null);
+    setAvisoFormato(null);
+    setSelecionados(new Set());
+    setCategorizacoes({});
+    setResultado(null);
+    setErrorMsg(null);
+  }
+
+  function handleClose() {
+    resetState();
+    onClose();
+  }
 
   async function handleUpload(file: File) {
-    if (!cartaoId) {
-      void msgApi.warning('Selecione o cartão antes de fazer o upload.');
-      return false;
-    }
+    if (!cartaoId) return false;
     setArquivo(file);
     setPreview(null);
     setResultado(null);
     setSelecionados(new Set());
     setCategorizacoes({});
+    setErrorMsg(null);
     setLoadingPreview(true);
 
     try {
@@ -88,7 +111,6 @@ export function ImportarFaturaPage() {
       setSelecionados(novos);
       setTimeout(() => tableRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
 
-      // Categorização IA em background
       const descricoes = resp.itens.filter(i => !i.jaImportado).map(i => i.descricao);
       if (descricoes.length > 0) {
         setLoadingCategorizacao(true);
@@ -106,10 +128,10 @@ export function ImportarFaturaPage() {
             }
           });
           setCategorizacoes(map);
-        }).catch(() => { /* sem categorização IA */ }).finally(() => setLoadingCategorizacao(false));
+        }).catch(() => {}).finally(() => setLoadingCategorizacao(false));
       }
     } catch {
-      void msgApi.error('Erro ao processar o arquivo.');
+      setErrorMsg('Erro ao processar o arquivo. Verifique se é um PDF, CSV ou OFX válido.');
     } finally {
       setLoadingPreview(false);
     }
@@ -119,11 +141,10 @@ export function ImportarFaturaPage() {
   async function handleConfirmar() {
     if (!cartaoId || !recebedorPadraoId || !preview) return;
     const itensSelecionados = preview.filter(i => selecionados.has(i.chaveImportacao));
-    if (itensSelecionados.length === 0) {
-      void msgApi.warning('Selecione ao menos um item para importar.');
-      return;
-    }
+    if (itensSelecionados.length === 0) return;
+
     setLoadingConfirmar(true);
+    setErrorMsg(null);
     try {
       const resp = await financeiroApi.faturas.importar.confirmar({
         cartaoId,
@@ -141,8 +162,9 @@ export function ImportarFaturaPage() {
       setArquivo(null);
       setSelecionados(new Set());
       setCategorizacoes({});
+      onSuccess();
     } catch {
-      void msgApi.error('Erro ao confirmar a importação.');
+      setErrorMsg('Erro ao confirmar a importação. Tente novamente.');
     } finally {
       setLoadingConfirmar(false);
     }
@@ -150,6 +172,7 @@ export function ImportarFaturaPage() {
 
   const itensSelecionadosCount = selecionados.size;
   const totalSelecionado = preview?.filter(i => selecionados.has(i.chaveImportacao)).reduce((s, i) => s + i.valor, 0) ?? 0;
+  const configCompleta = !!cartaoId && !!recebedorPadraoId;
 
   const columns: TableColumnsType<ImportacaoFaturaItemPreview> = [
     {
@@ -170,18 +193,18 @@ export function ImportarFaturaPage() {
         />
       ),
     },
-    { title: 'Data', dataIndex: 'dataTransacao', width: 100, render: v => formatDateBR(String(v)) },
+    { title: 'Data', dataIndex: 'dataTransacao', width: 90, render: v => formatDateBR(String(v)) },
     { title: 'Descrição', dataIndex: 'descricao', ellipsis: true },
-    { title: 'Valor', dataIndex: 'valor', width: 120, align: 'right', render: v => formatCurrencyBRL(Number(v)) },
+    { title: 'Valor', dataIndex: 'valor', width: 110, align: 'right', render: v => formatCurrencyBRL(Number(v)) },
     {
       title: (
         <span className="flex items-center gap-1">
           Categoria
-          {loadingCategorizacao ? <Spin size="small" /> : <RobotOutlined style={{ opacity: 0.5 }} />}
+          {loadingCategorizacao ? <Spin size="small" /> : <RobotOutlined style={{ opacity: 0.4 }} />}
         </span>
       ),
       key: 'categoria',
-      width: 200,
+      width: 190,
       sorter: false,
       render: (_, row) => {
         if (row.jaImportado) return null;
@@ -189,7 +212,7 @@ export function ImportarFaturaPage() {
         return (
           <div className="flex flex-col gap-1">
             {cat && (
-              <Tooltip content={`Sugestão IA — confiança ${Math.round(cat.confianca * 100)}%`}>
+              <Tooltip content={`IA — confiança ${Math.round(cat.confianca * 100)}%`}>
                 <Tag
                   color={cat.confianca >= 0.8 ? 'green' : 'orange'}
                   icon={<RobotOutlined />}
@@ -227,64 +250,64 @@ export function ImportarFaturaPage() {
     {
       title: 'Status',
       key: 'status',
-      width: 110,
+      width: 100,
       sorter: false,
       render: (_, row) =>
         row.jaImportado ? <Tag color="default">Já importado</Tag> : <Tag color="green">Novo</Tag>,
     },
   ];
 
+  const isWide = !!preview && preview.length > 0;
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {contextHolder}
-
-      <p className="text-sm text-on-surface-variant">
-        Importa CSV, PDF ou OFX de cartão de crédito. A IA categoriza automaticamente cada transação.
-      </p>
-
-      {/* Configuração */}
-      <div className="bg-surface-container-low border border-white/5 rounded-3xl p-6 space-y-4">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>settings</span>
+    <Modal
+      open={open}
+      onCancel={handleClose}
+      title={
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary">
+            <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>upload_file</span>
           </div>
-          <span className="font-bold text-on-surface">1. Configuração</span>
+          <span className="font-bold text-on-surface">Importar Fatura PDF</span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      }
+      footer={null}
+      width={isWide ? 900 : 520}
+      destroyOnHidden
+    >
+      <div className="space-y-5 pt-2">
+
+        {/* Configuração: cartão + recebedor */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wide mb-1 block">Cartão</label>
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-on-surface-variant">
+              Cartão <span className="text-error">*</span>
+            </label>
             <Select
               style={{ width: '100%' }}
               placeholder="Selecione o cartão"
               value={cartaoId}
-              onChange={v => { setCartaoId(v); setPreview(null); setArquivo(null); }}
+              onChange={v => { setCartaoId(v); resetState(); }}
               options={cartoes.map(c => ({ value: c.id, label: `${c.nome}${c.numeroFinal ? ` •••• ${c.numeroFinal}` : ''}` }))}
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wide mb-1 block">Recebedor padrão</label>
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-on-surface-variant">
+              Recebedor padrão <span className="text-error">*</span>
+            </label>
             <Select
               showSearch
               filterOption={(input, opt) => (opt?.label ?? '').toLowerCase().includes(input.toLowerCase())}
               style={{ width: '100%' }}
-              placeholder="Pessoa/fornecedor padrão"
+              placeholder="Fornecedor / loja padrão"
               value={recebedorPadraoId}
               onChange={setRecebedorPadraoId}
               options={pessoas.map(p => ({ value: p.id, label: p.nome }))}
             />
           </div>
         </div>
-      </div>
 
-      {/* Upload */}
-      <div className="bg-surface-container-low border border-white/5 rounded-3xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>upload_file</span>
-          </div>
-          <span className="font-bold text-on-surface">2. Arquivo da fatura</span>
-        </div>
-
+        {/* Upload */}
         <Dragger
           accept=".pdf,.csv,.txt,.ofx"
           multiple={false}
@@ -297,75 +320,80 @@ export function ImportarFaturaPage() {
             {arquivo ? arquivo.name : 'Clique ou arraste a fatura aqui'}
           </p>
           <p className="ant-upload-hint">
-            Aceita PDF, CSV e OFX — Nubank, Bradesco, Itaú, Inter, Santander e outros.
+            PDF, CSV ou OFX — Nubank, Bradesco, Itaú, Inter, Santander e outros.
             {!cartaoId && <strong> Selecione o cartão primeiro.</strong>}
           </p>
         </Dragger>
 
-        {loadingPreview && <div className="text-center mt-4"><Spin tip="Lendo arquivo..." /></div>}
-        {avisoFormato && <Alert type="warning" message={avisoFormato} style={{ marginTop: 12 }} showIcon />}
-      </div>
+        {loadingPreview && (
+          <div className="flex items-center justify-center gap-2 py-2 text-sm text-on-surface-variant">
+            <Spin size="small" /> Lendo arquivo e extraindo transações...
+          </div>
+        )}
 
-      {/* Preview */}
-      {preview && (
-        <div ref={tableRef} className="bg-surface-container-low border border-white/5 rounded-3xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>fact_check</span>
+        {avisoFormato && <Alert type="warning" message={avisoFormato} showIcon />}
+        {errorMsg && <Alert type="error" message={errorMsg} showIcon />}
+
+        {/* Preview */}
+        {preview && preview.length > 0 && (
+          <div ref={tableRef} className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-on-surface">Revisar transações</span>
+                {loadingCategorizacao && (
+                  <span className="flex items-center gap-1 text-xs text-primary">
+                    <Spin size="small" /> IA categorizando...
+                  </span>
+                )}
               </div>
-              <span className="font-bold text-on-surface">3. Revisar e confirmar</span>
-              {loadingCategorizacao && (
-                <span className="flex items-center gap-1 text-xs text-primary">
-                  <Spin size="small" /> IA categorizando...
-                </span>
-              )}
+              <Space>
+                <Button size="small" onClick={() => setSelecionados(new Set(preview.filter(i => !i.jaImportado).map(i => i.chaveImportacao)))}>
+                  Selecionar novos
+                </Button>
+                <Button size="small" onClick={() => setSelecionados(new Set())}>Limpar</Button>
+              </Space>
             </div>
-            <Space>
-              <Button size="small" onClick={() => setSelecionados(new Set(preview.filter(i => !i.jaImportado).map(i => i.chaveImportacao)))}>
-                Selecionar novos
-              </Button>
-              <Button size="small" onClick={() => setSelecionados(new Set())}>Limpar</Button>
-            </Space>
-          </div>
 
-          <AppDataTable
-            dataSource={preview}
-            columns={columns}
-            rowKey="chaveImportacao"
-            size="small"
-            pagination={false}
+            <AppDataTable
+              dataSource={preview}
+              columns={columns}
+              rowKey="chaveImportacao"
+              size="small"
+              pagination={false}
+            />
+
+            <div className="flex items-center justify-between rounded-xl border border-white/5 bg-surface-container px-4 py-2 text-sm font-bold text-on-surface">
+              <span>{itensSelecionadosCount} item(ns) selecionado(s)</span>
+              <span>{formatCurrencyBRL(totalSelecionado)}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Resultado */}
+        {resultado && (
+          <Alert
+            type="success"
+            icon={<CheckCircleOutlined />}
+            showIcon
+            message={`${resultado.criadas} lançamento(s) importado(s)${resultado.duplicadas > 0 ? `, ${resultado.duplicadas} ignorado(s) por duplicidade` : ''}.`}
           />
+        )}
 
-          <div className="mt-3 flex flex-col gap-2 rounded-2xl border border-white/5 bg-surface-container px-4 py-3 text-sm font-bold text-on-surface sm:flex-row sm:items-center sm:justify-between">
-            <span>{itensSelecionadosCount} item(ns) selecionado(s)</span>
-            <span>{formatCurrencyBRL(totalSelecionado)}</span>
-          </div>
-
-          <div className="mt-4 text-right">
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 border-t border-white/5 pt-4">
+          <Button onClick={handleClose}>Fechar</Button>
+          {preview && preview.length > 0 && !resultado && (
             <Button
               type="primary"
-              size="large"
               loading={loadingConfirmar}
               disabled={!configCompleta || itensSelecionadosCount === 0}
               onClick={() => void handleConfirmar()}
             >
               Importar {itensSelecionadosCount > 0 ? `${itensSelecionadosCount} lançamento(s)` : ''}
             </Button>
-          </div>
+          )}
         </div>
-      )}
-
-      {/* Resultado */}
-      {resultado && (
-        <Alert
-          type="success"
-          icon={<CheckCircleOutlined />}
-          showIcon
-          message={`Importação concluída: ${resultado.criadas} lançamento(s) criado(s)${resultado.duplicadas > 0 ? `, ${resultado.duplicadas} ignorado(s) por duplicidade` : ''}.`}
-          description="Os lançamentos foram adicionados como contas a pagar."
-        />
-      )}
-    </div>
+      </div>
+    </Modal>
   );
 }
