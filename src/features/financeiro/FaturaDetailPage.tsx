@@ -404,7 +404,7 @@ export function FaturaDetailPage() {
 
         <div className="fatura-detail-page__table-shell">
           <AppDataTable<FaturaItem>
-            rowKey="contaPagarId"
+            rowKey={(record) => record.ehEstorno ? `${record.contaPagarId}_estorno` : record.contaPagarId}
             dataSource={detail.itens}
             columns={[
               {
@@ -413,9 +413,11 @@ export function FaturaDetailPage() {
                 key: 'descricao',
                 render: (value, record) => (
                   <div className="fatura-detail-page__item-description">
-                    <Typography.Text strong>{String(value)}</Typography.Text>
+                    <Typography.Text strong style={record.ehEstorno ? { color: 'var(--ant-color-success)' } : undefined}>
+                      {String(value)}
+                    </Typography.Text>
                     <Typography.Text type="secondary">
-                      {record.quantidadeParcelas > 1 ? 'Compra parcelada' : 'Lancamento avulso'}
+                      {record.ehEstorno ? 'Credito de estorno' : record.quantidadeParcelas > 1 ? 'Compra parcelada' : 'Lancamento avulso'}
                     </Typography.Text>
                   </div>
                 )
@@ -431,13 +433,21 @@ export function FaturaDetailPage() {
                 title: 'Valor',
                 dataIndex: 'valorLiquido',
                 key: 'valorLiquido',
-                render: (value) => formatCurrencyBRL(Number(value))
+                render: (value, record) => (
+                  <Typography.Text style={{ color: record.ehEstorno ? 'var(--ant-color-success)' : undefined }} strong={record.ehEstorno}>
+                    {formatCurrencyBRL(Number(value))}
+                  </Typography.Text>
+                )
               },
               {
                 title: 'Status',
                 dataIndex: 'statusCodigo',
                 key: 'statusCodigo',
-                render: (value) => <Tag color={getAccountStatusColor(String(value))}>{String(value)}</Tag>
+                render: (value, record) => (
+                  <Tag color={record.ehEstorno ? 'green' : getAccountStatusColor(String(value))}>
+                    {record.ehEstorno ? 'Estorno' : String(value)}
+                  </Tag>
+                )
               },
               {
                 title: 'Parcela',

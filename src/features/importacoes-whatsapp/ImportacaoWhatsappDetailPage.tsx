@@ -398,7 +398,8 @@ export function ImportacaoWhatsappDetailPage() {
             page: 1,
             pageSize: 200,
             search: '',
-            ativo: true
+            ativo: true,
+            ehResponsavel: true
           }),
           cadastrosApi.cartoes.listar({
             page: 1,

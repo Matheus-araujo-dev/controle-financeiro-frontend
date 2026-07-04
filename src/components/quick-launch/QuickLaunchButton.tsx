@@ -107,6 +107,11 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
   }, [extraPessoas, pessoasResult.data]);
 
+  const responsaveis = useMemo<Option[]>(() => {
+    const fromServer = pessoasResult.data?.items.filter((p) => p.ehResponsavel).map((p) => ({ label: p.nome, value: p.id })) ?? [];
+    return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
+  }, [extraPessoas, pessoasResult.data]);
+
   const formas = useMemo<Array<Option & { ehCartao: boolean }>>(() => {
     const fromServer = formasResult.data?.items.map((f) => ({ label: f.nome, value: f.id, ehCartao: f.ehCartao })) ?? [];
     return [...extraFormas, ...fromServer.filter((f) => !extraFormas.some((e) => e.value === f.value))];
@@ -382,7 +387,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   aria-label="Responsável"
                   value={responsavelId}
                   onChange={setResponsavelId}
-                  options={pessoas}
+                  options={responsaveis}
                   placeholder="Selecionar responsável..."
                   onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
                   addNewLabel="Nova pessoa"

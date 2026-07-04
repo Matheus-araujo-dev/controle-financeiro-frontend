@@ -38,6 +38,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [loading, setLoading] = useState(Boolean(id));
   const [errorMessage, setErrorMessage] = useState<string>();
   const [pessoaOptions, setPessoaOptions] = useState<SelectOption[]>([]);
+  const [responsavelOptions, setResponsavelOptions] = useState<SelectOption[]>([]);
   const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<FormaPagamentoOption[]>([]);
   const [contaBancariaOptions, setContaBancariaOptions] = useState<SelectOption[]>([]);
   const [cartaoOptions, setCartaoOptions] = useState<SelectOption[]>([]);
@@ -131,14 +132,16 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
 
   useEffect(() => {
     async function loadOptions() {
-      const [pessoas, formas, contas, cartoes, rateios] = await Promise.all([
+      const [pessoas, responsaveis, formas, contas, cartoes, rateios] = await Promise.all([
         config.loadPessoaOptions(),
+        config.loadResponsavelOptions(),
         config.loadFormaPagamentoOptions(),
         config.loadContaBancariaOptions(),
         config.loadCartaoOptions(),
         config.loadRateioOptions()
       ]);
       setPessoaOptions(pessoas);
+      setResponsavelOptions(responsaveis);
       setFormaPagamentoOptions(formas);
       setContaBancariaOptions(contas);
       setCartaoOptions(cartoes);
@@ -267,6 +270,11 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     setPessoaOptions(options);
   }, [config]);
 
+  const reloadResponsavelOptions = useCallback(async () => {
+    const options = await config.loadResponsavelOptions();
+    setResponsavelOptions(options);
+  }, [config]);
+
   const reloadFormaPagamentoOptions = useCallback(async () => {
     const options = await config.loadFormaPagamentoOptions();
     setFormaPagamentoOptions(options);
@@ -312,6 +320,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     actionLoading,
     cardInvoicePreview,
     pessoaOptions,
+    responsavelOptions,
     formaPagamentoOptions,
     contaBancariaOptions,
     cartaoOptions,
@@ -324,6 +333,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     cancelar,
     estornar,
     reloadPessoaOptions,
+    reloadResponsavelOptions,
     reloadFormaPagamentoOptions,
     reloadContaBancariaOptions,
     reloadCartaoOptions,
