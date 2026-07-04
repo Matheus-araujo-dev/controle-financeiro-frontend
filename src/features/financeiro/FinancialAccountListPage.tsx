@@ -143,7 +143,7 @@ export function FinancialAccountListPage({
   const [actionError, setActionError] = useState<string>();
   const [filters, setFilters] = useState<ListFilters>({
     page: 1,
-    pageSize: 10,
+    pageSize: 20,
     search: '',
     statusCodigo: statusInicial ? [statusInicial] : ((config.defaultFilters.statusCodigo as StatusContaCodigo[]) ?? []),
     dataInicial: undefined,

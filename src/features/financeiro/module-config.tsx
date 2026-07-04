@@ -5,7 +5,8 @@ import { financeiroApi } from '../../services/http/financeiro-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR, toMonthInputValue } from '../../shared/date';
-import { filterContaGerencialLancavel, mapContaGerencialSelectOptions } from '../../shared/conta-gerencial';
+import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
+import type { ComboBoxOption } from '../../components/forms/ComboBox';
 import type { ContaGerencialTipo } from '../../types/cadastros';
 import type {
   ContaPagarDetalhe,
@@ -122,7 +123,7 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   loadFormaPagamentoOptions: () => Promise<FormaPagamentoOption[]>;
   loadContaBancariaOptions: () => Promise<SelectOption[]>;
   loadCartaoOptions: () => Promise<SelectOption[]>;
-  loadRateioOptions: () => Promise<SelectOption[]>;
+  loadRateioOptions: () => Promise<ComboBoxOption[]>;
   resolveCreateDefaults?: (searchParams: URLSearchParams) => Promise<Partial<FinanceiroFormValues> | null>;
   buildSummaryItems?: (summary: FinanceiroResumo) => SummaryCardItem[];
 };
@@ -329,17 +330,25 @@ async function loadCartaoOptions() {
   }));
 }
 
-async function loadRateioOptions(tipo: ContaGerencialTipo) {
+async function loadRateioOptions(tipo: ContaGerencialTipo): Promise<ComboBoxOption[]> {
   const response = await cadastrosApi.contasGerenciais.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: '',
     tipo,
-    ativo: true,
-    aceitaLancamentos: true
+    ativo: true
   });
 
-  return mapContaGerencialSelectOptions(filterContaGerencialLancavel(response.items));
+  return mapContaGerencialHierarchyData(response.items).map(({ value, main, chain }) => ({
+    value,
+    displayText: main,
+    label: chain ? (
+      <>
+        {main}{' '}
+        <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
+      </>
+    ) : main
+  }));
 }
 
 function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload {

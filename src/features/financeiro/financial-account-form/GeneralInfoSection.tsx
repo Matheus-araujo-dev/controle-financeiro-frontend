@@ -141,14 +141,9 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
                 {...field}
                 disabled={!canEdit}
                 onAddNew={canEdit ? () => setContaGerencialModalOpen(true) : undefined}
-              >
-                <option value="">Selecionar categoria...</option>
-                {rateioOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </ComboBox>
+                placeholder="Selecionar categoria..."
+                options={rateioOptions}
+              />
             )}
           />
 
