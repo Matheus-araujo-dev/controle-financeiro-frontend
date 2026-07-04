@@ -31,7 +31,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
   };
 
   return (
-    <div className="totalizador-card p-4 sm:p-6 min-h-[110px] sm:min-h-[148px] flex flex-col justify-between group">
+    <div className="totalizador-card p-4 sm:p-6 min-h-[110px] sm:min-h-[148px] flex flex-col group">
       <div className="flex justify-between items-start">
         <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">
           {label}
@@ -43,11 +43,11 @@ const KpiCard: React.FC<KpiCardProps> = ({
           {icon}
         </span>
       </div>
-      <div>
+      <div className="mt-4">
         <p className={`text-3xl font-headline font-bold ${color === 'primary' ? 'text-primary neon-glow' : 'text-on-surface'}`}>
           {formatCurrencyBRL(value)}
         </p>
-        
+
         {trend && (
           <p className={`text-[11px] flex items-center gap-1 mt-1 font-semibold ${trend.isUp ? 'text-primary' : 'text-error'}`}>
             <span className="material-symbols-outlined text-[12px]">
@@ -65,8 +65,8 @@ const KpiCard: React.FC<KpiCardProps> = ({
 
         {progress !== undefined && (
           <div className="w-full bg-surface-container-highest h-1.5 rounded-full mt-2 overflow-hidden">
-            <div 
-              className="bg-primary h-full transition-all duration-500" 
+            <div
+              className="bg-primary h-full transition-all duration-500"
               style={{ width: `${Math.min(progress, 100)}%` }}
             />
           </div>

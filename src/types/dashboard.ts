@@ -75,7 +75,7 @@ export type DashboardMovimentacaoResumo = {
   tipo: TipoMovimentacao;
   natureza: NaturezaMovimentacao;
   valor: number;
-  observacao: string | null;
+  observacaoResumida: string | null;
   contaPagarId: string | null;
   contaReceberId: string | null;
   faturaCartaoId: string | null;

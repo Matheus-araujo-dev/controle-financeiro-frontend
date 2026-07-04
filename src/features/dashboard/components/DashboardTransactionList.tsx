@@ -24,9 +24,9 @@ export const DashboardTransactionList: React.FC<DashboardTransactionListProps> =
     },
     {
       title: 'Descrição',
-      dataIndex: 'observacao',
-      key: 'observacao',
-      render: (value) => <span className="font-medium">{String(value) || 'Movimentação financeira'}</span>
+      dataIndex: 'observacaoResumida',
+      key: 'observacaoResumida',
+      render: (value: string | null) => <span className="font-medium">{value ?? 'Movimentação financeira'}</span>
     },
     {
       title: 'Categoria',
@@ -87,7 +87,7 @@ export const DashboardTransactionList: React.FC<DashboardTransactionListProps> =
       </div>
 
       <AppDataTable
-        rowKey={(record) => `${record.dataMovimentacao}-${record.observacao ?? ''}-${record.valor}`}
+        rowKey={(record) => `${record.dataMovimentacao}-${record.observacaoResumida ?? ''}-${record.valor}`}
         columns={columns}
         dataSource={movimentacoes}
         pagination={false}
