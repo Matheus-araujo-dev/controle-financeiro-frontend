@@ -95,39 +95,41 @@ export function PaymentSection({ form }: { form: FinancialAccountFormApi }) {
           </div>
         ) : null}
 
-        {formaPagamentoBehavior.baixarAutomaticamente ? (
-          <>
-            <div className="space-y-2">
-              <label className={fieldLabelClass}>Conta para Baixa</label>
-              <Controller
-                control={control}
-                name="contaBancariaId"
-                render={({ field }) => (
-                  <ComboBox
-                    {...field}
-                    disabled={!canEdit}
-                    onAddNew={canEdit ? () => setQuickAdd('conta') : undefined}
-                  >
-                    <option value="">Selecionar conta...</option>
-                    {contaBancariaOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </ComboBox>
-                )}
-              />
-            </div>
+        {formaPagamentoBehavior.baixarAutomaticamente && !formaPagamentoBehavior.ehCartao ? (
+          <div className="space-y-2">
+            <label className={fieldLabelClass}>Conta para Baixa</label>
+            <Controller
+              control={control}
+              name="contaBancariaId"
+              render={({ field }) => (
+                <ComboBox
+                  {...field}
+                  disabled={!canEdit}
+                  onAddNew={canEdit ? () => setQuickAdd('conta') : undefined}
+                >
+                  <option value="">Selecionar conta...</option>
+                  {contaBancariaOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </ComboBox>
+              )}
+            />
+          </div>
+        ) : null}
 
-            <div className="space-y-2">
-              <label className={fieldLabelClass}>Data Liquidação</label>
-              <Controller
-                control={control}
-                name="dataLiquidacao"
-                render={({ field }) => <DateInput mode="date" value={field.value} onChange={field.onChange} disabled={!canEdit} />}
-              />
-            </div>
-          </>
+        {formaPagamentoBehavior.ehCartao || formaPagamentoBehavior.baixarAutomaticamente ? (
+          <div className="space-y-2">
+            <label className={fieldLabelClass}>
+              {formaPagamentoBehavior.ehCartao ? 'Data da Compra' : 'Data Liquidação'}
+            </label>
+            <Controller
+              control={control}
+              name="dataLiquidacao"
+              render={({ field }) => <DateInput mode="date" value={field.value} onChange={field.onChange} disabled={!canEdit} />}
+            />
+          </div>
         ) : null}
       </div>
 
