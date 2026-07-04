@@ -9,7 +9,7 @@ import {
   Spin,
   Tag,
 } from 'antd';
-import { InboxOutlined, CheckCircleOutlined, RobotOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, RobotOutlined } from '@ant-design/icons';
 import { Upload } from 'antd';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { cadastrosApi } from '../../services/http/cadastros-api';
@@ -315,7 +315,9 @@ export function ImportarFaturaModal({ open, onClose, onSuccess, initialCartaoId 
           showUploadList={false}
           disabled={!cartaoId || loadingPreview}
         >
-          <p className="ant-upload-drag-icon"><InboxOutlined /></p>
+          <p className="ant-upload-drag-icon">
+            <span className="material-symbols-outlined text-5xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>inbox</span>
+          </p>
           <p className="ant-upload-text">
             {arquivo ? arquivo.name : 'Clique ou arraste a fatura aqui'}
           </p>
