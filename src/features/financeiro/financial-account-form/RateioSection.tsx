@@ -56,14 +56,9 @@ export function RateioSection({ form }: RateioSectionProps) {
                     {...rField}
                     disabled={!canEdit}
                     onAddNew={canEdit ? () => setContaGerencialModalIndex(index) : undefined}
-                  >
-                    <option value="">Selecionar...</option>
-                    {rateioOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </ComboBox>
+                    placeholder="Selecionar..."
+                    options={rateioOptions}
+                  />
                 )}
               />
             </div>

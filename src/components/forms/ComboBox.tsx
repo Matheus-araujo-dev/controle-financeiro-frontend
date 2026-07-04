@@ -16,6 +16,8 @@ export type ComboBoxOption = {
   label: ReactNode;
   value: string;
   disabled?: boolean;
+  /** Text shown in the input after selection; defaults to getTextFromNode(label). */
+  displayText?: string;
 };
 
 type LegacyOptionProps = {
@@ -113,7 +115,7 @@ export function ComboBox({
   const normalizedOptions = options ?? parsed.options;
   const resolvedPlaceholder = placeholder ?? parsed.placeholder ?? 'Selecione...';
   const selectedOption = normalizedOptions.find((option) => option.value === value);
-  const selectedLabel = getTextFromNode(selectedOption?.label);
+  const selectedLabel = selectedOption?.displayText ?? getTextFromNode(selectedOption?.label);
   const hasAddNewAction = Boolean(onAddNew);
 
   useEffect(() => {
@@ -173,7 +175,7 @@ export function ComboBox({
     }
 
     onChange?.(option.value);
-    setQuery(getTextFromNode(option.label));
+    setQuery(option.displayText ?? getTextFromNode(option.label));
     setOpen(false);
     inputRef.current?.blur();
   }

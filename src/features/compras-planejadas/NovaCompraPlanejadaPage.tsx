@@ -8,7 +8,7 @@ import { ComboBox, type ComboBoxOption } from '../../components/forms/ComboBox';
 import { PageState } from '../../components/states/PageState';
 import { FormSection } from '../../components/layout';
 import { CurrencyInput } from '../../shared/CurrencyInput';
-import { filterContaGerencialLancavel, mapContaGerencialSelectOptions } from '../../shared/conta-gerencial';
+import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
 import { cadastrosApi } from '../../services/http/cadastros-api';
@@ -83,12 +83,21 @@ export function NovaCompraPlanejadaPage() {
   const reloadContaGerencialOptions = useCallback(async () => {
     const response = await cadastrosApi.contasGerenciais.listar({
       page: 1,
-      pageSize: 100,
+      pageSize: 500,
       search: '',
       tipo: 'Despesa',
-      aceitaLancamentos: true
+      ativo: true
     });
-    setContaGerencialOptions(mapContaGerencialSelectOptions(filterContaGerencialLancavel(response.items)));
+    setContaGerencialOptions(mapContaGerencialHierarchyData(response.items).map(({ value, main, chain }) => ({
+      value,
+      displayText: main,
+      label: chain ? (
+        <>
+          {main}{' '}
+          <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
+        </>
+      ) : main
+    })));
   }, []);
 
   const reloadResponsavelOptions = useCallback(async () => {
@@ -104,10 +113,10 @@ export function NovaCompraPlanejadaPage() {
         const [contasGerenciais, responsaveis] = await Promise.all([
           cadastrosApi.contasGerenciais.listar({
             page: 1,
-            pageSize: 100,
+            pageSize: 500,
             search: '',
             tipo: 'Despesa',
-            aceitaLancamentos: true
+            ativo: true
           }),
           cadastrosApi.pessoas.listar({
             page: 1,
@@ -117,7 +126,16 @@ export function NovaCompraPlanejadaPage() {
           })
         ]);
 
-        setContaGerencialOptions(mapContaGerencialSelectOptions(filterContaGerencialLancavel(contasGerenciais.items)));
+        setContaGerencialOptions(mapContaGerencialHierarchyData(contasGerenciais.items).map(({ value, main, chain }) => ({
+          value,
+          displayText: main,
+          label: chain ? (
+            <>
+              {main}{' '}
+              <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
+            </>
+          ) : main
+        })));
         setResponsavelOptions(responsaveis.items.map((item) => ({ label: item.nome, value: item.id })));
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : 'Falha ao carregar dados de apoio.');

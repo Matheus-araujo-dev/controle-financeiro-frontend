@@ -12,6 +12,7 @@ import type {
   FormaPagamentoOption,
   SelectOption
 } from '../module-config';
+import type { ComboBoxOption } from '../../../components/forms/ComboBox';
 import { calculateValorLiquido, resolveFormaPagamentoBehavior } from '../module-config';
 import { financialAccountFormSchema } from '../schemas';
 import { formatMonthYearBR } from '../../../shared/date';
@@ -40,7 +41,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<FormaPagamentoOption[]>([]);
   const [contaBancariaOptions, setContaBancariaOptions] = useState<SelectOption[]>([]);
   const [cartaoOptions, setCartaoOptions] = useState<SelectOption[]>([]);
-  const [rateioOptions, setRateioOptions] = useState<SelectOption[]>([]);
+  const [rateioOptions, setRateioOptions] = useState<ComboBoxOption[]>([]);
   const [detailStatus, setDetailStatus] = useState<string>();
   const [actionLoading, setActionLoading] = useState(false);
   const [cardInvoicePreview, setCardInvoicePreview] = useState<CardInvoicePreview>();
