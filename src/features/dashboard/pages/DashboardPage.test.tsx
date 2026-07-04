@@ -58,7 +58,7 @@ const resumoMock = {
       tipo: 'Entrada',
       natureza: 'Realizada',
       valor: 250,
-      observacao: 'Receita recebida',
+      observacaoResumida: 'Receita recebida',
       contaPagarId: null,
       contaReceberId: 'cr1',
       faturaCartaoId: null

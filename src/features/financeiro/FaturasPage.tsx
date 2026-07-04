@@ -2,6 +2,7 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'rea
 import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { AppDataTable } from '../../components/data/AppDataTable';
+import { Button } from '../../components/ui/Button';
 import { ExportButton } from '../../components/data/ExportButton';
 import { ImportarFaturaModal } from './ImportarFaturaModal';
 import { IconActionButton } from '../../components/data/IconActionButton';
@@ -208,14 +209,15 @@ export function FaturasPage() {
     <ListPageShell
       actions={
         <div className="flex items-center gap-2">
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="sm"
+            icon={<span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>upload_file</span>}
             onClick={() => setImportarModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary/15 px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/25"
           >
-            <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>upload_file</span>
             Importar PDF
-          </button>
+          </Button>
           <ExportButton
             fetchPage={financeiroApi.faturas.listar}
             filters={filters}
