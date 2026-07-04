@@ -5,7 +5,6 @@ import {
   ArrowUpOutlined,
   CreditCardOutlined,
   DollarCircleOutlined,
-  HistoryOutlined,
   SearchOutlined,
   ShoppingCartOutlined,
   WalletOutlined,
@@ -13,7 +12,7 @@ import {
   UserOutlined
 } from '@ant-design/icons';
 import { DateInput } from '../../components/forms/DateInput';
-import type { MovimentacaoFilters, MovimentacaoResumo, NaturezaMovimentacao, TipoMovimentacao } from '../../types/financeiro';
+import type { MovimentacaoFilters, MovimentacaoResumo, TipoMovimentacao } from '../../types/financeiro';
 import { AppDataTable } from '../../components/data/AppDataTable';
 import { ExportButton } from '../../components/data/ExportButton';
 import { StatusBadge, type StatusTone } from '../../components/data/StatusBadge';
@@ -37,20 +36,7 @@ const tipoOptions: Array<{ label: string; value: TipoMovimentacao | '' }> = [
   { label: 'Saída', value: 'Saida' }
 ];
 
-const naturezaOptions: Array<{ label: string; value: NaturezaMovimentacao | '' }> = [
-  { label: 'Todas as naturezas', value: '' },
-  { label: 'Prevista', value: 'Prevista' },
-  { label: 'Realizada', value: 'Realizada' },
-  { label: 'Econômica', value: 'Economica' }
-];
-
 type FilterOption = { label: string; value: string };
-
-function naturezaTone(value: NaturezaMovimentacao): StatusTone {
-  if (value === 'Realizada') return 'success';
-  if (value === 'Economica') return 'warning';
-  return 'neutral';
-}
 
 function tipoTone(value: TipoMovimentacao): StatusTone {
   return value === 'Entrada' ? 'success' : 'neutral';
@@ -115,7 +101,6 @@ export function MovimentacoesPage() {
     contaBancariaIds: contaBancariaInicial ? [contaBancariaInicial] : undefined,
     responsavelIds: undefined,
     tipo: undefined,
-    natureza: undefined
   });
   const deferredFilters = useDeferredValue(filters);
 
@@ -168,7 +153,6 @@ export function MovimentacoesPage() {
     { header: 'Data', value: (r: MovimentacaoResumo) => r.dataMovimentacao },
     { header: 'Descrição', value: (r: MovimentacaoResumo) => r.observacao ?? '' },
     { header: 'Tipo', value: (r: MovimentacaoResumo) => r.tipo },
-    { header: 'Natureza', value: (r: MovimentacaoResumo) => r.natureza },
     { header: 'Conta bancária', value: (r: MovimentacaoResumo) => r.contaBancariaNome ?? '' },
     { header: 'Responsável', value: (r: MovimentacaoResumo) => r.responsavelNome ?? '' },
     { header: 'Valor', value: (r: MovimentacaoResumo) => r.valor },
@@ -194,8 +178,8 @@ export function MovimentacoesPage() {
       }
       filters={
       <FilterCard className="space-y-4">
-        {/* Linha 1: Período + Tipo + Natureza */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Linha 1: Período + Tipo */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <FilterField label="De">
             <DateInput
               compact
@@ -224,15 +208,6 @@ export function MovimentacoesPage() {
             />
           </FilterField>
 
-          <FilterField label="Natureza">
-            <MultiSelectFilter
-              ariaLabel="Natureza"
-              icon={<HistoryOutlined />}
-              options={naturezaOptions}
-              value={filters.natureza ? [filters.natureza] : []}
-              onChange={(next) => setFilters((prev) => ({ ...prev, natureza: next[0] as NaturezaMovimentacao | undefined, page: 1 }))}
-            />
-          </FilterField>
         </div>
 
         {/* Linha 2: Conta + Responsável + Busca */}
@@ -322,17 +297,12 @@ export function MovimentacoesPage() {
               }
             },
             {
-              title: 'Natureza',
-              dataIndex: 'natureza',
-              key: 'natureza',
-              render: (value, record: MovimentacaoResumo) => {
-                return (
-                  <div className="flex flex-col items-start gap-1">
-                    <StatusBadge label={String(value)} tone={naturezaTone(value as NaturezaMovimentacao)} />
-                    <StatusBadge label={record.tipo} tone={tipoTone(record.tipo)} />
-                  </div>
-                );
-              }
+              title: 'Tipo',
+              dataIndex: 'tipo',
+              key: 'tipo',
+              render: (_value, record: MovimentacaoResumo) => (
+                <StatusBadge label={record.tipo} tone={tipoTone(record.tipo)} />
+              )
             },
             {
               title: 'Conta',
