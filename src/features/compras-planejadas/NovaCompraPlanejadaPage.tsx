@@ -101,7 +101,7 @@ export function NovaCompraPlanejadaPage() {
   }, []);
 
   const reloadResponsavelOptions = useCallback(async () => {
-    const response = await cadastrosApi.pessoas.listar({ page: 1, pageSize: 100, search: '', ativo: true });
+    const response = await cadastrosApi.pessoas.listar({ page: 1, pageSize: 100, search: '', ativo: true, ehResponsavel: true });
     setResponsavelOptions(response.items.map((item) => ({ label: item.nome, value: item.id })));
   }, []);
 

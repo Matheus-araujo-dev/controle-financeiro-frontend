@@ -78,6 +78,7 @@ function createConfig() {
       encerrarRecorrencia: vi.fn().mockResolvedValue({ id: '1' }),
       toFormValues: vi.fn(),
       loadPessoaOptions: vi.fn().mockResolvedValue([{ label: 'Aninha', value: 'p1' }]),
+      loadResponsavelOptions: vi.fn().mockResolvedValue([{ label: 'Aninha', value: 'p1' }]),
       loadFormaPagamentoOptions: vi
         .fn()
         .mockResolvedValue([{ label: 'Cartão de crédito', value: 'fp1', ehCartao: true, baixarAutomaticamente: false }]),
@@ -193,6 +194,7 @@ describe('FinancialAccountListPage', () => {
             encerrarRecorrencia: vi.fn(),
             toFormValues: vi.fn(),
             loadPessoaOptions: vi.fn(),
+            loadResponsavelOptions: vi.fn(),
             loadFormaPagamentoOptions: vi.fn(),
             loadContaBancariaOptions: vi.fn(),
             loadCartaoOptions: vi.fn(),
