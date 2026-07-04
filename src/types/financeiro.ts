@@ -397,9 +397,10 @@ export type FaturaItem = {
   recebedorNome: string;
   dataCompra: string;
   valorLiquido: number;
-  statusCodigo: StatusContaCodigo;
+  statusCodigo: string;
   numeroParcela: number;
   quantidadeParcelas: number;
+  ehEstorno?: boolean;
 };
 
 export type FaturaDetalhe = FaturaResumo & {
