@@ -478,7 +478,7 @@ export function buildExportDefinition(
             Data: item.dataMovimentacao,
             Tipo: item.tipo,
             Natureza: item.natureza,
-            Observação: item.observacao ?? '',
+            Observação: item.observacaoResumida ?? '',
             Valor: item.valor
           })) ?? []
       }
