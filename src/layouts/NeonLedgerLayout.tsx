@@ -174,6 +174,13 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
 
   return (
     <div className="bg-surface font-body text-white min-h-screen" data-testid="admin-shell">
+      {/* Skip navigation link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-on-primary focus:rounded-lg focus:outline-none"
+      >
+        Pular para o conteúdo principal
+      </a>
       <nav className="fixed top-0 w-full z-50 flex items-center justify-between px-4 md:px-8 py-4 bg-surface/90 backdrop-blur-md border-b border-white/5">
         <div className="flex items-center gap-3 min-w-0">
           {/* Hamburguer — mobile only */}
@@ -354,6 +361,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
       </aside>
 
       <main
+        id="main-content"
         className="pt-24 pb-28 lg:pb-12 px-4 md:px-8 min-h-screen transition-all duration-200 max-lg:!ml-0"
         style={{ marginLeft: `${sidebarWidth}px` }}
       >
