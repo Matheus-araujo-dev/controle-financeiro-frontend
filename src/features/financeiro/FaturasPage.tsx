@@ -3,6 +3,7 @@ import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { AppDataTable } from '../../components/data/AppDataTable';
 import { ExportButton } from '../../components/data/ExportButton';
+import { ImportarFaturaModal } from './ImportarFaturaModal';
 import { IconActionButton } from '../../components/data/IconActionButton';
 import { DateInput } from '../../components/forms/DateInput';
 import {
@@ -129,6 +130,7 @@ export function FaturasPage() {
   const [cartoes, setCartoes] = useState<CartaoResumo[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
+  const [importarModalOpen, setImportarModalOpen] = useState(false);
   const origemContaCartao = searchParams.get('origem') === 'conta-cartao';
 
   useEffect(() => {
@@ -187,23 +189,48 @@ export function FaturasPage() {
     };
   }, [cartoes, data]);
 
+  // Cartão selecionado no filtro (para pré-selecionar no modal de importação)
+  const cartaoIdFiltrado = useMemo((): string | undefined => {
+    const rawId = filters.cartaoId;
+    const rawIds = filters.cartaoIds;
+    const ids: string[] = Array.isArray(rawIds) ? rawIds : Array.isArray(rawId) ? rawId : rawId ? [rawId] : [];
+    return ids.length === 1 ? ids[0] : undefined;
+  }, [filters.cartaoId, filters.cartaoIds]);
+
   return (
+    <>
+    <ImportarFaturaModal
+      open={importarModalOpen}
+      onClose={() => setImportarModalOpen(false)}
+      onSuccess={() => { void loadData(); }}
+      initialCartaoId={cartaoIdFiltrado}
+    />
     <ListPageShell
       actions={
-        <ExportButton
-          fetchPage={financeiroApi.faturas.listar}
-          filters={filters}
-          filename="faturas"
-          columns={[
-            { header: 'Competência', value: (f: FaturaResumo) => formatMonthYearBR(f.competencia) },
-            { header: 'Vencimento', value: (f: FaturaResumo) => formatDateBR(f.dataVencimento) },
-            { header: 'Fechamento', value: (f: FaturaResumo) => formatDateBR(f.dataFechamento) },
-            { header: 'Cartão', value: (f: FaturaResumo) => f.cartaoNome },
-            { header: 'Itens', value: (f: FaturaResumo) => f.quantidadeItens },
-            { header: 'Valor total', value: (f: FaturaResumo) => f.valorTotal },
-            { header: 'Status', value: (f: FaturaResumo) => f.statusNome }
-          ]}
-        />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setImportarModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary/15 px-3 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/25"
+          >
+            <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>upload_file</span>
+            Importar PDF
+          </button>
+          <ExportButton
+            fetchPage={financeiroApi.faturas.listar}
+            filters={filters}
+            filename="faturas"
+            columns={[
+              { header: 'Competência', value: (f: FaturaResumo) => formatMonthYearBR(f.competencia) },
+              { header: 'Vencimento', value: (f: FaturaResumo) => formatDateBR(f.dataVencimento) },
+              { header: 'Fechamento', value: (f: FaturaResumo) => formatDateBR(f.dataFechamento) },
+              { header: 'Cartão', value: (f: FaturaResumo) => f.cartaoNome },
+              { header: 'Itens', value: (f: FaturaResumo) => f.quantidadeItens },
+              { header: 'Valor total', value: (f: FaturaResumo) => f.valorTotal },
+              { header: 'Status', value: (f: FaturaResumo) => f.statusNome }
+            ]}
+          />
+        </div>
       }
       summaryColumns={4}
       summary={
@@ -442,5 +469,6 @@ export function FaturasPage() {
         />
       </div>
     </ListPageShell>
+    </>
   );
 }

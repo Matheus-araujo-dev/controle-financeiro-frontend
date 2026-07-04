@@ -49,15 +49,16 @@ export interface ImportacaoFaturaPreview {
 
 export interface ConfirmarImportacaoPayload {
   cartaoId: string;
-  formaPagamentoId: string;
   recebedorPadraoId: string;
-  contaGerencialPadraoId: string;
   itens: Array<{
     dataTransacao: string;
     descricao: string;
     valor: number;
     chaveImportacao: string;
+    contaGerencialId?: string;
   }>;
+  formaPagamentoId?: string;
+  contaGerencialPadraoId?: string;
 }
 
 export interface ConfirmarImportacaoResponse {

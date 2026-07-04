@@ -171,8 +171,8 @@ vi.mock('../../services/http/api-error', () => ({
 
 const pessoasResponse = {
   items: [
-    { id: 'p1', nome: 'Mercado' },
-    { id: 'r1', nome: 'Responsavel' }
+    { id: 'p1', nome: 'Mercado', ehResponsavel: false },
+    { id: 'r1', nome: 'Responsavel', ehResponsavel: true }
   ]
 };
 

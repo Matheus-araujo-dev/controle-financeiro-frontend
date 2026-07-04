@@ -18,7 +18,8 @@ export const navigationStructure: NavGroup[] = [
     items: [
       { key: '/dashboard', label: 'Dashboard' },
       { key: '/orcamento', label: 'Orçamento' },
-      { key: '/relatorios', label: 'Relatórios' }
+      { key: '/relatorios', label: 'Relatórios' },
+      { key: '/agenda', label: 'Agenda' }
     ]
   },
   {
@@ -26,10 +27,8 @@ export const navigationStructure: NavGroup[] = [
     label: 'Lançamentos',
     items: [
       { key: '/movimentacoes', label: 'Movimentações', aliases: ['/contas-pagar', '/contas-receber'] },
-      { key: '/agenda', label: 'Agenda' },
       { key: '/recorrencias', label: 'Recorrências' },
       { key: '/faturas', label: 'Faturas' },
-      { key: '/faturas/importar', label: 'Importar fatura CSV' },
       { key: '/importacoes-whatsapp', label: 'Importações WhatsApp' }
     ]
   },

@@ -77,6 +77,9 @@ function createConfig() {
       { label: 'Fornecedor', value: 'p1' },
       { label: 'Responsável', value: 'p2' }
     ]),
+    loadResponsavelOptions: vi.fn().mockResolvedValue([
+      { label: 'Responsável', value: 'p2' }
+    ]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([
       { label: 'Cartão corporativo', value: 'f1', ehCartao: true, baixarAutomaticamente: true }
     ]),
