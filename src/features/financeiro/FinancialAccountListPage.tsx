@@ -305,7 +305,7 @@ export function FinancialAccountListPage({
       sorter: true,
       mobileRole: 'title',
       render: (_value, record) => (
-        <div className="min-w-[200px]">
+        <div>
           <div className="text-sm font-bold text-on-surface">{record.descricao ?? '-'}</div>
           {record.numeroDocumento ? (
             <div className="text-xs text-on-surface-variant">Doc. {record.numeroDocumento}</div>

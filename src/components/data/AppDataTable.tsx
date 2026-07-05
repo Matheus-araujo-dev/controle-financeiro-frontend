@@ -485,8 +485,8 @@ export function AppDataTable<T extends object>({
               const parsedDate = parseMobileDate(dateRaw);
 
               return (
-                <article key={getRowKey(rowKey, record)} className="rounded-2xl border border-white/5 bg-surface-container px-3 py-3">
-                  <div className="flex items-start gap-3">
+                <article key={getRowKey(rowKey, record)} className="overflow-hidden rounded-2xl border border-white/5 bg-surface-container px-3 py-3">
+                  <div className="flex items-start gap-2">
                     {/* Bloco de data à esquerda */}
                     {dateCol ? (
                       parsedDate ? (
