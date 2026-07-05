@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../../../components/ui/Button';
 import { formatCurrencyBRL } from '../../../shared/currency';
 import { formatDateBR } from '../../../shared/date';
 import { DashboardContaResumo } from '../../../types/dashboard';
@@ -70,13 +71,15 @@ export const DashboardOperationalAgenda: React.FC<DashboardOperationalAgendaProp
         )}
       </div>
 
-      <button
+      <Button
         onClick={handleVerCalendario}
-        className="mt-2 self-center flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/8 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-primary transition-all hover:bg-primary/15 hover:border-primary/50"
+        variant="primary"
+        size="sm"
+        className="mt-2 self-center"
+        icon={<span className="material-symbols-outlined text-sm">calendar_month</span>}
       >
-        <span className="material-symbols-outlined text-sm">calendar_month</span>
         Ver calendário completo
-      </button>
+      </Button>
     </div>
   );
 };
