@@ -273,12 +273,14 @@ export function MovimentacoesPage() {
               title: 'Data',
               dataIndex: 'dataMovimentacao',
               key: 'dataMovimentacao',
+              mobileRole: 'date',
               render: (value) => <span className="text-sm font-medium text-on-surface-variant">{formatDateBR(String(value))}</span>
             },
             {
               title: 'Descrição',
               dataIndex: 'observacao',
               key: 'observacao',
+              mobileRole: 'title',
               render: (value, record: MovimentacaoResumo) => {
                 const descriptor = getMovementDescriptor(record);
                 const isPositive = record.tipo === 'Entrada';
@@ -300,6 +302,7 @@ export function MovimentacoesPage() {
               title: 'Tipo',
               dataIndex: 'tipo',
               key: 'tipo',
+              mobileRole: 'status',
               render: (_value, record: MovimentacaoResumo) => (
                 <StatusBadge label={record.tipo} tone={tipoTone(record.tipo)} />
               )
@@ -308,6 +311,7 @@ export function MovimentacoesPage() {
               title: 'Conta',
               dataIndex: 'contaBancariaNome',
               key: 'contaBancariaNome',
+              mobileRole: 'subtitle',
               render: (value, record: MovimentacaoResumo) => (
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2 text-on-surface-variant font-medium">
@@ -328,6 +332,7 @@ export function MovimentacoesPage() {
               dataIndex: 'valor',
               key: 'valor',
               align: 'right',
+              mobileRole: 'value',
               render: (value, record: MovimentacaoResumo) => {
                 const isPositive = record.tipo === 'Entrada';
                 const prefix = isPositive ? '+' : '-';
@@ -348,6 +353,7 @@ export function MovimentacoesPage() {
               title: 'Responsável',
               dataIndex: 'responsavelNome',
               key: 'responsavelNome',
+              mobileRole: 'hidden',
               render: (value) => (
                 <div className="flex items-center gap-2 text-primary/70">
                   <UserOutlined className="text-[10px]" />

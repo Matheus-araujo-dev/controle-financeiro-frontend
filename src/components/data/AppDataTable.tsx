@@ -44,6 +44,11 @@ export type AppDataColumn<T extends object> = {
   responsive?: string[];
   ellipsis?: boolean;
   children?: AppDataColumn<T>[];
+  /**
+   * Papel no layout compacto (mobile). Colunas sem este campo aparecem na
+   * faixa de detalhes secundários. Use 'hidden' para ocultar completamente.
+   */
+  mobileRole?: 'date' | 'title' | 'subtitle' | 'value' | 'status' | 'hidden';
   // O valor é tipado dinamicamente conforme o `dataIndex` da coluna (contrato igual ao
   // ColumnType do Ant Design); `unknown` quebraria todos os callbacks `render` existentes.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -215,6 +220,24 @@ function DropdownChevron() {
       <path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
+}
+
+const MONTH_SHORT_BR = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+function parseMobileDate(value: unknown): { day: string; month: string } | null {
+  if (!value || typeof value !== 'string') return null;
+  let date: Date | null = null;
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+    const parts = value.substring(0, 10).split('-');
+    date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  } else if (/^\d{2}\/\d{2}\/\d{4}/.test(value)) {
+    const parts = value.split('/');
+    date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+  }
+
+  if (!date || isNaN(date.getTime())) return null;
+  return { day: String(date.getDate()).padStart(2, '0'), month: MONTH_SHORT_BR[date.getMonth()] };
 }
 
 function renderCell<T extends object>(column: AppDataColumn<T>, record: T, index: number) {
@@ -418,38 +441,117 @@ export function AppDataTable<T extends object>({
 
   return (
     <div className="listing-table overflow-hidden rounded-3xl border border-white/5 bg-surface-container-low">
-      {compactLayout ? (
-        <div className="grid gap-3 p-3">
-          {dataSource.map((record, rowIndex) => {
-            const actionColumns = flatColumns.filter((column) => ['acoes', 'actions'].includes(getColumnKey(column)));
-            const dataColumns = flatColumns.filter((column) => !['acoes', 'actions'].includes(getColumnKey(column)));
-            return (
-              <article key={getRowKey(rowKey, record)} className="rounded-2xl border border-white/5 bg-surface-container p-4">
-                <div className="space-y-3">
-                  {dataColumns.map((column) => (
-                    <div key={getColumnKey(column)} className="grid gap-1">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-                        {column.title}
-                      </span>
-                      <div className="text-sm font-semibold text-on-surface">{renderCell(column, record, rowIndex)}</div>
-                    </div>
-                  ))}
-                </div>
+      {compactLayout ? (() => {
+        const actionCols = flatColumns.filter((col) => isActionColumn(col));
+        const dateCol = flatColumns.find((col) => col.mobileRole === 'date');
+        const titleCol = flatColumns.find((col) => col.mobileRole === 'title');
+        const subtitleCols = flatColumns.filter((col) => col.mobileRole === 'subtitle');
+        const valueCol = flatColumns.find((col) => col.mobileRole === 'value');
+        const statusCol = flatColumns.find((col) => col.mobileRole === 'status');
+        const detailCols = flatColumns.filter((col) => !isActionColumn(col) && !col.mobileRole);
+        const hasRoles = !!(dateCol ?? titleCol ?? valueCol ?? statusCol ?? subtitleCols.length);
 
-                {actionColumns.length ? (
-                  <div className="mt-4 flex flex-wrap justify-end gap-1 border-t border-white/5 pt-3">
-                    {actionColumns.map((column) => (
-                      <div key={getColumnKey(column)} className="flex min-h-[44px] min-w-[44px] items-center justify-center">
-                        {renderCell(column, record, rowIndex)}
+        return (
+          <div className="grid gap-2 p-3">
+            {dataSource.map((record, rowIndex) => {
+              if (!hasRoles) {
+                // Fallback: layout genérico por campo
+                const dataCols = flatColumns.filter((col) => !isActionColumn(col));
+                return (
+                  <article key={getRowKey(rowKey, record)} className="rounded-2xl border border-white/5 bg-surface-container p-4">
+                    <div className="space-y-3">
+                      {dataCols.map((col) => (
+                        <div key={getColumnKey(col)} className="grid gap-1">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{col.title}</span>
+                          <div className="text-sm font-semibold text-on-surface">{renderCell(col, record, rowIndex)}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {actionCols.length ? (
+                      <div className="mt-4 flex flex-wrap justify-end gap-1 border-t border-white/5 pt-3">
+                        {actionCols.map((col) => (
+                          <div key={getColumnKey(col)} className="flex min-h-[44px] min-w-[44px] items-center justify-center">
+                            {renderCell(col, record, rowIndex)}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    ) : null}
+                  </article>
+                );
+              }
+
+              // Layout híbrido A+C: data à esquerda, título+subtítulo no centro, valor+status à direita
+              const dateRaw = dateCol ? readColumnValue(record, dateCol.dataIndex) : undefined;
+              const parsedDate = parseMobileDate(dateRaw);
+
+              return (
+                <article key={getRowKey(rowKey, record)} className="rounded-2xl border border-white/5 bg-surface-container px-3 py-3">
+                  <div className="flex items-start gap-3">
+                    {/* Bloco de data à esquerda */}
+                    {dateCol ? (
+                      parsedDate ? (
+                        <div className="flex w-11 shrink-0 flex-col items-center justify-center rounded-xl bg-surface-container-high py-2">
+                          <span className="block text-base font-black leading-none text-on-surface">{parsedDate.day}</span>
+                          <span className="block text-[9px] font-bold uppercase tracking-wider text-on-surface-variant">{parsedDate.month}</span>
+                        </div>
+                      ) : (
+                        <div className="flex w-11 shrink-0 items-center justify-center rounded-xl bg-surface-container-high px-1 py-2">
+                          <div className="text-xs font-bold leading-tight text-on-surface-variant">{renderCell(dateCol, record, rowIndex)}</div>
+                        </div>
+                      )
+                    ) : null}
+
+                    {/* Centro: título e subtítulos */}
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      {titleCol ? (
+                        <div className="overflow-hidden text-sm font-bold leading-snug text-on-surface">
+                          {renderCell(titleCol, record, rowIndex)}
+                        </div>
+                      ) : null}
+                      {subtitleCols.map((col) => (
+                        <div key={getColumnKey(col)} className="overflow-hidden text-xs leading-snug text-on-surface-variant">
+                          {renderCell(col, record, rowIndex)}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Direita: valor e status */}
+                    {(valueCol ?? statusCol) ? (
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        {valueCol ? <div className="text-sm font-bold">{renderCell(valueCol, record, rowIndex)}</div> : null}
+                        {statusCol ? <div>{renderCell(statusCol, record, rowIndex)}</div> : null}
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-              </article>
-            );
-          })}
-        </div>
-      ) : (
+
+                  {/* Faixa de detalhes secundários */}
+                  {detailCols.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 border-t border-white/5 pt-2">
+                      {detailCols.map((col) => (
+                        <span key={getColumnKey(col)} className="flex items-center gap-1 text-xs text-on-surface-variant">
+                          <span className="text-[9px] font-black uppercase tracking-widest">{col.title}:</span>
+                          {renderCell(col, record, rowIndex)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {/* Ações */}
+                  {actionCols.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap justify-end gap-1 border-t border-white/5 pt-2">
+                      {actionCols.map((col) => (
+                        <div key={getColumnKey(col)} className="flex min-h-[44px] min-w-[44px] items-center justify-center">
+                          {renderCell(col, record, rowIndex)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })}
+          </div>
+        );
+      })() : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] border-collapse" role="table">
             <thead className="bg-surface-container">
