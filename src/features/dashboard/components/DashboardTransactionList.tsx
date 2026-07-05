@@ -1,6 +1,7 @@
 import { EyeOutlined } from '@ant-design/icons';
 import React from 'react';
 import { AppDataTable, type TableColumnsType } from '../../../components/data/AppDataTable';
+import { Button } from '../../../components/ui/Button';
 import { IconActionButton } from '../../../components/data/IconActionButton';
 import { formatCurrencyBRL } from '../../../shared/currency';
 import { formatDateBR } from '../../../shared/date';
@@ -20,18 +21,21 @@ export const DashboardTransactionList: React.FC<DashboardTransactionListProps> =
       title: 'Data',
       dataIndex: 'dataMovimentacao',
       key: 'dataMovimentacao',
+      mobileRole: 'date',
       render: (value) => <span className="text-on-surface-variant">{formatDateBR(String(value))}</span>
     },
     {
       title: 'Descrição',
       dataIndex: 'observacaoResumida',
       key: 'observacaoResumida',
+      mobileRole: 'title',
       render: (value: string | null) => <span className="font-medium">{value ?? 'Movimentação financeira'}</span>
     },
     {
       title: 'Categoria',
       dataIndex: 'natureza',
       key: 'natureza',
+      mobileRole: 'subtitle',
       render: (value) => (
         <span className="inline-flex items-center rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
           {String(value)}
@@ -41,6 +45,7 @@ export const DashboardTransactionList: React.FC<DashboardTransactionListProps> =
     {
       title: 'Status',
       key: 'status',
+      mobileRole: 'hidden',
       render: () => (
         <div className="flex items-center gap-2">
           <div className="h-1.5 w-1.5 rounded-full bg-primary ring-2 ring-primary/20" />
@@ -53,6 +58,7 @@ export const DashboardTransactionList: React.FC<DashboardTransactionListProps> =
       dataIndex: 'valor',
       key: 'valor',
       align: 'right',
+      mobileRole: 'value',
       render: (value, record) => (
         <span className={`font-bold ${record.tipo === 'Entrada' ? 'text-primary' : 'text-error'}`}>
           {record.tipo === 'Entrada' ? '+' : '-'} {formatCurrencyBRL(Number(value))}
@@ -93,14 +99,15 @@ export const DashboardTransactionList: React.FC<DashboardTransactionListProps> =
         pagination={false}
       />
 
-      <div className="p-4 border-t border-outline-variant/5 text-center">
-        <button
+      <div className="p-4 border-t border-outline-variant/5 flex justify-center">
+        <Button
           onClick={onViewAll}
-          className="text-xs font-bold hover:underline uppercase tracking-widest transition-all"
-          style={{ color: 'var(--color-primary)' }}
+          variant="ghost"
+          size="sm"
+          icon={<span className="material-symbols-outlined text-sm">history</span>}
         >
           Ver histórico completo
-        </button>
+        </Button>
       </div>
     </div>
   );
