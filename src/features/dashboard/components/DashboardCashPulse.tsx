@@ -84,14 +84,11 @@ export const DashboardCashPulse: React.FC<DashboardCashPulseProps> = ({ items })
             const isCritical = item.riscoSaldoNegativo;
             const isActive = activeIndex === index;
 
-            let barClass = '';
-            if (isToday) {
-              barClass = 'bg-primary/70';
-            } else if (isCritical) {
-              barClass = isActive ? 'bg-error/60' : 'bg-error/35 hover:bg-error/55';
-            } else {
-              barClass = isActive ? 'bg-primary/48' : 'bg-primary/25 hover:bg-primary/42';
-            }
+            const barClass = isToday
+              ? 'bg-primary/70'
+              : isCritical
+                ? (isActive ? 'bg-error/60' : 'bg-error/35 hover:bg-error/55')
+                : (isActive ? 'bg-primary/48' : 'bg-primary/25 hover:bg-primary/42');
 
             return (
               <div
