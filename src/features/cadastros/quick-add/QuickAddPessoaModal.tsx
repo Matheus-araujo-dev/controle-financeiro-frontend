@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ComboBox } from '../../../components/forms/ComboBox';
-import { formFieldClass, formLabelClass } from '../../../components/forms/FormPrimitives';
+import { formFieldClass, formLabelClass, ToggleField } from '../../../components/forms/FormPrimitives';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
 import { QuickAddModal } from './QuickAddModal';
 
@@ -76,9 +76,6 @@ export function QuickAddPessoaModal({ open, onClose, onSuccess, defaultRole }: P
     onClose();
   }
 
-  const checkboxClass = 'flex items-center gap-2 cursor-pointer select-none';
-  const boxClass = 'h-4 w-4 rounded border border-white/20 bg-surface-container accent-primary cursor-pointer';
-
   return (
     <QuickAddModal
       open={open}
@@ -108,19 +105,10 @@ export function QuickAddPessoaModal({ open, onClose, onSuccess, defaultRole }: P
 
       <div className="space-y-2">
         <label className={formLabelClass}>Papéis</label>
-        <div className="flex flex-wrap gap-4">
-          <label className={checkboxClass}>
-            <input type="checkbox" className={boxClass} checked={ehPagador} onChange={(e) => setEhPagador(e.target.checked)} />
-            <span className="text-sm text-on-surface">Pagador</span>
-          </label>
-          <label className={checkboxClass}>
-            <input type="checkbox" className={boxClass} checked={ehRecebedor} onChange={(e) => setEhRecebedor(e.target.checked)} />
-            <span className="text-sm text-on-surface">Recebedor</span>
-          </label>
-          <label className={checkboxClass}>
-            <input type="checkbox" className={boxClass} checked={ehResponsavel} onChange={(e) => setEhResponsavel(e.target.checked)} />
-            <span className="text-sm text-on-surface">Responsável</span>
-          </label>
+        <div className="space-y-2">
+          <ToggleField checked={ehPagador} onChange={setEhPagador} label="Pagador" />
+          <ToggleField checked={ehRecebedor} onChange={setEhRecebedor} label="Recebedor" />
+          <ToggleField checked={ehResponsavel} onChange={setEhResponsavel} label="Responsável" />
         </div>
       </div>
 
