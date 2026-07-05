@@ -363,6 +363,7 @@ export function FaturasPage() {
               dataIndex: 'competencia',
               key: 'competencia',
               sorter: true,
+              mobileRole: 'title',
               render: (value, record: FaturaResumo) => (
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-semibold text-white">{formatMonthYearBR(String(value))}</span>
@@ -375,6 +376,7 @@ export function FaturasPage() {
               dataIndex: 'dataVencimento',
               key: 'dataVencimento',
               sorter: true,
+              mobileRole: 'date',
               render: (value) => <span className="text-sm text-on-surface-variant">{formatDateBR(String(value))}</span>
             },
             {
@@ -382,6 +384,7 @@ export function FaturasPage() {
               dataIndex: 'cartaoNome',
               key: 'cartaoNome',
               sorter: true,
+              mobileRole: 'subtitle',
               render: (value, record: FaturaResumo) => {
                 const cartao = cartoesById.get(record.cartaoId);
 
@@ -402,6 +405,7 @@ export function FaturasPage() {
               key: 'valorTotal',
               align: 'right',
               sorter: true,
+              mobileRole: 'value',
               render: (value, record: FaturaResumo) => (
                 <span
                   className={`text-sm font-headline font-bold ${
@@ -417,6 +421,7 @@ export function FaturasPage() {
               dataIndex: 'statusCodigo',
               key: 'statusCodigo',
               sorter: true,
+              mobileRole: 'status',
               render: (_value, record: FaturaResumo) => (
                 <StatusBadge codigo={record.statusCodigo} nome={record.statusNome} />
               )

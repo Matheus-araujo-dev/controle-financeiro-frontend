@@ -125,6 +125,7 @@ export function ComprasPlanejadasListPage() {
       title: 'Título',
       dataIndex: 'titulo',
       key: 'titulo',
+      mobileRole: 'title',
       render: (value, record) => (
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-semibold text-white">{String(value)}</span>
@@ -141,12 +142,14 @@ export function ComprasPlanejadasListPage() {
       dataIndex: 'valorEstimado',
       key: 'valorEstimado',
       align: 'right',
+      mobileRole: 'value',
       render: (value) => <span className="font-headline text-sm font-bold text-white">{formatCurrencyBRL(Number(value))}</span>
     },
     {
       title: 'Data desejada',
       dataIndex: 'dataDesejada',
       key: 'dataDesejada',
+      mobileRole: 'date',
       render: (value) => (
         <span className="text-sm font-medium text-on-surface-variant">
           {value ? formatDateBR(String(value)) : 'Sem data'}
@@ -168,18 +171,21 @@ export function ComprasPlanejadasListPage() {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
+      mobileRole: 'status',
       render: (value) => <StatusBadge label={String(value)} tone={statusTone(value as CompraPlanejadaStatus)} />
     },
     {
       title: 'Conta gerencial',
       dataIndex: 'contaGerencialDescricao',
       key: 'contaGerencialDescricao',
+      mobileRole: 'subtitle',
       render: (value) => <span className="text-sm text-on-surface-variant">{String(value)}</span>
     },
     {
       title: 'Responsável',
       dataIndex: 'responsavelNome',
       key: 'responsavelNome',
+      mobileRole: 'subtitle',
       render: (value) => <span className="text-sm text-on-surface-variant">{String(value)}</span>
     },
     {
