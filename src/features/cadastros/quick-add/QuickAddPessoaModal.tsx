@@ -105,7 +105,7 @@ export function QuickAddPessoaModal({ open, onClose, onSuccess, defaultRole }: P
 
       <div className="space-y-2">
         <label className={formLabelClass}>Papéis</label>
-        <div className="space-y-2">
+        <div className="grid grid-cols-3 gap-2">
           <ToggleField checked={ehPagador} onChange={setEhPagador} label="Pagador" />
           <ToggleField checked={ehRecebedor} onChange={setEhRecebedor} label="Recebedor" />
           <ToggleField checked={ehResponsavel} onChange={setEhResponsavel} label="Responsável" />
