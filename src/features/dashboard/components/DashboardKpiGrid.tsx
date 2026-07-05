@@ -43,8 +43,8 @@ const KpiCard: React.FC<KpiCardProps> = ({
           {icon}
         </span>
       </div>
-      <div className="mt-4">
-        <p className={`text-3xl font-headline font-bold ${color === 'primary' ? 'text-primary neon-glow' : 'text-on-surface'}`}>
+      <div className="mt-2 sm:mt-4">
+        <p className={`text-xl sm:text-2xl lg:text-3xl font-headline font-bold leading-tight ${color === 'primary' ? 'text-primary neon-glow' : 'text-on-surface'}`}>
           {formatCurrencyBRL(value)}
         </p>
 
