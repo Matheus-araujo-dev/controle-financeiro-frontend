@@ -14,9 +14,11 @@ import { QuickAddPessoaModal } from '../../features/cadastros/quick-add/QuickAdd
 import { QuickAddFormaPagamentoModal } from '../../features/cadastros/quick-add/QuickAddFormaPagamentoModal';
 import { QuickAddContaGerencialModal } from '../../features/cadastros/quick-add/QuickAddContaGerencialModal';
 import { QuickAddCartaoModal } from '../../features/cadastros/quick-add/QuickAddCartaoModal';
-import { filterContaGerencialLancavel, mapContaGerencialSelectOptions } from '../../shared/conta-gerencial';
+import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
+import type { ComboBoxOption } from '../forms/ComboBox';
 
 type Option = { label: string; value: string };
+type ContaGerencialOption = ComboBoxOption;
 type QuickLaunchTipo = 'pagar' | 'receber';
 type QuickAddTarget = 'pessoaId' | 'responsavelId' | null;
 
@@ -83,8 +85,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [extraPessoas, setExtraPessoas] = useState<Option[]>([]);
   const [extraFormas, setExtraFormas] = useState<Array<Option & { ehCartao: boolean }>>([]);
   const [extraCartoes, setExtraCartoes] = useState<Option[]>([]);
-  const [extraContasDespesa, setExtraContasDespesa] = useState<Option[]>([]);
-  const [extraContasReceita, setExtraContasReceita] = useState<Option[]>([]);
+  const [extraContasDespesa, setExtraContasDespesa] = useState<ContaGerencialOption[]>([]);
+  const [extraContasReceita, setExtraContasReceita] = useState<ContaGerencialOption[]>([]);
 
   const [quickAddPessoaTarget, setQuickAddPessoaTarget] = useState<QuickAddTarget>(null);
   const [quickAddFormaOpen, setQuickAddFormaOpen] = useState(false);
@@ -122,13 +124,29 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     return [...extraCartoes, ...fromServer.filter((c) => !extraCartoes.some((e) => e.value === c.value))];
   }, [extraCartoes, cartoesResult.data]);
 
-  const contasDespesa = useMemo<Option[]>(() => {
-    const fromServer = mapContaGerencialSelectOptions(filterContaGerencialLancavel(despesaResult.data?.items ?? []));
+  const contasDespesa = useMemo<ContaGerencialOption[]>(() => {
+    const fromServer = mapContaGerencialHierarchyData(despesaResult.data?.items ?? []).map(({ value, main, chain }) => ({
+      value,
+      displayText: main,
+      label: chain ? (
+        <span>
+          {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
+        </span>
+      ) : main
+    }));
     return [...extraContasDespesa, ...fromServer.filter((c) => !extraContasDespesa.some((e) => e.value === c.value))];
   }, [extraContasDespesa, despesaResult.data]);
 
-  const contasReceita = useMemo<Option[]>(() => {
-    const fromServer = mapContaGerencialSelectOptions(filterContaGerencialLancavel(receitaResult.data?.items ?? []));
+  const contasReceita = useMemo<ContaGerencialOption[]>(() => {
+    const fromServer = mapContaGerencialHierarchyData(receitaResult.data?.items ?? []).map(({ value, main, chain }) => ({
+      value,
+      displayText: main,
+      label: chain ? (
+        <span>
+          {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
+        </span>
+      ) : main
+    }));
     return [...extraContasReceita, ...fromServer.filter((c) => !extraContasReceita.some((e) => e.value === c.value))];
   }, [extraContasReceita, receitaResult.data]);
 
@@ -291,11 +309,11 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   }
 
   function handleContaGerencialSuccess(newId: string, label: string) {
-    const nextOption = { value: newId, label };
+    const nextOption: ContaGerencialOption = { value: newId, label, displayText: label };
     if (tipo === 'pagar') {
-      setExtraContasDespesa((current) => mergeOption(current, nextOption));
+      setExtraContasDespesa((current) => [nextOption, ...current.filter((item) => item.value !== newId)]);
     } else {
-      setExtraContasReceita((current) => mergeOption(current, nextOption));
+      setExtraContasReceita((current) => [nextOption, ...current.filter((item) => item.value !== newId)]);
     }
     setContaGerencialId(newId);
     setQuickAddContaOpen(false);

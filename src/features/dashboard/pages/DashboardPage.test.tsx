@@ -127,7 +127,7 @@ describe('DashboardPage', () => {
     renderPage();
 
     expect(await screen.findByText('Saldo Atual')).toBeInTheDocument();
-    expect(screen.getByText('A Pagar (Hoje)')).toBeInTheDocument();
+    expect(screen.getByText('A Pagar')).toBeInTheDocument();
     expect(screen.getByText('A Receber')).toBeInTheDocument();
     expect(screen.getByText('Projetado (Fim de Mês)')).toBeInTheDocument();
     expect(await screen.findByText('R$1.500,00')).toBeInTheDocument();

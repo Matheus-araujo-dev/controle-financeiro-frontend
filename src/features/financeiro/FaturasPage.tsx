@@ -27,8 +27,8 @@ const defaultFilters: FaturaFilters = {
   page: 1,
   pageSize: 20,
   search: '',
-  competencia: '',
   cartaoId: undefined,
+  competencias: undefined,
   statusCodigo: undefined,
   dataVencimentoInicial: undefined,
   dataVencimentoFinal: undefined,
@@ -41,39 +41,26 @@ const statusOptions: Array<{ label: string; value: StatusFaturaCodigo }> = [
   { label: 'Paga', value: 'PAGA' }
 ];
 
-function normalizeCompetenciaInput(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 6);
-
-  if (digits.length <= 2) {
-    return digits;
+function generateCompetenciaOptions() {
+  const options: Array<{ value: string; label: string }> = [];
+  const now = new Date();
+  for (let i = 0; i < 24; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    options.push({ value: `${year}-${month}`, label: `${month}/${year}` });
   }
-
-  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return options;
 }
 
-function competenciaInputToApi(value: string) {
-  const digits = value.replace(/\D/g, '');
-  if (digits.length !== 6) {
-    return undefined;
-  }
-
-  return `${digits.slice(2, 6)}-${digits.slice(0, 2)}`;
-}
-
-function competenciaApiToInput(value?: string) {
-  const match = /^(\d{4})-(\d{2})$/.exec(value ?? '');
-  if (!match) {
-    return '';
-  }
-
-  return `${match[2]}/${match[1]}`;
-}
+const competenciaOptions = generateCompetenciaOptions();
 
 function buildInitialFilters(searchParams: URLSearchParams): FaturaFilters {
+  const competencia = searchParams.get('competencia');
   return {
     ...defaultFilters,
     cartaoId: searchParams.get('cartaoId') || undefined,
-    competencia: searchParams.get('competencia') || ''
+    competencias: competencia ? [competencia] : undefined
   };
 }
 
@@ -126,7 +113,6 @@ export function FaturasPage() {
   const initialFilters = useMemo(() => buildInitialFilters(searchParams), [searchParams]);
   const [filters, setFilters] = useState<FaturaFilters>(initialFilters);
   const deferredFilters = useDeferredValue(filters);
-  const [competenciaInput, setCompetenciaInput] = useState(() => competenciaApiToInput(initialFilters.competencia));
   const [data, setData] = useState<Awaited<ReturnType<typeof financeiroApi.faturas.listar>>>();
   const [cartoes, setCartoes] = useState<CartaoResumo[]>([]);
   const [loading, setLoading] = useState(false);
@@ -136,7 +122,6 @@ export function FaturasPage() {
 
   useEffect(() => {
     setFilters(initialFilters);
-    setCompetenciaInput(competenciaApiToInput(initialFilters.competencia));
   }, [initialFilters]);
 
   const loadData = useCallback(async () => {
@@ -306,19 +291,18 @@ export function FaturasPage() {
               />
             </FilterField>
             <FilterField label="Competência">
-              <FilterInputWrapper>
-                <input
-                  aria-label="Competência"
-                  placeholder="mm/aaaa"
-                  value={competenciaInput}
-                  onChange={(e) => {
-                    const next = normalizeCompetenciaInput(e.target.value);
-                    setCompetenciaInput(next);
-                    setFilters((f) => ({ ...f, page: 1, competencia: competenciaInputToApi(next) }));
-                  }}
-                  className={filterInputClass}
-                />
-              </FilterInputWrapper>
+              <MultiSelectFilter
+                ariaLabel="Competência"
+                options={competenciaOptions}
+                value={filters.competencias ?? []}
+                onChange={(next) =>
+                  setFilters((f) => ({
+                    ...f,
+                    page: 1,
+                    competencias: next.length ? next : undefined
+                  }))
+                }
+              />
             </FilterField>
             <FilterField label="Vencimento de">
               <DateInput

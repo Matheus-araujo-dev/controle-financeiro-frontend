@@ -4,6 +4,8 @@ import { CurrencyInput } from '../../shared/CurrencyInput';
 import { ComboBox } from '../../components/forms/ComboBox';
 import { DateInput } from '../../components/forms/DateInput';
 import { formatCurrencyBRL } from '../../shared/currency';
+import { QuickAddContaBancariaModal } from '../cadastros/quick-add/QuickAddContaBancariaModal';
+import { QuickAddFormaPagamentoModal } from '../cadastros/quick-add/QuickAddFormaPagamentoModal';
 import type { FinanceiroLiquidacaoFormValues, SelectOption } from './module-config';
 
 type Props = {
@@ -50,6 +52,10 @@ export function LiquidarModal({
   const [data, setData] = useState(todayIso());
   const [contaBancariaId, setContaBancariaId] = useState(defaultContaBancariaId ?? '');
   const [formaPagId, setFormaPagId] = useState(formaPagamentoId ?? '');
+  const [extraContasBancarias, setExtraContasBancarias] = useState<SelectOption[]>([]);
+  const [extraFormasPagamento, setExtraFormasPagamento] = useState<SelectOption[]>([]);
+  const [addContaBancariaOpen, setAddContaBancariaOpen] = useState(false);
+  const [addFormaPagamentoOpen, setAddFormaPagamentoOpen] = useState(false);
 
   // opções step 2
   const [atualizarValorConta, setAtualizarValorConta] = useState(true);
@@ -66,8 +72,13 @@ export function LiquidarModal({
       setAtualizarValorConta(true);
       setAtualizarRecorrencia(false);
       setCancelarValorRestante(false);
+      setExtraContasBancarias([]);
+      setExtraFormasPagamento([]);
     }
   }, [open, valorRestante, defaultContaBancariaId, formaPagamentoId]);
+
+  const allContasBancarias = [...extraContasBancarias, ...contaBancariaOptions.filter(o => !extraContasBancarias.some(e => e.value === o.value))];
+  const allFormasPagamento = [...extraFormasPagamento, ...formaPagamentoOptions.filter(o => !extraFormasPagamento.some(e => e.value === o.value))];
 
   if (!open) return null;
 
@@ -156,22 +167,24 @@ export function LiquidarModal({
               <ComboBox
                 value={contaBancariaId}
                 placeholder="Selecionar conta..."
-                options={contaBancariaOptions.map((o) => ({ value: o.value, label: o.label }))}
+                options={allContasBancarias.map((o) => ({ value: o.value, label: o.label }))}
                 onChange={setContaBancariaId}
+                onAddNew={() => setAddContaBancariaOpen(true)}
+                addNewLabel="Nova conta bancária"
               />
             </div>
 
-            {formaPagamentoOptions.length > 0 && (
-              <div>
-                <label className={fieldLabel}>Forma de pagamento</label>
-                <ComboBox
-                  value={formaPagId}
-                  placeholder="Selecionar..."
-                  options={formaPagamentoOptions.map((o) => ({ value: o.value, label: o.label }))}
-                  onChange={setFormaPagId}
-                />
-              </div>
-            )}
+            <div>
+              <label className={fieldLabel}>Forma de pagamento</label>
+              <ComboBox
+                value={formaPagId}
+                placeholder="Selecionar..."
+                options={allFormasPagamento.map((o) => ({ value: o.value, label: o.label }))}
+                onChange={setFormaPagId}
+                onAddNew={() => setAddFormaPagamentoOpen(true)}
+                addNewLabel="Nova forma de pagamento"
+              />
+            </div>
 
             {error ? <p className="text-sm font-medium text-error">{error}</p> : null}
 
@@ -275,7 +288,54 @@ export function LiquidarModal({
           </div>
         )}
       </div>
+      <QuickAddModalsForLiquidar
+        addContaBancariaOpen={addContaBancariaOpen}
+        addFormaPagamentoOpen={addFormaPagamentoOpen}
+        onContaBancariaClose={() => setAddContaBancariaOpen(false)}
+        onFormaPagamentoClose={() => setAddFormaPagamentoOpen(false)}
+        onContaBancariaSuccess={(id, label) => {
+          setExtraContasBancarias((prev) => [{ value: id, label }, ...prev.filter((o) => o.value !== id)]);
+          setContaBancariaId(id);
+          setAddContaBancariaOpen(false);
+        }}
+        onFormaPagamentoSuccess={(id, label) => {
+          setExtraFormasPagamento((prev) => [{ value: id, label }, ...prev.filter((o) => o.value !== id)]);
+          setFormaPagId(id);
+          setAddFormaPagamentoOpen(false);
+        }}
+      />
     </div>
+  );
+}
+
+function QuickAddModalsForLiquidar({
+  addContaBancariaOpen,
+  addFormaPagamentoOpen,
+  onContaBancariaClose,
+  onFormaPagamentoClose,
+  onContaBancariaSuccess,
+  onFormaPagamentoSuccess,
+}: {
+  addContaBancariaOpen: boolean;
+  addFormaPagamentoOpen: boolean;
+  onContaBancariaClose: () => void;
+  onFormaPagamentoClose: () => void;
+  onContaBancariaSuccess: (id: string, label: string) => void;
+  onFormaPagamentoSuccess: (id: string, label: string) => void;
+}) {
+  return (
+    <>
+      <QuickAddContaBancariaModal
+        open={addContaBancariaOpen}
+        onClose={onContaBancariaClose}
+        onSuccess={onContaBancariaSuccess}
+      />
+      <QuickAddFormaPagamentoModal
+        open={addFormaPagamentoOpen}
+        onClose={onFormaPagamentoClose}
+        onSuccess={onFormaPagamentoSuccess}
+      />
+    </>
   );
 }
 

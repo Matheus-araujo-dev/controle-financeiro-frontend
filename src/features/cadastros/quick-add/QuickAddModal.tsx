@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useEffect, useId, useRef } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '../../../components/ui/Button';
 
@@ -13,6 +13,7 @@ type QuickAddModalProps = {
   loading?: boolean;
   submitDisabled?: boolean;
   submitLabel?: string;
+  isDirty?: boolean;
   onClose: () => void;
   onSubmit: () => void;
 };
@@ -27,12 +28,18 @@ export function QuickAddModal({
   loading = false,
   submitDisabled = false,
   submitLabel = 'Confirmar Cadastro',
+  isDirty = false,
   onClose,
   onSubmit
 }: QuickAddModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  const [confirmClose, setConfirmClose] = useState(false);
 
+  useEffect(() => { onCloseRef.current = onClose; });
+
+  // Scroll lock + initial focus — only re-runs when open changes, not on every render.
   useEffect(() => {
     if (!open) return;
 
@@ -45,11 +52,32 @@ export function QuickAddModal({
     );
     firstFocusable?.focus();
 
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus();
+    };
+  }, [open]);
+
+  // Keyboard handler — uses ref so it stays stable without re-subscribing on every render.
+  const isDirtyRef = useRef(isDirty);
+  useEffect(() => { isDirtyRef.current = isDirty; });
+
+  const handleClose = useCallback(() => {
+    if (isDirtyRef.current) {
+      setConfirmClose(true);
+    } else {
+      onCloseRef.current();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
     function handleKeyDown(event: KeyboardEvent) {
       if (!dialogRef.current) return;
 
       if (event.key === 'Escape' && !loading) {
-        onClose();
+        handleClose();
         return;
       }
 
@@ -75,13 +103,8 @@ export function QuickAddModal({
     }
 
     document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', handleKeyDown);
-      previouslyFocused?.focus();
-    };
-  }, [open, loading, onClose]);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, loading, handleClose]);
 
   if (!open) return null;
 
@@ -90,7 +113,7 @@ export function QuickAddModal({
       className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm"
       onMouseDown={(event) => {
         if (!loading && event.target === event.currentTarget) {
-          onClose();
+          handleClose();
         }
       }}
     >
@@ -118,8 +141,18 @@ export function QuickAddModal({
           </div>
         ) : null}
 
+        {confirmClose ? (
+          <div className="mt-5 rounded-2xl border border-warning/20 bg-warning/8 p-4 space-y-3">
+            <p className="text-sm font-bold text-on-surface">Descartar dados não salvos?</p>
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="secondary" size="sm" onClick={() => setConfirmClose(false)}>Continuar editando</Button>
+              <Button type="button" size="sm" onClick={() => { setConfirmClose(false); onCloseRef.current(); }}>Descartar</Button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button type="button" variant="secondary" size="lg" className="rounded-2xl font-bold" onClick={onClose}>
+          <Button type="button" variant="secondary" size="lg" className="rounded-2xl font-bold" onClick={handleClose}>
             Cancelar
           </Button>
           <Button type="button" size="lg" className="rounded-2xl font-black" loading={loading} disabled={submitDisabled || loading} onClick={onSubmit}>
