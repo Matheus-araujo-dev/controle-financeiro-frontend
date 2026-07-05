@@ -1,6 +1,6 @@
-﻿import { lazy } from 'react';
-import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
+﻿import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
+import { lazyWithRetry as lazy } from './lazy-with-retry';
 import { financialRouteObjects, placeholderRouteObjects, supportRegistryRouteObjects, comprasPlanejadasRouteObjects } from './route-definitions';
 
 const DashboardPage = lazy(() => import('../features/dashboard/pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
