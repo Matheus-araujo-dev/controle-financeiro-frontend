@@ -524,26 +524,26 @@ export function AppDataTable<T extends object>({
                     ) : null}
                   </div>
 
-                  {/* Faixa de detalhes secundários */}
-                  {detailCols.length > 0 ? (
-                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 border-t border-white/5 pt-2">
-                      {detailCols.map((col) => (
-                        <span key={getColumnKey(col)} className="flex items-center gap-1 text-xs text-on-surface-variant">
-                          <span className="text-[9px] font-black uppercase tracking-widest">{col.title}:</span>
-                          {renderCell(col, record, rowIndex)}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {/* Ações */}
-                  {actionCols.length > 0 ? (
-                    <div className="mt-2 flex flex-wrap justify-end gap-1 border-t border-white/5 pt-2">
-                      {actionCols.map((col) => (
-                        <div key={getColumnKey(col)} className="flex min-h-[44px] min-w-[44px] items-center justify-center">
-                          {renderCell(col, record, rowIndex)}
+                  {/* Faixa de detalhes + ações na mesma linha */}
+                  {(detailCols.length > 0 || actionCols.length > 0) ? (
+                    <div className="mt-2 flex items-center gap-2 border-t border-white/5 pt-2">
+                      <div className="flex flex-1 flex-wrap gap-x-3 gap-y-0.5">
+                        {detailCols.map((col) => (
+                          <span key={getColumnKey(col)} className="flex items-center gap-1 text-xs text-on-surface-variant">
+                            <span className="text-[9px] font-black uppercase tracking-widest">{col.title}:</span>
+                            {renderCell(col, record, rowIndex)}
+                          </span>
+                        ))}
+                      </div>
+                      {actionCols.length > 0 ? (
+                        <div className="flex shrink-0 items-center gap-1">
+                          {actionCols.map((col) => (
+                            <div key={getColumnKey(col)} className="flex min-h-[44px] min-w-[44px] items-center justify-center">
+                              {renderCell(col, record, rowIndex)}
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      ) : null}
                     </div>
                   ) : null}
                 </article>
