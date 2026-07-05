@@ -3,11 +3,11 @@ import { persist } from 'zustand/middleware';
 import type { AuthMode, AuthTokenResponse, AuthUser } from '../types/auth';
 
 type AuthState = {
-  mode: AuthMode;
+  /** Modo de autenticação — imutável após inicialização (definido no build-time). */
+  readonly mode: AuthMode;
   currentUser: AuthUser | null;
   token: string | null;
   permissions: string[];
-  setMode: (mode: AuthMode) => void;
   signIn: (user: AuthUser) => void;
   applyTokenResponse: (response: AuthTokenResponse) => void;
   setToken: (token: string | null) => void;
@@ -32,7 +32,6 @@ export const useAuthStore = create<AuthState>()(
       currentUser: null,
       token: null,
       permissions: [],
-      setMode: (mode) => set({ mode }),
       signIn: (currentUser) => set({ currentUser }),
       applyTokenResponse: (response) => {
         const workspace = response.usuario.workspace ?? response.usuario.familia ?? null;

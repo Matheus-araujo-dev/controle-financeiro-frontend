@@ -4,7 +4,6 @@ import { useAuthMode, useAuthStore, useCurrentUser, useFamiliaAtual, useIsAuthen
 describe('useAuthStore', () => {
   afterEach(() => {
     useAuthStore.setState({
-      mode: 'development',
       currentUser: null,
       token: null,
       permissions: []
@@ -26,7 +25,6 @@ describe('useAuthStore', () => {
 
   it('clears the session', () => {
     useAuthStore.setState({
-      mode: 'development',
       currentUser: {
         userId: 'codex-user',
         displayName: 'Codex'
@@ -77,13 +75,11 @@ describe('useAuthStore', () => {
     });
   });
 
-  it('updates mode, token and permissions independently', () => {
-    useAuthStore.getState().setMode('jwt');
+  it('updates token and permissions independently', () => {
     useAuthStore.getState().setToken('manual-token');
     useAuthStore.getState().setPermissions(['familia:editar', 'financeiro:ler']);
 
     expect(useAuthStore.getState()).toMatchObject({
-      mode: 'jwt',
       token: 'manual-token',
       permissions: ['familia:editar', 'financeiro:ler']
     });
@@ -101,7 +97,6 @@ describe('useAuthStore', () => {
     expect(familia.result.current).toBeNull();
 
     act(() => {
-      useAuthStore.getState().setMode('google');
       useAuthStore.getState().signIn({
         userId: 'u2',
         displayName: 'Usuario Dois',
@@ -113,7 +108,7 @@ describe('useAuthStore', () => {
       });
     });
 
-    expect(mode.result.current).toBe('google');
+    expect(mode.result.current).toBe('development');
     expect(currentUser.result.current?.displayName).toBe('Usuario Dois');
     expect(authenticated.result.current).toBe(true);
     expect(familia.result.current).toEqual({
