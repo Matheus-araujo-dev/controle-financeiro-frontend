@@ -174,19 +174,17 @@ export function LiquidarModal({
               />
             </div>
 
-            {(allFormasPagamento.length > 0 || true) && (
-              <div>
-                <label className={fieldLabel}>Forma de pagamento</label>
-                <ComboBox
-                  value={formaPagId}
-                  placeholder="Selecionar..."
-                  options={allFormasPagamento.map((o) => ({ value: o.value, label: o.label }))}
-                  onChange={setFormaPagId}
-                  onAddNew={() => setAddFormaPagamentoOpen(true)}
-                  addNewLabel="Nova forma de pagamento"
-                />
-              </div>
-            )}
+            <div>
+              <label className={fieldLabel}>Forma de pagamento</label>
+              <ComboBox
+                value={formaPagId}
+                placeholder="Selecionar..."
+                options={allFormasPagamento.map((o) => ({ value: o.value, label: o.label }))}
+                onChange={setFormaPagId}
+                onAddNew={() => setAddFormaPagamentoOpen(true)}
+                addNewLabel="Nova forma de pagamento"
+              />
+            </div>
 
             {error ? <p className="text-sm font-medium text-error">{error}</p> : null}
 
