@@ -99,8 +99,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       { queryKey: ['ql-pessoas'], queryFn: () => cadastrosApi.pessoas.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-formas'], queryFn: () => cadastrosApi.formasPagamento.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-cartoes'], queryFn: () => cadastrosApi.cartoes.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
-      { queryKey: ['ql-contas-despesa'], queryFn: () => cadastrosApi.contasGerenciais.listar({ ...BASE_QUERY, tipo: 'Despesa', ativo: true, aceitaLancamentos: true }), staleTime: STALE_5MIN },
-      { queryKey: ['ql-contas-receita'], queryFn: () => cadastrosApi.contasGerenciais.listar({ ...BASE_QUERY, tipo: 'Receita', ativo: true, aceitaLancamentos: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-contas-despesa'], queryFn: () => cadastrosApi.contasGerenciais.listar({ page: 1, pageSize: 500, search: '', tipo: 'Despesa', ativo: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-contas-receita'], queryFn: () => cadastrosApi.contasGerenciais.listar({ page: 1, pageSize: 500, search: '', tipo: 'Receita', ativo: true }), staleTime: STALE_5MIN },
     ],
   });
 
@@ -459,9 +459,11 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               ) : null}
             </div>
 
-            <p className="mt-6 text-xs text-on-surface-variant">
-              Precisa de parcelas, rateio detalhado ou recorrência? Use o formulário completo em Contas a pagar/receber.
-            </p>
+            <div className="mt-8 border-t border-white/5 pt-5">
+              <p className="text-xs text-on-surface-variant">
+                Precisa de parcelas, rateio detalhado ou recorrência? Use o formulário completo em Contas a pagar/receber.
+              </p>
+            </div>
 
             <div className="mt-7 flex justify-end gap-3">
               <Button type="button" variant="secondary" size="lg" onClick={onClose}>
