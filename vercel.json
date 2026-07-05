@@ -9,12 +9,7 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Cross-Origin-Opener-Policy", "value": "unsafe-none" }
-      ]
-    },
-    {
-      "source": "/(sw\\.js|registerSW\\.js|index\\.html)",
-      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "unsafe-none" },
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     },
