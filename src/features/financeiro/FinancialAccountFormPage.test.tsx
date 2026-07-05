@@ -113,7 +113,7 @@ describe('FinancialAccountFormPage', () => {
     expect(screen.getByText(/Recorrência Automática/i)).toBeInTheDocument();
     expect(screen.getByText('Rateio por Centro de Custo')).toBeInTheDocument();
     expect(screen.getByText(/Observações Adicionais/i)).toBeInTheDocument();
-    expect(screen.getByText('08/2026')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('08/2026')).toBeInTheDocument();
     expect(screen.getByText(/05\/2026/)).toBeInTheDocument();
   }, 20000);
 
@@ -142,7 +142,7 @@ describe('FinancialAccountFormPage', () => {
     renderWithRoute('/contas-pagar/123', '/contas-pagar/:id', config);
 
     expect(await screen.findByDisplayValue('Despesa de teste')).toBeInTheDocument();
-    expect(screen.getByText('08/2026')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('08/2026')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lancamento' }));
 
