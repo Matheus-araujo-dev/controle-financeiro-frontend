@@ -86,6 +86,9 @@ describe('useAuthStore', () => {
   });
 
   it('exposes auth selector hooks', () => {
+    // Fixa o mode explicitamente: o default varia por ambiente (VITE_AUTH_MODE / .env.local),
+    // entao nao dependemos dele para manter o teste deterministico no CI.
+    useAuthStore.setState({ mode: 'development' });
     const mode = renderHook(() => useAuthMode());
     const currentUser = renderHook(() => useCurrentUser());
     const authenticated = renderHook(() => useIsAuthenticated());
