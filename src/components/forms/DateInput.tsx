@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { formatDateBR, formatMonthYearBR, toMonthInputValue } from '../../shared/date';
 
 export type DateInputMode = 'date' | 'month';
@@ -76,6 +76,35 @@ function monthDays(year: number, month: number) {
   return cells;
 }
 
+function maskDate(raw: string, mode: DateInputMode): string {
+  const digits = raw.replace(/\D/g, '');
+  if (mode === 'date') {
+    // dd/mm/aaaa
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+  }
+  // mm/aaaa
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 6)}`;
+}
+
+function parseMaskedToIso(masked: string, mode: DateInputMode): string | null {
+  if (mode === 'date') {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(masked);
+    if (!m) return null;
+    const [, dd, mm, yyyy] = m;
+    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    if (Number.isNaN(d.getTime()) || d.getMonth() + 1 !== Number(mm)) return null;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  const m = /^(\d{2})\/(\d{4})$/.exec(masked);
+  if (!m) return null;
+  const [, mm, yyyy] = m;
+  if (Number(mm) < 1 || Number(mm) > 12) return null;
+  return `${yyyy}-${mm}`;
+}
+
 export function DateInput({
   value,
   onChange,
@@ -88,7 +117,9 @@ export function DateInput({
 }: DateInputProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState<string | null>(null);
   const [popupStyle, setPopupStyle] = useState<CSSProperties>({});
   const [viewYear, setViewYear] = useState(() => {
     const month = parseIsoMonth(value);
@@ -352,25 +383,61 @@ export function DateInput({
     </div>
   ) : null;
 
+  function handleTextChange(e: ChangeEvent<HTMLInputElement>) {
+    const masked = maskDate(e.target.value, mode);
+    setTyped(masked);
+    const iso = parseMaskedToIso(masked, mode);
+    if (iso) {
+      onChange?.(iso);
+      setTyped(null);
+      setOpen(false);
+    } else if (masked === '') {
+      onChange?.('');
+    }
+  }
+
+  function handleTextKeyDown(e: ReactKeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      const iso = parseMaskedToIso(typed ?? '', mode);
+      if (iso) { onChange?.(iso); setTyped(null); setOpen(false); }
+    }
+    if (e.key === 'Escape') { setTyped(null); setOpen(false); }
+  }
+
+  const inputDisplayValue = typed !== null ? typed : (value ? formatDisplayValue(mode, value) : '');
+
   return (
     <div ref={rootRef} className="relative w-full">
-      <button
-        type="button"
-        disabled={disabled}
-        aria-label={ariaLabel}
-        aria-expanded={open}
-        onClick={() => {
-          if (!disabled) setOpen((current) => !current);
-        }}
-        className={`${className} flex w-full items-center justify-between gap-3 rounded-xl bg-surface-container px-4 text-left font-medium text-on-surface transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${compact ? 'h-11 py-0' : 'min-h-[54px] py-3'} ${
-          open ? 'ring-2 ring-primary/40' : 'ring-1 ring-white/5 hover:border-primary/30 hover:bg-surface-container-high'
-        }`}
+      <div
+        className={`${className} flex w-full items-stretch overflow-hidden rounded-xl bg-surface-container ring-1 ring-white/5 transition-all ${compact ? 'h-11' : 'min-h-[54px]'} ${
+          open ? 'ring-2 ring-primary/40' : 'hover:ring-white/10'
+        } ${disabled ? 'opacity-60' : ''}`}
       >
-        <span className={value ? 'text-on-surface' : 'text-outline/50'}>{displayValue}</span>
-        <span aria-hidden="true" className="material-symbols-outlined text-base text-on-surface-variant">
-          {mode === 'date' ? 'calendar_month' : 'date_range'}
-        </span>
-      </button>
+        <input
+          ref={inputRef}
+          type="text"
+          disabled={disabled}
+          aria-label={ariaLabel}
+          placeholder={placeholder}
+          value={inputDisplayValue}
+          onChange={handleTextChange}
+          onKeyDown={handleTextKeyDown}
+          onFocus={() => { if (!disabled) setOpen(true); }}
+          className={`min-w-0 flex-1 bg-transparent px-4 font-medium text-on-surface outline-none placeholder:text-outline/50 disabled:cursor-not-allowed ${compact ? 'text-sm' : ''}`}
+        />
+        <button
+          type="button"
+          disabled={disabled}
+          aria-label={`Abrir calendário${ariaLabel ? ` — ${ariaLabel}` : ''}`}
+          aria-expanded={open}
+          onClick={() => { if (!disabled) setOpen((c) => !c); }}
+          className="flex w-11 shrink-0 items-center justify-center border-l border-white/5 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary disabled:cursor-not-allowed"
+        >
+          <span aria-hidden="true" className="material-symbols-outlined text-base">
+            {mode === 'date' ? 'calendar_month' : 'date_range'}
+          </span>
+        </button>
+      </div>
 
       {popup ? createPortal(popup, document.body) : null}
     </div>

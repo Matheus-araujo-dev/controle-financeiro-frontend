@@ -100,7 +100,7 @@ export const DashboardKpiGrid: React.FC<DashboardKpiGridProps> = ({
         color="primary"
       />
       <KpiCard
-        label="A Pagar (Hoje)"
+        label="A Pagar"
         value={totalAPagar}
         icon="payments"
         color="error"

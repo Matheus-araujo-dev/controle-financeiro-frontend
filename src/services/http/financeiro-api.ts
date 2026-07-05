@@ -68,6 +68,17 @@ export interface ConfirmarImportacaoResponse {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+function normalizeFaturaFilters(params: FaturaFilters): Record<string, unknown> {
+  const { competencia, competencias, ...rest } = params;
+  const result: Record<string, unknown> = { ...rest };
+  if (competencias && competencias.length > 0) {
+    result.competencias = competencias;
+  } else if (competencia) {
+    result.competencia = competencia;
+  }
+  return result;
+}
+
 async function getPaged<T, TSummary = unknown>(url: string, params: Record<string, unknown>) {
   const response = await apiClient.get<PagedFinanceiro<T, TSummary>>(url, { params });
   return response.data;
@@ -125,7 +136,7 @@ export const financeiroApi = {
     obterPorId: (id: string) => getById<MovimentacaoDetalhe>(`/movimentacoes/${id}`)
   },
   faturas: {
-    listar: (params: FaturaFilters) => getPaged<FaturaResumo, FaturaListSummary>('/faturas', params),
+    listar: (params: FaturaFilters) => getPaged<FaturaResumo, FaturaListSummary>('/faturas', normalizeFaturaFilters(params)),
     obterPorId: (id: string) => getById<FaturaDetalhe>(`/faturas/${id}`),
     pagar: (id: string, payload: PagarFaturaPayload) => post<FaturaDetalhe>(`/faturas/${id}/pagar`, payload),
     estornar: (id: string) => post<FaturaDetalhe>(`/faturas/${id}/estornar`),

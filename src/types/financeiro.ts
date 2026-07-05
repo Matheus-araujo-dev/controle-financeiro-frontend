@@ -416,6 +416,7 @@ export type FaturaFilters = ListQueryBase & {
   cartaoId?: string | string[];
   cartaoIds?: string[];
   competencia?: string;
+  competencias?: string[];
   statusCodigo?: StatusFaturaCodigo | StatusFaturaCodigo[];
   statusCodigos?: StatusFaturaCodigo[];
   dataVencimentoInicial?: string;

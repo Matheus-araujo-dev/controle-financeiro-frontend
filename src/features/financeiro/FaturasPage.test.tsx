@@ -161,12 +161,13 @@ describe('FaturasPage', () => {
       )
     );
 
-    await userEvent.type(screen.getAllByLabelText('Competência')[0], '042026');
+    await userEvent.click(screen.getByRole('button', { name: 'Competência' }));
+    await userEvent.click(screen.getByRole('button', { name: '04/2026' }));
 
     await waitFor(() =>
       expect(financeiroApi.faturas.listar).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          competencia: '2026-04'
+          competencias: ['2026-04']
         })
       )
     );
@@ -299,13 +300,13 @@ describe('FaturasPage', () => {
     );
 
     expect(await screen.findByText('Compra no cartão localizada na fatura filtrada')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('05/2026')).toBeInTheDocument();
+    expect(screen.getByText('05/2026')).toBeInTheDocument();
 
     await waitFor(() =>
       expect(financeiroApi.faturas.listar).toHaveBeenCalledWith(
         expect.objectContaining({
           cartaoId: 'c1',
-          competencia: '2026-05'
+          competencias: ['2026-05']
         })
       )
     );
