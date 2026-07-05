@@ -303,6 +303,7 @@ export function FinancialAccountListPage({
       dataIndex: 'descricao',
       key: 'descricao',
       sorter: true,
+      mobileRole: 'title',
       render: (_value, record) => (
         <div className="min-w-[200px]">
           <div className="text-sm font-bold text-on-surface">{record.descricao ?? '-'}</div>
@@ -315,6 +316,7 @@ export function FinancialAccountListPage({
     {
       title: config.personLabel,
       key: 'pessoa',
+      mobileRole: 'subtitle',
       render: (_value, record) => (
         <span className="text-sm text-on-surface">{record.recebedorNome ?? record.pagadorNome ?? '—'}</span>
       )
@@ -322,6 +324,7 @@ export function FinancialAccountListPage({
     {
       title: 'Responsável',
       key: 'responsavel',
+      mobileRole: 'subtitle',
       render: (_value, record) => (
         <span className="text-sm text-on-surface-variant">{record.responsavelNome ?? '—'}</span>
       )
@@ -331,6 +334,7 @@ export function FinancialAccountListPage({
       dataIndex: 'dataVencimento',
       key: 'dataVencimento',
       sorter: true,
+      mobileRole: 'date',
       render: (value, record) => (
         <span className={`text-sm font-semibold ${record.statusCodigo === 'VENCIDA' ? 'text-error' : 'text-on-surface-variant'}`}>
           {formatDateBR(String(value ?? ''))}
@@ -362,6 +366,7 @@ export function FinancialAccountListPage({
       key: 'valorLiquido',
       align: 'right',
       sorter: true,
+      mobileRole: 'value',
       render: (value, record) => {
         const isParcial = record.statusCodigo === 'PARCIAL';
         const valorPago = record.valorPago;
@@ -388,6 +393,7 @@ export function FinancialAccountListPage({
       dataIndex: 'statusCodigo',
       key: 'statusCodigo',
       sorter: true,
+      mobileRole: 'status',
       render: (_value, record) => (
         <StatusBadge
           label={record.statusNome ?? readStatusLabel(record.statusCodigo ?? 'PENDENTE')}

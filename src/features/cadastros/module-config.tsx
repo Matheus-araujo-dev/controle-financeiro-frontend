@@ -205,11 +205,11 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
   listDescription: 'Cadastros de pagadores, recebedores e contrapartes.',
   formDescription: 'Use o cadastro para manter a base de pessoas consistente com o backend, incluindo uma ou mais chaves Pix.',
   columns: [
-    { title: 'Nome', dataIndex: 'nome', key: 'nome' },
-    { title: 'Tipo', dataIndex: 'tipoPessoa', key: 'tipoPessoa' },
+    { title: 'Nome', dataIndex: 'nome', key: 'nome', mobileRole: 'title' },
+    { title: 'Tipo', dataIndex: 'tipoPessoa', key: 'tipoPessoa', mobileRole: 'subtitle' },
     { title: 'Documento', dataIndex: 'cpfCnpj', key: 'cpfCnpj', render: (value) => (value ? applyCpfCnpjMask(String(value)) : '-') },
     { title: 'Contato', dataIndex: 'email', key: 'email', render: (value) => value ?? '-' },
-    { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
+    { title: 'Status', dataIndex: 'ativo', key: 'ativo', mobileRole: 'status', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome, documento ou email' },
@@ -306,8 +306,8 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
   listDescription: 'Cadastros de meios de pagamento para uso operacional.',
   formDescription: 'Configure cartão, baixa automática e disponibilidade da forma de pagamento.',
   columns: [
-    { title: 'Nome', dataIndex: 'nome', key: 'nome' },
-    { title: 'Tipo', dataIndex: 'tipo', key: 'tipo' },
+    { title: 'Nome', dataIndex: 'nome', key: 'nome', mobileRole: 'title' },
+    { title: 'Tipo', dataIndex: 'tipo', key: 'tipo', mobileRole: 'subtitle' },
     { title: 'Cartão', dataIndex: 'ehCartao', key: 'ehCartao', render: (_, record) => renderBooleanTag(record.ehCartao, 'Sim', 'Não') },
     {
       title: 'Baixa automática',
@@ -315,7 +315,7 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
       key: 'baixarAutomaticamente',
       render: (_, record) => renderBooleanTag(record.baixarAutomaticamente, 'Sim', 'Não')
     },
-    { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
+    { title: 'Status', dataIndex: 'ativo', key: 'ativo', mobileRole: 'status', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome da forma de pagamento' },
@@ -401,28 +401,31 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
   listDescription: 'Base de contas para saldo inicial, baixa automática e pagamentos.',
   formDescription: 'Cadastre dados bancários e saldo inicial para preparar o fluxo de caixa.',
   columns: [
-    { title: 'Nome', dataIndex: 'nome', key: 'nome' },
-    { title: 'Banco', dataIndex: 'banco', key: 'banco' },
+    { title: 'Nome', dataIndex: 'nome', key: 'nome', mobileRole: 'title' },
+    { title: 'Banco', dataIndex: 'banco', key: 'banco', mobileRole: 'subtitle' },
     { title: 'Conta', dataIndex: 'numeroConta', key: 'numeroConta', render: (value) => value ?? '-' },
     {
       title: 'Saldo inicial',
       dataIndex: 'saldoInicial',
       key: 'saldoInicial',
+      mobileRole: 'value',
       render: (value) => renderCurrency(value as number | null | undefined)
     },
     {
       title: 'Limite compartilhado',
       dataIndex: 'limiteCartoesCompartilhado',
       key: 'limiteCartoesCompartilhado',
+      mobileRole: 'hidden',
       render: (value) => renderCurrency(value as number | null | undefined)
     },
     {
       title: 'Disponível',
       dataIndex: 'limiteCartoesDisponivel',
       key: 'limiteCartoesDisponivel',
+      mobileRole: 'hidden',
       render: (value) => renderCurrency(value as number | null | undefined)
     },
-    { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
+    { title: 'Status', dataIndex: 'ativo', key: 'ativo', mobileRole: 'status', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome, banco ou número da conta' },
@@ -514,30 +517,33 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
   listDescription: 'Cadastre cartões com fechamento, vencimento e conta padrão de pagamento.',
   formDescription: 'Use os dados do cartão para preparar a fase de compras e faturas.',
   columns: [
-    { title: 'Nome', dataIndex: 'nome', key: 'nome' },
-    { title: 'Bandeira', dataIndex: 'bandeira', key: 'bandeira' },
-    { title: 'Final', dataIndex: 'numeroFinal', key: 'numeroFinal' },
+    { title: 'Nome', dataIndex: 'nome', key: 'nome', mobileRole: 'title' },
+    { title: 'Bandeira', dataIndex: 'bandeira', key: 'bandeira', mobileRole: 'subtitle' },
+    { title: 'Final', dataIndex: 'numeroFinal', key: 'numeroFinal', mobileRole: 'subtitle' },
     { title: 'Fechamento', dataIndex: 'diaFechamentoFatura', key: 'diaFechamentoFatura' },
     { title: 'Vencimento', dataIndex: 'diaVencimentoFatura', key: 'diaVencimentoFatura' },
     {
       title: 'Origem limite',
       dataIndex: 'usaLimiteCompartilhado',
       key: 'usaLimiteCompartilhado',
+      mobileRole: 'hidden',
       render: (_, record) => renderBooleanTag(record.usaLimiteCompartilhado, 'Compartilhado', 'Individual')
     },
     {
       title: 'Limite efetivo',
       dataIndex: 'limiteEfetivo',
       key: 'limiteEfetivo',
+      mobileRole: 'value',
       render: (value) => renderCurrency(value as number | null | undefined)
     },
     {
       title: 'Disponível',
       dataIndex: 'limiteDisponivel',
       key: 'limiteDisponivel',
+      mobileRole: 'hidden',
       render: (value) => renderCurrency(value as number | null | undefined)
     },
-    { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
+    { title: 'Status', dataIndex: 'ativo', key: 'ativo', mobileRole: 'status', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome, bandeira ou final' },
@@ -645,24 +651,26 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
   listDescription: 'Cadastre a estrutura de receita e despesa para rateio e visão gerencial.',
   formDescription: 'Contas pai são estruturais; somente contas sem filhos podem receber lançamentos e planejamentos.',
   columns: [
-    { title: 'Código', dataIndex: 'codigo', key: 'codigo', render: (value) => value ?? '-' },
-    { title: 'Descrição', dataIndex: 'descricao', key: 'descricao' },
-    { title: 'Tipo', dataIndex: 'tipo', key: 'tipo' },
+    { title: 'Código', dataIndex: 'codigo', key: 'codigo', mobileRole: 'subtitle', render: (value) => value ?? '-' },
+    { title: 'Descrição', dataIndex: 'descricao', key: 'descricao', mobileRole: 'title' },
+    { title: 'Tipo', dataIndex: 'tipo', key: 'tipo', mobileRole: 'status' },
     { title: 'Conta pai', dataIndex: 'contaPaiDescricao', key: 'contaPaiDescricao', render: (value) => value ?? '-' },
     { title: 'Responsável padrão', dataIndex: 'responsavelPadraoNome', key: 'responsavelPadraoNome', render: (value) => value ?? '-' },
     {
       title: 'Uso',
       dataIndex: 'aceitaLancamentos',
       key: 'aceitaLancamentos',
+      mobileRole: 'hidden',
       render: (_, record) => renderBooleanTag(record.aceitaLancamentos, 'Lançável', 'Estrutural')
     },
     {
       title: 'Receb. fatura',
       dataIndex: 'ehPadraoRecebimentoFaturaCartao',
       key: 'ehPadraoRecebimentoFaturaCartao',
+      mobileRole: 'hidden',
       render: (_, record) => renderBooleanTag(record.ehPadraoRecebimentoFaturaCartao, 'Padrão', 'Não')
     },
-    { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
+    { title: 'Status', dataIndex: 'ativo', key: 'ativo', mobileRole: 'hidden', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Código ou descrição' },

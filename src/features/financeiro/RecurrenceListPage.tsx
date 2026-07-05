@@ -193,6 +193,7 @@ export function RecurrenceListPage() {
             title: 'Descrição',
             dataIndex: 'descricao',
             key: 'descricao',
+            mobileRole: 'title',
             render: (value: string, record: RecorrenciaDisplayItem) => (
               <div>
                 <div className="text-sm font-bold text-on-surface">{String(value)}</div>
@@ -206,6 +207,7 @@ export function RecurrenceListPage() {
             title: 'Pessoa',
             dataIndex: 'pessoaNome',
             key: 'pessoaNome',
+            mobileRole: 'subtitle',
             render: (value: string) => (
               <span className="text-sm text-on-surface-variant">{String(value)}</span>
             )
@@ -215,6 +217,7 @@ export function RecurrenceListPage() {
             dataIndex: 'valorLiquido',
             key: 'valorLiquido',
             align: 'right',
+            mobileRole: 'value',
             render: (value: number, record: RecorrenciaDisplayItem) => (
               <span className={`text-sm font-bold ${record.tipoFormatted === 'receita' ? 'text-primary' : 'text-error'}`}>
                 {record.tipoFormatted === 'despesa' ? '- ' : '+ '}
@@ -235,6 +238,7 @@ export function RecurrenceListPage() {
             title: 'Início',
             dataIndex: 'dataInicio',
             key: 'dataInicio',
+            mobileRole: 'date',
             render: (value: string) => (
               <span className="text-sm text-on-surface-variant">{formatDateBR(String(value))}</span>
             )
@@ -243,6 +247,7 @@ export function RecurrenceListPage() {
             title: 'Status',
             dataIndex: 'ativa',
             key: 'ativa',
+            mobileRole: 'status',
             align: 'center',
             render: (value: boolean) =>
               value ? (
