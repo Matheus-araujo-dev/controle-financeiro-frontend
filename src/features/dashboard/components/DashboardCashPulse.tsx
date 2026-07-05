@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NeonBadge } from '../../../components/neon-ledger/NeonBadge';
 import { formatCurrencyBRL } from '../../../shared/currency';
-import { DashboardFluxoCaixaDia } from '../../../types/dashboard';
+import type { DashboardFluxoCaixaDia } from '../../../types/dashboard';
 
 interface DashboardCashPulseProps {
   items: DashboardFluxoCaixaDia[];
