@@ -1,5 +1,5 @@
-import { lazy } from 'react';
 import type { RouteObject } from 'react-router-dom';
+import { lazyWithRetry as lazy } from './lazy-with-retry';
 import {
   cartoesModuleConfig,
   contasBancariasModuleConfig,
