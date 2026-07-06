@@ -73,14 +73,38 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [tipo, setTipo] = useState<QuickLaunchTipo>('pagar');
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState(0);
-  const [dataVencimento, setDataVencimento] = useState(hojeISO());
+  const initialDate = useRef(hojeISO());
+  const [dataVencimento, setDataVencimento] = useState(initialDate.current);
   const [pessoaId, setPessoaId] = useState('');
   const [responsavelId, setResponsavelId] = useState('');
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
   const [cartaoId, setCartaoId] = useState('');
   const [contaGerencialId, setContaGerencialId] = useState('');
   const [saving, setSaving] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
   const lastAutoFilledContaRef = useRef<string | null>(null);
+
+  const isDirty =
+    descricao.trim() !== '' ||
+    valor !== 0 ||
+    pessoaId !== '' ||
+    responsavelId !== '' ||
+    formaPagamentoId !== '' ||
+    contaGerencialId !== '' ||
+    dataVencimento !== initialDate.current;
+
+  const isDirtyRef = useRef(isDirty);
+  const confirmCloseRef = useRef(confirmClose);
+  isDirtyRef.current = isDirty;
+  confirmCloseRef.current = confirmClose;
+
+  function requestClose() {
+    if (isDirtyRef.current) {
+      setConfirmClose(true);
+    } else {
+      onClose();
+    }
+  }
 
   // Itens adicionados via QuickAdd nesta sessão (aparecem no topo da lista)
   const [extraPessoas, setExtraPessoas] = useState<Option[]>([]);
@@ -208,7 +232,13 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       if (!dialogRef.current) return;
 
       if (event.key === 'Escape') {
-        onClose();
+        if (confirmCloseRef.current) {
+          setConfirmClose(false);
+        } else if (isDirtyRef.current) {
+          setConfirmClose(true);
+        } else {
+          onClose();
+        }
         return;
       }
 
@@ -362,7 +392,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="flex max-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-surface-container-low shadow-2xl"
+          className="relative flex max-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-surface-container-low shadow-2xl"
         >
           <div className="overflow-y-auto p-7">
             <div className="mb-6 flex items-center gap-3">
@@ -499,7 +529,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
             </div>
 
             <div className="mt-7 flex justify-end gap-3">
-              <Button type="button" variant="secondary" size="lg" onClick={onClose}>
+              <Button type="button" variant="secondary" size="lg" onClick={requestClose}>
                 Cancelar
               </Button>
               <Button type="button" size="lg" disabled={!podeSalvar || saving} loading={saving} onClick={() => void handleSubmit()}>
@@ -507,6 +537,38 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               </Button>
             </div>
           </div>
+
+          {confirmClose && (
+            <div
+              className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-black/70 backdrop-blur-sm"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="ql-confirm-title"
+            >
+              <div className="mx-6 w-full max-w-sm rounded-2xl border border-white/10 bg-surface-container p-6 shadow-xl">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/5 bg-surface-container-high text-amber-400">
+                    <span className="material-symbols-outlined text-xl" aria-hidden="true">warning</span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Atenção</p>
+                    <h4 id="ql-confirm-title" className="font-bold text-on-surface">Descartar dados?</h4>
+                  </div>
+                </div>
+                <p className="mb-6 text-sm leading-relaxed text-on-surface-variant">
+                  Os dados preenchidos ainda não foram salvos e serão perdidos se você fechar agora.
+                </p>
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <Button type="button" variant="secondary" size="md" onClick={() => setConfirmClose(false)}>
+                    Continuar editando
+                  </Button>
+                  <Button type="button" variant="danger" size="md" onClick={onClose}>
+                    Sim, descartar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
