@@ -191,10 +191,12 @@ describe('FinancialAccountFormPage', () => {
 
     renderWithRoute('/contas-pagar/123', '/contas-pagar/:id', config);
 
-    expect(await screen.findByText('Direcionado para fatura 05/2026')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Visa final 4242 .* fechamento 10\/05\/2026 .* vencimento 20\/05\/2026/i)
-    ).toBeInTheDocument();
+    // Eyebrow e competência agora são elementos separados no card redesenhado
+    expect(await screen.findByText(/direcionado para fatura/i)).toBeInTheDocument();
+    expect(screen.getByText('05/2026')).toBeInTheDocument();
+    expect(screen.getByText('Visa final 4242')).toBeInTheDocument();
+    expect(screen.getByText('10/05/2026')).toBeInTheDocument();
+    expect(screen.getByText('20/05/2026')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Abrir fatura prevista/i })).toHaveAttribute(
       'href',
       '/faturas?cartaoId=c1&competencia=2026-05&origem=conta-cartao'
