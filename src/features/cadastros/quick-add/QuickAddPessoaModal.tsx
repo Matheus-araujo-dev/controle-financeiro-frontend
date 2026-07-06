@@ -54,8 +54,10 @@ export function QuickAddPessoaModal({ open, onClose, onSuccess, defaultRole }: P
         chavesPix: [],
         ehPagador,
         ehRecebedor,
-        ehResponsavel
-      });
+        ehResponsavel,
+        contaGerencialDespesaId: null,
+        contaGerencialReceitaId: null
+      } as never);
       onSuccess(result.id, result.nome);
       handleClose();
     } catch {
