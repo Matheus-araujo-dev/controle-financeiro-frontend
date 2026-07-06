@@ -80,6 +80,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [cartaoId, setCartaoId] = useState('');
   const [contaGerencialId, setContaGerencialId] = useState('');
   const [saving, setSaving] = useState(false);
+  const lastAutoFilledContaRef = useRef<string | null>(null);
 
   // Itens adicionados via QuickAdd nesta sessão (aparecem no topo da lista)
   const [extraPessoas, setExtraPessoas] = useState<Option[]>([]);
@@ -164,10 +165,18 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   }, [extraContasReceita, receitaResult.data]);
 
   useEffect(() => {
-    if (!pessoaId || contaGerencialId) return;
+    if (!pessoaId) return;
     const contaIds = pessoaContaGerencialMap.get(pessoaId);
     const contaId = tipo === 'pagar' ? contaIds?.despesaId : contaIds?.receitaId;
-    if (contaId) setContaGerencialId(contaId);
+    const manuallyChanged = contaGerencialId && contaGerencialId !== lastAutoFilledContaRef.current;
+    if (manuallyChanged) return;
+    if (contaId) {
+      setContaGerencialId(contaId);
+      lastAutoFilledContaRef.current = contaId;
+    } else {
+      if (contaGerencialId === lastAutoFilledContaRef.current) setContaGerencialId('');
+      lastAutoFilledContaRef.current = null;
+    }
   }, [pessoaId, tipo, contaGerencialId, pessoaContaGerencialMap]);
 
   const someQueryErrored = [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult].some((r) => r.isError);

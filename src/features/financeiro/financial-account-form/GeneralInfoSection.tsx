@@ -44,13 +44,24 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
   const descricaoWatched = useWatch({ control, name: 'descricao' });
   const categoriaAtual = useWatch({ control, name: 'rateios.0.contaGerencialId' });
   const pessoaWatched = useWatch({ control, name: 'pessoaId' });
+  const lastAutoFilledContaRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!pessoaWatched || categoriaAtual) return;
+    if (!pessoaWatched) return;
     const pessoa = pessoaOptions.find((o) => o.value === pessoaWatched);
     // personRole='recebedor' → conta a pagar (despesa); personRole='pagador' → conta a receber (receita)
     const contaId = personRole === 'pagador' ? pessoa?.contaGerencialReceitaId : pessoa?.contaGerencialDespesaId;
-    if (contaId) setValue('rateios.0.contaGerencialId', contaId);
+    const manuallyChanged = categoriaAtual && categoriaAtual !== lastAutoFilledContaRef.current;
+    if (manuallyChanged) return;
+    if (contaId) {
+      setValue('rateios.0.contaGerencialId', contaId);
+      lastAutoFilledContaRef.current = contaId;
+    } else {
+      if (categoriaAtual === lastAutoFilledContaRef.current) {
+        setValue('rateios.0.contaGerencialId', '');
+      }
+      lastAutoFilledContaRef.current = null;
+    }
   }, [pessoaWatched, pessoaOptions, categoriaAtual, personRole, setValue]);
 
   useEffect(() => {
