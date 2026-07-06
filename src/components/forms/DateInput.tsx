@@ -150,16 +150,14 @@ export function DateInput({
   }, []);
 
   useLayoutEffect(() => {
-    if (!open || disabled) return;
+    if (!open || disabled || !rootRef.current) return;
 
-    const trigger = rootRef.current?.querySelector('button[aria-expanded]') as HTMLButtonElement | null;
-    if (!trigger) return;
-
-    const rect = trigger.getBoundingClientRect();
+    const rect = rootRef.current.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const estimatedHeight = mode === 'date' ? 362 : 246;
-    const estimatedWidth = mode === 'date' ? rect.width : Math.min(320, viewportWidth - 16);
+    const minWidth = mode === 'date' ? 280 : 280;
+    const estimatedWidth = Math.max(minWidth, Math.min(rect.width, viewportWidth - 16));
     const gap = 8;
     const showAbove = rect.bottom + estimatedHeight + gap > viewportHeight && rect.top > estimatedHeight + gap;
     const top = showAbove ? rect.top - estimatedHeight - gap : rect.bottom + gap;
