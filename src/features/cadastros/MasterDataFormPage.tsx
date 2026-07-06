@@ -103,7 +103,13 @@ function getPixPlaceholder(tipo?: string) {
 
 function toComboOptions(options: SelectOption[], includeEmpty = false): ComboBoxOption[] {
   const normalized = options.map((option) => ({
-    label: option.label,
+    label: option.chain ? (
+      <>
+        {option.label}{' '}
+        <span className="text-on-surface-variant/50 text-xs font-normal">{option.chain}</span>
+      </>
+    ) : option.label,
+    displayText: option.label,
     value: String(option.value)
   }));
 
@@ -111,7 +117,7 @@ function toComboOptions(options: SelectOption[], includeEmpty = false): ComboBox
 }
 
 function isOptionalSelect(fieldName: string) {
-  return ['contaPaiId', 'responsavelPadraoId', 'contaBancariaPagamentoPadraoId'].includes(fieldName);
+  return ['contaPaiId', 'responsavelPadraoId', 'contaBancariaPagamentoPadraoId', 'contaGerencialDespesaId', 'contaGerencialReceitaId'].includes(fieldName);
 }
 
 function sectionPlanFor(key: string) {
