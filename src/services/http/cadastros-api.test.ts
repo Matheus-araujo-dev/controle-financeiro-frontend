@@ -33,7 +33,9 @@ describe('cadastrosApi', () => {
       chavesPix: [],
       ehPagador: true,
       ehRecebedor: true,
-      ehResponsavel: true
+      ehResponsavel: true,
+      contaGerencialDespesaId: '',
+      contaGerencialReceitaId: ''
     });
     await cadastrosApi.pessoas.atualizar('1', {
       nome: 'Pessoa',
@@ -45,7 +47,9 @@ describe('cadastrosApi', () => {
       chavesPix: [],
       ehPagador: true,
       ehRecebedor: true,
-      ehResponsavel: true
+      ehResponsavel: true,
+      contaGerencialDespesaId: '',
+      contaGerencialReceitaId: ''
     });
     await cadastrosApi.pessoas.ativar('1');
     await cadastrosApi.pessoas.inativar('1');

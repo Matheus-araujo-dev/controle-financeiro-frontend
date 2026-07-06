@@ -31,6 +31,8 @@ export type PessoaResumo = {
   ehPagador: boolean;
   ehRecebedor: boolean;
   ehResponsavel: boolean;
+  contaGerencialDespesaId: string | null;
+  contaGerencialReceitaId: string | null;
 };
 
 export type PessoaChavePix = {
@@ -56,6 +58,8 @@ export type PessoaPayload = {
   ehPagador: boolean;
   ehRecebedor: boolean;
   ehResponsavel: boolean;
+  contaGerencialDespesaId: string;
+  contaGerencialReceitaId: string;
 };
 
 export type PessoaFilters = ListQueryBase & {

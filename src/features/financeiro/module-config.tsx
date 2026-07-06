@@ -37,6 +37,8 @@ export type FinanceiroResumo = {
 export type SelectOption = {
   label: string;
   value: string;
+  contaGerencialDespesaId?: string | null;
+  contaGerencialReceitaId?: string | null;
 };
 
 export type FormaPagamentoOption = SelectOption & {
@@ -285,7 +287,12 @@ async function loadPessoaOptions() {
     ativo: true
   });
 
-  return response.items.map((item) => ({ label: item.nome, value: item.id }));
+  return response.items.map((item) => ({
+    label: item.nome,
+    value: item.id,
+    contaGerencialDespesaId: item.contaGerencialDespesaId,
+    contaGerencialReceitaId: item.contaGerencialReceitaId
+  }));
 }
 
 async function loadResponsavelOptions() {

@@ -236,7 +236,19 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     { name: 'observacao', label: 'Observação', kind: 'textarea' },
     { name: 'ehPagador', label: 'Pagador', kind: 'switch' },
     { name: 'ehRecebedor', label: 'Recebedor', kind: 'switch' },
-    { name: 'ehResponsavel', label: 'Responsável', kind: 'switch' }
+    { name: 'ehResponsavel', label: 'Responsável', kind: 'switch' },
+    {
+      name: 'contaGerencialDespesaId',
+      label: 'Conta gerencial de despesa padrão',
+      kind: 'select',
+      loadOptions: () => loadContaGerencialOptions({ tipo: 'Despesa' })
+    },
+    {
+      name: 'contaGerencialReceitaId',
+      label: 'Conta gerencial de receita padrão',
+      kind: 'select',
+      loadOptions: () => loadContaGerencialOptions({ tipo: 'Receita' })
+    }
   ],
   schema: pessoaSchema,
   defaultFilters: { page: 1, pageSize: 20, search: '' },
@@ -250,12 +262,24 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     chavesPix: [],
     ehPagador: true,
     ehRecebedor: true,
-    ehResponsavel: true
+    ehResponsavel: true,
+    contaGerencialDespesaId: '',
+    contaGerencialReceitaId: ''
   },
   list: cadastrosApi.pessoas.listar,
   detail: cadastrosApi.pessoas.obterPorId,
-  create: cadastrosApi.pessoas.criar,
-  update: cadastrosApi.pessoas.atualizar,
+  create: (payload) =>
+    cadastrosApi.pessoas.criar({
+      ...payload,
+      contaGerencialDespesaId: payload.contaGerencialDespesaId || null,
+      contaGerencialReceitaId: payload.contaGerencialReceitaId || null
+    } as never),
+  update: (id, payload) =>
+    cadastrosApi.pessoas.atualizar(id, {
+      ...payload,
+      contaGerencialDespesaId: payload.contaGerencialDespesaId || null,
+      contaGerencialReceitaId: payload.contaGerencialReceitaId || null
+    } as never),
   toFormValues: (detail) => ({
     nome: detail.nome,
     tipoPessoa: detail.tipoPessoa,
@@ -266,7 +290,9 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     chavesPix: detail.chavesPix ?? [],
     ehPagador: detail.ehPagador ?? true,
     ehRecebedor: detail.ehRecebedor ?? true,
-    ehResponsavel: detail.ehResponsavel ?? true
+    ehResponsavel: detail.ehResponsavel ?? true,
+    contaGerencialDespesaId: detail.contaGerencialDespesaId ?? '',
+    contaGerencialReceitaId: detail.contaGerencialReceitaId ?? ''
   }),
   rowActions: [
     {

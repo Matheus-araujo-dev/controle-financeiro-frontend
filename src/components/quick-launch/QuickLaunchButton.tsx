@@ -109,6 +109,19 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
   }, [extraPessoas, pessoasResult.data]);
 
+  const pessoaContaGerencialMap = useMemo(() => {
+    const map = new Map<string, { despesaId?: string; receitaId?: string }>();
+    pessoasResult.data?.items.forEach((p) => {
+      if (p.contaGerencialDespesaId || p.contaGerencialReceitaId) {
+        map.set(p.id, {
+          despesaId: p.contaGerencialDespesaId ?? undefined,
+          receitaId: p.contaGerencialReceitaId ?? undefined
+        });
+      }
+    });
+    return map;
+  }, [pessoasResult.data]);
+
   const responsaveis = useMemo<Option[]>(() => {
     const fromServer = pessoasResult.data?.items.filter((p) => p.ehResponsavel).map((p) => ({ label: p.nome, value: p.id })) ?? [];
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
@@ -149,6 +162,13 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     }));
     return [...extraContasReceita, ...fromServer.filter((c) => !extraContasReceita.some((e) => e.value === c.value))];
   }, [extraContasReceita, receitaResult.data]);
+
+  useEffect(() => {
+    if (!pessoaId || contaGerencialId) return;
+    const contaIds = pessoaContaGerencialMap.get(pessoaId);
+    const contaId = tipo === 'pagar' ? contaIds?.despesaId : contaIds?.receitaId;
+    if (contaId) setContaGerencialId(contaId);
+  }, [pessoaId, tipo, contaGerencialId, pessoaContaGerencialMap]);
 
   const someQueryErrored = [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult].some((r) => r.isError);
   useEffect(() => {

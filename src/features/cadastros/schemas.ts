@@ -54,7 +54,9 @@ export const pessoaSchema = z.object({
     }),
   ehPagador: z.boolean(),
   ehRecebedor: z.boolean(),
-  ehResponsavel: z.boolean()
+  ehResponsavel: z.boolean(),
+  contaGerencialDespesaId: z.string(),
+  contaGerencialReceitaId: z.string()
 });
 
 export const formaPagamentoSchema = z.object({
