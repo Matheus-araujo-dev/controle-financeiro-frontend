@@ -3,7 +3,7 @@ import { Controller, useWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { agenteApi } from '../../../services/http/agente-api';
 
-import { formatMonthYearBR } from '../../../shared/date';
+import { formatDateBR, formatMonthYearBR } from '../../../shared/date';
 import { buildCardInvoiceLink } from './card-invoice';
 import { errorTextClass, fieldLabelClass, nativeFieldWithPaddingClass } from './field-classes';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
@@ -108,12 +108,16 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
             <div>
               <p className="text-sm font-bold">Direcionado para fatura {formatMonthYearBR(cardInvoicePreview.competencia)}</p>
               <p className="text-xs opacity-80">
-                {`${cardInvoicePreview.cartaoNome ?? 'Cartão selecionado'} • fechamento ${cardInvoicePreview.dataFechamento} • vencimento ${cardInvoicePreview.dataVencimento}`}
+                {`${cardInvoicePreview.cartaoNome ?? 'Cartão selecionado'} • fechamento ${formatDateBR(cardInvoicePreview.dataFechamento)} • vencimento ${formatDateBR(cardInvoicePreview.dataVencimento)}`}
               </p>
             </div>
           </div>
-          <Link to={buildCardInvoiceLink(cardInvoicePreview)} className="inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline">
-            Abrir fatura prevista <span className="material-symbols-outlined text-sm">search</span>
+          <Link
+            to={buildCardInvoiceLink(cardInvoicePreview)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/25"
+          >
+            Abrir fatura prevista
+            <span className="material-symbols-outlined text-sm">open_in_new</span>
           </Link>
         </div>
       ) : null}

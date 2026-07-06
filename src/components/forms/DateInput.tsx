@@ -416,6 +416,7 @@ export function DateInput({
         <input
           ref={inputRef}
           type="text"
+          inputMode="none"
           disabled={disabled}
           aria-label={ariaLabel}
           placeholder={placeholder}

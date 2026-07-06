@@ -199,6 +199,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     numeroParcela,
     totalRateios
   } = form;
+  const showSubmitError = Boolean(errorMessage) && !isSubmitting;
 
   const [confirm, setConfirm] = useState<ConfirmState>(null);
   const [plannedPurchaseConfirmOpen, setPlannedPurchaseConfirmOpen] = useState(false);
@@ -216,6 +217,12 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
   return (
     <div className="space-y-8 lg:col-span-5">
       <div className="fixed left-4 right-4 z-40 lg:hidden" style={{ bottom: '72px' }}>
+        {showSubmitError ? (
+          <div className="mb-2 flex items-center gap-2 rounded-xl border border-error/20 bg-error/10 px-3 py-2.5 text-error backdrop-blur-xl">
+            <span className="material-symbols-outlined text-sm shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+            <p className="text-xs font-bold">{errorMessage}</p>
+          </div>
+        ) : null}
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-surface-container-low/95 px-4 py-3 shadow-[0_-4px_32px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Valor Liquido</p>

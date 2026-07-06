@@ -88,6 +88,15 @@ function readLegacyOptions(children: ReactNode) {
   return { options, placeholder };
 }
 
+function findNextEnabled(options: ComboBoxOption[], from: number, step: 1 | -1): number {
+  const len = options.length;
+  for (let i = 1; i <= len; i++) {
+    const idx = ((from + step * i) % len + len) % len;
+    if (!options[idx].disabled) return idx;
+  }
+  return -1;
+}
+
 export function ComboBox({
   'aria-label': ariaLabel,
   id,
@@ -107,9 +116,12 @@ export function ComboBox({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [dropdownStyle, setDropdownStyle] = useState<CSSProperties>({});
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const parsed = useMemo(() => readLegacyOptions(children), [children]);
   const normalizedOptions = options ?? parsed.options;
@@ -117,6 +129,27 @@ export function ComboBox({
   const selectedOption = normalizedOptions.find((option) => option.value === value);
   const selectedLabel = selectedOption?.displayText ?? getTextFromNode(selectedOption?.label);
   const hasAddNewAction = Boolean(onAddNew);
+
+  const filteredOptions = useMemo(() => {
+    const search = query.trim().toLowerCase();
+    if (!open || search === '') {
+      return normalizedOptions;
+    }
+
+    return normalizedOptions.filter((option) => getTextFromNode(option.label).toLowerCase().includes(search));
+  }, [normalizedOptions, open, query]);
+
+  // Reset highlight when dropdown closes or query changes
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [open, query]);
+
+  // Auto-scroll highlighted item into view
+  useEffect(() => {
+    if (highlightedIndex < 0 || !listRef.current) return;
+    const el = listRef.current.children[highlightedIndex] as HTMLElement | undefined;
+    el?.scrollIntoView?.({ block: 'nearest' });
+  }, [highlightedIndex]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -154,15 +187,6 @@ export function ComboBox({
     );
   }, [open, options, parsed.options, onAddNew]);
 
-  const filteredOptions = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    if (!open || search === '') {
-      return normalizedOptions;
-    }
-
-    return normalizedOptions.filter((option) => getTextFromNode(option.label).toLowerCase().includes(search));
-  }, [normalizedOptions, open, query]);
-
   function close() {
     setOpen(false);
     setQuery(selectedLabel);
@@ -180,27 +204,78 @@ export function ComboBox({
     inputRef.current?.blur();
   }
 
+  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      close();
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      close();
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      if (!open) {
+        setOpen(true);
+        setQuery('');
+        return;
+      }
+      const next = findNextEnabled(filteredOptions, highlightedIndex, 1);
+      if (next >= 0) setHighlightedIndex(next);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (!open) return;
+      const prev = findNextEnabled(filteredOptions, highlightedIndex < 0 ? filteredOptions.length : highlightedIndex, -1);
+      if (prev >= 0) setHighlightedIndex(prev);
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (!open) return;
+      const target =
+        highlightedIndex >= 0
+          ? filteredOptions[highlightedIndex]
+          : filteredOptions.find((o) => !o.disabled);
+      if (target) selectOption(target);
+      return;
+    }
+  }
+
   const dropdown = open && !disabled ? createPortal(
     <div
       ref={dropdownRef}
       style={dropdownStyle}
       className="overflow-hidden rounded-xl border border-white/10 bg-surface-container-high shadow-2xl"
     >
-      {filteredOptions.length === 0 ? (
+      {filteredOptions.length === 0 && !onAddNew ? (
         <div className="px-4 py-3 text-sm font-medium text-on-surface-variant">Nenhuma opção disponível</div>
       ) : (
-        <div className="max-h-60 overflow-auto p-2">
-          {filteredOptions.map((option) => {
+        <div ref={listRef} className="max-h-60 overflow-auto p-2">
+          {filteredOptions.map((option, index) => {
             const isSelected = option.value === value;
+            const isHighlighted = index === highlightedIndex;
             return (
               <button
                 key={option.value}
                 type="button"
                 disabled={option.disabled}
                 onMouseDown={(event) => event.preventDefault()}
+                onMouseEnter={() => setHighlightedIndex(index)}
+                onMouseLeave={() => setHighlightedIndex(-1)}
                 onClick={() => selectOption(option)}
                 className={`block w-full rounded-lg px-3 py-2 text-left text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                  isSelected ? 'bg-primary/20 text-primary' : 'text-on-surface hover:bg-primary/15 hover:text-primary'
+                  isSelected
+                    ? 'bg-primary/20 text-primary'
+                    : isHighlighted
+                      ? 'bg-primary/15 text-primary'
+                      : 'text-on-surface hover:bg-primary/15 hover:text-primary'
                 }`}
               >
                 {option.label}
@@ -209,6 +284,17 @@ export function ComboBox({
           })}
         </div>
       )}
+      {onAddNew ? (
+        <button
+          type="button"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => { onAddNew(); setOpen(false); }}
+          className="flex w-full items-center gap-2 border-t border-white/6 px-4 py-2.5 text-left text-sm font-bold text-primary transition-colors hover:bg-primary/10"
+        >
+          <span className="material-symbols-outlined text-base">add_circle</span>
+          {addNewLabel}
+        </button>
+      ) : null}
     </div>,
     document.body
   ) : null;
@@ -244,21 +330,7 @@ export function ComboBox({
             setQuery(event.target.value);
             setOpen(true);
           }}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              event.preventDefault();
-              close();
-              return;
-            }
-
-            if (event.key === 'Enter') {
-              const firstVisible = filteredOptions.find((option) => !option.disabled);
-              if (firstVisible) {
-                event.preventDefault();
-                selectOption(firstVisible);
-              }
-            }
-          }}
+          onKeyDown={handleKeyDown}
           className={`min-w-0 flex-1 bg-transparent px-4 text-left font-medium text-on-surface outline-none placeholder:text-outline/50 disabled:cursor-not-allowed ${
             hasAddNewAction ? 'pr-24' : 'pr-10'
           }`}

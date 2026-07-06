@@ -19,11 +19,12 @@ export function FinancialAccountFormPage({
   config: FinanceiroModuleConfig<any, any, any>;
 }) {
   const form = useFinancialAccountForm(config);
-  const { id, control, canEdit, loading, errorMessage, handleSubmit, onSubmit } = form;
+  const { id, control, canEdit, loading, errorMessage, isSubmitting, handleSubmit, onSubmit } = form;
   const isReceita = config.key === 'contas-receber';
 
   if (loading) return <PageState state="loading" title="Carregando lançamento..." />;
-  if (errorMessage && !id) return <PageState state="error" title="Falha ao carregar lançamento" subtitle={errorMessage} />;
+  // Only show full-page error for load failures on existing records (never for submit errors)
+  if (errorMessage && id && !isSubmitting) return <PageState state="error" title="Falha ao carregar lançamento" subtitle={errorMessage} />;
 
   return (
     <div className="space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-28 lg:pb-0">
