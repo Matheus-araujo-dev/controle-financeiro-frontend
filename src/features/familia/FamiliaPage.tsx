@@ -10,7 +10,8 @@ import {
   Space,
   Typography
 } from 'antd';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PlusOutlined } from '@ant-design/icons';
 import {
   alterarPapelMembro,
@@ -53,24 +54,18 @@ function PapelBadge({ papel }: { papel: string }) {
 }
 
 function MinhasParticipacoes() {
+  const queryClient = useQueryClient();
   const workspaceAtual = useWorkspaceAtual();
-  const [participacoes, setParticipacoes] = useState<ParticipacaoWorkspaceResponse[]>([]);
-  const [loading, setLoading] = useState(true);
   const [switching, setSwitching] = useState<string | null>(null);
   const [creatingWorkspace, setCreatingWorkspace] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [nomeWorkspace, setNomeWorkspace] = useState('');
 
-  const carregar = useCallback(async () => {
-    setLoading(true);
-    try {
-      setParticipacoes(await listarMinhasParticipacoes());
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { void carregar(); }, [carregar]);
+  const { data: participacoes = [], isLoading: loading } = useQuery({
+    queryKey: ['participacoes', 'minhas'],
+    queryFn: () => listarMinhasParticipacoes(),
+    staleTime: 60_000
+  });
 
   const handleCriarWorkspace = async () => {
     if (creatingWorkspace || participacoes.length >= MAX_WORKSPACES) return;
@@ -78,6 +73,7 @@ function MinhasParticipacoes() {
     try {
       const resultado = await criarWorkspace(nomeWorkspace.trim() ? { nome: nomeWorkspace.trim() } : {});
       useAuthStore.getState().applyTokenResponse(resultado.sessao);
+      await queryClient.invalidateQueries({ queryKey: ['participacoes', 'minhas'] });
       notify('success', 'Novo espaço criado');
       setModalOpen(false);
       setNomeWorkspace('');
@@ -242,30 +238,21 @@ function EspacoAtivoNome({ nome, isAdmin, onRenomear }: { nome: string; isAdmin:
 }
 
 export function FamiliaPage() {
+  const queryClient = useQueryClient();
   const currentUser = useCurrentUser();
-  const [familia, setFamilia] = useState<FamiliaDetalheResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [conviteLink, setConviteLink] = useState<string | null>(null);
   const [conviteForm] = Form.useForm<{ email: string; papel: string }>();
 
+  const { data: familia, isLoading: loading, error: familiaError } = useQuery({
+    queryKey: ['familia', 'current'],
+    queryFn: () => obterMinhaFamilia(),
+    staleTime: 60_000
+  });
+
+  const error = familiaError ? getApiErrorMessage(familiaError) : null;
   const isAdmin = familia?.meuPapel === 'Administrador';
 
-  const carregar = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setFamilia(await obterMinhaFamilia());
-    } catch (err) {
-      setError(getApiErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
+  const invalidateFamilia = () => queryClient.invalidateQueries({ queryKey: ['familia', 'current'] });
 
   const handleCriarConvite = async (values: { email: string; papel: string }) => {
     try {
@@ -273,7 +260,7 @@ export function FamiliaPage() {
       const link = `${window.location.origin}/convite/${convite.token}`;
       setConviteLink(link);
       conviteForm.resetFields();
-      await carregar();
+      await invalidateFamilia();
     } catch (err) {
       notify('error', 'Não foi possível criar o convite', getApiErrorMessage(err));
     }
@@ -283,7 +270,7 @@ export function FamiliaPage() {
     try {
       await revogarConvite(id);
       notify('success', 'Convite revogado');
-      await carregar();
+      await invalidateFamilia();
     } catch (err) {
       notify('error', 'Não foi possível revogar o convite', getApiErrorMessage(err));
     }
@@ -293,7 +280,7 @@ export function FamiliaPage() {
     try {
       await alterarPapelMembro(membroId, papel);
       notify('success', 'Papel atualizado');
-      await carregar();
+      await invalidateFamilia();
     } catch (err) {
       notify('error', 'Não foi possível alterar o papel', getApiErrorMessage(err));
     }
@@ -303,7 +290,7 @@ export function FamiliaPage() {
     try {
       await removerMembro(membroId);
       notify('success', 'Membro removido');
-      await carregar();
+      await invalidateFamilia();
     } catch (err) {
       notify('error', 'Não foi possível remover o membro', getApiErrorMessage(err));
     }
@@ -311,7 +298,8 @@ export function FamiliaPage() {
 
   const handleRenomear = async (nome: string) => {
     try {
-      setFamilia(await renomearFamilia(nome));
+      const atualizada = await renomearFamilia(nome);
+      queryClient.setQueryData(['familia', 'current'], atualizada);
       notify('success', 'Espaço renomeado');
     } catch (err) {
       notify('error', 'Não foi possível renomear o espaço', getApiErrorMessage(err));
@@ -331,7 +319,7 @@ export function FamiliaPage() {
             <p className="text-sm font-semibold text-amber-300">Espaço ativo indisponível</p>
             <p className="text-xs text-on-surface-variant mt-0.5">{error}</p>
           </div>
-          <Button size="sm" onClick={() => void carregar()}>Tentar novamente</Button>
+          <Button size="sm" onClick={() => void invalidateFamilia()}>Tentar novamente</Button>
         </div>
       ) : (
         <>

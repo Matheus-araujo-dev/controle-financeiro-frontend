@@ -1,28 +1,21 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import type { FaturaResumo } from '../../../types/financeiro';
 import { financeiroApi } from '../../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../../shared/currency';
 import { formatDateBR, formatMonthYearBR } from '../../../shared/date';
 
-/**
- * Painel das faturas de cartão em aberto: a fatura corrente de cada cartão e a
- * previsão das próximas competências (compras parceladas/recorrentes já projetadas).
- */
 export function DashboardFaturasCartao() {
-  const [faturas, setFaturas] = useState<FaturaResumo[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isPending } = useQuery({
+    queryKey: ['faturas', 'abertas-dashboard'],
+    queryFn: async () => {
+      const response = await financeiroApi.faturas.listar({ page: 1, pageSize: 50, search: '', statusCodigo: 'ABERTA' });
+      return [...response.items].sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento));
+    },
+    staleTime: 5 * 60_000
+  });
 
-  useEffect(() => {
-    financeiroApi.faturas
-      .listar({ page: 1, pageSize: 50, search: '', statusCodigo: 'ABERTA' })
-      .then((response) =>
-        setFaturas([...response.items].sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento)))
-      )
-      .catch(() => setFaturas([]))
-      .finally(() => setLoading(false));
-  }, []);
-
+  const faturas = data ?? [];
   const visiveis = faturas.slice(0, 4);
 
   return (
@@ -37,13 +30,13 @@ export function DashboardFaturasCartao() {
         </Link>
       </div>
 
-      {loading ? (
+      {isPending ? (
         <p className="text-sm text-on-surface-variant animate-pulse">Carregando faturas...</p>
       ) : visiveis.length === 0 ? (
         <p className="text-sm text-on-surface-variant">Nenhuma fatura em aberto. 🎉</p>
       ) : (
         <div className="space-y-3">
-          {visiveis.map((fatura) => (
+          {visiveis.map((fatura: FaturaResumo) => (
             <Link
               key={fatura.id}
               to={`/faturas/${fatura.id}`}
