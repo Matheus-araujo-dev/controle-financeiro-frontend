@@ -48,6 +48,8 @@ export type SelectOption = {
   label: string;
   value: string | boolean;
   data?: Record<string, unknown>;
+  /** Texto da cadeia hierárquica pai, exibido em cinza menor ao lado do label. */
+  chain?: string;
 };
 
 export type FormFieldConfig<TPayload> = {
@@ -191,21 +193,19 @@ async function loadContaGerencialLancavelOptions(tipo: 'Despesa' | 'Receita') {
 
   const allById = new Map(response.items.map((item) => [item.id, item]));
 
-  function buildLabel(item: ContaGerencialResumo): string {
-    const main = buildContaGerencialOptionLabel(item);
+  return sortContasGerenciaisByCodigo(filterContaGerencialLancavel(response.items)).map((item) => {
     const ancestors: string[] = [];
     let current = item.contaPaiId ? allById.get(item.contaPaiId) : undefined;
     while (current) {
       ancestors.push(buildContaGerencialOptionLabel(current));
       current = current.contaPaiId ? allById.get(current.contaPaiId) : undefined;
     }
-    return ancestors.length > 0 ? `${main} (${ancestors.join(', ')})` : main;
-  }
-
-  return sortContasGerenciaisByCodigo(filterContaGerencialLancavel(response.items)).map((item) => ({
-    label: buildLabel(item),
-    value: item.id
-  }));
+    return {
+      label: buildContaGerencialOptionLabel(item),
+      value: item.id,
+      chain: ancestors.length > 0 ? `(${ancestors.join(', ')})` : undefined
+    };
+  });
 }
 
 async function loadPessoaOptions() {
