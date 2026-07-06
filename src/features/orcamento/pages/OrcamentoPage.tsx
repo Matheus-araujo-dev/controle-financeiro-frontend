@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formCompactFieldClass } from '../../../components/forms/FormPrimitives';
 import { DateInput } from '../../../components/forms/DateInput';
 import { PageState } from '../../../components/states/PageState';
@@ -138,32 +139,23 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
 }
 
 export function OrcamentoPage() {
+  const queryClient = useQueryClient();
   const [competencia, setCompetencia] = useState<string>(getCurrentCompetencia());
-  const [orcamento, setOrcamento] = useState<OrcamentoCompetencia>();
-  const [loading, setLoading] = useState(false);
   const [savingContaId, setSavingContaId] = useState<string>();
-  const [errorMessage, setErrorMessage] = useState<string>();
+  const [actionError, setActionError] = useState<string>();
 
-  const loadOrcamento = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
+  const { data: orcamento, isLoading, error } = useQuery({
+    queryKey: ['orcamento', 'competencia', competencia],
+    queryFn: () => orcamentosApi.obterPorCompetencia(competencia),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
 
-    try {
-      setOrcamento(await orcamentosApi.obterPorCompetencia(competencia));
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar orçamento.');
-    } finally {
-      setLoading(false);
-    }
-  }, [competencia]);
-
-  useEffect(() => {
-    void loadOrcamento();
-  }, [loadOrcamento]);
+  const errorMessage = actionError ?? (error instanceof Error ? error.message : error ? 'Falha ao carregar orçamento.' : undefined);
 
   async function handleSalvarMeta(item: OrcamentoItem, valorMeta: number | null) {
     setSavingContaId(item.contaGerencialId);
-    setErrorMessage(undefined);
+    setActionError(undefined);
 
     try {
       if (valorMeta && valorMeta > 0) {
@@ -176,15 +168,15 @@ export function OrcamentoPage() {
         await orcamentosApi.removerMeta(item.metaId);
       }
 
-      await loadOrcamento();
+      await queryClient.invalidateQueries({ queryKey: ['orcamento', 'competencia', competencia] });
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao salvar meta.');
+      setActionError(error instanceof Error ? error.message : 'Falha ao salvar meta.');
     } finally {
       setSavingContaId(undefined);
     }
   }
 
-  if (loading && !orcamento) {
+  if (isLoading && !orcamento) {
     return <PageState state="loading" title="Carregando orçamento" />;
   }
 

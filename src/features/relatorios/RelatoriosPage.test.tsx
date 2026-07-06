@@ -1,6 +1,21 @@
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RelatoriosPage } from './RelatoriosPage';
+
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } });
+}
+
+function renderPage() {
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RelatoriosPage />
+    </QueryClientProvider>
+  );
+}
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 import { dashboardApi } from '../../services/http/dashboard-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
@@ -250,7 +265,7 @@ describe('RelatoriosPage', () => {
   });
 
   it('loads all report sources and renders the overview', async () => {
-    render(<RelatoriosPage />);
+    renderPage();
 
     expect(await screen.findByText(/Leitura gerencial do período/i)).toBeInTheDocument();
     expect(await screen.findByText('Conta vencida')).toBeInTheDocument();
@@ -269,7 +284,7 @@ describe('RelatoriosPage', () => {
   });
 
   it('allows switching between the available report tabs', async () => {
-    render(<RelatoriosPage />);
+    renderPage();
 
     await screen.findByText('Conta vencida');
 
@@ -299,7 +314,7 @@ describe('RelatoriosPage', () => {
   });
 
   it('applies report-specific filters to backend calls', async () => {
-    render(<RelatoriosPage />);
+    renderPage();
 
     await screen.findByText('Conta vencida');
     await userEvent.click(screen.getByRole('button', { name: /faturas/i }));

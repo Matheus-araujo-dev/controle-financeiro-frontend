@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { ConfirmDialog } from '../../components/feedback/ConfirmDialog';
 import { LiquidarModal } from './LiquidarModal';
@@ -22,8 +23,9 @@ import {
 } from '../../components/layout';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
+import { notify } from '../../store/notification-store';
 import type { ContaFinanceiraListSummary, StatusContaCodigo } from '../../types/financeiro';
-import type { FinanceiroModuleConfig, FinanceiroResumo } from './module-config';
+import type { FinanceiroModuleConfig, FinanceiroLiquidacaoFormValues, FinanceiroResumo } from './module-config';
 import { resolveStatusTone } from './module-config';
 
 type FinancialRecord = {
@@ -122,6 +124,7 @@ export function FinancialAccountListPage({
   config: FinanceiroModuleConfig<any, any, any>;
   embedded?: boolean;
 }) {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const actionsSlot = useContext(WorkspaceActionsSlotContext);
   const isInWorkspace = actionsSlot !== undefined;
@@ -129,17 +132,8 @@ export function FinancialAccountListPage({
   const statusInicial = searchParams.get('status') as StatusContaCodigo | null;
   const isPagar = config.routeBase.includes('pagar');
 
-  const [data, setData] = useState<Awaited<ReturnType<typeof config.list>>>();
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string>();
-  const [pessoaOptions, setPessoaOptions] = useState<Array<{ label: string; value: string }>>([]);
-  const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<Array<{ label: string; value: string }>>([]);
-  const [contaBancariaOptions, setContaBancariaOptions] = useState<Array<{ label: string; value: string }>>([]);
-  const [contaBancariaId, setContaBancariaId] = useState('');
-  const [liquidacaoFormaPagamentoId, setLiquidacaoFormaPagamentoId] = useState('');
   const [pendingLiquidacao, setPendingLiquidacao] = useState<FinancialRecord | null>(null);
   const [pendingEstorno, setPendingEstorno] = useState<FinancialRecord | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string>();
   const [filters, setFilters] = useState<ListFilters>({
     page: 1,
@@ -152,55 +146,70 @@ export function FinancialAccountListPage({
     sortDirection: undefined
   });
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
+  const deferredFilters = useDeferredValue(filters);
 
-    try {
-      setData(await config.list(filters));
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar os lançamentos.');
-    } finally {
-      setLoading(false);
-    }
-  }, [config, filters]);
+  const { data, isFetching, error } = useQuery({
+    queryKey: [config.key, 'list', deferredFilters],
+    queryFn: () => config.list(deferredFilters),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
+  const { data: optionsData } = useQuery({
+    queryKey: [config.key, 'filter-options'],
+    queryFn: async () => {
+      const [pessoas, formas, contas] = await Promise.all([
+        config.loadPessoaOptions(),
+        config.loadFormaPagamentoOptions(),
+        config.loadContaBancariaOptions()
+      ]);
+      return { pessoas, formas, contas };
+    },
+    staleTime: 5 * 60_000
+  });
 
-  useEffect(() => {
-    let cancelled = false;
+  const pessoaOptions = useMemo(
+    () => (optionsData?.pessoas ?? []).map((item) => ({ label: item.label, value: item.value })),
+    [optionsData]
+  );
+  const formaPagamentoOptions = useMemo(
+    () => (optionsData?.formas ?? []).map((item) => ({ label: item.label, value: item.value })),
+    [optionsData]
+  );
+  const contaBancariaOptions = useMemo(
+    () => (optionsData?.contas ?? []).map((item) => ({ label: item.label, value: item.value })),
+    [optionsData]
+  );
+  const defaultContaBancariaId = optionsData?.contas?.[0]?.value ?? '';
+  const defaultFormaPagamentoId = optionsData?.formas?.[0]?.value ?? '';
 
-    async function loadFilterOptions() {
-      try {
-        const [pessoas, formas, contas] = await Promise.all([
-          config.loadPessoaOptions(),
-          config.loadFormaPagamentoOptions(),
-          config.loadContaBancariaOptions()
-        ]);
+  const liquidarMutation = useMutation({
+    mutationFn: (args: { id: string; values: FinanceiroLiquidacaoFormValues }) =>
+      config.liquidar!(args.id, args.values),
+    onSuccess: () => {
+      notify('success', 'Lançamento liquidado.');
+      void queryClient.invalidateQueries({ queryKey: [config.key, 'list'] });
+      setPendingLiquidacao(null);
+      setActionError(undefined);
+    },
+    onError: (err) =>
+      setActionError(err instanceof Error ? err.message : 'Falha ao liquidar o lançamento.')
+  });
 
-        if (!cancelled) {
-          setPessoaOptions(pessoas.map((item) => ({ label: item.label, value: item.value })));
-          setFormaPagamentoOptions(formas.map((item) => ({ label: item.label, value: item.value })));
-          setContaBancariaOptions(contas.map((item) => ({ label: item.label, value: item.value })));
-          setContaBancariaId(contas[0]?.value ?? '');
-          setLiquidacaoFormaPagamentoId(formas[0]?.value ?? '');
-        }
-      } catch {
-        if (!cancelled) {
-          setPessoaOptions([]);
-          setFormaPagamentoOptions([]);
-        }
-      }
-    }
+  const estornarMutation = useMutation({
+    mutationFn: (id: string) => config.estornar!(id),
+    onSuccess: () => {
+      notify('success', 'Lançamento estornado.');
+      void queryClient.invalidateQueries({ queryKey: [config.key, 'list'] });
+      setPendingEstorno(null);
+      setActionError(undefined);
+    },
+    onError: (err) =>
+      setActionError(err instanceof Error ? err.message : 'Falha ao estornar o lançamento.')
+  });
 
-    void loadFilterOptions();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [config]);
+  const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar os lançamentos.' : undefined;
+  const actionLoading = liquidarMutation.isPending || estornarMutation.isPending;
 
   const summary = data?.summary as ContaFinanceiraListSummary | FinanceiroResumo | undefined;
   const summaryItems = useMemo(() => {
@@ -216,8 +225,8 @@ export function FinancialAccountListPage({
     ];
   }, [config, data?.totalItems, summary]);
 
-  const onCreate = useCallback(() => navigate(`${config.routeBase}/novo`), [config.routeBase, navigate]);
-  const onEdit = useCallback((id: string) => navigate(`${config.routeBase}/${id}`), [config.routeBase, navigate]);
+  const onCreate = () => navigate(`${config.routeBase}/novo`);
+  const onEdit = (id: string) => navigate(`${config.routeBase}/${id}`);
 
   const pessoaSelecionada = (isPagar ? filters.recebedorIds : filters.pagadorIds) ?? [];
 
@@ -265,36 +274,6 @@ export function FinancialAccountListPage({
     if (!config.estornar || !record.id) return;
     setActionError(undefined);
     setPendingEstorno(record);
-  }
-
-  async function confirmarLiquidacao(values: import('./module-config').FinanceiroLiquidacaoFormValues) {
-    if (!pendingLiquidacao || !config.liquidar) return;
-    setActionLoading(true);
-    setActionError(undefined);
-    try {
-      await config.liquidar(pendingLiquidacao.id, values);
-      setPendingLiquidacao(null);
-      await loadData();
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : 'Falha ao liquidar o lançamento.');
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function confirmarEstorno() {
-    if (!pendingEstorno || !config.estornar) return;
-    setActionLoading(true);
-    setActionError(undefined);
-    try {
-      await config.estornar(pendingEstorno.id);
-      setPendingEstorno(null);
-      await loadData();
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : 'Falha ao estornar o lançamento.');
-    } finally {
-      setActionLoading(false);
-    }
   }
 
   const columns: TableColumnsType<FinancialRecord> = [
@@ -594,10 +573,10 @@ export function FinancialAccountListPage({
 
       <AppDataTable
         rowKey="id"
-        loading={loading}
+        loading={isFetching}
         errorMessage={errorMessage}
         emptyMessage={`Nenhuma ${config.singularTitle.toLowerCase()} encontrada.`}
-        onRetry={loadData}
+        onRetry={() => void queryClient.invalidateQueries({ queryKey: [config.key, 'list'] })}
         dataSource={(data?.items ?? []) as FinancialRecord[]}
         columns={columns}
         onTableChange={(pagination, _tableFilters, sorter) => {
@@ -623,15 +602,18 @@ export function FinancialAccountListPage({
         descricao={pendingLiquidacao?.descricao ?? ''}
         valorLiquido={pendingLiquidacao?.valorLiquido ?? 0}
         valorPago={pendingLiquidacao?.valorPago}
-        formaPagamentoId={pendingLiquidacao?.formaPagamentoId ?? liquidacaoFormaPagamentoId}
+        formaPagamentoId={pendingLiquidacao?.formaPagamentoId ?? defaultFormaPagamentoId}
         ehRecorrente={pendingLiquidacao?.ehRecorrente ?? false}
         contaBancariaOptions={contaBancariaOptions}
         formaPagamentoOptions={formaPagamentoOptions}
-        defaultContaBancariaId={contaBancariaId}
+        defaultContaBancariaId={defaultContaBancariaId}
         loading={actionLoading}
         error={actionError}
         onClose={() => { if (!actionLoading) { setPendingLiquidacao(null); setActionError(undefined); } }}
-        onConfirmar={(values) => void confirmarLiquidacao(values)}
+        onConfirmar={(values) => {
+          if (!pendingLiquidacao) return;
+          liquidarMutation.mutate({ id: pendingLiquidacao.id, values });
+        }}
       />
 
       <ConfirmDialog
@@ -652,7 +634,10 @@ export function FinancialAccountListPage({
           </div>
         }
         onClose={() => { if (!actionLoading) { setPendingEstorno(null); setActionError(undefined); } }}
-        onConfirm={() => void confirmarEstorno()}
+        onConfirm={() => {
+          if (!pendingEstorno) return;
+          estornarMutation.mutate(pendingEstorno.id);
+        }}
       />
     </div>
   );

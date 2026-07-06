@@ -1,4 +1,5 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { AppDataTable } from '../../components/data/AppDataTable';
@@ -109,14 +110,11 @@ function StatusBadge({ codigo, nome }: { codigo: StatusFaturaCodigo; nome: strin
 }
 
 export function FaturasPage() {
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const initialFilters = useMemo(() => buildInitialFilters(searchParams), [searchParams]);
   const [filters, setFilters] = useState<FaturaFilters>(initialFilters);
   const deferredFilters = useDeferredValue(filters);
-  const [data, setData] = useState<Awaited<ReturnType<typeof financeiroApi.faturas.listar>>>();
-  const [cartoes, setCartoes] = useState<CartaoResumo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>();
   const [importarModalOpen, setImportarModalOpen] = useState(false);
   const origemContaCartao = searchParams.get('origem') === 'conta-cartao';
 
@@ -124,34 +122,21 @@ export function FaturasPage() {
     setFilters(initialFilters);
   }, [initialFilters]);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
+  const { data, isFetching, error } = useQuery({
+    queryKey: ['faturas', 'list', deferredFilters],
+    queryFn: () => financeiroApi.faturas.listar(deferredFilters),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
 
-    try {
-      setData(await financeiroApi.faturas.listar(deferredFilters));
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar faturas.');
-    } finally {
-      setLoading(false);
-    }
-  }, [deferredFilters]);
+  const { data: cartoesData } = useQuery({
+    queryKey: ['cartoes', 'options'],
+    queryFn: () => cadastrosApi.cartoes.listar({ page: 1, pageSize: 200, search: '', ativo: true }),
+    staleTime: 5 * 60_000
+  });
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
-
-  useEffect(() => {
-    void (async () => {
-      const response = await cadastrosApi.cartoes.listar({
-        page: 1,
-        pageSize: 200,
-        search: '',
-        ativo: true
-      });
-      setCartoes(response.items);
-    })();
-  }, []);
+  const cartoes = cartoesData?.items ?? [];
+  const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar faturas.' : undefined;
 
   const cartoesById = useMemo(() => new Map(cartoes.map((cartao) => [cartao.id, cartao])), [cartoes]);
 
@@ -188,7 +173,7 @@ export function FaturasPage() {
     <ImportarFaturaModal
       open={importarModalOpen}
       onClose={() => setImportarModalOpen(false)}
-      onSuccess={() => { void loadData(); }}
+      onSuccess={() => { void queryClient.invalidateQueries({ queryKey: ['faturas', 'list'] }); }}
       initialCartaoId={cartaoIdFiltrado}
     />
     <ListPageShell
@@ -352,10 +337,10 @@ export function FaturasPage() {
       <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-white/5">
         <AppDataTable
           rowKey="id"
-          loading={loading}
+          loading={isFetching}
           errorMessage={errorMessage}
           emptyMessage="Nenhuma fatura encontrada."
-          onRetry={loadData}
+          onRetry={() => void queryClient.invalidateQueries({ queryKey: ['faturas', 'list'] })}
           dataSource={data?.items ?? []}
           columns={[
             {

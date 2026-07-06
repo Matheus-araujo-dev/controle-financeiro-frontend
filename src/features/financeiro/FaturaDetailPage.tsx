@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { AppDataTable } from '../../components/data/AppDataTable';
 import { ComboBox } from '../../components/forms/ComboBox';
@@ -29,86 +30,86 @@ function accountStatusBadgeVariant(statusCodigo: string) {
 }
 
 export function FaturaDetailPage() {
+  const queryClient = useQueryClient();
   const { id } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>();
-  const [detail, setDetail] = useState<FaturaDetalhe>();
-  const [contaOptions, setContaOptions] = useState<Array<{ label: string; value: string }>>([]);
   const [paymentValues, setPaymentValues] = useState<PaymentValues>({
     dataPagamento: '',
     contaBancariaPagamentoId: '',
     observacao: ''
   });
+  const [actionError, setActionError] = useState<string>();
+  const hasInitializedPayment = useRef(false);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['faturas', 'detail', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Fatura não informada.');
+      const [fatura, contas] = await Promise.all([
+        financeiroApi.faturas.obterPorId(id),
+        cadastrosApi.contasBancarias.listar({ page: 1, pageSize: 100, search: '', ativo: true })
+      ]);
+      return {
+        detail: fatura,
+        contaOptions: contas.items.map((item) => ({ label: `${item.nome} — ${item.banco}`, value: item.id }))
+      };
+    },
+    enabled: !!id,
+    staleTime: 30_000
+  });
 
   useEffect(() => {
-    async function loadData(faturaId: string) {
-      setLoading(true);
-      setErrorMessage(undefined);
-      try {
-        const [fatura, contas] = await Promise.all([
-          financeiroApi.faturas.obterPorId(faturaId),
-          cadastrosApi.contasBancarias.listar({ page: 1, pageSize: 100, search: '', ativo: true })
-        ]);
-        setDetail(fatura);
-        setContaOptions(contas.items.map((item) => ({ label: `${item.nome} — ${item.banco}`, value: item.id })));
-        setPaymentValues({
-          dataPagamento: fatura.dataPagamento ?? fatura.dataVencimento,
-          contaBancariaPagamentoId: fatura.contaBancariaPagamentoId ?? '',
-          observacao: fatura.observacao ?? ''
-        });
-      } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar a fatura.');
-      } finally {
-        setLoading(false);
-      }
-    }
+    if (!data?.detail || hasInitializedPayment.current) return;
+    setPaymentValues({
+      dataPagamento: data.detail.dataPagamento ?? data.detail.dataVencimento,
+      contaBancariaPagamentoId: data.detail.contaBancariaPagamentoId ?? '',
+      observacao: data.detail.observacao ?? ''
+    });
+    hasInitializedPayment.current = true;
+  }, [data?.detail]);
 
-    if (!id) { setLoading(false); setErrorMessage('Fatura não informada.'); return; }
-    void loadData(id);
-  }, [id]);
-
-  async function pagarFatura() {
-    if (!id) return;
-    setSaving(true);
-    setErrorMessage(undefined);
-    try {
-      const response = await financeiroApi.faturas.pagar(id, {
+  const pagarMutation = useMutation({
+    mutationFn: () =>
+      financeiroApi.faturas.pagar(id!, {
         dataPagamento: paymentValues.dataPagamento,
         contaBancariaPagamentoId: paymentValues.contaBancariaPagamentoId,
         observacao: paymentValues.observacao.trim() === '' ? null : paymentValues.observacao.trim()
-      });
-      setDetail(response);
+      }),
+    onSuccess: (response) => {
+      queryClient.setQueryData(['faturas', 'detail', id], (old: typeof data) => ({
+        ...old,
+        detail: response
+      }));
       setPaymentValues({
         dataPagamento: response.dataPagamento ?? paymentValues.dataPagamento,
         contaBancariaPagamentoId: response.contaBancariaPagamentoId ?? paymentValues.contaBancariaPagamentoId,
         observacao: response.observacao ?? ''
       });
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao pagar a fatura.');
-    } finally {
-      setSaving(false);
-    }
-  }
+      setActionError(undefined);
+    },
+    onError: (err) => setActionError(err instanceof Error ? err.message : 'Falha ao pagar a fatura.')
+  });
 
-  async function estornarFatura() {
-    if (!id) return;
-    setSaving(true);
-    setErrorMessage(undefined);
-    try {
-      const response = await financeiroApi.faturas.estornar(id);
-      setDetail(response);
+  const estornarMutation = useMutation({
+    mutationFn: () => financeiroApi.faturas.estornar(id!),
+    onSuccess: (response) => {
+      queryClient.setQueryData(['faturas', 'detail', id], (old: typeof data) => ({
+        ...old,
+        detail: response
+      }));
       setPaymentValues({
         dataPagamento: response.dataPagamento ?? response.dataVencimento,
         contaBancariaPagamentoId: response.contaBancariaPagamentoId ?? '',
         observacao: response.observacao ?? ''
       });
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao estornar o pagamento da fatura.');
-    } finally {
-      setSaving(false);
-    }
-  }
+      setActionError(undefined);
+    },
+    onError: (err) => setActionError(err instanceof Error ? err.message : 'Falha ao estornar o pagamento da fatura.')
+  });
+
+  const detail = data?.detail;
+  const contaOptions = data?.contaOptions ?? [];
+  const saving = pagarMutation.isPending || estornarMutation.isPending;
+  const errorMessage = actionError ?? (error instanceof Error ? error.message : error ? 'Falha ao carregar a fatura.' : undefined);
 
   const kpiCards = useMemo(() => {
     if (!detail) return [];
@@ -137,7 +138,7 @@ export function FaturaDetailPage() {
     ];
   }, [detail]);
 
-  if (loading) return <PageState state="loading" title="Carregando fatura..." />;
+  if (isLoading) return <PageState state="loading" title="Carregando fatura..." />;
   if (!detail) return <PageState state="error" title="Falha ao carregar fatura" subtitle={errorMessage ?? 'Fatura não encontrada.'} />;
 
   const paymentPending = detail.statusCodigo === 'ABERTA';
@@ -256,7 +257,7 @@ export function FaturaDetailPage() {
               size="lg"
               disabled={!canSubmitPayment || saving}
               loading={saving}
-              onClick={() => void pagarFatura()}
+              onClick={() => pagarMutation.mutate()}
             >
               Confirmar pagamento
             </Button>
@@ -281,7 +282,7 @@ export function FaturaDetailPage() {
               size="sm"
               disabled={saving}
               loading={saving}
-              onClick={() => void estornarFatura()}
+              onClick={() => estornarMutation.mutate()}
             >
               Estornar pagamento
             </Button>
