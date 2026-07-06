@@ -193,7 +193,7 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByText('Direcionado para fatura 05/2026')).toBeInTheDocument();
     expect(
-      screen.getByText(/Visa final 4242 .* fechamento 2026-05-10 .* vencimento 2026-05-20/i)
+      screen.getByText(/Visa final 4242 .* fechamento 10\/05\/2026 .* vencimento 20\/05\/2026/i)
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Abrir fatura prevista/i })).toHaveAttribute(
       'href',

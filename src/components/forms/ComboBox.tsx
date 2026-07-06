@@ -148,7 +148,7 @@ export function ComboBox({
   useEffect(() => {
     if (highlightedIndex < 0 || !listRef.current) return;
     const el = listRef.current.children[highlightedIndex] as HTMLElement | undefined;
-    el?.scrollIntoView({ block: 'nearest' });
+    el?.scrollIntoView?.({ block: 'nearest' });
   }, [highlightedIndex]);
 
   useEffect(() => {
