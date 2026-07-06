@@ -48,7 +48,8 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
   useEffect(() => {
     if (!pessoaWatched || categoriaAtual) return;
     const pessoa = pessoaOptions.find((o) => o.value === pessoaWatched);
-    const contaId = personRole === 'recebedor' ? pessoa?.contaGerencialReceitaId : pessoa?.contaGerencialDespesaId;
+    // personRole='recebedor' → conta a pagar (despesa); personRole='pagador' → conta a receber (receita)
+    const contaId = personRole === 'pagador' ? pessoa?.contaGerencialReceitaId : pessoa?.contaGerencialDespesaId;
     if (contaId) setValue('rateios.0.contaGerencialId', contaId);
   }, [pessoaWatched, pessoaOptions, categoriaAtual, personRole, setValue]);
 

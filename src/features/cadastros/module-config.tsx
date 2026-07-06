@@ -42,7 +42,7 @@ import {
 } from './schemas';
 import { applyCpfCnpjMask, type InputMaskKind } from './input-masks';
 import { formatCurrencyBRL } from '../../shared/currency';
-import { mapContaGerencialSelectOptionsWithData } from '../../shared/conta-gerencial';
+import { filterContaGerencialLancavel, mapContaGerencialSelectOptionsWithData, buildContaGerencialOptionLabel, sortContasGerenciaisByCodigo } from '../../shared/conta-gerencial';
 
 export type SelectOption = {
   label: string;
@@ -181,6 +181,33 @@ async function loadContaGerencialOptions(filters?: Partial<ContaGerencialFilters
   return mapContaGerencialSelectOptionsWithData(response.items);
 }
 
+async function loadContaGerencialLancavelOptions(tipo: 'Despesa' | 'Receita') {
+  const response = await cadastrosApi.contasGerenciais.listar({
+    page: 1,
+    pageSize: 200,
+    search: '',
+    tipo
+  });
+
+  const allById = new Map(response.items.map((item) => [item.id, item]));
+
+  function buildLabel(item: ContaGerencialResumo): string {
+    const main = buildContaGerencialOptionLabel(item);
+    const ancestors: string[] = [];
+    let current = item.contaPaiId ? allById.get(item.contaPaiId) : undefined;
+    while (current) {
+      ancestors.push(buildContaGerencialOptionLabel(current));
+      current = current.contaPaiId ? allById.get(current.contaPaiId) : undefined;
+    }
+    return ancestors.length > 0 ? `${main} (${ancestors.join(', ')})` : main;
+  }
+
+  return sortContasGerenciaisByCodigo(filterContaGerencialLancavel(response.items)).map((item) => ({
+    label: buildLabel(item),
+    value: item.id
+  }));
+}
+
 async function loadPessoaOptions() {
   const response = await cadastrosApi.pessoas.listar({
     page: 1,
@@ -241,13 +268,13 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
       name: 'contaGerencialDespesaId',
       label: 'Conta gerencial de despesa padrão',
       kind: 'select',
-      loadOptions: () => loadContaGerencialOptions({ tipo: 'Despesa' })
+      loadOptions: () => loadContaGerencialLancavelOptions('Despesa')
     },
     {
       name: 'contaGerencialReceitaId',
       label: 'Conta gerencial de receita padrão',
       kind: 'select',
-      loadOptions: () => loadContaGerencialOptions({ tipo: 'Receita' })
+      loadOptions: () => loadContaGerencialLancavelOptions('Receita')
     }
   ],
   schema: pessoaSchema,
