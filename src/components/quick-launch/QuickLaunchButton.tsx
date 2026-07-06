@@ -248,7 +248,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     try {
       const base = {
         numeroDocumento: null,
-        dataEmissao: hojeISO(),
+        dataEmissao: exigeCartao ? dataVencimento : hojeISO(),
         dataVencimento,
         formaPagamentoId,
         cartaoId: exigeCartao ? cartaoId : null,
@@ -382,9 +382,46 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="space-y-2">
-                <label className={formLabelClass}>Vencimento</label>
-                <DateInput ariaLabel="Vencimento" value={dataVencimento} onChange={setDataVencimento} />
+                <label className={formLabelClass}>Forma de pagamento</label>
+                <ComboBox
+                  aria-label="Forma de pagamento"
+                  value={formaPagamentoId}
+                  onChange={(value) => {
+                    setFormaPagamentoId(value);
+                    if (!formas.find((forma) => forma.value === value)?.ehCartao) {
+                      setCartaoId('');
+                    }
+                  }}
+                  options={formas}
+                  placeholder="Selecionar..."
+                  onAddNew={() => setQuickAddFormaOpen(true)}
+                  addNewLabel="Nova forma de pagamento"
+                />
               </div>
+
+              <div className="space-y-2">
+                <label className={formLabelClass}>{exigeCartao ? 'Data da compra' : 'Vencimento'}</label>
+                <DateInput
+                  ariaLabel={exigeCartao ? 'Data da compra' : 'Vencimento'}
+                  value={dataVencimento}
+                  onChange={setDataVencimento}
+                />
+              </div>
+
+              {exigeCartao ? (
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Cartão de crédito</label>
+                  <ComboBox
+                    aria-label="Cartão de crédito"
+                    value={cartaoId}
+                    onChange={setCartaoId}
+                    options={cartoes}
+                    placeholder="Selecionar cartão..."
+                    onAddNew={() => setQuickAddCartaoOpen(true)}
+                    addNewLabel="Novo cartão"
+                  />
+                </div>
+              ) : null}
 
               <div className="space-y-2">
                 <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
@@ -413,24 +450,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="space-y-2">
-                <label className={formLabelClass}>Forma de pagamento</label>
-                <ComboBox
-                  aria-label="Forma de pagamento"
-                  value={formaPagamentoId}
-                  onChange={(value) => {
-                    setFormaPagamentoId(value);
-                    if (!formas.find((forma) => forma.value === value)?.ehCartao) {
-                      setCartaoId('');
-                    }
-                  }}
-                  options={formas}
-                  placeholder="Selecionar..."
-                  onAddNew={() => setQuickAddFormaOpen(true)}
-                  addNewLabel="Nova forma de pagamento"
-                />
-              </div>
-
-              <div className="space-y-2">
                 <label className={formLabelClass}>Conta gerencial</label>
                 <ComboBox
                   aria-label="Conta gerencial"
@@ -442,21 +461,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   addNewLabel="Nova conta gerencial"
                 />
               </div>
-
-              {exigeCartao ? (
-                <div className="space-y-2">
-                  <label className={formLabelClass}>Cartão de crédito</label>
-                  <ComboBox
-                    aria-label="Cartão de crédito"
-                    value={cartaoId}
-                    onChange={setCartaoId}
-                    options={cartoes}
-                    placeholder="Selecionar cartão..."
-                    onAddNew={() => setQuickAddCartaoOpen(true)}
-                    addNewLabel="Novo cartão"
-                  />
-                </div>
-              ) : null}
             </div>
 
             <div className="mt-8 border-t border-white/5 pt-5">
