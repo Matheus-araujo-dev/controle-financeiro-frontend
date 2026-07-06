@@ -102,7 +102,9 @@ describe('cadastros module config', () => {
       chavesPix: [],
       ehPagador: true,
       ehRecebedor: true,
-      ehResponsavel: true
+      ehResponsavel: true,
+      contaGerencialDespesaId: '',
+      contaGerencialReceitaId: ''
     });
     expect(pessoasModuleConfig.exportColumns?.map((column) => column.value({ cpfCnpj: '12345678901', ativo: true } as never))).toEqual([
       undefined,

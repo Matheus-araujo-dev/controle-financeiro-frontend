@@ -109,6 +109,19 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
   }, [extraPessoas, pessoasResult.data]);
 
+  const pessoaContaGerencialMap = useMemo(() => {
+    const map = new Map<string, { despesaId?: string; receitaId?: string }>();
+    pessoasResult.data?.items.forEach((p) => {
+      if (p.contaGerencialDespesaId || p.contaGerencialReceitaId) {
+        map.set(p.id, {
+          despesaId: p.contaGerencialDespesaId ?? undefined,
+          receitaId: p.contaGerencialReceitaId ?? undefined
+        });
+      }
+    });
+    return map;
+  }, [pessoasResult.data]);
+
   const responsaveis = useMemo<Option[]>(() => {
     const fromServer = pessoasResult.data?.items.filter((p) => p.ehResponsavel).map((p) => ({ label: p.nome, value: p.id })) ?? [];
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
@@ -149,6 +162,13 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     }));
     return [...extraContasReceita, ...fromServer.filter((c) => !extraContasReceita.some((e) => e.value === c.value))];
   }, [extraContasReceita, receitaResult.data]);
+
+  useEffect(() => {
+    if (!pessoaId || contaGerencialId) return;
+    const contaIds = pessoaContaGerencialMap.get(pessoaId);
+    const contaId = tipo === 'pagar' ? contaIds?.despesaId : contaIds?.receitaId;
+    if (contaId) setContaGerencialId(contaId);
+  }, [pessoaId, tipo, contaGerencialId, pessoaContaGerencialMap]);
 
   const someQueryErrored = [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult].some((r) => r.isError);
   useEffect(() => {
@@ -248,7 +268,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     try {
       const base = {
         numeroDocumento: null,
-        dataEmissao: hojeISO(),
+        dataEmissao: exigeCartao ? dataVencimento : hojeISO(),
         dataVencimento,
         formaPagamentoId,
         cartaoId: exigeCartao ? cartaoId : null,
@@ -382,9 +402,46 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="space-y-2">
-                <label className={formLabelClass}>Vencimento</label>
-                <DateInput ariaLabel="Vencimento" value={dataVencimento} onChange={setDataVencimento} />
+                <label className={formLabelClass}>Forma de pagamento</label>
+                <ComboBox
+                  aria-label="Forma de pagamento"
+                  value={formaPagamentoId}
+                  onChange={(value) => {
+                    setFormaPagamentoId(value);
+                    if (!formas.find((forma) => forma.value === value)?.ehCartao) {
+                      setCartaoId('');
+                    }
+                  }}
+                  options={formas}
+                  placeholder="Selecionar..."
+                  onAddNew={() => setQuickAddFormaOpen(true)}
+                  addNewLabel="Nova forma de pagamento"
+                />
               </div>
+
+              <div className="space-y-2">
+                <label className={formLabelClass}>{exigeCartao ? 'Data da compra' : 'Vencimento'}</label>
+                <DateInput
+                  ariaLabel={exigeCartao ? 'Data da compra' : 'Vencimento'}
+                  value={dataVencimento}
+                  onChange={setDataVencimento}
+                />
+              </div>
+
+              {exigeCartao ? (
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Cartão de crédito</label>
+                  <ComboBox
+                    aria-label="Cartão de crédito"
+                    value={cartaoId}
+                    onChange={setCartaoId}
+                    options={cartoes}
+                    placeholder="Selecionar cartão..."
+                    onAddNew={() => setQuickAddCartaoOpen(true)}
+                    addNewLabel="Novo cartão"
+                  />
+                </div>
+              ) : null}
 
               <div className="space-y-2">
                 <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
@@ -413,24 +470,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="space-y-2">
-                <label className={formLabelClass}>Forma de pagamento</label>
-                <ComboBox
-                  aria-label="Forma de pagamento"
-                  value={formaPagamentoId}
-                  onChange={(value) => {
-                    setFormaPagamentoId(value);
-                    if (!formas.find((forma) => forma.value === value)?.ehCartao) {
-                      setCartaoId('');
-                    }
-                  }}
-                  options={formas}
-                  placeholder="Selecionar..."
-                  onAddNew={() => setQuickAddFormaOpen(true)}
-                  addNewLabel="Nova forma de pagamento"
-                />
-              </div>
-
-              <div className="space-y-2">
                 <label className={formLabelClass}>Conta gerencial</label>
                 <ComboBox
                   aria-label="Conta gerencial"
@@ -442,21 +481,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   addNewLabel="Nova conta gerencial"
                 />
               </div>
-
-              {exigeCartao ? (
-                <div className="space-y-2">
-                  <label className={formLabelClass}>Cartão de crédito</label>
-                  <ComboBox
-                    aria-label="Cartão de crédito"
-                    value={cartaoId}
-                    onChange={setCartaoId}
-                    options={cartoes}
-                    placeholder="Selecionar cartão..."
-                    onAddNew={() => setQuickAddCartaoOpen(true)}
-                    addNewLabel="Novo cartão"
-                  />
-                </div>
-              ) : null}
             </div>
 
             <div className="mt-8 border-t border-white/5 pt-5">

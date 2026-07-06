@@ -43,6 +43,14 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
 
   const descricaoWatched = useWatch({ control, name: 'descricao' });
   const categoriaAtual = useWatch({ control, name: 'rateios.0.contaGerencialId' });
+  const pessoaWatched = useWatch({ control, name: 'pessoaId' });
+
+  useEffect(() => {
+    if (!pessoaWatched || categoriaAtual) return;
+    const pessoa = pessoaOptions.find((o) => o.value === pessoaWatched);
+    const contaId = personRole === 'recebedor' ? pessoa?.contaGerencialReceitaId : pessoa?.contaGerencialDespesaId;
+    if (contaId) setValue('rateios.0.contaGerencialId', contaId);
+  }, [pessoaWatched, pessoaOptions, categoriaAtual, personRole, setValue]);
 
   useEffect(() => {
     if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current);
@@ -161,47 +169,6 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
           />
         </div>
 
-        <div className="space-y-2 md:col-span-2">
-          <label className={fieldLabelClass}>Categoria · conta gerencial</label>
-          <Controller
-            control={control}
-            name="rateios.0.contaGerencialId"
-            render={({ field }) => (
-              <ComboBox
-                {...field}
-                disabled={!canEdit}
-                onAddNew={canEdit ? () => setContaGerencialModalOpen(true) : undefined}
-                placeholder="Selecionar categoria..."
-                options={rateioOptions}
-              />
-            )}
-          />
-
-          {aiSugestao && !categoriaAtual ? (
-            <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/8 px-3 py-2 animate-in fade-in duration-300">
-              <span className="material-symbols-outlined text-sm text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
-              <span className="flex-1 text-xs font-medium text-primary">
-                IA sugere: <strong>{aiSugestao.descricao}</strong>
-                <span className="ml-1 opacity-60">({Math.round(aiSugestao.confianca * 100)}%)</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setValue('rateios.0.contaGerencialId', aiSugestao.id);
-                  setAiSugestao(null);
-                }}
-                className="rounded-lg bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary transition-colors hover:bg-primary/25"
-              >
-                Usar
-              </button>
-            </div>
-          ) : null}
-
-          <p className="ml-1 text-[11px] text-on-surface-variant/70">
-            Para dividir entre várias contas, use o rateio por centro de custo abaixo.
-          </p>
-        </div>
-
         <div className="space-y-2">
           <label className={fieldLabelClass}>{personLabel}</label>
           <Controller
@@ -254,6 +221,47 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
               </div>
             )}
           />
+        </div>
+
+        <div className="space-y-2 md:col-span-2">
+          <label className={fieldLabelClass}>Categoria · conta gerencial</label>
+          <Controller
+            control={control}
+            name="rateios.0.contaGerencialId"
+            render={({ field }) => (
+              <ComboBox
+                {...field}
+                disabled={!canEdit}
+                onAddNew={canEdit ? () => setContaGerencialModalOpen(true) : undefined}
+                placeholder="Selecionar categoria..."
+                options={rateioOptions}
+              />
+            )}
+          />
+
+          {aiSugestao && !categoriaAtual ? (
+            <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/8 px-3 py-2 animate-in fade-in duration-300">
+              <span className="material-symbols-outlined text-sm text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
+              <span className="flex-1 text-xs font-medium text-primary">
+                IA sugere: <strong>{aiSugestao.descricao}</strong>
+                <span className="ml-1 opacity-60">({Math.round(aiSugestao.confianca * 100)}%)</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setValue('rateios.0.contaGerencialId', aiSugestao.id);
+                  setAiSugestao(null);
+                }}
+                className="rounded-lg bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary transition-colors hover:bg-primary/25"
+              >
+                Usar
+              </button>
+            </div>
+          ) : null}
+
+          <p className="ml-1 text-[11px] text-on-surface-variant/70">
+            Para dividir entre várias contas, use o rateio por centro de custo abaixo.
+          </p>
         </div>
 
         <div className="space-y-2 md:col-span-2">
