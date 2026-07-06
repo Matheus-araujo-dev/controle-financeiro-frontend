@@ -1,20 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeftOutlined, CalendarOutlined, CheckCircleOutlined, CreditCardOutlined, WalletOutlined } from '@ant-design/icons';
-import { Button, Card, Form, Input, Select, Space, Tag, Typography } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 import { AppDataTable } from '../../components/data/AppDataTable';
+import { ComboBox } from '../../components/forms/ComboBox';
 import { DateInput } from '../../components/forms/DateInput';
+import { NeonBadge } from '../../components/neon-ledger/NeonBadge';
 import { PageState } from '../../components/states/PageState';
+import { Button } from '../../components/ui/Button';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR, formatMonthYearBR } from '../../shared/date';
 import type { FaturaDetalhe, FaturaItem } from '../../types/financeiro';
-
-type ContaBancariaOption = {
-  label: string;
-  value: string;
-};
 
 type PaymentValues = {
   dataPagamento: string;
@@ -22,24 +18,14 @@ type PaymentValues = {
   observacao: string;
 };
 
-function getInvoiceStatusColor(statusCodigo: string) {
-  switch (statusCodigo) {
-    case 'PAGA':
-      return 'green' as const;
-    default:
-      return 'gold' as const;
-  }
+function statusBadgeVariant(statusCodigo: string) {
+  return statusCodigo === 'PAGA' ? 'primary' : 'warning';
 }
 
-function getAccountStatusColor(statusCodigo: string) {
-  switch (statusCodigo) {
-    case 'LIQUIDADA':
-      return 'green' as const;
-    case 'VENCIDA':
-      return 'volcano' as const;
-    default:
-      return 'gold' as const;
-  }
+function accountStatusBadgeVariant(statusCodigo: string) {
+  if (statusCodigo === 'LIQUIDADA') return 'primary';
+  if (statusCodigo === 'VENCIDA') return 'error';
+  return 'warning';
 }
 
 export function FaturaDetailPage() {
@@ -48,7 +34,7 @@ export function FaturaDetailPage() {
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
   const [detail, setDetail] = useState<FaturaDetalhe>();
-  const [contaOptions, setContaOptions] = useState<ContaBancariaOption[]>([]);
+  const [contaOptions, setContaOptions] = useState<Array<{ label: string; value: string }>>([]);
   const [paymentValues, setPaymentValues] = useState<PaymentValues>({
     dataPagamento: '',
     contaBancariaPagamentoId: '',
@@ -59,25 +45,13 @@ export function FaturaDetailPage() {
     async function loadData(faturaId: string) {
       setLoading(true);
       setErrorMessage(undefined);
-
       try {
         const [fatura, contas] = await Promise.all([
           financeiroApi.faturas.obterPorId(faturaId),
-          cadastrosApi.contasBancarias.listar({
-            page: 1,
-            pageSize: 100,
-            search: '',
-            ativo: true
-          })
+          cadastrosApi.contasBancarias.listar({ page: 1, pageSize: 100, search: '', ativo: true })
         ]);
-
-        const contaOptionsLoaded = contas.items.map((item) => ({
-          label: `${item.nome} - ${item.banco}`,
-          value: item.id
-        }));
-
         setDetail(fatura);
-        setContaOptions(contaOptionsLoaded);
+        setContaOptions(contas.items.map((item) => ({ label: `${item.nome} — ${item.banco}`, value: item.id })));
         setPaymentValues({
           dataPagamento: fatura.dataPagamento ?? fatura.dataVencimento,
           contaBancariaPagamentoId: fatura.contaBancariaPagamentoId ?? '',
@@ -90,30 +64,20 @@ export function FaturaDetailPage() {
       }
     }
 
-    if (!id) {
-      setLoading(false);
-      setErrorMessage('Fatura nao informada.');
-      return;
-    }
-
+    if (!id) { setLoading(false); setErrorMessage('Fatura não informada.'); return; }
     void loadData(id);
   }, [id]);
 
   async function pagarFatura() {
-    if (!id) {
-      return;
-    }
-
+    if (!id) return;
     setSaving(true);
     setErrorMessage(undefined);
-
     try {
       const response = await financeiroApi.faturas.pagar(id, {
         dataPagamento: paymentValues.dataPagamento,
         contaBancariaPagamentoId: paymentValues.contaBancariaPagamentoId,
         observacao: paymentValues.observacao.trim() === '' ? null : paymentValues.observacao.trim()
       });
-
       setDetail(response);
       setPaymentValues({
         dataPagamento: response.dataPagamento ?? paymentValues.dataPagamento,
@@ -128,16 +92,11 @@ export function FaturaDetailPage() {
   }
 
   async function estornarFatura() {
-    if (!id) {
-      return;
-    }
-
+    if (!id) return;
     setSaving(true);
     setErrorMessage(undefined);
-
     try {
       const response = await financeiroApi.faturas.estornar(id);
-
       setDetail(response);
       setPaymentValues({
         dataPagamento: response.dataPagamento ?? response.dataVencimento,
@@ -151,318 +110,258 @@ export function FaturaDetailPage() {
     }
   }
 
-  const summaryCards = useMemo(() => {
-    if (!detail) {
-      return [];
-    }
-
+  const kpiCards = useMemo(() => {
+    if (!detail) return [];
     return [
       {
-        key: 'status',
-        label: 'Status da fatura',
-        value: detail.statusNome,
-        caption: detail.statusCodigo === 'PAGA' ? 'Pagamento consolidado' : 'Aguardando baixa financeira',
-        icon: <CheckCircleOutlined />
+        key: 'valor',
+        eyebrow: 'Valor total',
+        value: formatCurrencyBRL(detail.valorTotal),
+        accent: true
       },
       {
         key: 'vencimento',
-        label: detail.dataPagamento ? 'Pagamento registrado' : 'Vencimento',
-        value: formatDateBR(detail.dataPagamento ?? detail.dataVencimento),
-        caption: detail.dataPagamento ? 'Data efetiva da baixa' : 'Prazo atual da fatura',
-        icon: <CalendarOutlined />
+        eyebrow: detail.dataPagamento ? 'Pago em' : 'Vencimento',
+        value: formatDateBR(detail.dataPagamento ?? detail.dataVencimento)
+      },
+      {
+        key: 'fechamento',
+        eyebrow: 'Fechamento',
+        value: formatDateBR(detail.dataFechamento)
       },
       {
         key: 'itens',
-        label: 'Itens no ciclo',
-        value: `${detail.quantidadeItens}`,
-        caption: detail.quantidadeItens === 1 ? '1 lancamento agrupado' : `${detail.quantidadeItens} lancamentos agrupados`,
-        icon: <CreditCardOutlined />
-      },
-      {
-        key: 'conta',
-        label: 'Conta de pagamento',
-        value: detail.contaBancariaPagamentoNome ?? 'A definir',
-        caption: detail.contaBancariaPagamentoNome ? 'Conta vinculada ao pagamento' : 'Selecione a conta para liquidar',
-        icon: <WalletOutlined />
+        eyebrow: 'Lançamentos',
+        value: String(detail.quantidadeItens)
       }
     ];
   }, [detail]);
 
-  if (loading) {
-    return <PageState state="loading" title="Carregando fatura..." />;
-  }
-
-  if (!detail) {
-    return <PageState state="error" title="Falha ao carregar fatura" subtitle={errorMessage ?? 'Falha ao carregar a fatura.'} />;
-  }
+  if (loading) return <PageState state="loading" title="Carregando fatura..." />;
+  if (!detail) return <PageState state="error" title="Falha ao carregar fatura" subtitle={errorMessage ?? 'Fatura não encontrada.'} />;
 
   const paymentPending = detail.statusCodigo === 'ABERTA';
   const canSubmitPayment = paymentValues.dataPagamento.trim() !== '' && paymentValues.contaBancariaPagamentoId.trim() !== '';
 
   return (
-    <Space direction="vertical" size={24} style={{ width: '100%' }} className="fatura-detail-page">
-      <div className="fatura-detail-page__hero">
-        <div className="fatura-detail-page__hero-copy">
-          <Typography.Text className="fatura-detail-page__eyebrow">Nucleo administrativo</Typography.Text>
-          <Typography.Title level={2} className="fatura-detail-page__title">
-            Detalhe da fatura
-          </Typography.Title>
-          <Typography.Paragraph className="fatura-detail-page__description">
-            Revise os lancamentos do ciclo, acompanhe o resumo financeiro e registre o pagamento quando o caixa for efetivado.
-          </Typography.Paragraph>
-        </div>
+    <div className="space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
-        <Space wrap className="fatura-detail-page__hero-actions">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            Fatura de cartão · {formatMonthYearBR(detail.competencia)}
+          </p>
+          <h1 className="font-headline text-2xl font-bold text-on-surface">{detail.cartaoNome}</h1>
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <NeonBadge variant={statusBadgeVariant(detail.statusCodigo)}>
+            {detail.statusNome}
+          </NeonBadge>
           <Link to="/faturas">
-            <Button size="large" icon={<ArrowLeftOutlined />}>
-              Voltar para faturas
+            <Button type="button" variant="secondary" size="sm">
+              <span className="material-symbols-outlined text-base">arrow_back</span>
+              Voltar
             </Button>
           </Link>
-        </Space>
+        </div>
       </div>
 
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {kpiCards.map((card) => (
+          <div
+            key={card.key}
+            className="rounded-2xl border border-white/6 bg-surface-container-low p-4"
+          >
+            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{card.eyebrow}</p>
+            <p className={`mt-1 font-headline text-xl font-bold ${card.accent ? 'text-primary' : 'text-on-surface'}`}>
+              {card.value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Error */}
       {errorMessage ? (
-        <Card size="small" style={{ borderColor: 'var(--ant-color-error)', backgroundColor: 'var(--ant-color-error-bg)' }}>
-          <Typography.Text type="danger">{errorMessage}</Typography.Text>
-        </Card>
+        <div className="flex items-center gap-3 rounded-2xl border border-error/20 bg-error/10 p-4 text-error">
+          <span className="material-symbols-outlined shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+          <p className="text-sm font-bold">{errorMessage}</p>
+        </div>
       ) : null}
 
-      <Card className="fatura-detail-page__summary-card" variant="borderless">
-        <div className="fatura-detail-page__summary-header">
-          <div className="fatura-detail-page__summary-copy">
-            <Typography.Text className="fatura-detail-page__section-eyebrow">Resumo da competencia</Typography.Text>
-            <Typography.Title level={4} className="fatura-detail-page__section-title">
-              {detail.cartaoNome}
-            </Typography.Title>
-            <Typography.Paragraph className="fatura-detail-page__section-description">
-              Leitura operacional do ciclo, com total da fatura, prazo, conta de pagamento e consolidacao dos itens agrupados.
-            </Typography.Paragraph>
-          </div>
-          <Space wrap>
-            <Tag color={getInvoiceStatusColor(detail.statusCodigo)}>{detail.statusNome}</Tag>
-            <Tag color="gold">{detail.quantidadeItens} item(ns)</Tag>
-          </Space>
-        </div>
-
-        <div className="fatura-detail-page__summary-layout">
-          <section className="fatura-detail-page__summary-main">
-            <Typography.Text type="secondary">Valor total da fatura</Typography.Text>
-            <Typography.Title level={1} className="fatura-detail-page__summary-value">
-              {formatCurrencyBRL(detail.valorTotal)}
-            </Typography.Title>
-            <Typography.Text type="secondary">
-              {paymentPending
-                ? `Vencimento em ${formatDateBR(detail.dataVencimento)}`
-                : `Pagamento consolidado em ${formatDateBR(detail.dataPagamento ?? detail.dataVencimento)}`}
-            </Typography.Text>
-
-            <div className="fatura-detail-page__metrics-grid">
-              {summaryCards.map((card) => (
-                <div key={card.key} className="fatura-detail-page__metric">
-                  <div className="fatura-detail-page__metric-icon">{card.icon}</div>
-                  <div className="fatura-detail-page__metric-copy">
-                    <Typography.Text type="secondary">{card.label}</Typography.Text>
-                    <Typography.Text strong>{card.value}</Typography.Text>
-                    <Typography.Text type="secondary" className="fatura-detail-page__metric-caption">
-                      {card.caption}
-                    </Typography.Text>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="fatura-detail-page__summary-side">
-            <div className="fatura-detail-page__summary-line">
-              <Typography.Text type="secondary">Competencia</Typography.Text>
-              <Typography.Text strong>{formatMonthYearBR(detail.competencia)}</Typography.Text>
-            </div>
-            <div className="fatura-detail-page__summary-line">
-              <Typography.Text type="secondary">Fechamento</Typography.Text>
-              <Typography.Text strong>{formatDateBR(detail.dataFechamento)}</Typography.Text>
-            </div>
-            <div className="fatura-detail-page__summary-line">
-              <Typography.Text type="secondary">Vencimento</Typography.Text>
-              <Typography.Text strong>{formatDateBR(detail.dataVencimento)}</Typography.Text>
-            </div>
-            <div className="fatura-detail-page__summary-line">
-              <Typography.Text type="secondary">Conta de pagamento</Typography.Text>
-              <Typography.Text strong>{detail.contaBancariaPagamentoNome ?? 'A definir'}</Typography.Text>
-            </div>
-          </section>
-        </div>
-      </Card>
-
-      <Card className="fatura-detail-page__payment-card" variant="borderless">
-        <div className="fatura-detail-page__payment-header">
+      {/* Payment section */}
+      <div className="rounded-2xl border border-white/6 bg-surface-container-low p-6">
+        <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <Typography.Text className="fatura-detail-page__section-eyebrow">
+            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
               {paymentPending ? 'Pagamento pendente' : 'Pagamento registrado'}
-            </Typography.Text>
-            <Typography.Title level={4} className="fatura-detail-page__section-title">
-              {paymentPending ? 'Completar fechamento financeiro' : 'Resumo do pagamento'}
-            </Typography.Title>
-            <Typography.Paragraph className="fatura-detail-page__section-description">
+            </p>
+            <h2 className="mt-1 font-headline text-lg font-bold text-on-surface">
+              {paymentPending ? 'Registrar pagamento' : 'Resumo do pagamento'}
+            </h2>
+            <p className="mt-0.5 text-sm text-on-surface-variant">
               {paymentPending
-                ? 'Informe a data, a conta bancaria e uma observacao opcional para registrar a saida real do caixa.'
-                : 'A fatura ja foi liquidada. Os dados abaixo mostram como o pagamento foi registrado.'}
-            </Typography.Paragraph>
+                ? 'Informe a data, a conta bancária e uma observação opcional para registrar a saída do caixa.'
+                : 'A fatura já foi liquidada. Dados do pagamento registrado abaixo.'}
+            </p>
           </div>
-          <Tag color={getInvoiceStatusColor(detail.statusCodigo)}>{detail.statusNome}</Tag>
+          <NeonBadge variant={statusBadgeVariant(detail.statusCodigo)}>
+            {detail.statusNome}
+          </NeonBadge>
         </div>
 
         {paymentPending ? (
-          <Form layout="vertical" className="fatura-detail-page__payment-form">
-            <div className="fatura-detail-page__payment-grid">
-              <Form.Item label="Data de pagamento">
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+                  Data de pagamento
+                </label>
                 <DateInput
                   ariaLabel="Data de pagamento"
                   value={paymentValues.dataPagamento}
-                  onChange={(value) =>
-                    setPaymentValues((current) => ({
-                      ...current,
-                      dataPagamento: value
-                    }))
-                  }
+                  onChange={(value) => setPaymentValues((c) => ({ ...c, dataPagamento: value }))}
                 />
-              </Form.Item>
-
-              <Form.Item label="Conta bancaria">
-                <Select
-                  aria-label="Conta bancaria"
-                  value={paymentValues.contaBancariaPagamentoId || undefined}
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+                  Conta bancária
+                </label>
+                <ComboBox
+                  aria-label="Conta bancária"
+                  value={paymentValues.contaBancariaPagamentoId}
                   options={contaOptions}
-                  onChange={(value) =>
-                    setPaymentValues((current) => ({
-                      ...current,
-                      contaBancariaPagamentoId: value ?? ''
-                    }))
-                  }
-                  style={{ width: '100%' }}
+                  placeholder="Selecionar conta..."
+                  onChange={(value) => setPaymentValues((c) => ({ ...c, contaBancariaPagamentoId: value }))}
                 />
-              </Form.Item>
-
-              <Form.Item label="Observacao">
-                <Input
-                  aria-label="Observacao"
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+                  Observação (opcional)
+                </label>
+                <input
+                  type="text"
+                  aria-label="Observação"
                   value={paymentValues.observacao}
-                  onChange={(event) =>
-                    setPaymentValues((current) => ({
-                      ...current,
-                      observacao: event.target.value
-                    }))
-                  }
+                  placeholder="Notas sobre o pagamento..."
+                  onChange={(e) => setPaymentValues((c) => ({ ...c, observacao: e.target.value }))}
+                  className="h-[54px] w-full rounded-xl bg-surface-container px-4 font-medium text-on-surface ring-1 ring-white/5 outline-none placeholder:text-outline/50 focus:ring-2 focus:ring-primary/40"
                 />
-              </Form.Item>
+              </div>
             </div>
-            <Space direction="vertical" size={12}>
-              <Typography.Text type="secondary">
-                O botao so fica habilitado quando data e conta bancaria estiverem preenchidas.
-              </Typography.Text>
-              <Button type="primary" size="large" loading={saving} disabled={!canSubmitPayment} onClick={() => void pagarFatura()}>
-                Pagar fatura
-              </Button>
-            </Space>
-          </Form>
+            <Button
+              type="button"
+              variant="primary"
+              size="lg"
+              disabled={!canSubmitPayment || saving}
+              loading={saving}
+              onClick={() => void pagarFatura()}
+            >
+              Confirmar pagamento
+            </Button>
+          </div>
         ) : (
-          <Space direction="vertical" size={12}>
-            <div className="fatura-detail-page__summary-line">
-              <Typography.Text type="secondary">Data do pagamento</Typography.Text>
-              <Typography.Text strong>{detail.dataPagamento ? formatDateBR(detail.dataPagamento) : '-'}</Typography.Text>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {[
+                { label: 'Data do pagamento', value: detail.dataPagamento ? formatDateBR(detail.dataPagamento) : '—' },
+                { label: 'Conta bancária', value: detail.contaBancariaPagamentoNome ?? 'Não informada' },
+                { label: 'Observação', value: detail.observacao?.trim() || 'Sem observações registradas.' }
+              ].map((row) => (
+                <div key={row.label} className="rounded-xl border border-white/5 bg-surface-container p-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{row.label}</p>
+                  <p className="mt-1 text-sm font-bold text-on-surface">{row.value}</p>
+                </div>
+              ))}
             </div>
-            <div className="fatura-detail-page__summary-line">
-              <Typography.Text type="secondary">Conta bancaria</Typography.Text>
-              <Typography.Text strong>{detail.contaBancariaPagamentoNome ?? 'Nao informada'}</Typography.Text>
-            </div>
-            <div className="fatura-detail-page__summary-line">
-              <Typography.Text type="secondary">Observacao</Typography.Text>
-              <Typography.Text strong>{detail.observacao?.trim() ? detail.observacao : 'Sem observacoes registradas.'}</Typography.Text>
-            </div>
-            <Button danger size="large" loading={saving} onClick={() => void estornarFatura()}>
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              disabled={saving}
+              loading={saving}
+              onClick={() => void estornarFatura()}
+            >
               Estornar pagamento
             </Button>
-          </Space>
-        )}
-      </Card>
-
-      <Card className="fatura-detail-page__items-card" variant="borderless">
-        <div className="fatura-detail-page__items-header">
-          <div>
-            <Typography.Text className="fatura-detail-page__section-eyebrow">Lancamentos do ciclo</Typography.Text>
-            <Typography.Title level={4} className="fatura-detail-page__section-title">
-              Itens vinculados a esta fatura
-            </Typography.Title>
-            <Typography.Paragraph className="fatura-detail-page__section-description">
-              Consulte descricao, recebedor, data da compra, valor e o andamento individual de cada parcela agrupada.
-            </Typography.Paragraph>
           </div>
-          <Space wrap>
-            <Tag color="gold">{detail.quantidadeItens} item(ns)</Tag>
-            <Tag color={getInvoiceStatusColor(detail.statusCodigo)}>{detail.statusNome}</Tag>
-          </Space>
+        )}
+      </div>
+
+      {/* Items table */}
+      <div className="rounded-2xl border border-white/6 bg-surface-container-low p-6">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Lançamentos do ciclo</p>
+            <h2 className="mt-1 font-headline text-lg font-bold text-on-surface">
+              Itens vinculados a esta fatura
+            </h2>
+          </div>
+          <NeonBadge variant="neutral">{detail.quantidadeItens} item(ns)</NeonBadge>
         </div>
 
-        <div className="fatura-detail-page__table-shell">
-          <AppDataTable<FaturaItem>
-            rowKey={(record) => record.ehEstorno ? `${record.contaPagarId}_estorno` : record.contaPagarId}
-            dataSource={detail.itens}
-            columns={[
-              {
-                title: 'Descricao',
-                dataIndex: 'descricao',
-                key: 'descricao',
-                render: (value, record) => (
-                  <div className="fatura-detail-page__item-description">
-                    <Typography.Text strong style={record.ehEstorno ? { color: 'var(--ant-color-success)' } : undefined}>
-                      {String(value)}
-                    </Typography.Text>
-                    <Typography.Text type="secondary">
-                      {record.ehEstorno ? 'Credito de estorno' : record.quantidadeParcelas > 1 ? 'Compra parcelada' : 'Lancamento avulso'}
-                    </Typography.Text>
-                  </div>
-                )
-              },
-              { title: 'Recebedor', dataIndex: 'recebedorNome', key: 'recebedorNome' },
-              {
-                title: 'Data da compra',
-                dataIndex: 'dataCompra',
-                key: 'dataCompra',
-                render: (value) => formatDateBR(String(value))
-              },
-              {
-                title: 'Valor',
-                dataIndex: 'valorLiquido',
-                key: 'valorLiquido',
-                render: (value, record) => (
-                  <Typography.Text style={{ color: record.ehEstorno ? 'var(--ant-color-success)' : undefined }} strong={record.ehEstorno}>
-                    {formatCurrencyBRL(Number(value))}
-                  </Typography.Text>
-                )
-              },
-              {
-                title: 'Status',
-                dataIndex: 'statusCodigo',
-                key: 'statusCodigo',
-                render: (value, record) => (
-                  <Tag color={record.ehEstorno ? 'green' : getAccountStatusColor(String(value))}>
-                    {record.ehEstorno ? 'Estorno' : String(value)}
-                  </Tag>
-                )
-              },
-              {
-                title: 'Parcela',
-                key: 'parcela',
-                render: (_value, record) => (
-                  <Tag bordered={false} color="default" className="fatura-detail-page__parcel-tag">
-                    {record.numeroParcela}/{record.quantidadeParcelas}
-                  </Tag>
-                )
-              }
-            ]}
-            emptyMessage="Nenhum item encontrado para esta fatura."
-          />
-        </div>
-      </Card>
-    </Space>
+        <AppDataTable<FaturaItem>
+          rowKey={(record) => record.ehEstorno ? `${record.contaPagarId}_estorno` : record.contaPagarId}
+          dataSource={detail.itens}
+          columns={[
+            {
+              title: 'Descrição',
+              dataIndex: 'descricao',
+              key: 'descricao',
+              mobileRole: 'title',
+              render: (value, record) => (
+                <div>
+                  <p className={`font-bold ${record.ehEstorno ? 'text-primary' : 'text-on-surface'}`}>{String(value)}</p>
+                  <p className="text-xs text-on-surface-variant">
+                    {record.ehEstorno ? 'Crédito de estorno' : record.quantidadeParcelas > 1 ? 'Compra parcelada' : 'Lançamento avulso'}
+                  </p>
+                </div>
+              )
+            },
+            { title: 'Recebedor', dataIndex: 'recebedorNome', key: 'recebedorNome', mobileRole: 'subtitle' },
+            {
+              title: 'Data da compra',
+              dataIndex: 'dataCompra',
+              key: 'dataCompra',
+              mobileRole: 'date',
+              render: (value) => formatDateBR(String(value))
+            },
+            {
+              title: 'Valor',
+              dataIndex: 'valorLiquido',
+              key: 'valorLiquido',
+              mobileRole: 'value',
+              render: (value, record) => (
+                <span className={`font-bold ${record.ehEstorno ? 'text-primary' : ''}`}>
+                  {formatCurrencyBRL(Number(value))}
+                </span>
+              )
+            },
+            {
+              title: 'Status',
+              dataIndex: 'statusCodigo',
+              key: 'statusCodigo',
+              mobileRole: 'status',
+              render: (value, record) => (
+                <NeonBadge variant={record.ehEstorno ? 'primary' : accountStatusBadgeVariant(String(value))} size="sm">
+                  {record.ehEstorno ? 'Estorno' : String(value)}
+                </NeonBadge>
+              )
+            },
+            {
+              title: 'Parcela',
+              key: 'parcela',
+              render: (_value, record) => (
+                <span className="text-xs font-bold text-on-surface-variant">
+                  {record.numeroParcela}/{record.quantidadeParcelas}
+                </span>
+              )
+            }
+          ]}
+          emptyMessage="Nenhum item encontrado para esta fatura."
+        />
+      </div>
+    </div>
   );
 }
