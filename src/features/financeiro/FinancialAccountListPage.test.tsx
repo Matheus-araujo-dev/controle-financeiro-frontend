@@ -1,7 +1,13 @@
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { FinancialAccountListPage } from './FinancialAccountListPage';
+
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } });
+}
 
 function createConfig() {
   const list = vi
@@ -93,12 +99,23 @@ function createConfig() {
 }
 
 describe('FinancialAccountListPage', () => {
+  let queryClient: QueryClient;
+
+  function TestWrapper({ children }: { children: React.ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  }
+
+  beforeEach(() => {
+    queryClient = createTestQueryClient();
+  });
+
   it('loads data, applies filters and renders navigation links', async () => {
     const { config, list } = createConfig();
     render(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
@@ -201,7 +218,8 @@ describe('FinancialAccountListPage', () => {
             loadRateioOptions: vi.fn()
           }}
         />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect(await screen.findByText('Falha ao carregar dados')).toBeInTheDocument();
@@ -219,7 +237,8 @@ describe('FinancialAccountListPage', () => {
     render(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
@@ -272,7 +291,8 @@ describe('FinancialAccountListPage', () => {
     render(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect(await screen.findByText('Plano funerário')).toBeInTheDocument();
@@ -296,7 +316,8 @@ describe('FinancialAccountListPage', () => {
     render(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
@@ -311,7 +332,8 @@ describe('FinancialAccountListPage', () => {
     render(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, Card, Divider, Form, Input, InputNumber, Popconfirm, Spin, Switch, Tag, Typography } from 'antd';
 import { MobileOutlined, CheckCircleOutlined, DisconnectOutlined, BellOutlined, WhatsAppOutlined } from '@ant-design/icons';
 import { agenteApi, type WhatsappAlertasResponse, type WhatsappStatusResponse } from '../../services/http/agente-api';
@@ -9,48 +10,47 @@ import { Button } from '../../components/ui/Button';
 const { Title, Text, Paragraph } = Typography;
 
 export function WhatsappVinculoPage() {
-  const [status, setStatus] = useState<WhatsappStatusResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [salvando, setSalvando] = useState(false);
   const [salvandoAlertas, setSalvandoAlertas] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [alertas, setAlertas] = useState<WhatsappAlertasResponse | null>(null);
   const [form] = Form.useForm<{ telefone: string }>();
   const [formAlertas] = Form.useForm<WhatsappAlertasResponse>();
+  const hasInitializedForms = useRef(false);
 
-  const carregar = useCallback(async () => {
-    setLoading(true);
-    setErro(null);
-    try {
+  const { data: queryData, isLoading } = useQuery({
+    queryKey: ['whatsapp', 'vinculo'],
+    queryFn: async () => {
       const [s, al] = await Promise.allSettled([
         agenteApi.obterStatusWhatsapp(),
-        agenteApi.obterAlertasWhatsapp(),
+        agenteApi.obterAlertasWhatsapp()
       ]);
+      return {
+        status: s.status === 'fulfilled' ? s.value : null,
+        alertas: al.status === 'fulfilled' ? al.value : null,
+        statusError: s.status === 'rejected' ? getApiErrorMessage(s.reason) : null
+      };
+    },
+    staleTime: 60_000
+  });
 
-      if (s.status === 'fulfilled') {
-        setStatus(s.value);
-        if (s.value.telefone) form.setFieldValue('telefone', s.value.telefone);
-      } else {
-        setErro(getApiErrorMessage(s.reason));
-      }
+  const status = queryData?.status ?? null;
+  const alertas = queryData?.alertas ?? null;
 
-      if (al.status === 'fulfilled') {
-        setAlertas(al.value);
-        formAlertas.setFieldsValue(al.value);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [form, formAlertas]);
-
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => {
+    if (!queryData || hasInitializedForms.current) return;
+    if (queryData.status?.telefone) form.setFieldValue('telefone', queryData.status.telefone);
+    if (queryData.alertas) formAlertas.setFieldsValue(queryData.alertas);
+    if (queryData.statusError) setErro(queryData.statusError);
+    hasInitializedForms.current = true;
+  }, [queryData, form, formAlertas]);
 
   const salvar = async (values: { telefone: string }) => {
     setSalvando(true);
     setErro(null);
     try {
       const res = await agenteApi.registrarWhatsapp({ telefone: values.telefone });
-      setStatus(res);
+      queryClient.setQueryData(['whatsapp', 'vinculo'], (old: typeof queryData) => ({ ...old, status: res }));
       notify('success', 'WhatsApp vinculado com sucesso.');
     } catch (err) {
       setErro(getApiErrorMessage(err));
@@ -64,7 +64,10 @@ export function WhatsappVinculoPage() {
     setErro(null);
     try {
       await agenteApi.desativarWhatsapp();
-      setStatus({ telefone: null, ativo: false, verificadoEm: null });
+      queryClient.setQueryData(['whatsapp', 'vinculo'], (old: typeof queryData) => ({
+        ...old,
+        status: { telefone: null, ativo: false, verificadoEm: null }
+      }));
       form.resetFields();
       notify('success', 'WhatsApp desvinculado.');
     } catch (err) {
@@ -78,7 +81,7 @@ export function WhatsappVinculoPage() {
     setSalvandoAlertas(true);
     try {
       const res = await agenteApi.salvarAlertasWhatsapp(values);
-      setAlertas(res);
+      queryClient.setQueryData(['whatsapp', 'vinculo'], (old: typeof queryData) => ({ ...old, alertas: res }));
       formAlertas.setFieldsValue(res);
       notify('success', 'Configurações de alertas salvas.');
     } catch (err) {
@@ -88,7 +91,7 @@ export function WhatsappVinculoPage() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-16">
         <Spin size="large" />

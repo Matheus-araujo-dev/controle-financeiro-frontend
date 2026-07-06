@@ -1,9 +1,15 @@
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { FaturaDetailPage } from './FaturaDetailPage';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { cadastrosApi } from '../../services/http/cadastros-api';
+
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } });
+}
 
 vi.mock('../../services/http/financeiro-api', () => ({
   financeiroApi: {
@@ -28,8 +34,15 @@ vi.mock('../../services/http/cadastros-api', () => ({
 }));
 
 describe('FaturaDetailPage', () => {
+  let queryClient: QueryClient;
+
+  function TestWrapper({ children }: { children: React.ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = createTestQueryClient();
   });
 
   it('loads the invoice detail, renders the redesigned summary and pays the invoice', async () => {
@@ -118,7 +131,8 @@ describe('FaturaDetailPage', () => {
         <Routes>
           <Route path="/faturas/:id" element={<FaturaDetailPage />} />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect(await screen.findByText('Visa Corporate')).toBeInTheDocument();
@@ -217,7 +231,8 @@ describe('FaturaDetailPage', () => {
         <Routes>
           <Route path="/faturas/:id" element={<FaturaDetailPage />} />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect(await screen.findByText('Resumo do pagamento')).toBeInTheDocument();

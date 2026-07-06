@@ -1,4 +1,5 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Button } from '../../components/ui/Button';
 import { ComboBox } from '../../components/forms/ComboBox';
@@ -71,155 +72,135 @@ export function RelatoriosPage() {
   const [compraStatus, setCompraStatus] = useState<string[]>([]);
   const [compraPrioridade, setCompraPrioridade] = useState<string[]>([]);
   const [comparativoMeses, setComparativoMeses] = useState('6');
-  const [data, setData] = useState<ReportState>({});
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string>();
-
   const deferredInadimplenciaSearch = useDeferredValue(inadimplenciaSearch);
   const deferredFaturaSearch = useDeferredValue(faturaSearch);
   const deferredRecorrenciaSearch = useDeferredValue(recorrenciaSearch);
   const deferredCompraSearch = useDeferredValue(compraSearch);
 
-  useEffect(() => {
-    let cancelled = false;
-    const range = getMonthRange(referenceMonth);
-
-    async function loadReports() {
-      setLoading(true);
-      setErrorMessage(undefined);
-
-      try {
-        const [
-          resumo,
-          responsaveis,
-          contasGerenciais,
-          fluxoCaixa,
-          previsoes,
-          contasPagarVencidas,
-          contasReceberVencidas,
-          faturas,
-          recorrencias,
-          compras,
-          comparativo
-        ] = await Promise.all([
-          dashboardApi.obterResumo({ mesReferencia: referenceMonth }),
-          dashboardApi.obterResumoPorResponsaveis({ mesReferencia: referenceMonth }),
-          dashboardApi.obterResumoContasGerenciais({
-            mesReferencia: referenceMonth,
-            tipo: contaTipo[0] as DashboardContaGerencialTipo | undefined
-          }),
-          dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth }),
-          dashboardApi.obterResumoCentralPrevisao({
-            mesReferencia: referenceMonth,
-            origem: previsaoOrigem[0] as DashboardCentralPrevisaoOrigem | undefined,
-            status: previsaoStatus[0] as DashboardCentralPrevisaoStatus | undefined
-          }),
-          (!inadimplenciaTipo.length || inadimplenciaTipo.includes('pagar'))
-            ? financeiroApi.contasPagar.listar({
-                page: 1,
-                pageSize: MAX_REPORT_ROWS,
-                search: deferredInadimplenciaSearch,
-                statusCodigo: ['VENCIDA'],
-                dataInicial: range.start,
-                dataFinal: range.end,
-                sortBy: 'dataVencimento',
-                sortDirection: 'Asc'
-              })
-            : Promise.resolve(emptyPaged<ContaPagarResumo, ContaFinanceiraListSummary>()),
-          (!inadimplenciaTipo.length || inadimplenciaTipo.includes('receber'))
-            ? financeiroApi.contasReceber.listar({
-                page: 1,
-                pageSize: MAX_REPORT_ROWS,
-                search: deferredInadimplenciaSearch,
-                statusCodigo: ['VENCIDA'],
-                dataInicial: range.start,
-                dataFinal: range.end,
-                sortBy: 'dataVencimento',
-                sortDirection: 'Asc'
-              })
-            : Promise.resolve(emptyPaged<ContaReceberResumo, ContaFinanceiraListSummary>()),
-          financeiroApi.faturas.listar({
-            page: 1,
-            pageSize: MAX_REPORT_ROWS,
-            search: deferredFaturaSearch,
-            competencia: referenceMonth,
-            statusCodigo: faturaStatus[0] as StatusFaturaCodigo | undefined,
-            sortBy: 'dataVencimento',
-            sortDirection: 'Asc'
-          }),
-          financeiroApi.recorrencias.listar({
-            page: 1,
-            pageSize: MAX_REPORT_ROWS,
-            search: deferredRecorrenciaSearch,
-            tipo: recorrenciaTipo[0] as 'Pagar' | 'Receber' | undefined,
-            ativa: recorrenciaAtiva[0] === 'true' ? true : recorrenciaAtiva[0] === 'false' ? false : undefined,
-            dataReferenciaInicial: range.start,
-            dataReferenciaFinal: range.end,
-            sortBy: 'dataInicio',
-            sortDirection: 'Asc'
-          }),
-          comprasPlanejadasApi.listar({
-            page: 1,
-            pageSize: MAX_REPORT_ROWS,
-            search: deferredCompraSearch,
-            status: compraStatus[0] as CompraPlanejadaStatus | undefined,
-            prioridade: compraPrioridade[0] as CompraPlanejadaPrioridade | undefined,
-            dataDesejadaInicial: range.start,
-            dataDesejadaFinal: range.end,
-            sortBy: 'dataDesejada',
-            sortDirection: 'Asc'
-          }),
-          dashboardApi.obterComparativoMensal({ meses: Number(comparativoMeses) })
-        ]);
-
-        if (!cancelled) {
-          setData({
-            resumo,
-            responsaveis,
-            contasGerenciais,
-            fluxoCaixa,
-            previsoes,
-            contasPagarVencidas,
-            contasReceberVencidas,
-            faturas,
-            recorrencias,
-            compras,
-            comparativo
-          });
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar relatórios.');
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadReports();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    comparativoMeses,
-    compraPrioridade,
-    compraStatus,
+  const reportFilters = {
+    referenceMonth,
     contaTipo,
-    deferredCompraSearch,
-    deferredFaturaSearch,
-    deferredInadimplenciaSearch,
-    deferredRecorrenciaSearch,
-    faturaStatus,
-    inadimplenciaTipo,
     previsaoOrigem,
     previsaoStatus,
-    recorrenciaAtiva,
+    inadimplenciaTipo,
+    deferredInadimplenciaSearch,
+    faturaStatus,
+    deferredFaturaSearch,
     recorrenciaTipo,
-    referenceMonth
-  ]);
+    recorrenciaAtiva,
+    deferredRecorrenciaSearch,
+    compraStatus,
+    compraPrioridade,
+    deferredCompraSearch,
+    comparativoMeses
+  };
+
+  const { data: reportData, isFetching: loading, error: reportError } = useQuery({
+    queryKey: ['relatorios', reportFilters],
+    queryFn: async (): Promise<ReportState> => {
+      const range = getMonthRange(referenceMonth);
+      const [
+        resumo,
+        responsaveis,
+        contasGerenciais,
+        fluxoCaixa,
+        previsoes,
+        contasPagarVencidas,
+        contasReceberVencidas,
+        faturas,
+        recorrencias,
+        compras,
+        comparativo
+      ] = await Promise.all([
+        dashboardApi.obterResumo({ mesReferencia: referenceMonth }),
+        dashboardApi.obterResumoPorResponsaveis({ mesReferencia: referenceMonth }),
+        dashboardApi.obterResumoContasGerenciais({
+          mesReferencia: referenceMonth,
+          tipo: contaTipo[0] as DashboardContaGerencialTipo | undefined
+        }),
+        dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth }),
+        dashboardApi.obterResumoCentralPrevisao({
+          mesReferencia: referenceMonth,
+          origem: previsaoOrigem[0] as DashboardCentralPrevisaoOrigem | undefined,
+          status: previsaoStatus[0] as DashboardCentralPrevisaoStatus | undefined
+        }),
+        (!inadimplenciaTipo.length || inadimplenciaTipo.includes('pagar'))
+          ? financeiroApi.contasPagar.listar({
+              page: 1,
+              pageSize: MAX_REPORT_ROWS,
+              search: deferredInadimplenciaSearch,
+              statusCodigo: ['VENCIDA'],
+              dataInicial: range.start,
+              dataFinal: range.end,
+              sortBy: 'dataVencimento',
+              sortDirection: 'Asc'
+            })
+          : Promise.resolve(emptyPaged<ContaPagarResumo, ContaFinanceiraListSummary>()),
+        (!inadimplenciaTipo.length || inadimplenciaTipo.includes('receber'))
+          ? financeiroApi.contasReceber.listar({
+              page: 1,
+              pageSize: MAX_REPORT_ROWS,
+              search: deferredInadimplenciaSearch,
+              statusCodigo: ['VENCIDA'],
+              dataInicial: range.start,
+              dataFinal: range.end,
+              sortBy: 'dataVencimento',
+              sortDirection: 'Asc'
+            })
+          : Promise.resolve(emptyPaged<ContaReceberResumo, ContaFinanceiraListSummary>()),
+        financeiroApi.faturas.listar({
+          page: 1,
+          pageSize: MAX_REPORT_ROWS,
+          search: deferredFaturaSearch,
+          competencia: referenceMonth,
+          statusCodigo: faturaStatus[0] as StatusFaturaCodigo | undefined,
+          sortBy: 'dataVencimento',
+          sortDirection: 'Asc'
+        }),
+        financeiroApi.recorrencias.listar({
+          page: 1,
+          pageSize: MAX_REPORT_ROWS,
+          search: deferredRecorrenciaSearch,
+          tipo: recorrenciaTipo[0] as 'Pagar' | 'Receber' | undefined,
+          ativa: recorrenciaAtiva[0] === 'true' ? true : recorrenciaAtiva[0] === 'false' ? false : undefined,
+          dataReferenciaInicial: range.start,
+          dataReferenciaFinal: range.end,
+          sortBy: 'dataInicio',
+          sortDirection: 'Asc'
+        }),
+        comprasPlanejadasApi.listar({
+          page: 1,
+          pageSize: MAX_REPORT_ROWS,
+          search: deferredCompraSearch,
+          status: compraStatus[0] as CompraPlanejadaStatus | undefined,
+          prioridade: compraPrioridade[0] as CompraPlanejadaPrioridade | undefined,
+          dataDesejadaInicial: range.start,
+          dataDesejadaFinal: range.end,
+          sortBy: 'dataDesejada',
+          sortDirection: 'Asc'
+        }),
+        dashboardApi.obterComparativoMensal({ meses: Number(comparativoMeses) })
+      ]);
+      return {
+        resumo,
+        responsaveis,
+        contasGerenciais,
+        fluxoCaixa,
+        previsoes,
+        contasPagarVencidas,
+        contasReceberVencidas,
+        faturas,
+        recorrencias,
+        compras,
+        comparativo
+      };
+    },
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
+
+  const data: ReportState = reportData ?? {};
+  const errorMessage = reportError instanceof Error ? reportError.message : reportError ? 'Falha ao carregar relatórios.' : undefined;
 
   const responsaveis = data.responsaveis?.itens ?? [];
   const contasGerenciais = data.contasGerenciais?.itens ?? [];
