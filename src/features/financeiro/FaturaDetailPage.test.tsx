@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { FaturaDetailPage } from './FaturaDetailPage';
@@ -122,15 +122,14 @@ describe('FaturaDetailPage', () => {
     );
 
     expect(await screen.findByText('Visa Corporate')).toBeInTheDocument();
-    expect(screen.getByText('Nucleo administrativo')).toBeInTheDocument();
-    expect(screen.getByText('Valor total da fatura')).toBeInTheDocument();
+    expect(screen.getByText('Valor total')).toBeInTheDocument();
     expect(screen.getByText('Itens vinculados a esta fatura')).toBeInTheDocument();
     expect(screen.getByText('Compra cartao abril A')).toBeInTheDocument();
 
-    const select = screen.getByRole('combobox');
-    fireEvent.mouseDown(select);
-    await userEvent.click(await screen.findByText('Conta principal - Banco Exemplo'));
-    await userEvent.click(screen.getByRole('button', { name: 'Pagar fatura' }));
+    const combobox = screen.getByRole('combobox');
+    await userEvent.click(combobox);
+    await userEvent.click(await screen.findByText('Conta principal — Banco Exemplo'));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento' }));
 
     await waitFor(() =>
       expect(financeiroApi.faturas.pagar).toHaveBeenCalledWith('f1', {
@@ -226,7 +225,7 @@ describe('FaturaDetailPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Estornar pagamento' }));
 
     await waitFor(() => expect(financeiroApi.faturas.estornar).toHaveBeenCalledWith('f1'));
-    expect(await screen.findByText('Completar fechamento financeiro')).toBeInTheDocument();
+    expect(await screen.findByText('Registrar pagamento')).toBeInTheDocument();
     expect(screen.getAllByText('Aberta').length).toBeGreaterThan(0);
   });
 });
