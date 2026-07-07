@@ -246,12 +246,12 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
       <FormActionPanel
         title="Pronto para salvar?"
         eyebrow="Resumo Financeiro"
-        submitLabel={id && id !== 'novo' ? 'Atualizar Lancamento' : 'Confirmar Lancamento'}
+        submitLabel={id && id !== 'novo' ? 'Atualizar Lançamento' : 'Confirmar Lançamento'}
         submitDisabled={isSubmitting}
         submitting={isSubmitting}
         error={errorMessage}
         onCancel={onCancel}
-        cancelLabel="Descartar Alteracoes"
+        cancelLabel="Descartar Alterações"
         items={[
           { label: 'Valor Liquido', value: formatCurrencyBRL(valorLiquido), accent: true },
           { label: 'Valor Original', value: formatCurrencyBRL(valorOriginal) },
@@ -283,14 +283,14 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
                 }
                 setConfirm({
                   title: 'Confirmar Cancelamento',
-                  message: 'Tem certeza que deseja cancelar este lancamento? Esta acao nao pode ser desfeita.',
+                  message: 'Tem certeza que deseja cancelar este lançamento? Esta ação não pode ser desfeita.',
                   confirmLabel: 'Sim, cancelar',
                   tone: 'danger',
                   onConfirm: () => void cancelar()
                 });
               }}
             >
-              Cancelar Titulo
+              Cancelar Título
             </Button>
           ) : null}
 
