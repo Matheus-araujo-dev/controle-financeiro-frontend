@@ -14,13 +14,19 @@ describe('RouteErrorPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // @ts-expect-error redefinição parcial para o teste
-    delete window.location;
-    window.location = { ...originalLocation, reload: vi.fn(), href: '' } as unknown as Location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { ...originalLocation, reload: vi.fn(), href: '' },
+    });
   });
 
   afterEach(() => {
-    window.location = originalLocation;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: originalLocation,
+    });
   });
 
   it('mostra a mensagem de um Error comum', () => {

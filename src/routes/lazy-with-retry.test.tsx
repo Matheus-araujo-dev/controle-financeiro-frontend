@@ -7,13 +7,19 @@ describe('lazyWithRetry', () => {
 
   beforeEach(() => {
     window.sessionStorage.clear();
-    // @ts-expect-error redefinição parcial para o teste
-    delete window.location;
-    window.location = { ...originalLocation, reload: vi.fn() } as unknown as Location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { ...originalLocation, reload: vi.fn() },
+    });
   });
 
   afterEach(() => {
-    window.location = originalLocation;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: originalLocation,
+    });
   });
 
   it('renderiza o componente quando o import funciona', async () => {
