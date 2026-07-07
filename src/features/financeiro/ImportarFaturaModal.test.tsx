@@ -135,7 +135,7 @@ describe('ImportarFaturaModal', () => {
   it('renders cartão and recebedor fields without forma de pagamento or categoria padrão', async () => {
     renderModal();
 
-    expect(await screen.findByText('Importar Fatura PDF')).toBeInTheDocument();
+    expect(await screen.findByText('Importar Fatura')).toBeInTheDocument();
     expect(screen.getByText('Cartão')).toBeInTheDocument();
     expect(screen.getByText('Recebedor padrão')).toBeInTheDocument();
 
@@ -277,13 +277,12 @@ describe('ImportarFaturaModal', () => {
     const { onSuccess } = renderModal({ initialCartaoId: 'c1' });
     await waitFor(() => expect(cadastrosApi.cartoes.listar).toHaveBeenCalled());
 
-    // Select recebedor via AntD Select combobox
-    const comboboxes = screen.getAllByRole('combobox');
-    // First combobox is Cartão, second is Recebedor
-    const recebedorInput = comboboxes[1];
+    // Seleciona o recebedor pela aria-label (robusto a mudanças de layout/ordem dos campos).
+    // O ComboBox customizado renderiza cada opção como <button> com o texto do label.
+    const recebedorInput = screen.getByRole('combobox', { name: 'Recebedor padrão' });
     await userEvent.click(recebedorInput);
 
-    const option = await screen.findByTitle('Mercado Extra');
+    const option = await screen.findByRole('button', { name: 'Mercado Extra' });
     await userEvent.click(option);
 
     await uploadFile(new File(['%PDF'], 'fatura.pdf', { type: 'application/pdf' }));
@@ -297,7 +296,7 @@ describe('ImportarFaturaModal', () => {
     ));
     expect(onSuccess).toHaveBeenCalledOnce();
 
-    expect(await screen.findByText(/1 lançamento\(s\) importado/i)).toBeInTheDocument();
+    expect(await screen.findByText(/1 lançamento\(s\) criado\(s\)/i)).toBeInTheDocument();
   });
 
   it('reloads cartão when modal re-opens', async () => {
