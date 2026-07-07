@@ -144,7 +144,7 @@ describe('FinancialAccountFormPage', () => {
     expect(await screen.findByDisplayValue('Despesa de teste')).toBeInTheDocument();
     expect(screen.getByDisplayValue('08/2026')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lancamento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lançamento' }));
 
     await waitFor(() =>
       expect(config.update).toHaveBeenCalledWith('123', {
@@ -168,7 +168,7 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByText('Rateio por Centro de Custo')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lancamento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lançamento' }));
 
     await waitFor(() => expect(config.create).toHaveBeenCalled());
     expect(navigateMock).toHaveBeenCalledWith('/contas-pagar/1');
@@ -234,7 +234,7 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByText('Rateio por Centro de Custo')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lancamento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lançamento' }));
 
     await waitFor(() => expect(config.create).toHaveBeenCalled());
     expect(await screen.findByText('Descrição obrigatória.')).toBeInTheDocument();
