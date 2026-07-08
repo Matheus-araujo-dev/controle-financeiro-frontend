@@ -129,6 +129,7 @@ export type ContaPagarDetalhe = {
   recebedorNome: string;
   dataVencimento: string;
   dataLiquidacao: string | null;
+  dataCompra: string | null;
   formaPagamentoId: string;
   formaPagamentoNome: string;
   formaPagamentoEhCartao: boolean;
@@ -173,6 +174,7 @@ export type ContaPagarPayload = {
   cartaoId: string | null;
   contaBancariaId: string | null;
   dataLiquidacao: string | null;
+  dataCompra: string | null;
   valorOriginal: number;
   valorDesconto: number;
   valorJuros: number;

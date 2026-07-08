@@ -62,6 +62,7 @@ export type FinanceiroFormValues = {
   cartaoId: string;
   contaBancariaId: string;
   dataLiquidacao: string;
+  dataCompra: string;
   valorOriginal: number;
   valorDesconto: number;
   valorJuros: number;
@@ -154,6 +155,7 @@ const defaultValues: FinanceiroFormValues = {
   cartaoId: '',
   contaBancariaId: '',
   dataLiquidacao: '',
+  dataCompra: '',
   valorOriginal: 0,
   valorDesconto: 0,
   valorJuros: 0,
@@ -384,6 +386,7 @@ function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload
     cartaoId: normalizeNullableId(values.cartaoId),
     contaBancariaId: normalizeNullableId(values.contaBancariaId),
     dataLiquidacao: normalizeNullableText(values.dataLiquidacao),
+    dataCompra: normalizeNullableText(values.dataCompra),
     valorOriginal: values.valorOriginal,
     valorDesconto: values.valorDesconto,
     valorJuros: values.valorJuros,
@@ -439,6 +442,7 @@ function buildToFormValues(detail: {
   cartaoId: string | null;
   contaBancariaId: string | null;
   dataLiquidacao: string | null;
+  dataCompra: string | null;
   rateios: Array<{ contaGerencialId: string; valor: number }>;
   pessoaId: string;
   responsavelId: string | null;
@@ -464,6 +468,7 @@ function buildToFormValues(detail: {
     cartaoId: detail.cartaoId ?? '',
     contaBancariaId: detail.contaBancariaId ?? '',
     dataLiquidacao: detail.dataLiquidacao ?? '',
+    dataCompra: detail.dataCompra ?? detail.dataLiquidacao ?? '',
     valorOriginal: detail.valorOriginal,
     valorDesconto: detail.valorDesconto,
     valorJuros: detail.valorJuros,
@@ -556,6 +561,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
       cartaoId: detail.cartaoId,
       contaBancariaId: detail.contaBancariaId,
       dataLiquidacao: detail.dataLiquidacao,
+      dataCompra: detail.dataCompra,
       rateios: detail.rateios,
       pessoaId: detail.recebedorId,
       responsavelId: detail.responsavelCompraId,
@@ -670,6 +676,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
       cartaoId: detail.cartaoId,
       contaBancariaId: detail.contaBancariaId,
       dataLiquidacao: detail.dataLiquidacao,
+      dataCompra: null,
       rateios: detail.rateios,
       pessoaId: detail.pagadorId,
       responsavelId: detail.responsavelId,

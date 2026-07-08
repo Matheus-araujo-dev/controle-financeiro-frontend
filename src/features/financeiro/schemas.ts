@@ -18,6 +18,7 @@ export const financialAccountFormSchema = z
     cartaoId: z.string(),
     contaBancariaId: z.string(),
     dataLiquidacao: z.string(),
+    dataCompra: z.string(),
     valorOriginal: z.number().nonnegative(),
     valorDesconto: z.number().nonnegative(),
     valorJuros: z.number().nonnegative(),
