@@ -28,7 +28,7 @@ export function resolveApiBaseUrl(envBaseUrl?: string, browserLocation: BrowserL
   return `${protocol}//${hostname}${portSegment}/api/v1`;
 }
 
-type RetriableRequestConfig = InternalAxiosRequestConfig & { _retried?: boolean };
+type RetriableRequestConfig = InternalAxiosRequestConfig & { _retried?: boolean; _silentError?: boolean };
 
 let refreshPromise: Promise<AuthTokenResponse | null> | null = null;
 
@@ -89,7 +89,7 @@ export function registerApiClientInterceptors(client: ReturnType<typeof axios.cr
         }
       }
 
-      if (!status || status >= 500) {
+      if ((!status || status >= 500) && !originalRequest?._silentError) {
         notify('error', 'Falha na comunicacao com a API', getApiErrorMessage(error));
       }
 

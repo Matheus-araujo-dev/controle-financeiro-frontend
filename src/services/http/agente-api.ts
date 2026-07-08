@@ -81,7 +81,11 @@ export const agenteApi = {
   },
 
   obterInsights: async (mesReferencia: string): Promise<AgenteInsightsResponse> => {
-    const { data } = await apiClient.post<AgenteInsightsResponse>('/agente/insights', { mesReferencia });
+    const { data } = await apiClient.post<AgenteInsightsResponse>(
+      '/agente/insights',
+      { mesReferencia },
+      { timeout: 60_000, _silentError: true } as never
+    );
     return data;
   },
 

@@ -80,7 +80,7 @@ describe('agenteApi', () => {
       receberLimiteCategoria: true,
       receberLimiteResponsavel: false
     });
-    expect(apiClient.post).toHaveBeenCalledWith('/agente/insights', { mesReferencia: '2026-06' });
+    expect(apiClient.post).toHaveBeenCalledWith('/agente/insights', { mesReferencia: '2026-06' }, { timeout: 60_000, _silentError: true });
     expect(apiClient.post).toHaveBeenCalledWith('/agente/categorizar', { descricoes: ['Mercado'] });
   });
 });
