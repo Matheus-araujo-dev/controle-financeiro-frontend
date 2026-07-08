@@ -1,4 +1,5 @@
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo } from 'react';
+import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowDownOutlined,
@@ -86,22 +87,37 @@ function getMovementDescriptor(item: MovimentacaoResumo) {
   };
 }
 
+const defaultMovimentacaoFilters: MovimentacaoFilters = {
+  page: 1,
+  pageSize: 20,
+  search: '',
+  dataInicial: undefined,
+  dataFinal: undefined,
+  contaBancariaIds: undefined,
+  responsavelIds: undefined,
+  tipo: undefined,
+};
+
 export function MovimentacoesPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const contaBancariaInicial = urlParams.get('contaBancariaId');
   const dataInicialParam = urlParams.get('dataInicial') ?? undefined;
   const dataFinalParam = urlParams.get('dataFinal') ?? undefined;
 
-  const [filters, setFilters] = useState<MovimentacaoFilters>({
-    page: 1,
-    pageSize: 20,
-    search: '',
-    dataInicial: dataInicialParam,
-    dataFinal: dataFinalParam,
-    contaBancariaIds: contaBancariaInicial ? [contaBancariaInicial] : undefined,
-    responsavelIds: undefined,
-    tipo: undefined,
-  });
+  const hasUrlParams = !!(contaBancariaInicial || dataInicialParam || dataFinalParam);
+  const urlOverrides: Partial<MovimentacaoFilters> | undefined = hasUrlParams
+    ? {
+        contaBancariaIds: contaBancariaInicial ? [contaBancariaInicial] : undefined,
+        dataInicial: dataInicialParam,
+        dataFinal: dataFinalParam,
+      }
+    : undefined;
+
+  const { filters, setFilters, clearFilters, isModified } = usePersistedFilters(
+    'filters:movimentacoes',
+    defaultMovimentacaoFilters,
+    urlOverrides
+  );
   const deferredFilters = useDeferredValue(filters);
 
   const { data, isFetching, error, refetch } = useQuery({
@@ -177,7 +193,7 @@ export function MovimentacoesPage() {
         </>
       }
       filters={
-      <FilterCard className="space-y-4">
+      <FilterCard className="space-y-4" onClear={isModified ? clearFilters : undefined}>
         {/* Linha 1: Período + Tipo */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <FilterField label="De">

@@ -1,4 +1,5 @@
 import { useDeferredValue, useMemo, useState } from 'react';
+import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircleFilled, EyeOutlined, PauseCircleOutlined, PlayCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import { AppDataTable } from '../../components/data/AppDataTable';
@@ -36,7 +37,7 @@ type RecorrenciaDisplayItem = RecorrenciaListItem & {
 
 export function RecurrenceListPage() {
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState<RecorrenciaFilters>(defaultFilters);
+  const { filters, setFilters, clearFilters, isModified } = usePersistedFilters('filters:recorrencias', defaultFilters);
   const deferredFilters = useDeferredValue(filters);
   const [actionLoadingId, setActionLoadingId] = useState<string>();
 
@@ -126,7 +127,7 @@ export function RecurrenceListPage() {
       }
       summaryColumns={4}
       filters={
-        <FilterCard>
+        <FilterCard onClear={isModified ? clearFilters : undefined}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <FilterField label="Busca">
               <FilterInputWrapper icon={<SearchOutlined />}>

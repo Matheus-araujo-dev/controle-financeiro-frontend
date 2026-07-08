@@ -1,4 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
@@ -112,15 +113,29 @@ function StatusBadge({ codigo, nome }: { codigo: StatusFaturaCodigo; nome: strin
 export function FaturasPage() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const initialFilters = useMemo(() => buildInitialFilters(searchParams), [searchParams]);
-  const [filters, setFilters] = useState<FaturaFilters>(initialFilters);
-  const deferredFilters = useDeferredValue(filters);
   const [importarModalOpen, setImportarModalOpen] = useState(false);
   const origemContaCartao = searchParams.get('origem') === 'conta-cartao';
 
+  const urlOverrides = useMemo(() => {
+    const competencia = searchParams.get('competencia');
+    const cartaoId = searchParams.get('cartaoId');
+    return (competencia || cartaoId)
+      ? { cartaoId: cartaoId || undefined, competencias: competencia ? [competencia] : undefined }
+      : undefined;
+  }, [searchParams]);
+
+  const { filters, setFilters, clearFilters, isModified } = usePersistedFilters(
+    'filters:faturas',
+    defaultFilters,
+    urlOverrides
+  );
+  const deferredFilters = useDeferredValue(filters);
+
+  // Atualiza filtros quando URL muda (deep-link vindo do dashboard)
   useEffect(() => {
-    setFilters(initialFilters);
-  }, [initialFilters]);
+    if (!urlOverrides) return;
+    setFilters((prev) => ({ ...prev, ...urlOverrides }));
+  }, [urlOverrides]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data, isFetching, error } = useQuery({
     queryKey: ['faturas', 'list', deferredFilters],
@@ -230,7 +245,7 @@ export function FaturasPage() {
         </>
       }
       filters={
-        <FilterCard>
+        <FilterCard onClear={isModified ? clearFilters : undefined}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <FilterField label="Busca">
               <FilterInputWrapper icon={<SearchOutlined />}>

@@ -1,4 +1,5 @@
 import { useDeferredValue, useMemo, useState } from 'react';
+import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
@@ -135,16 +136,23 @@ export function FinancialAccountListPage({
   const [pendingLiquidacao, setPendingLiquidacao] = useState<FinancialRecord | null>(null);
   const [pendingEstorno, setPendingEstorno] = useState<FinancialRecord | null>(null);
   const [actionError, setActionError] = useState<string>();
-  const [filters, setFilters] = useState<ListFilters>({
+
+  const defaultListFilters: ListFilters = {
     page: 1,
     pageSize: 20,
     search: '',
-    statusCodigo: statusInicial ? [statusInicial] : ((config.defaultFilters.statusCodigo as StatusContaCodigo[]) ?? []),
+    statusCodigo: (config.defaultFilters.statusCodigo as StatusContaCodigo[]) ?? [],
     dataInicial: undefined,
     dataFinal: undefined,
     sortBy: undefined,
     sortDirection: undefined
-  });
+  };
+
+  const { filters, setFilters, clearFilters, isModified } = usePersistedFilters(
+    `filters:${config.key}`,
+    defaultListFilters,
+    statusInicial ? { statusCodigo: [statusInicial] } : undefined
+  );
 
   const deferredFilters = useDeferredValue(filters);
 
@@ -460,7 +468,7 @@ export function FinancialAccountListPage({
 
       <ListSummaryCards items={summaryItems} columns={5} />
 
-      <FilterCard>
+      <FilterCard onClear={isModified ? clearFilters : undefined}>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <FilterField label="Status">
             <MultiSelectFilter
