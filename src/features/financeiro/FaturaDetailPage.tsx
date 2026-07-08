@@ -310,6 +310,7 @@ export function FaturaDetailPage() {
               title: 'Descrição',
               dataIndex: 'descricao',
               key: 'descricao',
+              sorter: false,
               mobileRole: 'title',
               render: (value, record) => (
                 <div>
@@ -320,11 +321,12 @@ export function FaturaDetailPage() {
                 </div>
               )
             },
-            { title: 'Recebedor', dataIndex: 'recebedorNome', key: 'recebedorNome', mobileRole: 'subtitle' },
+            { title: 'Recebedor', dataIndex: 'recebedorNome', key: 'recebedorNome', sorter: false, mobileRole: 'subtitle' },
             {
               title: 'Data da compra',
               dataIndex: 'dataCompra',
               key: 'dataCompra',
+              sorter: false,
               mobileRole: 'date',
               render: (value) => formatDateBR(String(value))
             },
@@ -332,6 +334,7 @@ export function FaturaDetailPage() {
               title: 'Valor',
               dataIndex: 'valorLiquido',
               key: 'valorLiquido',
+              sorter: false,
               mobileRole: 'value',
               render: (value, record) => (
                 <span className={`font-bold ${record.ehEstorno ? 'text-primary' : ''}`}>
@@ -343,6 +346,7 @@ export function FaturaDetailPage() {
               title: 'Status',
               dataIndex: 'statusCodigo',
               key: 'statusCodigo',
+              sorter: false,
               mobileRole: 'status',
               render: (value, record) => (
                 <NeonBadge variant={record.ehEstorno ? 'primary' : accountStatusBadgeVariant(String(value))} size="sm">
@@ -353,6 +357,7 @@ export function FaturaDetailPage() {
             {
               title: 'Parcela',
               key: 'parcela',
+              sorter: false,
               render: (_value, record) => (
                 <span className="text-xs font-bold text-on-surface-variant">
                   {record.numeroParcela}/{record.quantidadeParcelas}
