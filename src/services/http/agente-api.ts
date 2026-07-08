@@ -81,12 +81,15 @@ export const agenteApi = {
   },
 
   obterInsights: async (mesReferencia: string): Promise<AgenteInsightsResponse> => {
+    // validateStatus: () => true evita que qualquer status (500, timeout etc.) dispare
+    // o interceptor de erro global e mostre o toast "Falha na comunicação com a API".
+    // O card de IA trata a ausência de insights silenciosamente na UI.
     const { data } = await apiClient.post<AgenteInsightsResponse>(
       '/agente/insights',
       { mesReferencia },
-      { timeout: 60_000, _silentError: true } as never
+      { timeout: 60_000, validateStatus: () => true } as never
     );
-    return data;
+    return data?.insights ? data : { insights: [], tokensUsados: 0 };
   },
 
   categorizar: async (descricoes: string[]): Promise<AgenteCategorizarResponse> => {
