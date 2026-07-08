@@ -3,11 +3,13 @@ import { RouterProvider } from 'react-router-dom';
 import { AppProviders } from './app/AppProviders';
 import { appRouter } from './routes/router';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { PwaUpdateBanner } from './components/pwa/PwaUpdateBanner';
 
 export default function App() {
   return (
     <ErrorBoundary>
       <AppProviders>
+        <PwaUpdateBanner />
         <Suspense
           fallback={
             <div className="flex h-screen items-center justify-center bg-surface font-body text-on-surface-variant">

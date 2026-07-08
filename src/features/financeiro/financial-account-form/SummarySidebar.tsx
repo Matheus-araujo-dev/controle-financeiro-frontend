@@ -51,6 +51,93 @@ function ConfirmDialog({ state, onClose }: { state: ConfirmState; onClose: () =>
   );
 }
 
+function RecorrenciaCancelDialog({
+  open,
+  onClose,
+  onCancelarApenas,
+  onCancelarEPausar
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCancelarApenas: () => void;
+  onCancelarEPausar: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
+        <div className="mb-6 flex items-start gap-3">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-error/12 text-error">
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>repeat</span>
+          </div>
+          <div>
+            <h3 className="font-headline text-lg font-bold text-on-surface">Cancelar lancamento recorrente</h3>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Este lancamento esta vinculado a uma recorrencia ativa. Deseja pausar a recorrencia para que novas contas nao sejam geradas?
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Voltar
+          </Button>
+          <Button type="button" variant="secondary" onClick={onCancelarApenas}>
+            Nao, manter recorrencia
+          </Button>
+          <Button type="button" variant="danger" onClick={onCancelarEPausar}>
+            Sim, pausar recorrencia
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ParcelasCancelDialog({
+  open,
+  onClose,
+  onCancelarApenas,
+  onCancelarFuturas
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCancelarApenas: () => void;
+  onCancelarFuturas: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
+        <div className="mb-6 flex items-start gap-3">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-error/12 text-error">
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
+          </div>
+          <div>
+            <h3 className="font-headline text-lg font-bold text-on-surface">Cancelar parcela</h3>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Este titulo faz parte de um parcelamento. Deseja cancelar tambem as parcelas futuras pendentes?
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Voltar
+          </Button>
+          <Button type="button" variant="secondary" onClick={onCancelarApenas}>
+            Nao, apenas esta
+          </Button>
+          <Button type="button" variant="danger" onClick={onCancelarFuturas}>
+            Sim, cancelar futuras
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function PlannedPurchaseCancelDialog({
   open,
   onClose,
@@ -107,20 +194,35 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     cancelar,
     estornar,
     origemCompraPlanejadaId,
+    exibeRecorrencia,
+    grupoParcelamentoId,
+    numeroParcela,
     totalRateios
   } = form;
+  const showSubmitError = Boolean(errorMessage) && !isSubmitting;
 
   const [confirm, setConfirm] = useState<ConfirmState>(null);
   const [plannedPurchaseConfirmOpen, setPlannedPurchaseConfirmOpen] = useState(false);
+  const [recorrenciaConfirmOpen, setRecorrenciaConfirmOpen] = useState(false);
+  const [parcelasConfirmOpen, setParcelasConfirmOpen] = useState(false);
 
   const valorOriginal = Number(watchedValues.valorOriginal) || 0;
   const valorDesconto = Number(watchedValues.valorDesconto) || 0;
   const valorJurosMulta = (Number(watchedValues.valorJuros) || 0) + (Number(watchedValues.valorMulta) || 0);
   const hasPlannedPurchaseOrigin = Boolean(origemCompraPlanejadaId);
+  const hasRecorrenciaOrigin = Boolean(id) && Boolean(exibeRecorrencia);
+  // Não-origem de parcelamento: tem grupo mas não é a parcela 1
+  const isNonOriginParcela = Boolean(grupoParcelamentoId) && numeroParcela !== undefined && numeroParcela > 1;
 
   return (
     <div className="space-y-8 lg:col-span-5">
       <div className="fixed left-4 right-4 z-40 lg:hidden" style={{ bottom: '72px' }}>
+        {showSubmitError ? (
+          <div className="mb-2 flex items-center gap-2 rounded-xl border border-error/20 bg-error/10 px-3 py-2.5 text-error backdrop-blur-xl">
+            <span className="material-symbols-outlined text-sm shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+            <p className="text-xs font-bold">{errorMessage}</p>
+          </div>
+        ) : null}
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-surface-container-low/95 px-4 py-3 shadow-[0_-4px_32px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Valor Liquido</p>
@@ -133,7 +235,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
             variant="primary"
             size="lg"
             className="shrink-0 rounded-xl"
-            disabled={isSubmitting || !isValid}
+            disabled={isSubmitting}
             loading={isSubmitting}
           >
             {id && id !== 'novo' ? 'Atualizar' : 'Confirmar'}
@@ -144,12 +246,12 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
       <FormActionPanel
         title="Pronto para salvar?"
         eyebrow="Resumo Financeiro"
-        submitLabel={id && id !== 'novo' ? 'Atualizar Lancamento' : 'Confirmar Lancamento'}
-        submitDisabled={isSubmitting || !isValid}
+        submitLabel={id && id !== 'novo' ? 'Atualizar Lançamento' : 'Confirmar Lançamento'}
+        submitDisabled={isSubmitting}
         submitting={isSubmitting}
         error={errorMessage}
         onCancel={onCancel}
-        cancelLabel="Descartar Alteracoes"
+        cancelLabel="Descartar Alterações"
         items={[
           { label: 'Valor Liquido', value: formatCurrencyBRL(valorLiquido), accent: true },
           { label: 'Valor Original', value: formatCurrencyBRL(valorOriginal) },
@@ -160,7 +262,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
         ]}
       >
         <div className="space-y-3">
-          {id && (detailStatus === 'PENDENTE' || detailStatus === 'EM_FATURA') ? (
+          {id && (detailStatus === 'PENDENTE' || detailStatus === 'FUTURO' || detailStatus === 'EM_FATURA') ? (
             <Button
               type="button"
               variant="danger"
@@ -171,17 +273,24 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
                   setPlannedPurchaseConfirmOpen(true);
                   return;
                 }
-
+                if (hasRecorrenciaOrigin) {
+                  setRecorrenciaConfirmOpen(true);
+                  return;
+                }
+                if (isNonOriginParcela) {
+                  setParcelasConfirmOpen(true);
+                  return;
+                }
                 setConfirm({
                   title: 'Confirmar Cancelamento',
-                  message: 'Tem certeza que deseja cancelar este lancamento? Esta acao nao pode ser desfeita.',
+                  message: 'Tem certeza que deseja cancelar este lançamento? Esta ação não pode ser desfeita.',
                   confirmLabel: 'Sim, cancelar',
                   tone: 'danger',
                   onConfirm: () => void cancelar()
                 });
               }}
             >
-              Cancelar Titulo
+              Cancelar Título
             </Button>
           ) : null}
 
@@ -208,6 +317,18 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
       </FormActionPanel>
 
       <ConfirmDialog state={confirm} onClose={() => setConfirm(null)} />
+      <RecorrenciaCancelDialog
+        open={recorrenciaConfirmOpen}
+        onClose={() => setRecorrenciaConfirmOpen(false)}
+        onCancelarApenas={() => {
+          void cancelar({ pausarRecorrenciaRelacionada: false });
+          setRecorrenciaConfirmOpen(false);
+        }}
+        onCancelarEPausar={() => {
+          void cancelar({ pausarRecorrenciaRelacionada: true });
+          setRecorrenciaConfirmOpen(false);
+        }}
+      />
       <PlannedPurchaseCancelDialog
         open={plannedPurchaseConfirmOpen}
         onClose={() => setPlannedPurchaseConfirmOpen(false)}
@@ -218,6 +339,18 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
         onCancelPlanning={() => {
           void cancelar({ cancelarPlanejamentoRelacionado: true });
           setPlannedPurchaseConfirmOpen(false);
+        }}
+      />
+      <ParcelasCancelDialog
+        open={parcelasConfirmOpen}
+        onClose={() => setParcelasConfirmOpen(false)}
+        onCancelarApenas={() => {
+          void cancelar({ cancelarParcelasFuturas: false });
+          setParcelasConfirmOpen(false);
+        }}
+        onCancelarFuturas={() => {
+          void cancelar({ cancelarParcelasFuturas: true });
+          setParcelasConfirmOpen(false);
         }}
       />
     </div>

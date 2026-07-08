@@ -1,7 +1,13 @@
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { FinancialAccountListPage } from './FinancialAccountListPage';
+
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } });
+}
 
 function createConfig() {
   const list = vi
@@ -55,6 +61,7 @@ function createConfig() {
       singularTitle: 'Conta a pagar',
       routeBase: '/contas-pagar',
       personLabel: 'Recebedor',
+      personRole: 'recebedor' as const,
       listDescription: 'Descricao da listagem.',
       formDescription: 'Descricao do formulario.',
       columns: [{ title: 'Descricao', dataIndex: 'descricao', key: 'descricao' }],
@@ -77,6 +84,7 @@ function createConfig() {
       encerrarRecorrencia: vi.fn().mockResolvedValue({ id: '1' }),
       toFormValues: vi.fn(),
       loadPessoaOptions: vi.fn().mockResolvedValue([{ label: 'Aninha', value: 'p1' }]),
+      loadResponsavelOptions: vi.fn().mockResolvedValue([{ label: 'Aninha', value: 'p1' }]),
       loadFormaPagamentoOptions: vi
         .fn()
         .mockResolvedValue([{ label: 'Cartão de crédito', value: 'fp1', ehCartao: true, baixarAutomaticamente: false }]),
@@ -91,12 +99,23 @@ function createConfig() {
 }
 
 describe('FinancialAccountListPage', () => {
+  let queryClient: QueryClient;
+
+  function TestWrapper({ children }: { children: React.ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  }
+
+  beforeEach(() => {
+    queryClient = createTestQueryClient();
+  });
+
   it('loads data, applies filters and renders navigation links', async () => {
     const { config, list } = createConfig();
     render(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
@@ -169,6 +188,7 @@ describe('FinancialAccountListPage', () => {
             singularTitle: 'Conta a pagar',
             routeBase: '/contas-pagar',
             personLabel: 'Recebedor',
+      personRole: 'recebedor' as const,
             listDescription: 'Descricao da listagem.',
             formDescription: 'Descricao do formulario.',
             columns: [{ title: 'Descricao', dataIndex: 'descricao', key: 'descricao' }],
@@ -191,13 +211,15 @@ describe('FinancialAccountListPage', () => {
             encerrarRecorrencia: vi.fn(),
             toFormValues: vi.fn(),
             loadPessoaOptions: vi.fn(),
+            loadResponsavelOptions: vi.fn(),
             loadFormaPagamentoOptions: vi.fn(),
             loadContaBancariaOptions: vi.fn(),
             loadCartaoOptions: vi.fn(),
             loadRateioOptions: vi.fn()
           }}
         />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect(await screen.findByText('Falha ao carregar dados')).toBeInTheDocument();
@@ -215,17 +237,19 @@ describe('FinancialAccountListPage', () => {
     render(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
 
     await userEvent.click(screen.getByRole('button', { name: 'Liquidar' }));
 
-    const modalTitle = (await screen.findAllByText('Liquidação rápida'))[0];
-    const modal = (modalTitle.closest('[role="dialog"]') ?? document.body) as HTMLElement;
+    // Wait for the new LiquidarModal to appear
+    await screen.findByText('Liquidar lançamento');
 
-    await userEvent.click(within(modal).getByRole('button', { name: 'Sim, liquidar' }));
+    // The valor == original so button label is "Confirmar"
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
 
     const hoje = new Date().toISOString().split('T')[0];
 
@@ -235,7 +259,9 @@ describe('FinancialAccountListPage', () => {
         dataLiquidacao: hoje,
         contaBancariaId: 'cb1',
         formaPagamentoId: 'fp1',
-        atualizarValorConta: true
+        atualizarValorConta: false,
+        atualizarRecorrencia: false,
+        cancelarValorRestante: false
       })
     );
   }, 20000);
@@ -265,7 +291,8 @@ describe('FinancialAccountListPage', () => {
     render(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect(await screen.findByText('Plano funerário')).toBeInTheDocument();
@@ -289,7 +316,8 @@ describe('FinancialAccountListPage', () => {
     render(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
@@ -304,7 +332,8 @@ describe('FinancialAccountListPage', () => {
     render(
       <MemoryRouter>
         <FinancialAccountListPage config={config} />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
     );
 
     expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);

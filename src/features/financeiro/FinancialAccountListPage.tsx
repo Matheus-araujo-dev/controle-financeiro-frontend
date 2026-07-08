@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Modal } from 'antd';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { ConfirmDialog } from '../../components/feedback/ConfirmDialog';
+import { LiquidarModal } from './LiquidarModal';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { Button } from '../../components/ui/Button';
 import { ExportButton } from '../../components/data/ExportButton';
@@ -21,8 +24,9 @@ import {
 } from '../../components/layout';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
+import { notify } from '../../store/notification-store';
 import type { ContaFinanceiraListSummary, StatusContaCodigo } from '../../types/financeiro';
-import type { FinanceiroModuleConfig, FinanceiroResumo } from './module-config';
+import type { FinanceiroModuleConfig, FinanceiroLiquidacaoFormValues, FinanceiroResumo } from './module-config';
 import { resolveStatusTone } from './module-config';
 
 type FinancialRecord = {
@@ -36,10 +40,12 @@ type FinancialRecord = {
   statusCodigo?: StatusContaCodigo;
   statusNome?: string | null;
   valorLiquido?: number;
+  valorPago?: number | null;
   formaPagamentoNome?: string | null;
   formaPagamentoId?: string | null;
   numeroParcela?: number;
   quantidadeParcelas?: number;
+  ehRecorrente?: boolean;
 };
 
 type ListFilters = {
@@ -62,6 +68,7 @@ type ListFilters = {
 const statusOptions: Array<{ label: string; value: StatusContaCodigo }> = [
   { label: 'Pendente', value: 'PENDENTE' },
   { label: 'Vencida', value: 'VENCIDA' },
+  { label: 'Futuro', value: 'FUTURO' },
   { label: 'Parcial', value: 'PARCIAL' },
   { label: 'Liquidada', value: 'LIQUIDADA' },
   { label: 'Cancelada', value: 'CANCELADA' },
@@ -118,6 +125,7 @@ export function FinancialAccountListPage({
   config: FinanceiroModuleConfig<any, any, any>;
   embedded?: boolean;
 }) {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const actionsSlot = useContext(WorkspaceActionsSlotContext);
   const isInWorkspace = actionsSlot !== undefined;
@@ -125,72 +133,91 @@ export function FinancialAccountListPage({
   const statusInicial = searchParams.get('status') as StatusContaCodigo | null;
   const isPagar = config.routeBase.includes('pagar');
 
-  const [data, setData] = useState<Awaited<ReturnType<typeof config.list>>>();
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string>();
-  const [pessoaOptions, setPessoaOptions] = useState<Array<{ label: string; value: string }>>([]);
-  const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<Array<{ label: string; value: string }>>([]);
-  const [contaBancariaId, setContaBancariaId] = useState('');
-  const [liquidacaoFormaPagamentoId, setLiquidacaoFormaPagamentoId] = useState('');
-  const [filters, setFilters] = useState<ListFilters>({
+  const [pendingLiquidacao, setPendingLiquidacao] = useState<FinancialRecord | null>(null);
+  const [pendingEstorno, setPendingEstorno] = useState<FinancialRecord | null>(null);
+  const [actionError, setActionError] = useState<string>();
+
+  const defaultListFilters: ListFilters = {
     page: 1,
-    pageSize: 10,
+    pageSize: 20,
     search: '',
-    statusCodigo: statusInicial ? [statusInicial] : ((config.defaultFilters.statusCodigo as StatusContaCodigo[]) ?? []),
+    statusCodigo: (config.defaultFilters.statusCodigo as StatusContaCodigo[]) ?? [],
     dataInicial: undefined,
     dataFinal: undefined,
     sortBy: undefined,
     sortDirection: undefined
+  };
+
+  const { filters, setFilters, clearFilters, isModified } = usePersistedFilters(
+    `filters:${config.key}`,
+    defaultListFilters,
+    statusInicial ? { statusCodigo: [statusInicial] } : undefined
+  );
+
+  const deferredFilters = useDeferredValue(filters);
+
+  const { data, isFetching, error } = useQuery({
+    queryKey: [config.key, 'list', deferredFilters],
+    queryFn: () => config.list(deferredFilters),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
   });
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
+  const { data: optionsData } = useQuery({
+    queryKey: [config.key, 'filter-options'],
+    queryFn: async () => {
+      const [pessoas, formas, contas] = await Promise.all([
+        config.loadPessoaOptions(),
+        config.loadFormaPagamentoOptions(),
+        config.loadContaBancariaOptions()
+      ]);
+      return { pessoas, formas, contas };
+    },
+    staleTime: 5 * 60_000
+  });
 
-    try {
-      setData(await config.list(filters));
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar os lançamentos.');
-    } finally {
-      setLoading(false);
-    }
-  }, [config, filters]);
+  const pessoaOptions = useMemo(
+    () => (optionsData?.pessoas ?? []).map((item) => ({ label: item.label, value: item.value })),
+    [optionsData]
+  );
+  const formaPagamentoOptions = useMemo(
+    () => (optionsData?.formas ?? []).map((item) => ({ label: item.label, value: item.value })),
+    [optionsData]
+  );
+  const contaBancariaOptions = useMemo(
+    () => (optionsData?.contas ?? []).map((item) => ({ label: item.label, value: item.value })),
+    [optionsData]
+  );
+  const defaultContaBancariaId = optionsData?.contas?.[0]?.value ?? '';
+  const defaultFormaPagamentoId = optionsData?.formas?.[0]?.value ?? '';
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
+  const liquidarMutation = useMutation({
+    mutationFn: (args: { id: string; values: FinanceiroLiquidacaoFormValues }) =>
+      config.liquidar!(args.id, args.values),
+    onSuccess: () => {
+      notify('success', 'Lançamento liquidado.');
+      void queryClient.invalidateQueries({ queryKey: [config.key, 'list'] });
+      setPendingLiquidacao(null);
+      setActionError(undefined);
+    },
+    onError: (err) =>
+      setActionError(err instanceof Error ? err.message : 'Falha ao liquidar o lançamento.')
+  });
 
-  useEffect(() => {
-    let cancelled = false;
+  const estornarMutation = useMutation({
+    mutationFn: (id: string) => config.estornar!(id),
+    onSuccess: () => {
+      notify('success', 'Lançamento estornado.');
+      void queryClient.invalidateQueries({ queryKey: [config.key, 'list'] });
+      setPendingEstorno(null);
+      setActionError(undefined);
+    },
+    onError: (err) =>
+      setActionError(err instanceof Error ? err.message : 'Falha ao estornar o lançamento.')
+  });
 
-    async function loadFilterOptions() {
-      try {
-        const [pessoas, formas, contas] = await Promise.all([
-          config.loadPessoaOptions(),
-          config.loadFormaPagamentoOptions(),
-          config.loadContaBancariaOptions()
-        ]);
-
-        if (!cancelled) {
-          setPessoaOptions(pessoas.map((item) => ({ label: item.label, value: item.value })));
-          setFormaPagamentoOptions(formas.map((item) => ({ label: item.label, value: item.value })));
-          setContaBancariaId(contas[0]?.value ?? '');
-          setLiquidacaoFormaPagamentoId(formas[0]?.value ?? '');
-        }
-      } catch {
-        if (!cancelled) {
-          setPessoaOptions([]);
-          setFormaPagamentoOptions([]);
-        }
-      }
-    }
-
-    void loadFilterOptions();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [config]);
+  const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar os lançamentos.' : undefined;
+  const actionLoading = liquidarMutation.isPending || estornarMutation.isPending;
 
   const summary = data?.summary as ContaFinanceiraListSummary | FinanceiroResumo | undefined;
   const summaryItems = useMemo(() => {
@@ -206,8 +233,8 @@ export function FinancialAccountListPage({
     ];
   }, [config, data?.totalItems, summary]);
 
-  const onCreate = useCallback(() => navigate(`${config.routeBase}/novo`), [config.routeBase, navigate]);
-  const onEdit = useCallback((id: string) => navigate(`${config.routeBase}/${id}`), [config.routeBase, navigate]);
+  const onCreate = () => navigate(`${config.routeBase}/novo`);
+  const onEdit = (id: string) => navigate(`${config.routeBase}/${id}`);
 
   const pessoaSelecionada = (isPagar ? filters.recebedorIds : filters.pagadorIds) ?? [];
 
@@ -245,42 +272,16 @@ export function FinancialAccountListPage({
     }));
   }
 
-  async function liquidarRapido(record: FinancialRecord) {
+  function liquidarRapido(record: FinancialRecord) {
     if (!config.liquidar || !record.id) return;
-
-    Modal.confirm({
-      title: 'Liquidação rápida',
-      content: 'Deseja liquidar este lançamento agora com a data de hoje?',
-      centered: true,
-      okText: 'Sim, liquidar',
-      cancelText: 'Cancelar',
-      onOk: async () => {
-        await config.liquidar!(record.id, {
-          valorLiquidacao: record.valorLiquido ?? 0,
-          dataLiquidacao: todayIso(),
-          contaBancariaId,
-          formaPagamentoId: record.formaPagamentoId ?? liquidacaoFormaPagamentoId,
-          atualizarValorConta: true
-        });
-        await loadData();
-      }
-    });
+    setActionError(undefined);
+    setPendingLiquidacao(record);
   }
 
-  async function estornar(record: FinancialRecord) {
+  function estornar(record: FinancialRecord) {
     if (!config.estornar || !record.id) return;
-
-    Modal.confirm({
-      title: 'Estornar lançamento',
-      content: 'Deseja realmente estornar esta liquidação? O lançamento voltará para o status Pendente.',
-      centered: true,
-      okText: 'Sim, estornar',
-      cancelText: 'Cancelar',
-      onOk: async () => {
-        await config.estornar!(record.id);
-        await loadData();
-      }
-    });
+    setActionError(undefined);
+    setPendingEstorno(record);
   }
 
   const columns: TableColumnsType<FinancialRecord> = [
@@ -289,8 +290,9 @@ export function FinancialAccountListPage({
       dataIndex: 'descricao',
       key: 'descricao',
       sorter: true,
+      mobileRole: 'title',
       render: (_value, record) => (
-        <div className="min-w-[200px]">
+        <div>
           <div className="text-sm font-bold text-on-surface">{record.descricao ?? '-'}</div>
           {record.numeroDocumento ? (
             <div className="text-xs text-on-surface-variant">Doc. {record.numeroDocumento}</div>
@@ -301,6 +303,7 @@ export function FinancialAccountListPage({
     {
       title: config.personLabel,
       key: 'pessoa',
+      mobileRole: 'subtitle',
       render: (_value, record) => (
         <span className="text-sm text-on-surface">{record.recebedorNome ?? record.pagadorNome ?? '—'}</span>
       )
@@ -308,6 +311,7 @@ export function FinancialAccountListPage({
     {
       title: 'Responsável',
       key: 'responsavel',
+      mobileRole: 'subtitle',
       render: (_value, record) => (
         <span className="text-sm text-on-surface-variant">{record.responsavelNome ?? '—'}</span>
       )
@@ -317,6 +321,7 @@ export function FinancialAccountListPage({
       dataIndex: 'dataVencimento',
       key: 'dataVencimento',
       sorter: true,
+      mobileRole: 'date',
       render: (value, record) => (
         <span className={`text-sm font-semibold ${record.statusCodigo === 'VENCIDA' ? 'text-error' : 'text-on-surface-variant'}`}>
           {formatDateBR(String(value ?? ''))}
@@ -348,17 +353,34 @@ export function FinancialAccountListPage({
       key: 'valorLiquido',
       align: 'right',
       sorter: true,
-      render: (value, record) => (
-        <span className={`font-bold ${record.statusCodigo === 'VENCIDA' ? 'text-error' : 'text-on-surface'}`}>
-          {formatCurrencyBRL(Number(value ?? 0))}
-        </span>
-      )
+      mobileRole: 'value',
+      render: (value, record) => {
+        const isParcial = record.statusCodigo === 'PARCIAL';
+        const valorPago = record.valorPago;
+        const valorRestante = isParcial && valorPago != null ? Number(value ?? 0) - valorPago : null;
+        return (
+          <div className="text-right">
+            <span className={`font-bold ${record.statusCodigo === 'VENCIDA' ? 'text-error' : 'text-on-surface'}`}>
+              {formatCurrencyBRL(Number(value ?? 0))}
+            </span>
+            {isParcial && valorPago != null && (
+              <div className="text-xs text-on-surface-variant leading-tight">
+                <span className="text-primary">{formatCurrencyBRL(valorPago)} pago</span>
+                {valorRestante != null && valorRestante > 0 && (
+                  <> · {formatCurrencyBRL(valorRestante)} restante</>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       title: 'Status',
       dataIndex: 'statusCodigo',
       key: 'statusCodigo',
       sorter: true,
+      mobileRole: 'status',
       render: (_value, record) => (
         <StatusBadge
           label={record.statusNome ?? readStatusLabel(record.statusCodigo ?? 'PENDENTE')}
@@ -372,28 +394,32 @@ export function FinancialAccountListPage({
       align: 'center',
       render: (_value, record) => {
         const isLiquidated = record.statusCodigo === 'LIQUIDADA';
-        const canLiquidate = !isLiquidated && record.statusCodigo !== 'CANCELADA' && record.statusCodigo !== 'EM_FATURA';
+        const isParcial = record.statusCodigo === 'PARCIAL';
+        const canEstornar = isLiquidated || isParcial;
+        const canLiquidate = !isLiquidated && record.statusCodigo !== 'CANCELADA' && record.statusCodigo !== 'EM_FATURA' && record.statusCodigo !== 'FUTURO';
 
         return (
           <div className="flex items-center justify-center gap-1">
             {canLiquidate ? (
               <IconActionButton
-                label="Liquidar"
+                label={isParcial ? 'Liquidar restante' : 'Liquidar'}
                 icon={<span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}
                 onClick={() => void liquidarRapido(record)}
               />
             ) : null}
-            <IconActionButton
-              label={isLiquidated ? 'Estornar' : 'Detalhes/Editar'}
-              icon={<span className="material-symbols-outlined text-[18px]">{isLiquidated ? 'undo' : 'edit'}</span>}
-              onClick={() => {
-                if (isLiquidated) {
-                  void estornar(record);
-                  return;
-                }
-                onEdit(record.id);
-              }}
-            />
+            {canEstornar ? (
+              <IconActionButton
+                label="Estornar"
+                icon={<span className="material-symbols-outlined text-[18px]">undo</span>}
+                onClick={() => void estornar(record)}
+              />
+            ) : (
+              <IconActionButton
+                label="Detalhes/Editar"
+                icon={<span className="material-symbols-outlined text-[18px]">edit</span>}
+                onClick={() => onEdit(record.id)}
+              />
+            )}
           </div>
         );
       }
@@ -442,7 +468,7 @@ export function FinancialAccountListPage({
 
       <ListSummaryCards items={summaryItems} columns={5} />
 
-      <FilterCard>
+      <FilterCard onClear={isModified ? clearFilters : undefined}>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <FilterField label="Status">
             <MultiSelectFilter
@@ -555,10 +581,10 @@ export function FinancialAccountListPage({
 
       <AppDataTable
         rowKey="id"
-        loading={loading}
+        loading={isFetching}
         errorMessage={errorMessage}
         emptyMessage={`Nenhuma ${config.singularTitle.toLowerCase()} encontrada.`}
-        onRetry={loadData}
+        onRetry={() => void queryClient.invalidateQueries({ queryKey: [config.key, 'list'] })}
         dataSource={(data?.items ?? []) as FinancialRecord[]}
         columns={columns}
         onTableChange={(pagination, _tableFilters, sorter) => {
@@ -576,6 +602,49 @@ export function FinancialAccountListPage({
           total: data?.totalItems ?? 0,
           showSizeChanger: true,
           onChange: (page, pageSize) => setFilters((current) => ({ ...current, page, pageSize }))
+        }}
+      />
+
+      <LiquidarModal
+        open={pendingLiquidacao !== null}
+        descricao={pendingLiquidacao?.descricao ?? ''}
+        valorLiquido={pendingLiquidacao?.valorLiquido ?? 0}
+        valorPago={pendingLiquidacao?.valorPago}
+        formaPagamentoId={pendingLiquidacao?.formaPagamentoId ?? defaultFormaPagamentoId}
+        ehRecorrente={pendingLiquidacao?.ehRecorrente ?? false}
+        contaBancariaOptions={contaBancariaOptions}
+        formaPagamentoOptions={formaPagamentoOptions}
+        defaultContaBancariaId={defaultContaBancariaId}
+        loading={actionLoading}
+        error={actionError}
+        onClose={() => { if (!actionLoading) { setPendingLiquidacao(null); setActionError(undefined); } }}
+        onConfirmar={(values) => {
+          if (!pendingLiquidacao) return;
+          liquidarMutation.mutate({ id: pendingLiquidacao.id, values });
+        }}
+      />
+
+      <ConfirmDialog
+        open={pendingEstorno !== null}
+        title="Estornar lançamento"
+        eyebrow="Confirmar ação"
+        icon="undo"
+        confirmLabel="Sim, estornar"
+        cancelLabel="Cancelar"
+        confirmVariant="danger"
+        loading={actionLoading}
+        body={
+          <div className="space-y-3">
+            <p>Deseja estornar <strong className="text-on-surface">{pendingEstorno?.descricao}</strong>? O lançamento voltará para o status Pendente.</p>
+            {actionError ? (
+              <p className="text-sm font-medium text-error">{actionError}</p>
+            ) : null}
+          </div>
+        }
+        onClose={() => { if (!actionLoading) { setPendingEstorno(null); setActionError(undefined); } }}
+        onConfirm={() => {
+          if (!pendingEstorno) return;
+          estornarMutation.mutate(pendingEstorno.id);
         }}
       />
     </div>

@@ -12,12 +12,13 @@ export const financialAccountFormSchema = z
     numeroDocumento: z.string(),
     pessoaId: z.string().min(1, 'Selecione a pessoa'),
     responsavelId: z.string().min(1, 'Selecione o responsável'),
-    dataEmissao: z.string().min(1, 'Informe a data de emissão'),
+    dataEmissao: z.string(),
     dataVencimento: z.string().min(1, 'Informe a data de vencimento'),
     formaPagamentoId: z.string().min(1, 'Selecione a forma de pagamento'),
     cartaoId: z.string(),
     contaBancariaId: z.string(),
     dataLiquidacao: z.string(),
+    dataCompra: z.string(),
     valorOriginal: z.number().nonnegative(),
     valorDesconto: z.number().nonnegative(),
     valorJuros: z.number().nonnegative(),
@@ -45,6 +46,18 @@ export const financialAccountFormSchema = z
         code: z.ZodIssueCode.custom,
         path: ['rateios'],
         message: 'A soma dos rateios deve fechar exatamente o valor líquido.'
+      });
+    }
+
+    if (
+      values.dataEmissao.trim() !== '' &&
+      values.dataVencimento.trim() !== '' &&
+      values.dataVencimento < values.dataEmissao
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dataVencimento'],
+        message: 'A data de vencimento não pode ser anterior à data de emissão.'
       });
     }
 

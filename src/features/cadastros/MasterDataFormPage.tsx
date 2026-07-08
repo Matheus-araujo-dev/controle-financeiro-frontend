@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useFieldArray, useForm, useWatch, type Control, type FieldErrors } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { DateInput } from '../../components/forms/DateInput';
 import { ComboBox, type ComboBoxOption } from '../../components/forms/ComboBox';
@@ -102,7 +103,13 @@ function getPixPlaceholder(tipo?: string) {
 
 function toComboOptions(options: SelectOption[], includeEmpty = false): ComboBoxOption[] {
   const normalized = options.map((option) => ({
-    label: option.label,
+    label: option.chain ? (
+      <>
+        {option.label}{' '}
+        <span className="text-on-surface-variant/50 text-xs font-normal">{option.chain}</span>
+      </>
+    ) : option.label,
+    displayText: option.label,
     value: String(option.value)
   }));
 
@@ -110,7 +117,7 @@ function toComboOptions(options: SelectOption[], includeEmpty = false): ComboBox
 }
 
 function isOptionalSelect(fieldName: string) {
-  return ['contaPaiId', 'responsavelPadraoId', 'contaBancariaPagamentoPadraoId'].includes(fieldName);
+  return ['contaPaiId', 'responsavelPadraoId', 'contaBancariaPagamentoPadraoId', 'contaGerencialDespesaId', 'contaGerencialReceitaId'].includes(fieldName);
 }
 
 function sectionPlanFor(key: string) {
@@ -260,6 +267,7 @@ export function MasterDataFormPage({
   type TPayload = Record<string, unknown>;
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(Boolean(id));
   const [loadError, setLoadError] = useState<string>();
   const [submitError, setSubmitError] = useState<string>();
@@ -369,6 +377,7 @@ export function MasterDataFormPage({
       if (id) await config.update(id, payload);
       else await config.create(payload);
 
+      await queryClient.invalidateQueries({ queryKey: [config.key] });
       navigate(config.routeBase);
     } catch (error) {
       const apiError = error as AxiosError<ApiErrorResponse>;

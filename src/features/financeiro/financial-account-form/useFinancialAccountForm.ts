@@ -12,6 +12,7 @@ import type {
   FormaPagamentoOption,
   SelectOption
 } from '../module-config';
+import type { ComboBoxOption } from '../../../components/forms/ComboBox';
 import { calculateValorLiquido, resolveFormaPagamentoBehavior } from '../module-config';
 import { financialAccountFormSchema } from '../schemas';
 import { formatMonthYearBR } from '../../../shared/date';
@@ -37,13 +38,16 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [loading, setLoading] = useState(Boolean(id));
   const [errorMessage, setErrorMessage] = useState<string>();
   const [pessoaOptions, setPessoaOptions] = useState<SelectOption[]>([]);
+  const [responsavelOptions, setResponsavelOptions] = useState<SelectOption[]>([]);
   const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<FormaPagamentoOption[]>([]);
   const [contaBancariaOptions, setContaBancariaOptions] = useState<SelectOption[]>([]);
   const [cartaoOptions, setCartaoOptions] = useState<SelectOption[]>([]);
-  const [rateioOptions, setRateioOptions] = useState<SelectOption[]>([]);
+  const [rateioOptions, setRateioOptions] = useState<ComboBoxOption[]>([]);
   const [detailStatus, setDetailStatus] = useState<string>();
   const [actionLoading, setActionLoading] = useState(false);
   const [cardInvoicePreview, setCardInvoicePreview] = useState<CardInvoicePreview>();
+  const [grupoParcelamentoId, setGrupoParcelamentoId] = useState<string | null | undefined>(undefined);
+  const [numeroParcela, setNumeroParcela] = useState<number | undefined>(undefined);
 
   const {
     control,
@@ -120,15 +124,24 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   }, [setValue, valorLiquido, watchedRateios]);
 
   useEffect(() => {
+    if (!formaPagamentoBehavior.ehCartao) return;
+    if (!watchedValues.dataCompra) {
+      setValue('dataCompra', new Date().toISOString().split('T')[0], { shouldValidate: false, shouldDirty: false });
+    }
+  }, [formaPagamentoBehavior.ehCartao, setValue]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     async function loadOptions() {
-      const [pessoas, formas, contas, cartoes, rateios] = await Promise.all([
+      const [pessoas, responsaveis, formas, contas, cartoes, rateios] = await Promise.all([
         config.loadPessoaOptions(),
+        config.loadResponsavelOptions(),
         config.loadFormaPagamentoOptions(),
         config.loadContaBancariaOptions(),
         config.loadCartaoOptions(),
         config.loadRateioOptions()
       ]);
       setPessoaOptions(pessoas);
+      setResponsavelOptions(responsaveis);
       setFormaPagamentoOptions(formas);
       setContaBancariaOptions(contas);
       setCartaoOptions(cartoes);
@@ -154,6 +167,10 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         reset(normalizeRecurringFormValues(config.toFormValues(detail)));
         setDetailStatus(detail.statusCodigo);
         setCardInvoicePreview(extractCardInvoicePreview(detail));
+        if ('grupoParcelamentoId' in detail) {
+          setGrupoParcelamentoId((detail as Record<string, unknown>).grupoParcelamentoId as string | null);
+          setNumeroParcela((detail as Record<string, unknown>).numeroParcela as number | undefined);
+        }
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar o lançamento.');
       } finally {
@@ -253,6 +270,11 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     setPessoaOptions(options);
   }, [config]);
 
+  const reloadResponsavelOptions = useCallback(async () => {
+    const options = await config.loadResponsavelOptions();
+    setResponsavelOptions(options);
+  }, [config]);
+
   const reloadFormaPagamentoOptions = useCallback(async () => {
     const options = await config.loadFormaPagamentoOptions();
     setFormaPagamentoOptions(options);
@@ -298,6 +320,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     actionLoading,
     cardInvoicePreview,
     pessoaOptions,
+    responsavelOptions,
     formaPagamentoOptions,
     contaBancariaOptions,
     cartaoOptions,
@@ -305,9 +328,12 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     setValue,
     onCancel,
     onSubmit,
+    grupoParcelamentoId,
+    numeroParcela,
     cancelar,
     estornar,
     reloadPessoaOptions,
+    reloadResponsavelOptions,
     reloadFormaPagamentoOptions,
     reloadContaBancariaOptions,
     reloadCartaoOptions,

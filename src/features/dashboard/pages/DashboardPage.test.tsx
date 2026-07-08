@@ -1,13 +1,47 @@
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { DashboardPage } from './DashboardPage';
 import { dashboardApi } from '../../../services/http/dashboard-api';
 import { selectMonthInDateInput } from '../../../test/date-input';
 
+function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } });
+}
+
 vi.mock('../../../services/http/dashboard-api', () => ({
   dashboardApi: {
     obterResumo: vi.fn(),
     obterFluxoCaixa: vi.fn()
+  }
+}));
+
+vi.mock('../../../services/http/cadastros-api', () => ({
+  cadastrosApi: {
+    contasBancarias: {
+      listar: vi.fn().mockResolvedValue({ items: [], page: 1, pageSize: 200, totalItems: 0, totalPages: 0 })
+    }
+  }
+}));
+
+vi.mock('../../../services/http/orcamentos-api', () => ({
+  orcamentosApi: {
+    obterPorCompetencia: vi.fn().mockResolvedValue({ itens: [], totalMeta: 0, totalRealizado: 0, percentualConsumido: 0 })
+  }
+}));
+
+vi.mock('../../../services/http/financeiro-api', () => ({
+  financeiroApi: {
+    faturas: {
+      listar: vi.fn().mockResolvedValue({ items: [], page: 1, pageSize: 50, totalItems: 0, totalPages: 0 })
+    }
+  }
+}));
+
+vi.mock('../../../services/http/agente-api', () => ({
+  agenteApi: {
+    obterInsights: vi.fn().mockResolvedValue({ insights: [] })
   }
 }));
 
@@ -58,7 +92,7 @@ const resumoMock = {
       tipo: 'Entrada',
       natureza: 'Realizada',
       valor: 250,
-      observacao: 'Receita recebida',
+      observacaoResumida: 'Receita recebida',
       contaPagarId: null,
       contaReceberId: 'cr1',
       faturaCartaoId: null
@@ -91,10 +125,13 @@ function mockDashboardBase() {
 }
 
 function renderPage() {
+  const queryClient = createTestQueryClient();
   return render(
-    <MemoryRouter>
-      <DashboardPage />
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -127,7 +164,7 @@ describe('DashboardPage', () => {
     renderPage();
 
     expect(await screen.findByText('Saldo Atual')).toBeInTheDocument();
-    expect(screen.getByText('A Pagar (Hoje)')).toBeInTheDocument();
+    expect(screen.getByText('A Pagar')).toBeInTheDocument();
     expect(screen.getByText('A Receber')).toBeInTheDocument();
     expect(screen.getByText('Projetado (Fim de Mês)')).toBeInTheDocument();
     expect(await screen.findByText('R$1.500,00')).toBeInTheDocument();

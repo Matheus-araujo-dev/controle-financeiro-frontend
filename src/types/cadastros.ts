@@ -28,6 +28,11 @@ export type PessoaResumo = {
   email: string | null;
   telefone: string | null;
   ativo: boolean;
+  ehPagador: boolean;
+  ehRecebedor: boolean;
+  ehResponsavel: boolean;
+  contaGerencialDespesaId: string | null;
+  contaGerencialReceitaId: string | null;
 };
 
 export type PessoaChavePix = {
@@ -50,12 +55,20 @@ export type PessoaPayload = {
   telefone: string;
   observacao: string;
   chavesPix: PessoaChavePix[];
+  ehPagador: boolean;
+  ehRecebedor: boolean;
+  ehResponsavel: boolean;
+  contaGerencialDespesaId: string;
+  contaGerencialReceitaId: string;
 };
 
 export type PessoaFilters = ListQueryBase & {
   tipoPessoa?: PessoaTipo;
   tiposPessoa?: PessoaTipo[];
   ativo?: boolean;
+  ehPagador?: boolean;
+  ehRecebedor?: boolean;
+  ehResponsavel?: boolean;
   documento?: string;
   email?: string;
   telefone?: string;

@@ -5,7 +5,8 @@ import { QuickAddContaGerencialModal } from './QuickAddContaGerencialModal';
 vi.mock('../../../services/http/cadastros-api', () => ({
   cadastrosApi: {
     contasGerenciais: {
-      criar: vi.fn()
+      criar: vi.fn(),
+      listar: vi.fn().mockResolvedValue({ items: [] })
     }
   }
 }));

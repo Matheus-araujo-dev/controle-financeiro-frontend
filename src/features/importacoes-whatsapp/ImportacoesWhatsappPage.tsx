@@ -1,4 +1,5 @@
-import { useCallback, useDeferredValue, useEffect, useState } from 'react';
+import { useDeferredValue, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { IconActionButton } from '../../components/data/IconActionButton';
@@ -43,11 +44,18 @@ const origemOptions: Array<{ label: string; value: TipoOrigemImportacaoWhatsappC
 ];
 
 export function ImportacoesWhatsappPage() {
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ImportacoesWhatsappFilters>(defaultFilters);
   const deferredFilters = useDeferredValue(filters);
-  const [data, setData] = useState<Awaited<ReturnType<typeof importacoesWhatsappApi.listar>>>();
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>();
+
+  const { data, isFetching, error } = useQuery({
+    queryKey: ['importacoes-whatsapp', 'list', deferredFilters],
+    queryFn: () => importacoesWhatsappApi.listar(deferredFilters),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
+
+  const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar importações.' : undefined;
 
   const columns: TableColumnsType<ImportacaoWhatsappResumo> = [
     { title: 'Remetente', dataIndex: 'remetente', key: 'remetente' },
@@ -77,22 +85,6 @@ export function ImportacoesWhatsappPage() {
       )
     }
   ];
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
-      setData(await importacoesWhatsappApi.listar(deferredFilters));
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar importações.');
-    } finally {
-      setLoading(false);
-    }
-  }, [deferredFilters]);
-
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
 
   return (
     <ListPageShell
@@ -209,10 +201,10 @@ export function ImportacoesWhatsappPage() {
     >
       <AppDataTable<ImportacaoWhatsappResumo>
         rowKey="id"
-        loading={loading}
+        loading={isFetching}
         errorMessage={errorMessage}
         emptyMessage="Nenhuma importação encontrada."
-        onRetry={loadData}
+        onRetry={() => void queryClient.invalidateQueries({ queryKey: ['importacoes-whatsapp', 'list'] })}
         dataSource={data?.items ?? []}
         columns={columns}
         onTableChange={(pagination, _f, sorter) => {

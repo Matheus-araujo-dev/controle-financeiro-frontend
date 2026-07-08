@@ -5,6 +5,8 @@ type ContaGerencialLike = {
   aceitaLancamentos?: boolean;
 };
 
+type ContaGerencialWithParent = ContaGerencialLike & { contaPaiId?: string | null };
+
 type SelectOption = {
   label: string;
   value: string;
@@ -57,6 +59,30 @@ export function mapContaGerencialSelectOptions<T extends ContaGerencialLike>(ite
 
 export function filterContaGerencialLancavel<T extends ContaGerencialLike>(items: T[]) {
   return items.filter((item) => item.aceitaLancamentos !== false);
+}
+
+function buildContaGerencialParentChain<T extends ContaGerencialWithParent>(
+  item: T,
+  allById: Map<string, T>
+): string | null {
+  const ancestors: string[] = [];
+  let current = item.contaPaiId ? allById.get(item.contaPaiId) : undefined;
+  while (current) {
+    ancestors.push(buildContaGerencialOptionLabel(current));
+    current = current.contaPaiId ? allById.get(current.contaPaiId) : undefined;
+  }
+  return ancestors.length > 0 ? `(${ancestors.join(', ')})` : null;
+}
+
+export function mapContaGerencialHierarchyData<T extends ContaGerencialWithParent>(
+  allItems: T[]
+): Array<{ value: string; main: string; chain: string | null }> {
+  const allById = new Map(allItems.map((item) => [item.id, item]));
+  return sortContasGerenciaisByCodigo(filterContaGerencialLancavel(allItems)).map((item) => ({
+    value: item.id,
+    main: buildContaGerencialOptionLabel(item),
+    chain: buildContaGerencialParentChain(item, allById)
+  }));
 }
 
 export function mapContaGerencialSelectOptionsWithData<

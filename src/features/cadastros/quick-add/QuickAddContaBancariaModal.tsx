@@ -66,12 +66,13 @@ export function QuickAddContaBancariaModal({ open, onClose, onSuccess }: Props) 
       error={error}
       loading={loading}
       submitDisabled={!nome.trim() || !banco.trim()}
+      isDirty={!!nome.trim() || !!banco.trim()}
       onClose={handleClose}
       onSubmit={handleSave}
     >
       <div className="space-y-2">
         <label className={formLabelClass}>Nome da Conta</label>
-        <input autoFocus value={nome} onChange={(event) => setNome(event.target.value)} placeholder="Ex: Conta Corrente Nubank" className={formFieldClass} />
+        <input value={nome} onChange={(event) => setNome(event.target.value)} placeholder="Ex: Conta Corrente Nubank" className={formFieldClass} />
       </div>
 
       <div className="space-y-2">

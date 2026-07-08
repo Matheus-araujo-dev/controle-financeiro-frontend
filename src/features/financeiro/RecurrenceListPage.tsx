@@ -1,6 +1,7 @@
 import { useDeferredValue, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { CheckCircleFilled, EyeOutlined, PauseCircleOutlined, SearchOutlined } from '@ant-design/icons';
+import { usePersistedFilters } from '../../hooks/usePersistedFilters';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { CheckCircleFilled, EyeOutlined, PauseCircleOutlined, PlayCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import { AppDataTable } from '../../components/data/AppDataTable';
 import { ExportButton } from '../../components/data/ExportButton';
 import { IconActionButton } from '../../components/data/IconActionButton';
@@ -17,6 +18,7 @@ import {
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
+import { notify } from '../../store/notification-store';
 import type { RecorrenciaFilters, RecorrenciaListItem, RecorrenciaListSummary } from '../../types/financeiro';
 
 const defaultFilters: RecorrenciaFilters = {
@@ -34,8 +36,10 @@ type RecorrenciaDisplayItem = RecorrenciaListItem & {
 };
 
 export function RecurrenceListPage() {
-  const [filters, setFilters] = useState<RecorrenciaFilters>(defaultFilters);
+  const queryClient = useQueryClient();
+  const { filters, setFilters, clearFilters, isModified } = usePersistedFilters('filters:recorrencias', defaultFilters);
   const deferredFilters = useDeferredValue(filters);
+  const [actionLoadingId, setActionLoadingId] = useState<string>();
 
   const { data, isFetching, error, refetch } = useQuery({
     queryKey: ['recorrencias', 'list', deferredFilters],
@@ -45,6 +49,24 @@ export function RecurrenceListPage() {
   });
 
   const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar recorrências.' : undefined;
+
+  async function handleToggleAtiva(record: RecorrenciaDisplayItem) {
+    setActionLoadingId(record.id);
+    try {
+      if (record.ativa) {
+        await financeiroApi.recorrencias.pausar(record.id);
+        notify('success', 'Recorrência pausada.');
+      } else {
+        await financeiroApi.recorrencias.retomar(record.id);
+        notify('success', 'Recorrência retomada.');
+      }
+      await queryClient.invalidateQueries({ queryKey: ['recorrencias'] });
+    } catch {
+      notify('error', 'Falha ao alterar status da recorrência.');
+    } finally {
+      setActionLoadingId(undefined);
+    }
+  }
 
   const recorrencias = useMemo(
     () =>
@@ -105,7 +127,7 @@ export function RecurrenceListPage() {
       }
       summaryColumns={4}
       filters={
-        <FilterCard>
+        <FilterCard onClear={isModified ? clearFilters : undefined}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <FilterField label="Busca">
               <FilterInputWrapper icon={<SearchOutlined />}>
@@ -172,6 +194,7 @@ export function RecurrenceListPage() {
             title: 'Descrição',
             dataIndex: 'descricao',
             key: 'descricao',
+            mobileRole: 'title',
             render: (value: string, record: RecorrenciaDisplayItem) => (
               <div>
                 <div className="text-sm font-bold text-on-surface">{String(value)}</div>
@@ -185,6 +208,7 @@ export function RecurrenceListPage() {
             title: 'Pessoa',
             dataIndex: 'pessoaNome',
             key: 'pessoaNome',
+            mobileRole: 'subtitle',
             render: (value: string) => (
               <span className="text-sm text-on-surface-variant">{String(value)}</span>
             )
@@ -194,6 +218,7 @@ export function RecurrenceListPage() {
             dataIndex: 'valorLiquido',
             key: 'valorLiquido',
             align: 'right',
+            mobileRole: 'value',
             render: (value: number, record: RecorrenciaDisplayItem) => (
               <span className={`text-sm font-bold ${record.tipoFormatted === 'receita' ? 'text-primary' : 'text-error'}`}>
                 {record.tipoFormatted === 'despesa' ? '- ' : '+ '}
@@ -214,6 +239,7 @@ export function RecurrenceListPage() {
             title: 'Início',
             dataIndex: 'dataInicio',
             key: 'dataInicio',
+            mobileRole: 'date',
             render: (value: string) => (
               <span className="text-sm text-on-surface-variant">{formatDateBR(String(value))}</span>
             )
@@ -222,6 +248,7 @@ export function RecurrenceListPage() {
             title: 'Status',
             dataIndex: 'ativa',
             key: 'ativa',
+            mobileRole: 'status',
             align: 'center',
             render: (value: boolean) =>
               value ? (
@@ -240,7 +267,14 @@ export function RecurrenceListPage() {
             width: 80,
             align: 'right',
             render: (_value, record: RecorrenciaDisplayItem) => (
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-1">
+                <IconActionButton
+                  label={record.ativa ? 'Pausar' : 'Retomar'}
+                  icon={record.ativa ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                  type="text"
+                  disabled={actionLoadingId === record.id}
+                  onClick={() => void handleToggleAtiva(record)}
+                />
                 <IconActionButton
                   label="Detalhar"
                   icon={<EyeOutlined />}

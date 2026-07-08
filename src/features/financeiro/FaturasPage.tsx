@@ -1,8 +1,12 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { usePersistedFilters } from '../../hooks/usePersistedFilters';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { AppDataTable } from '../../components/data/AppDataTable';
+import { Button } from '../../components/ui/Button';
 import { ExportButton } from '../../components/data/ExportButton';
+import { ImportarFaturaModal } from './ImportarFaturaModal';
 import { IconActionButton } from '../../components/data/IconActionButton';
 import { DateInput } from '../../components/forms/DateInput';
 import {
@@ -25,8 +29,8 @@ const defaultFilters: FaturaFilters = {
   page: 1,
   pageSize: 20,
   search: '',
-  competencia: '',
   cartaoId: undefined,
+  competencias: undefined,
   statusCodigo: undefined,
   dataVencimentoInicial: undefined,
   dataVencimentoFinal: undefined,
@@ -39,39 +43,26 @@ const statusOptions: Array<{ label: string; value: StatusFaturaCodigo }> = [
   { label: 'Paga', value: 'PAGA' }
 ];
 
-function normalizeCompetenciaInput(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 6);
-
-  if (digits.length <= 2) {
-    return digits;
+function generateCompetenciaOptions() {
+  const options: Array<{ value: string; label: string }> = [];
+  const now = new Date();
+  for (let i = 0; i < 24; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    options.push({ value: `${year}-${month}`, label: `${month}/${year}` });
   }
-
-  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return options;
 }
 
-function competenciaInputToApi(value: string) {
-  const digits = value.replace(/\D/g, '');
-  if (digits.length !== 6) {
-    return undefined;
-  }
-
-  return `${digits.slice(2, 6)}-${digits.slice(0, 2)}`;
-}
-
-function competenciaApiToInput(value?: string) {
-  const match = /^(\d{4})-(\d{2})$/.exec(value ?? '');
-  if (!match) {
-    return '';
-  }
-
-  return `${match[2]}/${match[1]}`;
-}
+const competenciaOptions = generateCompetenciaOptions();
 
 function buildInitialFilters(searchParams: URLSearchParams): FaturaFilters {
+  const competencia = searchParams.get('competencia');
   return {
     ...defaultFilters,
     cartaoId: searchParams.get('cartaoId') || undefined,
-    competencia: searchParams.get('competencia') || ''
+    competencias: competencia ? [competencia] : undefined
   };
 }
 
@@ -120,50 +111,47 @@ function StatusBadge({ codigo, nome }: { codigo: StatusFaturaCodigo; nome: strin
 }
 
 export function FaturasPage() {
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const initialFilters = useMemo(() => buildInitialFilters(searchParams), [searchParams]);
-  const [filters, setFilters] = useState<FaturaFilters>(initialFilters);
-  const deferredFilters = useDeferredValue(filters);
-  const [competenciaInput, setCompetenciaInput] = useState(() => competenciaApiToInput(initialFilters.competencia));
-  const [data, setData] = useState<Awaited<ReturnType<typeof financeiroApi.faturas.listar>>>();
-  const [cartoes, setCartoes] = useState<CartaoResumo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>();
+  const [importarModalOpen, setImportarModalOpen] = useState(false);
   const origemContaCartao = searchParams.get('origem') === 'conta-cartao';
 
+  const urlOverrides = useMemo(() => {
+    const competencia = searchParams.get('competencia');
+    const cartaoId = searchParams.get('cartaoId');
+    return (competencia || cartaoId)
+      ? { cartaoId: cartaoId || undefined, competencias: competencia ? [competencia] : undefined }
+      : undefined;
+  }, [searchParams]);
+
+  const { filters, setFilters, clearFilters, isModified } = usePersistedFilters(
+    'filters:faturas',
+    defaultFilters,
+    urlOverrides
+  );
+  const deferredFilters = useDeferredValue(filters);
+
+  // Atualiza filtros quando URL muda (deep-link vindo do dashboard)
   useEffect(() => {
-    setFilters(initialFilters);
-    setCompetenciaInput(competenciaApiToInput(initialFilters.competencia));
-  }, [initialFilters]);
+    if (!urlOverrides) return;
+    setFilters((prev) => ({ ...prev, ...urlOverrides }));
+  }, [urlOverrides]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
+  const { data, isFetching, error } = useQuery({
+    queryKey: ['faturas', 'list', deferredFilters],
+    queryFn: () => financeiroApi.faturas.listar(deferredFilters),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
 
-    try {
-      setData(await financeiroApi.faturas.listar(deferredFilters));
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar faturas.');
-    } finally {
-      setLoading(false);
-    }
-  }, [deferredFilters]);
+  const { data: cartoesData } = useQuery({
+    queryKey: ['cartoes', 'options'],
+    queryFn: () => cadastrosApi.cartoes.listar({ page: 1, pageSize: 200, search: '', ativo: true }),
+    staleTime: 5 * 60_000
+  });
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
-
-  useEffect(() => {
-    void (async () => {
-      const response = await cadastrosApi.cartoes.listar({
-        page: 1,
-        pageSize: 200,
-        search: '',
-        ativo: true
-      });
-      setCartoes(response.items);
-    })();
-  }, []);
+  const cartoes = cartoesData?.items ?? [];
+  const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar faturas.' : undefined;
 
   const cartoesById = useMemo(() => new Map(cartoes.map((cartao) => [cartao.id, cartao])), [cartoes]);
 
@@ -187,23 +175,49 @@ export function FaturasPage() {
     };
   }, [cartoes, data]);
 
+  // Cartão selecionado no filtro (para pré-selecionar no modal de importação)
+  const cartaoIdFiltrado = useMemo((): string | undefined => {
+    const rawId = filters.cartaoId;
+    const rawIds = filters.cartaoIds;
+    const ids: string[] = Array.isArray(rawIds) ? rawIds : Array.isArray(rawId) ? rawId : rawId ? [rawId] : [];
+    return ids.length === 1 ? ids[0] : undefined;
+  }, [filters.cartaoId, filters.cartaoIds]);
+
   return (
+    <>
+    <ImportarFaturaModal
+      open={importarModalOpen}
+      onClose={() => setImportarModalOpen(false)}
+      onSuccess={() => { void queryClient.invalidateQueries({ queryKey: ['faturas', 'list'] }); }}
+      initialCartaoId={cartaoIdFiltrado}
+    />
     <ListPageShell
       actions={
-        <ExportButton
-          fetchPage={financeiroApi.faturas.listar}
-          filters={filters}
-          filename="faturas"
-          columns={[
-            { header: 'Competência', value: (f: FaturaResumo) => formatMonthYearBR(f.competencia) },
-            { header: 'Vencimento', value: (f: FaturaResumo) => formatDateBR(f.dataVencimento) },
-            { header: 'Fechamento', value: (f: FaturaResumo) => formatDateBR(f.dataFechamento) },
-            { header: 'Cartão', value: (f: FaturaResumo) => f.cartaoNome },
-            { header: 'Itens', value: (f: FaturaResumo) => f.quantidadeItens },
-            { header: 'Valor total', value: (f: FaturaResumo) => f.valorTotal },
-            { header: 'Status', value: (f: FaturaResumo) => f.statusNome }
-          ]}
-        />
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            icon={<span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>upload_file</span>}
+            onClick={() => setImportarModalOpen(true)}
+          >
+            Importar PDF
+          </Button>
+          <ExportButton
+            fetchPage={financeiroApi.faturas.listar}
+            filters={filters}
+            filename="faturas"
+            columns={[
+              { header: 'Competência', value: (f: FaturaResumo) => formatMonthYearBR(f.competencia) },
+              { header: 'Vencimento', value: (f: FaturaResumo) => formatDateBR(f.dataVencimento) },
+              { header: 'Fechamento', value: (f: FaturaResumo) => formatDateBR(f.dataFechamento) },
+              { header: 'Cartão', value: (f: FaturaResumo) => f.cartaoNome },
+              { header: 'Itens', value: (f: FaturaResumo) => f.quantidadeItens },
+              { header: 'Valor total', value: (f: FaturaResumo) => f.valorTotal },
+              { header: 'Status', value: (f: FaturaResumo) => f.statusNome }
+            ]}
+          />
+        </div>
       }
       summaryColumns={4}
       summary={
@@ -231,7 +245,7 @@ export function FaturasPage() {
         </>
       }
       filters={
-        <FilterCard>
+        <FilterCard onClear={isModified ? clearFilters : undefined}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <FilterField label="Busca">
               <FilterInputWrapper icon={<SearchOutlined />}>
@@ -277,19 +291,18 @@ export function FaturasPage() {
               />
             </FilterField>
             <FilterField label="Competência">
-              <FilterInputWrapper>
-                <input
-                  aria-label="Competência"
-                  placeholder="mm/aaaa"
-                  value={competenciaInput}
-                  onChange={(e) => {
-                    const next = normalizeCompetenciaInput(e.target.value);
-                    setCompetenciaInput(next);
-                    setFilters((f) => ({ ...f, page: 1, competencia: competenciaInputToApi(next) }));
-                  }}
-                  className={filterInputClass}
-                />
-              </FilterInputWrapper>
+              <MultiSelectFilter
+                ariaLabel="Competência"
+                options={competenciaOptions}
+                value={filters.competencias ?? []}
+                onChange={(next) =>
+                  setFilters((f) => ({
+                    ...f,
+                    page: 1,
+                    competencias: next.length ? next : undefined
+                  }))
+                }
+              />
             </FilterField>
             <FilterField label="Vencimento de">
               <DateInput
@@ -339,10 +352,10 @@ export function FaturasPage() {
       <div className="bg-surface-container-low rounded-3xl overflow-hidden border border-white/5">
         <AppDataTable
           rowKey="id"
-          loading={loading}
+          loading={isFetching}
           errorMessage={errorMessage}
           emptyMessage="Nenhuma fatura encontrada."
-          onRetry={loadData}
+          onRetry={() => void queryClient.invalidateQueries({ queryKey: ['faturas', 'list'] })}
           dataSource={data?.items ?? []}
           columns={[
             {
@@ -350,6 +363,7 @@ export function FaturasPage() {
               dataIndex: 'competencia',
               key: 'competencia',
               sorter: true,
+              mobileRole: 'title',
               render: (value, record: FaturaResumo) => (
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-semibold text-white">{formatMonthYearBR(String(value))}</span>
@@ -362,6 +376,7 @@ export function FaturasPage() {
               dataIndex: 'dataVencimento',
               key: 'dataVencimento',
               sorter: true,
+              mobileRole: 'date',
               render: (value) => <span className="text-sm text-on-surface-variant">{formatDateBR(String(value))}</span>
             },
             {
@@ -369,6 +384,7 @@ export function FaturasPage() {
               dataIndex: 'cartaoNome',
               key: 'cartaoNome',
               sorter: true,
+              mobileRole: 'subtitle',
               render: (value, record: FaturaResumo) => {
                 const cartao = cartoesById.get(record.cartaoId);
 
@@ -389,6 +405,7 @@ export function FaturasPage() {
               key: 'valorTotal',
               align: 'right',
               sorter: true,
+              mobileRole: 'value',
               render: (value, record: FaturaResumo) => (
                 <span
                   className={`text-sm font-headline font-bold ${
@@ -404,6 +421,7 @@ export function FaturasPage() {
               dataIndex: 'statusCodigo',
               key: 'statusCodigo',
               sorter: true,
+              mobileRole: 'status',
               render: (_value, record: FaturaResumo) => (
                 <StatusBadge codigo={record.statusCodigo} nome={record.statusNome} />
               )
@@ -442,5 +460,6 @@ export function FaturasPage() {
         />
       </div>
     </ListPageShell>
+    </>
   );
 }

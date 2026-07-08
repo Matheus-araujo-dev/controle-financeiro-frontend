@@ -3,7 +3,7 @@ import { Controller, useWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { agenteApi } from '../../../services/http/agente-api';
 
-import { formatMonthYearBR } from '../../../shared/date';
+import { formatDateBR, formatMonthYearBR } from '../../../shared/date';
 import { buildCardInvoiceLink } from './card-invoice';
 import { errorTextClass, fieldLabelClass, nativeFieldWithPaddingClass } from './field-classes';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
@@ -15,11 +15,12 @@ import { QuickAddContaGerencialModal } from '../../cadastros/quick-add/QuickAddC
 type GeneralInfoSectionProps = {
   form: FinancialAccountFormApi;
   personLabel: string;
+  personRole: 'pagador' | 'recebedor';
 };
 
 type PessoaTarget = 'pessoaId' | 'responsavelId' | null;
 
-export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProps) {
+export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInfoSectionProps) {
   const {
     control,
     errors,
@@ -27,9 +28,11 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
     origemCompraPlanejadaId,
     cardInvoicePreview,
     pessoaOptions,
+    responsavelOptions,
     rateioOptions,
     setValue,
     reloadPessoaOptions,
+    reloadResponsavelOptions,
     reloadRateioOptions
   } = form;
 
@@ -40,6 +43,26 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
 
   const descricaoWatched = useWatch({ control, name: 'descricao' });
   const categoriaAtual = useWatch({ control, name: 'rateios.0.contaGerencialId' });
+  const pessoaWatched = useWatch({ control, name: 'pessoaId' });
+  const lastAutoFilledContaRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!pessoaWatched) return;
+    const pessoa = pessoaOptions.find((o) => o.value === pessoaWatched);
+    // personRole='recebedor' → conta a pagar (despesa); personRole='pagador' → conta a receber (receita)
+    const contaId = personRole === 'pagador' ? pessoa?.contaGerencialReceitaId : pessoa?.contaGerencialDespesaId;
+    const manuallyChanged = categoriaAtual && categoriaAtual !== lastAutoFilledContaRef.current;
+    if (manuallyChanged) return;
+    if (contaId) {
+      setValue('rateios.0.contaGerencialId', contaId);
+      lastAutoFilledContaRef.current = contaId;
+    } else {
+      if (categoriaAtual === lastAutoFilledContaRef.current) {
+        setValue('rateios.0.contaGerencialId', '');
+      }
+      lastAutoFilledContaRef.current = null;
+    }
+  }, [pessoaWatched, pessoaOptions, categoriaAtual, personRole, setValue]);
 
   useEffect(() => {
     if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current);
@@ -71,9 +94,13 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
 
   function handlePessoaSuccess(newId: string) {
     const target = pessoaModalTarget;
-    void reloadPessoaOptions().then(() => {
-      if (target) setValue(target, newId);
-    });
+    if (target === 'responsavelId') {
+      void reloadResponsavelOptions().then(() => setValue(target, newId));
+    } else {
+      void reloadPessoaOptions().then(() => {
+        if (target) setValue(target, newId);
+      });
+    }
   }
 
   function handleContaGerencialSuccess(newId: string) {
@@ -95,19 +122,42 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
       ) : null}
 
       {cardInvoicePreview ? (
-        <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/10 p-4">
-          <div className="flex gap-3 text-primary">
-            <span className="material-symbols-outlined mt-1 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>credit_card</span>
-            <div>
-              <p className="text-sm font-bold">Direcionado para fatura {formatMonthYearBR(cardInvoicePreview.competencia)}</p>
-              <p className="text-xs opacity-80">
-                {`${cardInvoicePreview.cartaoNome ?? 'Cartão selecionado'} • fechamento ${cardInvoicePreview.dataFechamento} • vencimento ${cardInvoicePreview.dataVencimento}`}
+        <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <span
+              className="mt-0.5 shrink-0 text-xl text-primary material-symbols-outlined"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              credit_card
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary/70">Direcionado para fatura</p>
+              <p className="mt-0.5 font-headline text-base font-bold text-on-surface">
+                {formatMonthYearBR(cardInvoicePreview.competencia)}
               </p>
+              <div className="mt-3 grid grid-cols-3 gap-x-4 gap-y-1">
+                {[
+                  { label: 'Cartão', value: cardInvoicePreview.cartaoNome ?? '—' },
+                  { label: 'Fechamento', value: formatDateBR(cardInvoicePreview.dataFechamento) },
+                  { label: 'Vencimento', value: formatDateBR(cardInvoicePreview.dataVencimento) },
+                ].map((item) => (
+                  <div key={item.label}>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{item.label}</p>
+                    <p className="text-xs font-bold text-on-surface truncate">{item.value}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <Link to={buildCardInvoiceLink(cardInvoicePreview)} className="inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline">
-            Abrir fatura prevista <span className="material-symbols-outlined text-sm">search</span>
-          </Link>
+          <div className="border-t border-primary/15 pt-3">
+            <Link
+              to={buildCardInvoiceLink(cardInvoicePreview)}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary transition-opacity hover:opacity-75"
+            >
+              <span className="material-symbols-outlined text-base leading-none">open_in_new</span>
+              Abrir fatura prevista
+            </Link>
+          </div>
         </div>
       ) : null}
 
@@ -131,6 +181,60 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
           />
         </div>
 
+        <div className="space-y-2">
+          <label className={fieldLabelClass}>{personLabel}</label>
+          <Controller
+            control={control}
+            name="pessoaId"
+            render={({ field }) => (
+              <div className="space-y-1">
+                <div className={errors.pessoaId ? 'rounded-xl ring-1 ring-error' : ''}>
+                  <ComboBox
+                    {...field}
+                    disabled={!canEdit}
+                    onAddNew={canEdit ? () => setPessoaModalTarget('pessoaId') : undefined}
+                  >
+                    <option value="">Selecionar...</option>
+                    {pessoaOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </ComboBox>
+                </div>
+                {errors.pessoaId ? <span className={errorTextClass}>{errors.pessoaId.message}</span> : null}
+              </div>
+            )}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className={fieldLabelClass}>Responsável</label>
+          <Controller
+            control={control}
+            name="responsavelId"
+            render={({ field }) => (
+              <div className="space-y-1">
+                <div className={errors.responsavelId ? 'rounded-xl ring-1 ring-error' : ''}>
+                  <ComboBox
+                    {...field}
+                    disabled={!canEdit}
+                    onAddNew={canEdit ? () => setPessoaModalTarget('responsavelId') : undefined}
+                  >
+                    <option value="">Selecionar...</option>
+                    {responsavelOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </ComboBox>
+                </div>
+                {errors.responsavelId ? <span className={errorTextClass}>{errors.responsavelId.message}</span> : null}
+              </div>
+            )}
+          />
+        </div>
+
         <div className="space-y-2 md:col-span-2">
           <label className={fieldLabelClass}>Categoria · conta gerencial</label>
           <Controller
@@ -141,14 +245,9 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
                 {...field}
                 disabled={!canEdit}
                 onAddNew={canEdit ? () => setContaGerencialModalOpen(true) : undefined}
-              >
-                <option value="">Selecionar categoria...</option>
-                {rateioOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </ComboBox>
+                placeholder="Selecionar categoria..."
+                options={rateioOptions}
+              />
             )}
           />
 
@@ -177,56 +276,6 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
           </p>
         </div>
 
-        <div className="space-y-2">
-          <label className={fieldLabelClass}>{personLabel}</label>
-          <Controller
-            control={control}
-            name="pessoaId"
-            render={({ field }) => (
-              <div className="space-y-1">
-                <ComboBox
-                  {...field}
-                  disabled={!canEdit}
-                  onAddNew={canEdit ? () => setPessoaModalTarget('pessoaId') : undefined}
-                >
-                  <option value="">Selecionar...</option>
-                  {pessoaOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </ComboBox>
-                {errors.pessoaId ? <span className={errorTextClass}>{errors.pessoaId.message}</span> : null}
-              </div>
-            )}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className={fieldLabelClass}>Responsável</label>
-          <Controller
-            control={control}
-            name="responsavelId"
-            render={({ field }) => (
-              <div className="space-y-1">
-                <ComboBox
-                  {...field}
-                  disabled={!canEdit}
-                  onAddNew={canEdit ? () => setPessoaModalTarget('responsavelId') : undefined}
-                >
-                  <option value="">Selecionar...</option>
-                  {pessoaOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </ComboBox>
-                {errors.responsavelId ? <span className={errorTextClass}>{errors.responsavelId.message}</span> : null}
-              </div>
-            )}
-          />
-        </div>
-
         <div className="space-y-2 md:col-span-2">
           <label className={fieldLabelClass}>Nº Documento</label>
           <Controller
@@ -239,7 +288,12 @@ export function GeneralInfoSection({ form, personLabel }: GeneralInfoSectionProp
         </div>
       </div>
 
-      <QuickAddPessoaModal open={pessoaModalTarget !== null} onClose={() => setPessoaModalTarget(null)} onSuccess={handlePessoaSuccess} />
+      <QuickAddPessoaModal
+        open={pessoaModalTarget !== null}
+        onClose={() => setPessoaModalTarget(null)}
+        onSuccess={handlePessoaSuccess}
+        defaultRole={pessoaModalTarget === 'responsavelId' ? 'responsavel' : personRole}
+      />
       <QuickAddContaGerencialModal open={contaGerencialModalOpen} onClose={() => setContaGerencialModalOpen(false)} onSuccess={handleContaGerencialSuccess} />
     </FormSection>
   );

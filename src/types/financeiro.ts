@@ -1,7 +1,7 @@
 import type { PagedResult } from './api';
 
 export type LancamentoOrigem = 'Manual' | 'Recorrencia' | 'Importacao';
-export type StatusContaCodigo = 'PENDENTE' | 'LIQUIDADA' | 'VENCIDA' | 'CANCELADA' | 'PARCIAL' | 'EM_FATURA';
+export type StatusContaCodigo = 'PENDENTE' | 'LIQUIDADA' | 'VENCIDA' | 'CANCELADA' | 'PARCIAL' | 'EM_FATURA' | 'FUTURO';
 export type StatusFaturaCodigo = 'ABERTA' | 'PAGA';
 export type TipoMovimentacao = 'Entrada' | 'Saida';
 export type NaturezaMovimentacao = 'Prevista' | 'Realizada' | 'Economica';
@@ -110,6 +110,7 @@ export type ContaPagarResumo = {
   formaPagamentoId: string;
   formaPagamentoNome: string;
   valorLiquido: number;
+  valorPago: number | null;
   statusCodigo: StatusContaCodigo;
   statusNome: string;
   quantidadeParcelas: number;
@@ -128,6 +129,7 @@ export type ContaPagarDetalhe = {
   recebedorNome: string;
   dataVencimento: string;
   dataLiquidacao: string | null;
+  dataCompra: string | null;
   formaPagamentoId: string;
   formaPagamentoNome: string;
   formaPagamentoEhCartao: boolean;
@@ -141,6 +143,7 @@ export type ContaPagarDetalhe = {
   valorJuros: number;
   valorMulta: number;
   valorLiquido: number;
+  valorPago: number | null;
   quantidadeParcelas: number;
   numeroParcela: number;
   grupoParcelamentoId: string | null;
@@ -171,6 +174,7 @@ export type ContaPagarPayload = {
   cartaoId: string | null;
   contaBancariaId: string | null;
   dataLiquidacao: string | null;
+  dataCompra: string | null;
   valorOriginal: number;
   valorDesconto: number;
   valorJuros: number;
@@ -213,6 +217,7 @@ export type ContaReceberResumo = {
   formaPagamentoId: string;
   formaPagamentoNome: string;
   valorLiquido: number;
+  valorPago: number | null;
   statusCodigo: StatusContaCodigo;
   statusNome: string;
   quantidadeParcelas: number;
@@ -244,6 +249,7 @@ export type ContaReceberDetalhe = {
   valorJuros: number;
   valorMulta: number;
   valorLiquido: number;
+  valorPago: number | null;
   quantidadeParcelas: number;
   numeroParcela: number;
   grupoParcelamentoId: string | null;
@@ -304,10 +310,18 @@ export type LiquidacaoPayload = {
   contaBancariaId: string;
   formaPagamentoId: string;
   atualizarValorConta: boolean;
+  atualizarRecorrencia: boolean;
+  cancelarValorRestante: boolean;
 };
 
 export type CancelarContaPagarPayload = {
   cancelarPlanejamentoRelacionado?: boolean | null;
+  pausarRecorrenciaRelacionada?: boolean | null;
+  cancelarParcelasFuturas?: boolean | null;
+};
+
+export type CancelarContaReceberPayload = {
+  pausarRecorrenciaRelacionada?: boolean | null;
 };
 
 export type GerarOcorrenciasPayload = {
@@ -385,9 +399,10 @@ export type FaturaItem = {
   recebedorNome: string;
   dataCompra: string;
   valorLiquido: number;
-  statusCodigo: StatusContaCodigo;
+  statusCodigo: string;
   numeroParcela: number;
   quantidadeParcelas: number;
+  ehEstorno?: boolean;
 };
 
 export type FaturaDetalhe = FaturaResumo & {
@@ -403,6 +418,7 @@ export type FaturaFilters = ListQueryBase & {
   cartaoId?: string | string[];
   cartaoIds?: string[];
   competencia?: string;
+  competencias?: string[];
   statusCodigo?: StatusFaturaCodigo | StatusFaturaCodigo[];
   statusCodigos?: StatusFaturaCodigo[];
   dataVencimentoInicial?: string;

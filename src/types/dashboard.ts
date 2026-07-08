@@ -13,12 +13,14 @@ export type DashboardResumoFilters = {
   mesReferencia?: string;
   dataReferencia?: string;
   diasProjetados?: number;
+  contaBancariaIds?: string[];
 };
 
 export type DashboardFluxoCaixaFilters = {
   mesReferencia?: string;
   dataInicial?: string;
   dias?: number;
+  contaBancariaIds?: string[];
 };
 
 export type DashboardContaGerencialResumoFilters = {
@@ -73,7 +75,7 @@ export type DashboardMovimentacaoResumo = {
   tipo: TipoMovimentacao;
   natureza: NaturezaMovimentacao;
   valor: number;
-  observacao: string | null;
+  observacaoResumida: string | null;
   contaPagarId: string | null;
   contaReceberId: string | null;
   faturaCartaoId: string | null;

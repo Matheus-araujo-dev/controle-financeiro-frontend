@@ -41,7 +41,8 @@ const validValues = {
   recorrenciaDataFim: '2026-08',
   recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
   recorrenciaObservacao: 'Contrato mensal',
-  recorrenciaGerarAteData: '2026-10-20'
+  recorrenciaGerarAteData: '2026-10-20',
+  dataCompra: '2026-04-04'
 };
 
 function createConfig() {
@@ -77,6 +78,9 @@ function createConfig() {
       { label: 'Fornecedor', value: 'p1' },
       { label: 'Responsável', value: 'p2' }
     ]),
+    loadResponsavelOptions: vi.fn().mockResolvedValue([
+      { label: 'Responsável', value: 'p2' }
+    ]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([
       { label: 'Cartão corporativo', value: 'f1', ehCartao: true, baixarAutomaticamente: true }
     ]),
@@ -110,7 +114,7 @@ describe('FinancialAccountFormPage', () => {
     expect(screen.getByText(/Recorrência Automática/i)).toBeInTheDocument();
     expect(screen.getByText('Rateio por Centro de Custo')).toBeInTheDocument();
     expect(screen.getByText(/Observações Adicionais/i)).toBeInTheDocument();
-    expect(screen.getByText('08/2026')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('08/2026')).toBeInTheDocument();
     expect(screen.getByText(/05\/2026/)).toBeInTheDocument();
   }, 20000);
 
@@ -139,9 +143,9 @@ describe('FinancialAccountFormPage', () => {
     renderWithRoute('/contas-pagar/123', '/contas-pagar/:id', config);
 
     expect(await screen.findByDisplayValue('Despesa de teste')).toBeInTheDocument();
-    expect(screen.getByText('08/2026')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('08/2026')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lancamento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lançamento' }));
 
     await waitFor(() =>
       expect(config.update).toHaveBeenCalledWith('123', {
@@ -165,7 +169,7 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByText('Rateio por Centro de Custo')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lancamento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lançamento' }));
 
     await waitFor(() => expect(config.create).toHaveBeenCalled());
     expect(navigateMock).toHaveBeenCalledWith('/contas-pagar/1');
@@ -188,10 +192,12 @@ describe('FinancialAccountFormPage', () => {
 
     renderWithRoute('/contas-pagar/123', '/contas-pagar/:id', config);
 
-    expect(await screen.findByText('Direcionado para fatura 05/2026')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Visa final 4242 .* fechamento 2026-05-10 .* vencimento 2026-05-20/i)
-    ).toBeInTheDocument();
+    // Eyebrow e competência agora são elementos separados no card redesenhado
+    expect(await screen.findByText(/direcionado para fatura/i)).toBeInTheDocument();
+    expect(screen.getByText('05/2026')).toBeInTheDocument();
+    expect(screen.getByText('Visa final 4242')).toBeInTheDocument();
+    expect(screen.getByText('10/05/2026')).toBeInTheDocument();
+    expect(screen.getByText('20/05/2026')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Abrir fatura prevista/i })).toHaveAttribute(
       'href',
       '/faturas?cartaoId=c1&competencia=2026-05&origem=conta-cartao'
@@ -229,7 +235,7 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByText('Rateio por Centro de Custo')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lancamento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lançamento' }));
 
     await waitFor(() => expect(config.create).toHaveBeenCalled());
     expect(await screen.findByText('Descrição obrigatória.')).toBeInTheDocument();

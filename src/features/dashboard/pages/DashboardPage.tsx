@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '../../../components/ui/Button';
+import { MultiSelectFilter } from '../../../components/layout';
 import { DashboardKpiGrid } from '../components/DashboardKpiGrid';
 import { DashboardFaturasCartao } from '../components/DashboardFaturasCartao';
 import { DashboardCashPulse } from '../components/DashboardCashPulse';
@@ -9,71 +11,56 @@ import { DashboardTransactionList } from '../components/DashboardTransactionList
 import { DashboardAiInsights } from '../components/DashboardAiInsights';
 import { DateInput } from '../../../components/forms/DateInput';
 import { PageState } from '../../../components/states/PageState';
+import { cadastrosApi } from '../../../services/http/cadastros-api';
 import { dashboardApi } from '../../../services/http/dashboard-api';
 import { orcamentosApi } from '../../../services/http/orcamentos-api';
 import { formatCurrencyBRL } from '../../../shared/currency';
-import type { DashboardFluxoCaixa, DashboardResumo } from '../../../types/dashboard';
-import type { OrcamentoItem } from '../../../types/orcamento';
 
 function getCurrentReferenceMonth() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
+const CURRENT_MONTH = getCurrentReferenceMonth();
+
 export function DashboardPage() {
-  const [summary, setSummary] = useState<DashboardResumo>();
-  const [cashFlow, setCashFlow] = useState<DashboardFluxoCaixa>();
-  const [referenceMonth, setReferenceMonth] = useState<string>(getCurrentReferenceMonth());
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>();
-  const [categoriasEstouradas, setCategoriasEstouradas] = useState<OrcamentoItem[]>([]);
+  const navigate = useNavigate();
+  const [referenceMonth, setReferenceMonth] = useState<string>(CURRENT_MONTH);
+  const [selectedContasBancarias, setSelectedContasBancarias] = useState<string[]>([]);
 
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
+  const contaBancariaIds = selectedContasBancarias.length > 0 ? selectedContasBancarias : undefined;
 
-    try {
-      const [summaryResponse, cashFlowResponse] = await Promise.all([
-        dashboardApi.obterResumo({ mesReferencia: referenceMonth }),
-        dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth })
-      ]);
+  const { data: contasBancariasData } = useQuery({
+    queryKey: ['contas-bancarias', 'options-dashboard'],
+    queryFn: () => cadastrosApi.contasBancarias.listar({ page: 1, pageSize: 200, search: '', ativo: true }),
+    staleTime: 5 * 60_000
+  });
 
-      setSummary(summaryResponse);
-      setCashFlow(cashFlowResponse);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar dashboard.');
-    } finally {
-      setLoading(false);
-    }
-  }, [referenceMonth]);
+  const { data: summary, isFetching: loadingSummary, error: summaryError } = useQuery({
+    queryKey: ['dashboard', 'resumo', referenceMonth, contaBancariaIds],
+    queryFn: () => dashboardApi.obterResumo({ mesReferencia: referenceMonth, contaBancariaIds }),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
 
-  useEffect(() => {
-    void loadDashboard();
-  }, [loadDashboard]);
+  const { data: cashFlow } = useQuery({
+    queryKey: ['dashboard', 'fluxo-caixa', referenceMonth, contaBancariaIds],
+    queryFn: () => dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth, contaBancariaIds }),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
 
-  useEffect(() => {
-    let cancelled = false;
+  const { data: orcamentoData } = useQuery({
+    queryKey: ['orcamento', 'corrente', CURRENT_MONTH],
+    queryFn: () => orcamentosApi.obterPorCompetencia(CURRENT_MONTH),
+    staleTime: 5 * 60_000
+  });
 
-    // Alerta de orçamento sempre olha o mês corrente, independente do mês exibido.
-    orcamentosApi
-      .obterPorCompetencia(getCurrentReferenceMonth())
-      .then((orcamento) => {
-        if (!cancelled) {
-          setCategoriasEstouradas(orcamento.itens.filter((item) => item.estourado));
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setCategoriasEstouradas([]);
-        }
-      });
+  const contaBancariaOptions = (contasBancariasData?.items ?? []).map((c) => ({ label: c.nome, value: c.id }));
+  const categoriasEstouradas = (orcamentoData?.itens ?? []).filter((item) => item.estourado);
+  const errorMessage = summaryError instanceof Error ? summaryError.message : summaryError ? 'Falha ao carregar dashboard.' : undefined;
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (loading && !summary && !cashFlow) {
+  if (loadingSummary && !summary && !cashFlow) {
     return <PageState state="loading" title="Carregando dashboard" />;
   }
 
@@ -83,14 +70,27 @@ export function DashboardPage() {
   return (
     <>
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          {contaBancariaOptions.length > 0 && (
+            <div className="w-[220px] shrink-0">
+              <MultiSelectFilter
+                ariaLabel="Filtrar por conta bancária"
+                placeholder="Todas as contas"
+                options={contaBancariaOptions}
+                value={selectedContasBancarias}
+                onChange={setSelectedContasBancarias}
+                icon={<span className="material-symbols-outlined text-sm">account_balance</span>}
+              />
+            </div>
+          )}
+
           <div className="w-[200px] shrink-0">
             <DateInput
               compact
               mode="month"
               ariaLabel="Mês de referência do dashboard"
               value={referenceMonth}
-              onChange={(value) => setReferenceMonth(value || getCurrentReferenceMonth())}
+              onChange={(value) => setReferenceMonth(value || CURRENT_MONTH)}
             />
           </div>
 
@@ -110,7 +110,6 @@ export function DashboardPage() {
           </div>
         )}
 
-        {/* Alerta de estouro de orçamento no mês corrente */}
         {categoriasEstouradas.length > 0 && (
           <Link
             to="/orcamento"
@@ -127,7 +126,6 @@ export function DashboardPage() {
           </Link>
         )}
 
-        {/* Alerta de contas vencidas */}
         {totalContasVencidias > 0 && (
           <Link
             to="/contas-pagar?status=VENCIDA"
@@ -144,7 +142,6 @@ export function DashboardPage() {
           </Link>
         )}
 
-        {/* KPI Grid */}
         <DashboardKpiGrid
           saldoAtual={summary?.saldoAtual ?? 0}
           totalAPagar={summary?.totalAPagar ?? 0}
@@ -153,21 +150,25 @@ export function DashboardPage() {
           numContasPendentes={totalContasVencidias + totalContasAPagarAVencer}
         />
 
-        {/* Middle Section: Graph and Agenda */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <DashboardCashPulse items={cashFlow?.itens ?? []} />
-          <DashboardOperationalAgenda items={summary?.contasAVencer ?? []} />
+          <DashboardOperationalAgenda items={summary?.contasAVencer ?? []} referenceMonth={referenceMonth} />
         </div>
 
-        {/* Bottom Section: Faturas e Transações */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <DashboardFaturasCartao />
           <div className="lg:col-span-2">
-            <DashboardTransactionList movimentacoes={summary?.movimentacoesRecentes ?? []} onViewAll={() => {}} />
+            <DashboardTransactionList
+              movimentacoes={summary?.movimentacoesRecentes ?? []}
+              onViewAll={() => {
+                const [year, month] = referenceMonth.split('-');
+                const lastDay = new Date(Number(year), Number(month), 0).getDate();
+                navigate(`/movimentacoes?dataInicial=${referenceMonth}-01&dataFinal=${referenceMonth}-${lastDay}`);
+              }}
+            />
           </div>
         </div>
 
-        {/* AI Insights */}
         <DashboardAiInsights mesReferencia={referenceMonth} />
       </div>
     </>

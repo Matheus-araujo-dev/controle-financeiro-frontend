@@ -42,12 +42,14 @@ import {
 } from './schemas';
 import { applyCpfCnpjMask, type InputMaskKind } from './input-masks';
 import { formatCurrencyBRL } from '../../shared/currency';
-import { mapContaGerencialSelectOptionsWithData } from '../../shared/conta-gerencial';
+import { filterContaGerencialLancavel, mapContaGerencialSelectOptionsWithData, buildContaGerencialOptionLabel, sortContasGerenciaisByCodigo } from '../../shared/conta-gerencial';
 
 export type SelectOption = {
   label: string;
   value: string | boolean;
   data?: Record<string, unknown>;
+  /** Texto da cadeia hierárquica pai, exibido em cinza menor ao lado do label. */
+  chain?: string;
 };
 
 export type FormFieldConfig<TPayload> = {
@@ -181,6 +183,31 @@ async function loadContaGerencialOptions(filters?: Partial<ContaGerencialFilters
   return mapContaGerencialSelectOptionsWithData(response.items);
 }
 
+async function loadContaGerencialLancavelOptions(tipo: 'Despesa' | 'Receita') {
+  const response = await cadastrosApi.contasGerenciais.listar({
+    page: 1,
+    pageSize: 200,
+    search: '',
+    tipo
+  });
+
+  const allById = new Map(response.items.map((item) => [item.id, item]));
+
+  return sortContasGerenciaisByCodigo(filterContaGerencialLancavel(response.items)).map((item) => {
+    const ancestors: string[] = [];
+    let current = item.contaPaiId ? allById.get(item.contaPaiId) : undefined;
+    while (current) {
+      ancestors.push(buildContaGerencialOptionLabel(current));
+      current = current.contaPaiId ? allById.get(current.contaPaiId) : undefined;
+    }
+    return {
+      label: buildContaGerencialOptionLabel(item),
+      value: item.id,
+      chain: ancestors.length > 0 ? `(${ancestors.join(', ')})` : undefined
+    };
+  });
+}
+
 async function loadPessoaOptions() {
   const response = await cadastrosApi.pessoas.listar({
     page: 1,
@@ -205,11 +232,11 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
   listDescription: 'Cadastros de pagadores, recebedores e contrapartes.',
   formDescription: 'Use o cadastro para manter a base de pessoas consistente com o backend, incluindo uma ou mais chaves Pix.',
   columns: [
-    { title: 'Nome', dataIndex: 'nome', key: 'nome' },
-    { title: 'Tipo', dataIndex: 'tipoPessoa', key: 'tipoPessoa' },
+    { title: 'Nome', dataIndex: 'nome', key: 'nome', mobileRole: 'title' },
+    { title: 'Tipo', dataIndex: 'tipoPessoa', key: 'tipoPessoa', mobileRole: 'subtitle' },
     { title: 'Documento', dataIndex: 'cpfCnpj', key: 'cpfCnpj', render: (value) => (value ? applyCpfCnpjMask(String(value)) : '-') },
     { title: 'Contato', dataIndex: 'email', key: 'email', render: (value) => value ?? '-' },
-    { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
+    { title: 'Status', dataIndex: 'ativo', key: 'ativo', mobileRole: 'status', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome, documento ou email' },
@@ -233,7 +260,22 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     { name: 'cpfCnpj', label: 'CPF/CNPJ', kind: 'text', mask: 'cpfCnpj' },
     { name: 'email', label: 'Email', kind: 'text' },
     { name: 'telefone', label: 'Telefone', kind: 'text', mask: 'phone' },
-    { name: 'observacao', label: 'Observação', kind: 'textarea' }
+    { name: 'observacao', label: 'Observação', kind: 'textarea' },
+    { name: 'ehPagador', label: 'Pagador', kind: 'switch' },
+    { name: 'ehRecebedor', label: 'Recebedor', kind: 'switch' },
+    { name: 'ehResponsavel', label: 'Responsável', kind: 'switch' },
+    {
+      name: 'contaGerencialDespesaId',
+      label: 'Conta gerencial de despesa padrão',
+      kind: 'select',
+      loadOptions: () => loadContaGerencialLancavelOptions('Despesa')
+    },
+    {
+      name: 'contaGerencialReceitaId',
+      label: 'Conta gerencial de receita padrão',
+      kind: 'select',
+      loadOptions: () => loadContaGerencialLancavelOptions('Receita')
+    }
   ],
   schema: pessoaSchema,
   defaultFilters: { page: 1, pageSize: 20, search: '' },
@@ -244,12 +286,27 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     email: '',
     telefone: '',
     observacao: '',
-    chavesPix: []
+    chavesPix: [],
+    ehPagador: true,
+    ehRecebedor: true,
+    ehResponsavel: true,
+    contaGerencialDespesaId: '',
+    contaGerencialReceitaId: ''
   },
   list: cadastrosApi.pessoas.listar,
   detail: cadastrosApi.pessoas.obterPorId,
-  create: cadastrosApi.pessoas.criar,
-  update: cadastrosApi.pessoas.atualizar,
+  create: (payload) =>
+    cadastrosApi.pessoas.criar({
+      ...payload,
+      contaGerencialDespesaId: payload.contaGerencialDespesaId || null,
+      contaGerencialReceitaId: payload.contaGerencialReceitaId || null
+    } as never),
+  update: (id, payload) =>
+    cadastrosApi.pessoas.atualizar(id, {
+      ...payload,
+      contaGerencialDespesaId: payload.contaGerencialDespesaId || null,
+      contaGerencialReceitaId: payload.contaGerencialReceitaId || null
+    } as never),
   toFormValues: (detail) => ({
     nome: detail.nome,
     tipoPessoa: detail.tipoPessoa,
@@ -257,7 +314,12 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     email: detail.email ?? '',
     telefone: detail.telefone ?? '',
     observacao: detail.observacao ?? '',
-    chavesPix: detail.chavesPix ?? []
+    chavesPix: detail.chavesPix ?? [],
+    ehPagador: detail.ehPagador ?? true,
+    ehRecebedor: detail.ehRecebedor ?? true,
+    ehResponsavel: detail.ehResponsavel ?? true,
+    contaGerencialDespesaId: detail.contaGerencialDespesaId ?? '',
+    contaGerencialReceitaId: detail.contaGerencialReceitaId ?? ''
   }),
   rowActions: [
     {
@@ -297,8 +359,8 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
   listDescription: 'Cadastros de meios de pagamento para uso operacional.',
   formDescription: 'Configure cartão, baixa automática e disponibilidade da forma de pagamento.',
   columns: [
-    { title: 'Nome', dataIndex: 'nome', key: 'nome' },
-    { title: 'Tipo', dataIndex: 'tipo', key: 'tipo' },
+    { title: 'Nome', dataIndex: 'nome', key: 'nome', mobileRole: 'title' },
+    { title: 'Tipo', dataIndex: 'tipo', key: 'tipo', mobileRole: 'subtitle' },
     { title: 'Cartão', dataIndex: 'ehCartao', key: 'ehCartao', render: (_, record) => renderBooleanTag(record.ehCartao, 'Sim', 'Não') },
     {
       title: 'Baixa automática',
@@ -306,7 +368,7 @@ export const formasPagamentoModuleConfig: MasterDataModuleConfig<
       key: 'baixarAutomaticamente',
       render: (_, record) => renderBooleanTag(record.baixarAutomaticamente, 'Sim', 'Não')
     },
-    { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
+    { title: 'Status', dataIndex: 'ativo', key: 'ativo', mobileRole: 'status', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome da forma de pagamento' },
@@ -392,28 +454,31 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
   listDescription: 'Base de contas para saldo inicial, baixa automática e pagamentos.',
   formDescription: 'Cadastre dados bancários e saldo inicial para preparar o fluxo de caixa.',
   columns: [
-    { title: 'Nome', dataIndex: 'nome', key: 'nome' },
-    { title: 'Banco', dataIndex: 'banco', key: 'banco' },
+    { title: 'Nome', dataIndex: 'nome', key: 'nome', mobileRole: 'title' },
+    { title: 'Banco', dataIndex: 'banco', key: 'banco', mobileRole: 'subtitle' },
     { title: 'Conta', dataIndex: 'numeroConta', key: 'numeroConta', render: (value) => value ?? '-' },
     {
       title: 'Saldo inicial',
       dataIndex: 'saldoInicial',
       key: 'saldoInicial',
+      mobileRole: 'value',
       render: (value) => renderCurrency(value as number | null | undefined)
     },
     {
       title: 'Limite compartilhado',
       dataIndex: 'limiteCartoesCompartilhado',
       key: 'limiteCartoesCompartilhado',
+      mobileRole: 'hidden',
       render: (value) => renderCurrency(value as number | null | undefined)
     },
     {
       title: 'Disponível',
       dataIndex: 'limiteCartoesDisponivel',
       key: 'limiteCartoesDisponivel',
+      mobileRole: 'hidden',
       render: (value) => renderCurrency(value as number | null | undefined)
     },
-    { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
+    { title: 'Status', dataIndex: 'ativo', key: 'ativo', mobileRole: 'status', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome, banco ou número da conta' },
@@ -505,30 +570,33 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
   listDescription: 'Cadastre cartões com fechamento, vencimento e conta padrão de pagamento.',
   formDescription: 'Use os dados do cartão para preparar a fase de compras e faturas.',
   columns: [
-    { title: 'Nome', dataIndex: 'nome', key: 'nome' },
-    { title: 'Bandeira', dataIndex: 'bandeira', key: 'bandeira' },
-    { title: 'Final', dataIndex: 'numeroFinal', key: 'numeroFinal' },
+    { title: 'Nome', dataIndex: 'nome', key: 'nome', mobileRole: 'title' },
+    { title: 'Bandeira', dataIndex: 'bandeira', key: 'bandeira', mobileRole: 'subtitle' },
+    { title: 'Final', dataIndex: 'numeroFinal', key: 'numeroFinal', mobileRole: 'subtitle' },
     { title: 'Fechamento', dataIndex: 'diaFechamentoFatura', key: 'diaFechamentoFatura' },
     { title: 'Vencimento', dataIndex: 'diaVencimentoFatura', key: 'diaVencimentoFatura' },
     {
       title: 'Origem limite',
       dataIndex: 'usaLimiteCompartilhado',
       key: 'usaLimiteCompartilhado',
+      mobileRole: 'hidden',
       render: (_, record) => renderBooleanTag(record.usaLimiteCompartilhado, 'Compartilhado', 'Individual')
     },
     {
       title: 'Limite efetivo',
       dataIndex: 'limiteEfetivo',
       key: 'limiteEfetivo',
+      mobileRole: 'value',
       render: (value) => renderCurrency(value as number | null | undefined)
     },
     {
       title: 'Disponível',
       dataIndex: 'limiteDisponivel',
       key: 'limiteDisponivel',
+      mobileRole: 'hidden',
       render: (value) => renderCurrency(value as number | null | undefined)
     },
-    { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
+    { title: 'Status', dataIndex: 'ativo', key: 'ativo', mobileRole: 'status', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Nome, bandeira ou final' },
@@ -636,24 +704,26 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
   listDescription: 'Cadastre a estrutura de receita e despesa para rateio e visão gerencial.',
   formDescription: 'Contas pai são estruturais; somente contas sem filhos podem receber lançamentos e planejamentos.',
   columns: [
-    { title: 'Código', dataIndex: 'codigo', key: 'codigo', render: (value) => value ?? '-' },
-    { title: 'Descrição', dataIndex: 'descricao', key: 'descricao' },
-    { title: 'Tipo', dataIndex: 'tipo', key: 'tipo' },
+    { title: 'Código', dataIndex: 'codigo', key: 'codigo', mobileRole: 'subtitle', render: (value) => value ?? '-' },
+    { title: 'Descrição', dataIndex: 'descricao', key: 'descricao', mobileRole: 'title' },
+    { title: 'Tipo', dataIndex: 'tipo', key: 'tipo', mobileRole: 'status' },
     { title: 'Conta pai', dataIndex: 'contaPaiDescricao', key: 'contaPaiDescricao', render: (value) => value ?? '-' },
     { title: 'Responsável padrão', dataIndex: 'responsavelPadraoNome', key: 'responsavelPadraoNome', render: (value) => value ?? '-' },
     {
       title: 'Uso',
       dataIndex: 'aceitaLancamentos',
       key: 'aceitaLancamentos',
+      mobileRole: 'hidden',
       render: (_, record) => renderBooleanTag(record.aceitaLancamentos, 'Lançável', 'Estrutural')
     },
     {
       title: 'Receb. fatura',
       dataIndex: 'ehPadraoRecebimentoFaturaCartao',
       key: 'ehPadraoRecebimentoFaturaCartao',
+      mobileRole: 'hidden',
       render: (_, record) => renderBooleanTag(record.ehPadraoRecebimentoFaturaCartao, 'Padrão', 'Não')
     },
-    { title: 'Status', dataIndex: 'ativo', key: 'ativo', render: (_, record) => renderStatusTag(record.ativo) }
+    { title: 'Status', dataIndex: 'ativo', key: 'ativo', mobileRole: 'hidden', render: (_, record) => renderStatusTag(record.ativo) }
   ],
   filters: [
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Código ou descrição' },

@@ -5,7 +5,8 @@ import { financeiroApi } from '../../services/http/financeiro-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR, toMonthInputValue } from '../../shared/date';
-import { filterContaGerencialLancavel, mapContaGerencialSelectOptions } from '../../shared/conta-gerencial';
+import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
+import type { ComboBoxOption } from '../../components/forms/ComboBox';
 import type { ContaGerencialTipo } from '../../types/cadastros';
 import type {
   ContaPagarDetalhe,
@@ -36,6 +37,8 @@ export type FinanceiroResumo = {
 export type SelectOption = {
   label: string;
   value: string;
+  contaGerencialDespesaId?: string | null;
+  contaGerencialReceitaId?: string | null;
 };
 
 export type FormaPagamentoOption = SelectOption & {
@@ -59,6 +62,7 @@ export type FinanceiroFormValues = {
   cartaoId: string;
   contaBancariaId: string;
   dataLiquidacao: string;
+  dataCompra: string;
   valorOriginal: number;
   valorDesconto: number;
   valorJuros: number;
@@ -84,6 +88,8 @@ export type FinanceiroLiquidacaoFormValues = {
   contaBancariaId: string;
   formaPagamentoId: string;
   atualizarValorConta: boolean;
+  atualizarRecorrencia: boolean;
+  cancelarValorRestante: boolean;
 };
 
 export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> = {
@@ -92,6 +98,7 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   singularTitle: string;
   routeBase: string;
   personLabel: string;
+  personRole: 'pagador' | 'recebedor';
   listDescription: string;
   formDescription: string;
   columns: TableColumnsType<TSummary>;
@@ -117,10 +124,11 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   cancelar?: (id: string, options?: CancelarContaPagarPayload) => Promise<TDetail>;
   toFormValues: (detail: TDetail) => FinanceiroFormValues;
   loadPessoaOptions: () => Promise<SelectOption[]>;
+  loadResponsavelOptions: () => Promise<SelectOption[]>;
   loadFormaPagamentoOptions: () => Promise<FormaPagamentoOption[]>;
   loadContaBancariaOptions: () => Promise<SelectOption[]>;
   loadCartaoOptions: () => Promise<SelectOption[]>;
-  loadRateioOptions: () => Promise<SelectOption[]>;
+  loadRateioOptions: () => Promise<ComboBoxOption[]>;
   resolveCreateDefaults?: (searchParams: URLSearchParams) => Promise<Partial<FinanceiroFormValues> | null>;
   buildSummaryItems?: (summary: FinanceiroResumo) => SummaryCardItem[];
 };
@@ -147,6 +155,7 @@ const defaultValues: FinanceiroFormValues = {
   cartaoId: '',
   contaBancariaId: '',
   dataLiquidacao: '',
+  dataCompra: '',
   valorOriginal: 0,
   valorDesconto: 0,
   valorJuros: 0,
@@ -267,6 +276,7 @@ export function resolveStatusTone(statusCodigo: StatusContaCodigo) {
   if (statusCodigo === 'LIQUIDADA') return 'positive';
   if (statusCodigo === 'CANCELADA') return 'neutral';
   if (statusCodigo === 'EM_FATURA') return 'neutral';
+  if (statusCodigo === 'FUTURO') return 'neutral';
   if (statusCodigo === 'VENCIDA') return 'negative';
   return 'warning';
 }
@@ -277,6 +287,23 @@ async function loadPessoaOptions() {
     pageSize: 100,
     search: '',
     ativo: true
+  });
+
+  return response.items.map((item) => ({
+    label: item.nome,
+    value: item.id,
+    contaGerencialDespesaId: item.contaGerencialDespesaId,
+    contaGerencialReceitaId: item.contaGerencialReceitaId
+  }));
+}
+
+async function loadResponsavelOptions() {
+  const response = await cadastrosApi.pessoas.listar({
+    page: 1,
+    pageSize: 100,
+    search: '',
+    ativo: true,
+    ehResponsavel: true
   });
 
   return response.items.map((item) => ({ label: item.nome, value: item.id }));
@@ -326,24 +353,32 @@ async function loadCartaoOptions() {
   }));
 }
 
-async function loadRateioOptions(tipo: ContaGerencialTipo) {
+async function loadRateioOptions(tipo: ContaGerencialTipo): Promise<ComboBoxOption[]> {
   const response = await cadastrosApi.contasGerenciais.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: '',
     tipo,
-    ativo: true,
-    aceitaLancamentos: true
+    ativo: true
   });
 
-  return mapContaGerencialSelectOptions(filterContaGerencialLancavel(response.items));
+  return mapContaGerencialHierarchyData(response.items).map(({ value, main, chain }) => ({
+    value,
+    displayText: main,
+    label: chain ? (
+      <>
+        {main}{' '}
+        <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
+      </>
+    ) : main
+  }));
 }
 
 function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload {
   return {
     origemCompraPlanejadaId: normalizeNullableId(values.origemCompraPlanejadaId),
     numeroDocumento: normalizeNullableText(values.numeroDocumento),
-    dataEmissao: values.dataEmissao,
+    dataEmissao: values.dataEmissao || new Date().toISOString().split('T')[0],
     responsavelCompraId: values.responsavelId,
     recebedorId: values.pessoaId,
     dataVencimento: values.dataVencimento,
@@ -351,6 +386,7 @@ function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload
     cartaoId: normalizeNullableId(values.cartaoId),
     contaBancariaId: normalizeNullableId(values.contaBancariaId),
     dataLiquidacao: normalizeNullableText(values.dataLiquidacao),
+    dataCompra: normalizeNullableText(values.dataCompra),
     valorOriginal: values.valorOriginal,
     valorDesconto: values.valorDesconto,
     valorJuros: values.valorJuros,
@@ -369,7 +405,7 @@ function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload
 function buildContaReceberPayload(values: FinanceiroFormValues): ContaReceberPayload {
   return {
     numeroDocumento: normalizeNullableText(values.numeroDocumento),
-    dataEmissao: values.dataEmissao,
+    dataEmissao: values.dataEmissao || new Date().toISOString().split('T')[0],
     responsavelId: values.responsavelId,
     pagadorId: values.pessoaId,
     dataVencimento: values.dataVencimento,
@@ -406,6 +442,7 @@ function buildToFormValues(detail: {
   cartaoId: string | null;
   contaBancariaId: string | null;
   dataLiquidacao: string | null;
+  dataCompra: string | null;
   rateios: Array<{ contaGerencialId: string; valor: number }>;
   pessoaId: string;
   responsavelId: string | null;
@@ -431,6 +468,7 @@ function buildToFormValues(detail: {
     cartaoId: detail.cartaoId ?? '',
     contaBancariaId: detail.contaBancariaId ?? '',
     dataLiquidacao: detail.dataLiquidacao ?? '',
+    dataCompra: detail.dataCompra ?? detail.dataLiquidacao ?? '',
     valorOriginal: detail.valorOriginal,
     valorDesconto: detail.valorDesconto,
     valorJuros: detail.valorJuros,
@@ -460,6 +498,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
   singularTitle: 'Conta a pagar',
   routeBase: '/contas-pagar',
   personLabel: 'Recebedor',
+  personRole: 'recebedor',
   listDescription: '',
   formDescription: 'Cadastre despesas e obrigações financeiras mantendo rateio e parcelamento coerentes com o backend.',
   columns: [
@@ -501,7 +540,9 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
       dataLiquidacao: values.dataLiquidacao,
       contaBancariaId: values.contaBancariaId,
       formaPagamentoId: values.formaPagamentoId,
-      atualizarValorConta: values.atualizarValorConta
+      atualizarValorConta: values.atualizarValorConta,
+      atualizarRecorrencia: values.atualizarRecorrencia,
+      cancelarValorRestante: values.cancelarValorRestante
     }),
   estornar: financeiroApi.contasPagar.estornar,
   cancelar: financeiroApi.contasPagar.cancelar,
@@ -520,6 +561,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
       cartaoId: detail.cartaoId,
       contaBancariaId: detail.contaBancariaId,
       dataLiquidacao: detail.dataLiquidacao,
+      dataCompra: detail.dataCompra,
       rateios: detail.rateios,
       pessoaId: detail.recebedorId,
       responsavelId: detail.responsavelCompraId,
@@ -530,6 +572,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
     formaPagamentoId: detail.formaPagamentoId
   }),
   loadPessoaOptions,
+  loadResponsavelOptions,
   loadFormaPagamentoOptions,
   loadContaBancariaOptions,
   loadCartaoOptions,
@@ -570,6 +613,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
   singularTitle: 'Conta a receber',
   routeBase: '/contas-receber',
   personLabel: 'Pagador',
+  personRole: 'pagador',
   listDescription: '',
   formDescription: 'Cadastre receitas mantendo os contratos e a composição de rateio coerentes com o backend.',
   columns: [
@@ -611,7 +655,9 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
       dataLiquidacao: values.dataLiquidacao,
       contaBancariaId: values.contaBancariaId,
       formaPagamentoId: values.formaPagamentoId,
-      atualizarValorConta: values.atualizarValorConta
+      atualizarValorConta: values.atualizarValorConta,
+      atualizarRecorrencia: values.atualizarRecorrencia,
+      cancelarValorRestante: values.cancelarValorRestante
     }),
   estornar: financeiroApi.contasReceber.estornar,
   cancelar: financeiroApi.contasReceber.cancelar,
@@ -630,6 +676,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
       cartaoId: detail.cartaoId,
       contaBancariaId: detail.contaBancariaId,
       dataLiquidacao: detail.dataLiquidacao,
+      dataCompra: null,
       rateios: detail.rateios,
       pessoaId: detail.pagadorId,
       responsavelId: detail.responsavelId,
@@ -639,6 +686,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
     formaPagamentoId: detail.formaPagamentoId
   }),
   loadPessoaOptions,
+  loadResponsavelOptions,
   loadFormaPagamentoOptions,
   loadContaBancariaOptions,
   loadCartaoOptions,

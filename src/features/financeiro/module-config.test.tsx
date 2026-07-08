@@ -200,7 +200,9 @@ describe('financeiro module config', () => {
       dataLiquidacao: '2026-06-21',
       contaBancariaId: 'banco-1',
       formaPagamentoId: 'forma-1',
-      atualizarValorConta: true
+      atualizarValorConta: true,
+      atualizarRecorrencia: false,
+      cancelarValorRestante: false
     });
 
     expect(financeiroApi.contasPagar.atualizar).toHaveBeenCalled();
@@ -210,7 +212,9 @@ describe('financeiro module config', () => {
       dataLiquidacao: '2026-06-21',
       contaBancariaId: 'banco-1',
       formaPagamentoId: 'forma-1',
-      atualizarValorConta: true
+      atualizarValorConta: true,
+      atualizarRecorrencia: false,
+      cancelarValorRestante: false
     });
 
     await expect(contasPagarModuleConfig.resolveCreateDefaults?.(new URLSearchParams())).resolves.toBeNull();
@@ -290,9 +294,11 @@ describe('financeiro module config', () => {
     ]);
     await expect(contasPagarModuleConfig.loadContaBancariaOptions()).resolves.toEqual([{ label: 'Conta - Banco', value: 'b1' }]);
     await expect(contasPagarModuleConfig.loadCartaoOptions()).resolves.toEqual([{ label: 'Visa - final 1234', value: 'c1' }]);
-    await expect(contasPagarModuleConfig.loadRateioOptions()).resolves.toEqual([{ label: '2.1 - Receita', value: 'g2' }]);
+    await expect(contasPagarModuleConfig.loadRateioOptions()).resolves.toEqual([
+      expect.objectContaining({ value: 'g2', displayText: '2.1 - Receita', label: '2.1 - Receita' })
+    ]);
     expect(cadastrosApi.contasGerenciais.listar).toHaveBeenCalledWith(
-      expect.objectContaining({ tipo: 'Despesa', aceitaLancamentos: true })
+      expect.objectContaining({ tipo: 'Despesa', ativo: true })
     );
 
     const summary = contasReceberModuleConfig.buildSummaryItems?.({

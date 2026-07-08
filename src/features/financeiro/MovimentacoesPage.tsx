@@ -1,11 +1,11 @@
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo } from 'react';
+import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
   CreditCardOutlined,
   DollarCircleOutlined,
-  HistoryOutlined,
   SearchOutlined,
   ShoppingCartOutlined,
   WalletOutlined,
@@ -13,7 +13,7 @@ import {
   UserOutlined
 } from '@ant-design/icons';
 import { DateInput } from '../../components/forms/DateInput';
-import type { MovimentacaoFilters, MovimentacaoResumo, NaturezaMovimentacao, TipoMovimentacao } from '../../types/financeiro';
+import type { MovimentacaoFilters, MovimentacaoResumo, TipoMovimentacao } from '../../types/financeiro';
 import { AppDataTable } from '../../components/data/AppDataTable';
 import { ExportButton } from '../../components/data/ExportButton';
 import { StatusBadge, type StatusTone } from '../../components/data/StatusBadge';
@@ -37,20 +37,7 @@ const tipoOptions: Array<{ label: string; value: TipoMovimentacao | '' }> = [
   { label: 'Saída', value: 'Saida' }
 ];
 
-const naturezaOptions: Array<{ label: string; value: NaturezaMovimentacao | '' }> = [
-  { label: 'Todas as naturezas', value: '' },
-  { label: 'Prevista', value: 'Prevista' },
-  { label: 'Realizada', value: 'Realizada' },
-  { label: 'Econômica', value: 'Economica' }
-];
-
 type FilterOption = { label: string; value: string };
-
-function naturezaTone(value: NaturezaMovimentacao): StatusTone {
-  if (value === 'Realizada') return 'success';
-  if (value === 'Economica') return 'warning';
-  return 'neutral';
-}
 
 function tipoTone(value: TipoMovimentacao): StatusTone {
   return value === 'Entrada' ? 'success' : 'neutral';
@@ -100,21 +87,37 @@ function getMovementDescriptor(item: MovimentacaoResumo) {
   };
 }
 
-export function MovimentacoesPage() {
-  // Link "ver extrato" das contas bancárias abre a página já filtrada pela conta.
-  const contaBancariaInicial = new URLSearchParams(window.location.search).get('contaBancariaId');
+const defaultMovimentacaoFilters: MovimentacaoFilters = {
+  page: 1,
+  pageSize: 20,
+  search: '',
+  dataInicial: undefined,
+  dataFinal: undefined,
+  contaBancariaIds: undefined,
+  responsavelIds: undefined,
+  tipo: undefined,
+};
 
-  const [filters, setFilters] = useState<MovimentacaoFilters>({
-    page: 1,
-    pageSize: 20,
-    search: '',
-    dataInicial: undefined,
-    dataFinal: undefined,
-    contaBancariaIds: contaBancariaInicial ? [contaBancariaInicial] : undefined,
-    responsavelIds: undefined,
-    tipo: undefined,
-    natureza: undefined
-  });
+export function MovimentacoesPage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const contaBancariaInicial = urlParams.get('contaBancariaId');
+  const dataInicialParam = urlParams.get('dataInicial') ?? undefined;
+  const dataFinalParam = urlParams.get('dataFinal') ?? undefined;
+
+  const hasUrlParams = !!(contaBancariaInicial || dataInicialParam || dataFinalParam);
+  const urlOverrides: Partial<MovimentacaoFilters> | undefined = hasUrlParams
+    ? {
+        contaBancariaIds: contaBancariaInicial ? [contaBancariaInicial] : undefined,
+        dataInicial: dataInicialParam,
+        dataFinal: dataFinalParam,
+      }
+    : undefined;
+
+  const { filters, setFilters, clearFilters, isModified } = usePersistedFilters(
+    'filters:movimentacoes',
+    defaultMovimentacaoFilters,
+    urlOverrides
+  );
   const deferredFilters = useDeferredValue(filters);
 
   const { data, isFetching, error, refetch } = useQuery({
@@ -166,7 +169,6 @@ export function MovimentacoesPage() {
     { header: 'Data', value: (r: MovimentacaoResumo) => r.dataMovimentacao },
     { header: 'Descrição', value: (r: MovimentacaoResumo) => r.observacao ?? '' },
     { header: 'Tipo', value: (r: MovimentacaoResumo) => r.tipo },
-    { header: 'Natureza', value: (r: MovimentacaoResumo) => r.natureza },
     { header: 'Conta bancária', value: (r: MovimentacaoResumo) => r.contaBancariaNome ?? '' },
     { header: 'Responsável', value: (r: MovimentacaoResumo) => r.responsavelNome ?? '' },
     { header: 'Valor', value: (r: MovimentacaoResumo) => r.valor },
@@ -191,9 +193,9 @@ export function MovimentacoesPage() {
         </>
       }
       filters={
-      <FilterCard className="space-y-4">
-        {/* Linha 1: Período + Tipo + Natureza */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <FilterCard className="space-y-4" onClear={isModified ? clearFilters : undefined}>
+        {/* Linha 1: Período + Tipo */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <FilterField label="De">
             <DateInput
               compact
@@ -222,15 +224,6 @@ export function MovimentacoesPage() {
             />
           </FilterField>
 
-          <FilterField label="Natureza">
-            <MultiSelectFilter
-              ariaLabel="Natureza"
-              icon={<HistoryOutlined />}
-              options={naturezaOptions}
-              value={filters.natureza ? [filters.natureza] : []}
-              onChange={(next) => setFilters((prev) => ({ ...prev, natureza: next[0] as NaturezaMovimentacao | undefined, page: 1 }))}
-            />
-          </FilterField>
         </div>
 
         {/* Linha 2: Conta + Responsável + Busca */}
@@ -296,12 +289,14 @@ export function MovimentacoesPage() {
               title: 'Data',
               dataIndex: 'dataMovimentacao',
               key: 'dataMovimentacao',
+              mobileRole: 'date',
               render: (value) => <span className="text-sm font-medium text-on-surface-variant">{formatDateBR(String(value))}</span>
             },
             {
               title: 'Descrição',
               dataIndex: 'observacao',
               key: 'observacao',
+              mobileRole: 'title',
               render: (value, record: MovimentacaoResumo) => {
                 const descriptor = getMovementDescriptor(record);
                 const isPositive = record.tipo === 'Entrada';
@@ -320,22 +315,19 @@ export function MovimentacoesPage() {
               }
             },
             {
-              title: 'Natureza',
-              dataIndex: 'natureza',
-              key: 'natureza',
-              render: (value, record: MovimentacaoResumo) => {
-                return (
-                  <div className="flex flex-col items-start gap-1">
-                    <StatusBadge label={String(value)} tone={naturezaTone(value as NaturezaMovimentacao)} />
-                    <StatusBadge label={record.tipo} tone={tipoTone(record.tipo)} />
-                  </div>
-                );
-              }
+              title: 'Tipo',
+              dataIndex: 'tipo',
+              key: 'tipo',
+              mobileRole: 'status',
+              render: (_value, record: MovimentacaoResumo) => (
+                <StatusBadge label={record.tipo} tone={tipoTone(record.tipo)} />
+              )
             },
             {
               title: 'Conta',
               dataIndex: 'contaBancariaNome',
               key: 'contaBancariaNome',
+              mobileRole: 'subtitle',
               render: (value, record: MovimentacaoResumo) => (
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2 text-on-surface-variant font-medium">
@@ -356,6 +348,7 @@ export function MovimentacoesPage() {
               dataIndex: 'valor',
               key: 'valor',
               align: 'right',
+              mobileRole: 'value',
               render: (value, record: MovimentacaoResumo) => {
                 const isPositive = record.tipo === 'Entrada';
                 const prefix = isPositive ? '+' : '-';
@@ -376,6 +369,7 @@ export function MovimentacoesPage() {
               title: 'Responsável',
               dataIndex: 'responsavelNome',
               key: 'responsavelNome',
+              mobileRole: 'hidden',
               render: (value) => (
                 <div className="flex items-center gap-2 text-primary/70">
                   <UserOutlined className="text-[10px]" />

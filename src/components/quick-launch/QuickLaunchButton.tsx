@@ -14,9 +14,11 @@ import { QuickAddPessoaModal } from '../../features/cadastros/quick-add/QuickAdd
 import { QuickAddFormaPagamentoModal } from '../../features/cadastros/quick-add/QuickAddFormaPagamentoModal';
 import { QuickAddContaGerencialModal } from '../../features/cadastros/quick-add/QuickAddContaGerencialModal';
 import { QuickAddCartaoModal } from '../../features/cadastros/quick-add/QuickAddCartaoModal';
-import { filterContaGerencialLancavel, mapContaGerencialSelectOptions } from '../../shared/conta-gerencial';
+import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
+import type { ComboBoxOption } from '../forms/ComboBox';
 
 type Option = { label: string; value: string };
+type ContaGerencialOption = ComboBoxOption;
 type QuickLaunchTipo = 'pagar' | 'receber';
 type QuickAddTarget = 'pessoaId' | 'responsavelId' | null;
 
@@ -71,20 +73,45 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [tipo, setTipo] = useState<QuickLaunchTipo>('pagar');
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState(0);
-  const [dataVencimento, setDataVencimento] = useState(hojeISO());
+  const initialDate = useRef(hojeISO());
+  const [dataVencimento, setDataVencimento] = useState(initialDate.current);
   const [pessoaId, setPessoaId] = useState('');
   const [responsavelId, setResponsavelId] = useState('');
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
   const [cartaoId, setCartaoId] = useState('');
   const [contaGerencialId, setContaGerencialId] = useState('');
   const [saving, setSaving] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  const lastAutoFilledContaRef = useRef<string | null>(null);
+
+  const isDirty =
+    descricao.trim() !== '' ||
+    valor !== 0 ||
+    pessoaId !== '' ||
+    responsavelId !== '' ||
+    formaPagamentoId !== '' ||
+    contaGerencialId !== '' ||
+    dataVencimento !== initialDate.current;
+
+  const isDirtyRef = useRef(isDirty);
+  const confirmCloseRef = useRef(confirmClose);
+  isDirtyRef.current = isDirty;
+  confirmCloseRef.current = confirmClose;
+
+  function requestClose() {
+    if (isDirtyRef.current) {
+      setConfirmClose(true);
+    } else {
+      onClose();
+    }
+  }
 
   // Itens adicionados via QuickAdd nesta sessão (aparecem no topo da lista)
   const [extraPessoas, setExtraPessoas] = useState<Option[]>([]);
   const [extraFormas, setExtraFormas] = useState<Array<Option & { ehCartao: boolean }>>([]);
   const [extraCartoes, setExtraCartoes] = useState<Option[]>([]);
-  const [extraContasDespesa, setExtraContasDespesa] = useState<Option[]>([]);
-  const [extraContasReceita, setExtraContasReceita] = useState<Option[]>([]);
+  const [extraContasDespesa, setExtraContasDespesa] = useState<ContaGerencialOption[]>([]);
+  const [extraContasReceita, setExtraContasReceita] = useState<ContaGerencialOption[]>([]);
 
   const [quickAddPessoaTarget, setQuickAddPessoaTarget] = useState<QuickAddTarget>(null);
   const [quickAddFormaOpen, setQuickAddFormaOpen] = useState(false);
@@ -97,13 +124,31 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       { queryKey: ['ql-pessoas'], queryFn: () => cadastrosApi.pessoas.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-formas'], queryFn: () => cadastrosApi.formasPagamento.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-cartoes'], queryFn: () => cadastrosApi.cartoes.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
-      { queryKey: ['ql-contas-despesa'], queryFn: () => cadastrosApi.contasGerenciais.listar({ ...BASE_QUERY, tipo: 'Despesa', ativo: true, aceitaLancamentos: true }), staleTime: STALE_5MIN },
-      { queryKey: ['ql-contas-receita'], queryFn: () => cadastrosApi.contasGerenciais.listar({ ...BASE_QUERY, tipo: 'Receita', ativo: true, aceitaLancamentos: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-contas-despesa'], queryFn: () => cadastrosApi.contasGerenciais.listar({ page: 1, pageSize: 500, search: '', tipo: 'Despesa', ativo: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-contas-receita'], queryFn: () => cadastrosApi.contasGerenciais.listar({ page: 1, pageSize: 500, search: '', tipo: 'Receita', ativo: true }), staleTime: STALE_5MIN },
     ],
   });
 
   const pessoas = useMemo<Option[]>(() => {
     const fromServer = pessoasResult.data?.items.map((p) => ({ label: p.nome, value: p.id })) ?? [];
+    return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
+  }, [extraPessoas, pessoasResult.data]);
+
+  const pessoaContaGerencialMap = useMemo(() => {
+    const map = new Map<string, { despesaId?: string; receitaId?: string }>();
+    pessoasResult.data?.items.forEach((p) => {
+      if (p.contaGerencialDespesaId || p.contaGerencialReceitaId) {
+        map.set(p.id, {
+          despesaId: p.contaGerencialDespesaId ?? undefined,
+          receitaId: p.contaGerencialReceitaId ?? undefined
+        });
+      }
+    });
+    return map;
+  }, [pessoasResult.data]);
+
+  const responsaveis = useMemo<Option[]>(() => {
+    const fromServer = pessoasResult.data?.items.filter((p) => p.ehResponsavel).map((p) => ({ label: p.nome, value: p.id })) ?? [];
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
   }, [extraPessoas, pessoasResult.data]);
 
@@ -117,15 +162,46 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     return [...extraCartoes, ...fromServer.filter((c) => !extraCartoes.some((e) => e.value === c.value))];
   }, [extraCartoes, cartoesResult.data]);
 
-  const contasDespesa = useMemo<Option[]>(() => {
-    const fromServer = mapContaGerencialSelectOptions(filterContaGerencialLancavel(despesaResult.data?.items ?? []));
+  const contasDespesa = useMemo<ContaGerencialOption[]>(() => {
+    const fromServer = mapContaGerencialHierarchyData(despesaResult.data?.items ?? []).map(({ value, main, chain }) => ({
+      value,
+      displayText: main,
+      label: chain ? (
+        <span>
+          {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
+        </span>
+      ) : main
+    }));
     return [...extraContasDespesa, ...fromServer.filter((c) => !extraContasDespesa.some((e) => e.value === c.value))];
   }, [extraContasDespesa, despesaResult.data]);
 
-  const contasReceita = useMemo<Option[]>(() => {
-    const fromServer = mapContaGerencialSelectOptions(filterContaGerencialLancavel(receitaResult.data?.items ?? []));
+  const contasReceita = useMemo<ContaGerencialOption[]>(() => {
+    const fromServer = mapContaGerencialHierarchyData(receitaResult.data?.items ?? []).map(({ value, main, chain }) => ({
+      value,
+      displayText: main,
+      label: chain ? (
+        <span>
+          {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
+        </span>
+      ) : main
+    }));
     return [...extraContasReceita, ...fromServer.filter((c) => !extraContasReceita.some((e) => e.value === c.value))];
   }, [extraContasReceita, receitaResult.data]);
+
+  useEffect(() => {
+    if (!pessoaId) return;
+    const contaIds = pessoaContaGerencialMap.get(pessoaId);
+    const contaId = tipo === 'pagar' ? contaIds?.despesaId : contaIds?.receitaId;
+    const manuallyChanged = contaGerencialId && contaGerencialId !== lastAutoFilledContaRef.current;
+    if (manuallyChanged) return;
+    if (contaId) {
+      setContaGerencialId(contaId);
+      lastAutoFilledContaRef.current = contaId;
+    } else {
+      if (contaGerencialId === lastAutoFilledContaRef.current) setContaGerencialId('');
+      lastAutoFilledContaRef.current = null;
+    }
+  }, [pessoaId, tipo, contaGerencialId, pessoaContaGerencialMap]);
 
   const someQueryErrored = [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult].some((r) => r.isError);
   useEffect(() => {
@@ -156,7 +232,13 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       if (!dialogRef.current) return;
 
       if (event.key === 'Escape') {
-        onClose();
+        if (confirmCloseRef.current) {
+          setConfirmClose(false);
+        } else if (isDirtyRef.current) {
+          setConfirmClose(true);
+        } else {
+          onClose();
+        }
         return;
       }
 
@@ -225,7 +307,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     try {
       const base = {
         numeroDocumento: null,
-        dataEmissao: hojeISO(),
+        dataEmissao: exigeCartao ? dataVencimento : hojeISO(),
         dataVencimento,
         formaPagamentoId,
         cartaoId: exigeCartao ? cartaoId : null,
@@ -247,7 +329,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
           ...base,
           origemCompraPlanejadaId: null,
           responsavelCompraId: responsavelId,
-          recebedorId: pessoaId
+          recebedorId: pessoaId,
+          dataCompra: null
         });
       } else {
         await financeiroApi.contasReceber.criar({
@@ -286,11 +369,11 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   }
 
   function handleContaGerencialSuccess(newId: string, label: string) {
-    const nextOption = { value: newId, label };
+    const nextOption: ContaGerencialOption = { value: newId, label, displayText: label };
     if (tipo === 'pagar') {
-      setExtraContasDespesa((current) => mergeOption(current, nextOption));
+      setExtraContasDespesa((current) => [nextOption, ...current.filter((item) => item.value !== newId)]);
     } else {
-      setExtraContasReceita((current) => mergeOption(current, nextOption));
+      setExtraContasReceita((current) => [nextOption, ...current.filter((item) => item.value !== newId)]);
     }
     setContaGerencialId(newId);
     setQuickAddContaOpen(false);
@@ -310,7 +393,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="flex max-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-surface-container-low shadow-2xl"
+          className="relative flex max-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-surface-container-low shadow-2xl"
         >
           <div className="overflow-y-auto p-7">
             <div className="mb-6 flex items-center gap-3">
@@ -359,9 +442,46 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="space-y-2">
-                <label className={formLabelClass}>Vencimento</label>
-                <DateInput ariaLabel="Vencimento" value={dataVencimento} onChange={setDataVencimento} />
+                <label className={formLabelClass}>Forma de pagamento</label>
+                <ComboBox
+                  aria-label="Forma de pagamento"
+                  value={formaPagamentoId}
+                  onChange={(value) => {
+                    setFormaPagamentoId(value);
+                    if (!formas.find((forma) => forma.value === value)?.ehCartao) {
+                      setCartaoId('');
+                    }
+                  }}
+                  options={formas}
+                  placeholder="Selecionar..."
+                  onAddNew={() => setQuickAddFormaOpen(true)}
+                  addNewLabel="Nova forma de pagamento"
+                />
               </div>
+
+              <div className="space-y-2">
+                <label className={formLabelClass}>{exigeCartao ? 'Data da compra' : 'Vencimento'}</label>
+                <DateInput
+                  ariaLabel={exigeCartao ? 'Data da compra' : 'Vencimento'}
+                  value={dataVencimento}
+                  onChange={setDataVencimento}
+                />
+              </div>
+
+              {exigeCartao ? (
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Cartão de crédito</label>
+                  <ComboBox
+                    aria-label="Cartão de crédito"
+                    value={cartaoId}
+                    onChange={setCartaoId}
+                    options={cartoes}
+                    placeholder="Selecionar cartão..."
+                    onAddNew={() => setQuickAddCartaoOpen(true)}
+                    addNewLabel="Novo cartão"
+                  />
+                </div>
+              ) : null}
 
               <div className="space-y-2">
                 <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
@@ -382,28 +502,10 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   aria-label="Responsável"
                   value={responsavelId}
                   onChange={setResponsavelId}
-                  options={pessoas}
+                  options={responsaveis}
                   placeholder="Selecionar responsável..."
                   onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
                   addNewLabel="Nova pessoa"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className={formLabelClass}>Forma de pagamento</label>
-                <ComboBox
-                  aria-label="Forma de pagamento"
-                  value={formaPagamentoId}
-                  onChange={(value) => {
-                    setFormaPagamentoId(value);
-                    if (!formas.find((forma) => forma.value === value)?.ehCartao) {
-                      setCartaoId('');
-                    }
-                  }}
-                  options={formas}
-                  placeholder="Selecionar..."
-                  onAddNew={() => setQuickAddFormaOpen(true)}
-                  addNewLabel="Nova forma de pagamento"
                 />
               </div>
 
@@ -419,29 +521,16 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   addNewLabel="Nova conta gerencial"
                 />
               </div>
-
-              {exigeCartao ? (
-                <div className="space-y-2">
-                  <label className={formLabelClass}>Cartão de crédito</label>
-                  <ComboBox
-                    aria-label="Cartão de crédito"
-                    value={cartaoId}
-                    onChange={setCartaoId}
-                    options={cartoes}
-                    placeholder="Selecionar cartão..."
-                    onAddNew={() => setQuickAddCartaoOpen(true)}
-                    addNewLabel="Novo cartão"
-                  />
-                </div>
-              ) : null}
             </div>
 
-            <p className="mt-6 text-xs text-on-surface-variant">
-              Precisa de parcelas, rateio detalhado ou recorrência? Use o formulário completo em Contas a pagar/receber.
-            </p>
+            <div className="mt-8 border-t border-white/5 pt-5">
+              <p className="text-xs text-on-surface-variant">
+                Precisa de parcelas, rateio detalhado ou recorrência? Use o formulário completo em Contas a pagar/receber.
+              </p>
+            </div>
 
             <div className="mt-7 flex justify-end gap-3">
-              <Button type="button" variant="secondary" size="lg" onClick={onClose}>
+              <Button type="button" variant="secondary" size="lg" onClick={requestClose}>
                 Cancelar
               </Button>
               <Button type="button" size="lg" disabled={!podeSalvar || saving} loading={saving} onClick={() => void handleSubmit()}>
@@ -449,6 +538,38 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               </Button>
             </div>
           </div>
+
+          {confirmClose && (
+            <div
+              className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-black/70 backdrop-blur-sm"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="ql-confirm-title"
+            >
+              <div className="mx-6 w-full max-w-sm rounded-2xl border border-white/10 bg-surface-container p-6 shadow-xl">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/5 bg-surface-container-high text-amber-400">
+                    <span className="material-symbols-outlined text-xl" aria-hidden="true">warning</span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Atenção</p>
+                    <h4 id="ql-confirm-title" className="font-bold text-on-surface">Descartar dados?</h4>
+                  </div>
+                </div>
+                <p className="mb-6 text-sm leading-relaxed text-on-surface-variant">
+                  Os dados preenchidos ainda não foram salvos e serão perdidos se você fechar agora.
+                </p>
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <Button type="button" variant="secondary" size="md" onClick={() => setConfirmClose(false)}>
+                    Continuar editando
+                  </Button>
+                  <Button type="button" variant="danger" size="md" onClick={onClose}>
+                    Sim, descartar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { agenteApi, type AgenteInsight } from '../../../services/http/agente-api';
+import { useQuery } from '@tanstack/react-query';
+import { agenteApi } from '../../../services/http/agente-api';
 
 const tipoConfig = {
   ALERTA: {
@@ -38,23 +38,17 @@ interface Props {
 }
 
 export function DashboardAiInsights({ mesReferencia }: Props) {
-  const [insights, setInsights] = useState<AgenteInsight[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const { data, isPending, isError } = useQuery({
+    queryKey: ['dashboard', 'insights', mesReferencia],
+    queryFn: () => agenteApi.obterInsights(mesReferencia),
+    staleTime: 5 * 60_000,
+    retry: false
+  });
 
-  useEffect(() => {
-    setLoading(true);
-    setError(false);
-    agenteApi
-      .obterInsights(mesReferencia)
-      .then((res) => setInsights(res.insights))
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, [mesReferencia]);
+  const insights = data?.insights ?? [];
 
   return (
     <div className="bg-surface-container-low border border-white/5 rounded-3xl p-6">
-      {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -76,8 +70,7 @@ export function DashboardAiInsights({ mesReferencia }: Props) {
         </Link>
       </div>
 
-      {/* Content */}
-      {loading ? (
+      {isPending ? (
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
             <div
@@ -87,7 +80,7 @@ export function DashboardAiInsights({ mesReferencia }: Props) {
             />
           ))}
         </div>
-      ) : error ? (
+      ) : isError ? (
         <div className="text-center py-6 text-on-surface-variant text-sm">
           <span className="material-symbols-outlined block text-2xl mb-2 opacity-40" style={{ fontVariationSettings: "'FILL' 1" }}>psychology_alt</span>
           Análise indisponível no momento.{' '}

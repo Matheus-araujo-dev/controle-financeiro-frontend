@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { formCompactFieldClass } from '../../../components/forms/FormPrimitives';
 import { DateInput } from '../../../components/forms/DateInput';
 import { PageState } from '../../../components/states/PageState';
 import { orcamentosApi } from '../../../services/http/orcamentos-api';
@@ -63,7 +65,7 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
   const metaCalculada = !item.aceitaLancamentos;
 
   return (
-    <div className="bg-surface-container-highest border border-outline-variant/10 rounded-2xl p-4 flex flex-col gap-3">
+    <div className="bg-surface-container border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-bold text-on-surface truncate">
@@ -96,8 +98,8 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
             value={draftMeta}
             onChange={setDraftMeta}
             disabled={saving || metaCalculada}
-            placeholder={metaCalculada ? 'Calculada automaticamente' : 'Definir meta'}
-            className="w-36 min-w-[120px] flex-1 sm:flex-none"
+            placeholder={metaCalculada ? 'Calculada automaticamente' : 'R$ 0,00'}
+            className={`${formCompactFieldClass} !min-h-0 !bg-surface-container-high h-11 w-36 min-w-[120px] flex-1 sm:flex-none text-sm`}
           />
           <button
             type="button"
@@ -137,32 +139,23 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
 }
 
 export function OrcamentoPage() {
+  const queryClient = useQueryClient();
   const [competencia, setCompetencia] = useState<string>(getCurrentCompetencia());
-  const [orcamento, setOrcamento] = useState<OrcamentoCompetencia>();
-  const [loading, setLoading] = useState(false);
   const [savingContaId, setSavingContaId] = useState<string>();
-  const [errorMessage, setErrorMessage] = useState<string>();
+  const [actionError, setActionError] = useState<string>();
 
-  const loadOrcamento = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
+  const { data: orcamento, isLoading, error } = useQuery({
+    queryKey: ['orcamento', 'competencia', competencia],
+    queryFn: () => orcamentosApi.obterPorCompetencia(competencia),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
+  });
 
-    try {
-      setOrcamento(await orcamentosApi.obterPorCompetencia(competencia));
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar orçamento.');
-    } finally {
-      setLoading(false);
-    }
-  }, [competencia]);
-
-  useEffect(() => {
-    void loadOrcamento();
-  }, [loadOrcamento]);
+  const errorMessage = actionError ?? (error instanceof Error ? error.message : error ? 'Falha ao carregar orçamento.' : undefined);
 
   async function handleSalvarMeta(item: OrcamentoItem, valorMeta: number | null) {
     setSavingContaId(item.contaGerencialId);
-    setErrorMessage(undefined);
+    setActionError(undefined);
 
     try {
       if (valorMeta && valorMeta > 0) {
@@ -175,15 +168,15 @@ export function OrcamentoPage() {
         await orcamentosApi.removerMeta(item.metaId);
       }
 
-      await loadOrcamento();
+      await queryClient.invalidateQueries({ queryKey: ['orcamento', 'competencia', competencia] });
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao salvar meta.');
+      setActionError(error instanceof Error ? error.message : 'Falha ao salvar meta.');
     } finally {
       setSavingContaId(undefined);
     }
   }
 
-  if (loading && !orcamento) {
+  if (isLoading && !orcamento) {
     return <PageState state="loading" title="Carregando orçamento" />;
   }
 
@@ -250,7 +243,7 @@ export function OrcamentoPage() {
       )}
 
       <div className="space-y-3">
-        {orcamento?.itens.map((item) => (
+        {[...(orcamento?.itens ?? [])].sort((a, b) => (a.contaGerencialCodigo ?? '').localeCompare(b.contaGerencialCodigo ?? '', 'pt-BR', { numeric: true })).map((item) => (
           <OrcamentoRow
             key={item.contaGerencialId}
             item={item}

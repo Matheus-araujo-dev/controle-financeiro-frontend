@@ -61,6 +61,9 @@ function createConfig() {
       { label: 'Fornecedor', value: 'p1' },
       { label: 'Responsável', value: 'p2' }
     ]),
+    loadResponsavelOptions: vi.fn().mockResolvedValue([
+      { label: 'Responsável', value: 'p2' }
+    ]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([
       { label: 'Débito automático', value: 'f1', ehCartao: false, baixarAutomaticamente: true }
     ]),
@@ -88,7 +91,7 @@ describe('FinancialAccountFormPage recurrence fixes', () => {
   it('renders the recurrence fields and normalizes installments to one', async () => {
     renderPage();
 
-    expect(await screen.findByText('05/2026')).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('05/2026')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Contrato mensal')).toBeInTheDocument();
     expect(screen.getByText('Permitido')).toBeInTheDocument();
     expect(screen.getByText(/Início da Série/i)).toBeInTheDocument();
@@ -105,15 +108,15 @@ describe('FinancialAccountFormPage recurrence fixes', () => {
   it('applies the dark native classes to emission, due and liquidation dates', async () => {
     renderPage();
 
-    await waitFor(() => expect(screen.getByText('04/04/2026')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByDisplayValue('04/04/2026')).toBeInTheDocument());
 
-    const dataEmissaoButton = screen.getByText('04/04/2026').closest('button');
-    const dataVencimentoButton = screen.getAllByText('20/04/2026').at(0)?.closest('button');
-    const dataLiquidacaoButton = screen.getAllByText('20/04/2026').at(1)?.closest('button');
+    const dataEmissaoWrapper = screen.getByDisplayValue('04/04/2026').closest('div');
+    const dataVencimentoWrapper = screen.getAllByDisplayValue('20/04/2026').at(0)?.closest('div');
+    const dataLiquidacaoWrapper = screen.getAllByDisplayValue('20/04/2026').at(1)?.closest('div');
 
-    expect(dataEmissaoButton?.className).toContain('bg-surface-container');
-    expect(dataVencimentoButton?.className).toContain('bg-surface-container');
-    expect(dataLiquidacaoButton?.className).toContain('bg-surface-container');
+    expect(dataEmissaoWrapper?.className).toContain('bg-surface-container');
+    expect(dataVencimentoWrapper?.className).toContain('bg-surface-container');
+    expect(dataLiquidacaoWrapper?.className).toContain('bg-surface-container');
   });
 
   it('requires responsável when validating the form payload', () => {
