@@ -41,7 +41,8 @@ const validValues = {
   recorrenciaDataFim: '2026-08',
   recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
   recorrenciaObservacao: 'Contrato mensal',
-  recorrenciaGerarAteData: '2026-10-20'
+  recorrenciaGerarAteData: '2026-10-20',
+  dataCompra: '2026-04-04'
 };
 
 function createConfig() {
