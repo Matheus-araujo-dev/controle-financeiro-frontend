@@ -138,6 +138,49 @@ function ParcelasCancelDialog({
 }
 
 
+function RecorrenciaEscopoDialog({
+  open,
+  onClose,
+  onApenas,
+  onAlterarFuturas
+}: {
+  open: boolean;
+  onClose: () => void;
+  onApenas: () => void;
+  onAlterarFuturas: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
+        <div className="mb-6 flex items-start gap-3">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/12 text-primary">
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>repeat</span>
+          </div>
+          <div>
+            <h3 className="font-headline text-lg font-bold text-on-surface">Atualizar lançamento recorrente</h3>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Este lançamento pertence a uma recorrência ativa. Deseja atualizar apenas esta ocorrência ou esta e todas as futuras?
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Voltar
+          </Button>
+          <Button type="button" variant="secondary" onClick={onApenas}>
+            Apenas esta
+          </Button>
+          <Button type="button" variant="primary" onClick={onAlterarFuturas}>
+            Esta e as futuras
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PlannedPurchaseCancelDialog({
   open,
   onClose,
@@ -197,7 +240,11 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     exibeRecorrencia,
     grupoParcelamentoId,
     numeroParcela,
-    totalRateios
+    totalRateios,
+    pendingValues,
+    onConfirmApenas,
+    onConfirmAlterarFuturas,
+    clearPendingScope
   } = form;
   const showSubmitError = Boolean(errorMessage) && !isSubmitting;
 
@@ -205,6 +252,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
   const [plannedPurchaseConfirmOpen, setPlannedPurchaseConfirmOpen] = useState(false);
   const [recorrenciaConfirmOpen, setRecorrenciaConfirmOpen] = useState(false);
   const [parcelasConfirmOpen, setParcelasConfirmOpen] = useState(false);
+  const [scopeSubmitting, setScopeSubmitting] = useState(false);
 
   const valorOriginal = Number(watchedValues.valorOriginal) || 0;
   const valorDesconto = Number(watchedValues.valorDesconto) || 0;
@@ -351,6 +399,18 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
         onCancelarFuturas={() => {
           void cancelar({ cancelarParcelasFuturas: true });
           setParcelasConfirmOpen(false);
+        }}
+      />
+      <RecorrenciaEscopoDialog
+        open={pendingValues !== null && !scopeSubmitting}
+        onClose={clearPendingScope}
+        onApenas={() => {
+          setScopeSubmitting(true);
+          void onConfirmApenas().finally(() => setScopeSubmitting(false));
+        }}
+        onAlterarFuturas={() => {
+          setScopeSubmitting(true);
+          void onConfirmAlterarFuturas().finally(() => setScopeSubmitting(false));
         }}
       />
     </div>

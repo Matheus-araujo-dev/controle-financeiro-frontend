@@ -48,6 +48,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [cardInvoicePreview, setCardInvoicePreview] = useState<CardInvoicePreview>();
   const [grupoParcelamentoId, setGrupoParcelamentoId] = useState<string | null | undefined>(undefined);
   const [numeroParcela, setNumeroParcela] = useState<number | undefined>(undefined);
+  const [pendingValues, setPendingValues] = useState<FinanceiroFormValues | null>(null);
 
   const {
     control,
@@ -86,6 +87,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   );
   const exibeRecorrencia = watchedValues.ehRecorrente;
   const canEdit = detailStatus !== 'LIQUIDADA' && detailStatus !== 'CANCELADA';
+  const canAlterarFuturas = Boolean(id) && exibeRecorrencia && canEdit && Boolean(config.alterarFuturas);
 
   const recurringStartDatePreview = useMemo(
     () => (watchedValues.recorrenciaDataInicio ? formatMonthYearBR(watchedValues.recorrenciaDataInicio) : null),
@@ -206,6 +208,10 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
 
   const onSubmit = useCallback(
     async (values: FinanceiroFormValues) => {
+      if (id && canAlterarFuturas) {
+        setPendingValues(values);
+        return;
+      }
       try {
         if (id) {
           await config.update(id, values);
@@ -232,8 +238,46 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         setErrorMessage(error instanceof Error ? error.message : 'Falha ao salvar o lançamento.');
       }
     },
-    [id, config, navigate, setError]
+    [id, canAlterarFuturas, config, navigate, setError]
   );
+
+  const handleSaveError = useCallback(
+    (error: unknown) => {
+      const apiError = error as AxiosError<ApiErrorResponse>;
+      const validationErrors = apiError.response?.data?.errors;
+      if (validationErrors) {
+        applyServerValidationErrors(validationErrors, (field, message) =>
+          setError(field as keyof FinanceiroFormValues, { type: 'server', message })
+        );
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : 'Falha ao salvar o lançamento.');
+      }
+      setPendingValues(null);
+    },
+    [setError]
+  );
+
+  const onConfirmApenas = useCallback(async () => {
+    if (!id || !pendingValues) return;
+    try {
+      await config.update(id, pendingValues);
+      navigate(config.routeBase);
+    } catch (error) {
+      handleSaveError(error);
+    }
+  }, [id, pendingValues, config, navigate, handleSaveError]);
+
+  const onConfirmAlterarFuturas = useCallback(async () => {
+    if (!id || !pendingValues || !config.alterarFuturas) return;
+    try {
+      await config.alterarFuturas(id, pendingValues);
+      navigate(config.routeBase);
+    } catch (error) {
+      handleSaveError(error);
+    }
+  }, [id, pendingValues, config, navigate, handleSaveError]);
+
+  const clearPendingScope = useCallback(() => setPendingValues(null), []);
 
   const cancelar = useCallback(async (options?: CancelarContaPagarPayload) => {
     if (!id || !config.cancelar) return;
@@ -312,6 +356,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     origemCompraPlanejadaId,
     exibeRecorrencia,
     canEdit,
+    canAlterarFuturas,
     recurringStartDatePreview,
     automaticRecurringStartPreview,
     loading,
@@ -328,6 +373,10 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     setValue,
     onCancel,
     onSubmit,
+    pendingValues,
+    onConfirmApenas,
+    onConfirmAlterarFuturas,
+    clearPendingScope,
     grupoParcelamentoId,
     numeroParcela,
     cancelar,
