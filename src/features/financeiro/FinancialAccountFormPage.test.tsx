@@ -159,6 +159,30 @@ describe('FinancialAccountFormPage', () => {
     );
   }, 30000);
 
+  it('calls alterarFuturas when Esta e as futuras is chosen in the scope dialog', async () => {
+    const config = createConfig();
+    config.toFormValues.mockReturnValue({
+      ...validValues,
+      recorrenciaDataInicio: '2026-05-20'
+    });
+
+    renderWithRoute('/contas-pagar/123', '/contas-pagar/:id', config);
+
+    expect(await screen.findByDisplayValue('Despesa de teste')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lançamento' }));
+
+    expect(await screen.findByText(/Atualizar lançamento recorrente/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Esta e as futuras' }));
+
+    await waitFor(() =>
+      expect(config.alterarFuturas).toHaveBeenCalledWith('123', {
+        ...validValues,
+        recorrenciaDataInicio: '2026-05-20'
+      })
+    );
+  }, 30000);
+
   it('redirects to the saved detail when creating a card purchase', async () => {
     const config = createConfig();
     config.create.mockResolvedValue({
