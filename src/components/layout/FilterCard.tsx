@@ -6,15 +6,16 @@ import { Button } from '../ui/Button';
 interface FilterCardProps {
   children: ReactNode;
   className?: string;
+  onClear?: () => void;
 }
 
-export function FilterCard({ children, className = '' }: FilterCardProps) {
+export function FilterCard({ children, className = '', onClear }: FilterCardProps) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
       {/* Mobile: botão que abre bottom sheet */}
-      <div className="lg:hidden">
+      <div className="lg:hidden flex items-center gap-2">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -23,6 +24,16 @@ export function FilterCard({ children, className = '' }: FilterCardProps) {
           <span className="material-symbols-outlined" style={{ fontSize: '18px', lineHeight: 1 }}>tune</span>
           Filtros
         </button>
+        {onClear && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="flex items-center gap-1 h-9 px-3 rounded-xl text-xs font-semibold text-on-surface-variant hover:text-white transition-colors"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '16px', lineHeight: 1 }}>filter_list_off</span>
+            Limpar
+          </button>
+        )}
 
         {open && createPortal(
           <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="Filtros">
@@ -52,13 +63,24 @@ export function FilterCard({ children, className = '' }: FilterCardProps) {
               <div className="overflow-y-auto p-5 flex-1">
                 {children}
               </div>
-              {/* Botão fixo no rodapé */}
-              <div className="px-5 pb-6 pt-3 border-t border-white/5 shrink-0 bg-surface">
+              {/* Rodapé fixo */}
+              <div className="px-5 pb-6 pt-3 border-t border-white/5 shrink-0 bg-surface flex gap-3">
+                {onClear && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="lg"
+                    className="flex-1"
+                    onClick={() => { onClear(); setOpen(false); }}
+                  >
+                    Limpar filtros
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="primary"
                   size="lg"
-                  className="w-full"
+                  className={onClear ? 'flex-1' : 'w-full'}
                   onClick={() => setOpen(false)}
                 >
                   Aplicar filtros
@@ -73,6 +95,18 @@ export function FilterCard({ children, className = '' }: FilterCardProps) {
       {/* Desktop: card inline normal */}
       <div className={`hidden lg:block bg-surface-container-low rounded-3xl border border-white/5 p-5 ${className}`}>
         {children}
+        {onClear && (
+          <div className="flex justify-end mt-3 pt-3 border-t border-white/5">
+            <button
+              type="button"
+              onClick={onClear}
+              className="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant hover:text-white transition-colors"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '15px', lineHeight: 1 }}>filter_list_off</span>
+              Limpar filtros
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

@@ -329,7 +329,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
           ...base,
           origemCompraPlanejadaId: null,
           responsavelCompraId: responsavelId,
-          recebedorId: pessoaId
+          recebedorId: pessoaId,
+          dataCompra: null
         });
       } else {
         await financeiroApi.contasReceber.criar({

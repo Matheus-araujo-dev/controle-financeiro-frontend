@@ -11,6 +11,7 @@ const validValues = {
   cartaoId: '',
   contaBancariaId: '',
   dataLiquidacao: '',
+  dataCompra: '',
   valorOriginal: 100,
   valorDesconto: 10,
   valorJuros: 5,

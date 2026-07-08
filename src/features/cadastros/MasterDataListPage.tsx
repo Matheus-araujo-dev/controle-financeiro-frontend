@@ -1,4 +1,5 @@
-import { useDeferredValue, useState } from 'react';
+import { useDeferredValue } from 'react';
+import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useQuery } from '@tanstack/react-query';
 import {
   CheckCircleOutlined,
@@ -26,11 +27,6 @@ import {
   MultiSelectFilter
 } from '../../components/layout';
 import type { MasterDataModuleConfig, RowAction, SelectOption } from './module-config';
-
-type KeyedValue<T> = {
-  configKey: string;
-  value: T;
-};
 
 function asMultiValue(value: unknown) {
   if (Array.isArray(value)) {
@@ -154,12 +150,15 @@ export function MasterDataListPage({
   config: MasterDataModuleConfig<any, any, any, any>;
 }) {
   const navigate = useNavigate();
-  const [filtersState, setFiltersState] = useState<KeyedValue<Record<string, unknown>>>({
-    configKey: config.key,
-    value: config.defaultFilters
-  });
-  const filters = filtersState.configKey === config.key ? filtersState.value : config.defaultFilters;
+  const { filters, setFilters: setFiltersRaw, clearFilters, isModified } = usePersistedFilters(
+    `filters:${config.key}`,
+    config.defaultFilters as Record<string, unknown>
+  );
   const deferredFilters = useDeferredValue(filters);
+
+  function setFiltersState(next: Record<string, unknown>) {
+    setFiltersRaw(next);
+  }
 
   const { data, isFetching, error, refetch } = useQuery({
     queryKey: [config.key, 'list', deferredFilters],
@@ -198,7 +197,7 @@ export function MasterDataListPage({
       }
       filters={
         config.filters.length > 0 ? (
-        <FilterCard>
+        <FilterCard onClear={isModified ? clearFilters : undefined}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {config.filters.map((filter) => (
               <FilterField key={filter.name} label={filter.label}>
@@ -208,10 +207,7 @@ export function MasterDataListPage({
                       placeholder={filter.placeholder ?? filter.label}
                       value={String((filters as Record<string, unknown>)[filter.name] ?? '')}
                       onChange={(event) =>
-                        setFiltersState({
-                          configKey: config.key,
-                          value: { ...filters, page: 1, [filter.name]: event.target.value }
-                        })
+                        setFiltersState({ ...filters, page: 1, [filter.name]: event.target.value })
                       }
                       className={filterInputClass}
                     />
@@ -226,10 +222,7 @@ export function MasterDataListPage({
                     }))}
                     value={asMultiValue((filters as Record<string, unknown>)[filter.name])}
                     onChange={(next) =>
-                      setFiltersState({
-                        configKey: config.key,
-                        value: { ...filters, page: 1, [filter.name]: resolveFilterValue(filter, next) }
-                      })
+                      setFiltersState({ ...filters, page: 1, [filter.name]: resolveFilterValue(filter, next) })
                     }
                   />
                 ) : null}
@@ -254,19 +247,16 @@ export function MasterDataListPage({
           onTableChange={(pagination, _f, sorter) => {
             const s = Array.isArray(sorter) ? sorter[0] : sorter;
             setFiltersState({
-              configKey: config.key,
-              value: {
-                ...filters,
-                page: pagination.current ?? filters.page,
-                pageSize: pagination.pageSize ?? filters.pageSize,
-                sortBy: s?.field ?? undefined,
-                sortDirection: s?.order === 'ascend' ? 'Asc' : s?.order === 'descend' ? 'Desc' : undefined
-              }
+              ...filters,
+              page: pagination.current ?? filters.page,
+              pageSize: pagination.pageSize ?? filters.pageSize,
+              sortBy: s?.field ?? undefined,
+              sortDirection: s?.order === 'ascend' ? 'Asc' : s?.order === 'descend' ? 'Desc' : undefined
             });
           }}
           pagination={{
-            current: data?.page ?? filters.page,
-            pageSize: data?.pageSize ?? filters.pageSize,
+            current: data?.page ?? (filters.page as number),
+            pageSize: data?.pageSize ?? (filters.pageSize as number),
             total: data?.totalItems ?? 0,
             showSizeChanger: true
           }}

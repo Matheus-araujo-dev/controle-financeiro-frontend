@@ -125,8 +125,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
 
   useEffect(() => {
     if (!formaPagamentoBehavior.ehCartao) return;
-    if (!watchedValues.dataLiquidacao) {
-      setValue('dataLiquidacao', new Date().toISOString().split('T')[0], { shouldValidate: false, shouldDirty: false });
+    if (!watchedValues.dataCompra) {
+      setValue('dataCompra', new Date().toISOString().split('T')[0], { shouldValidate: false, shouldDirty: false });
     }
   }, [formaPagamentoBehavior.ehCartao, setValue]); // eslint-disable-line react-hooks/exhaustive-deps
 

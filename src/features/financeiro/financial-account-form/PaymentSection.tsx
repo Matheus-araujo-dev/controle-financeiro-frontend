@@ -119,11 +119,20 @@ export function PaymentSection({ form }: { form: FinancialAccountFormApi }) {
           </div>
         ) : null}
 
-        {formaPagamentoBehavior.ehCartao || formaPagamentoBehavior.baixarAutomaticamente ? (
+        {formaPagamentoBehavior.ehCartao ? (
           <div className="space-y-2">
-            <label className={fieldLabelClass}>
-              {formaPagamentoBehavior.ehCartao ? 'Data da Compra' : 'Data Liquidação'}
-            </label>
+            <label className={fieldLabelClass}>Data da Compra</label>
+            <Controller
+              control={control}
+              name="dataCompra"
+              render={({ field }) => <DateInput mode="date" value={field.value} onChange={field.onChange} disabled={!canEdit} />}
+            />
+          </div>
+        ) : null}
+
+        {formaPagamentoBehavior.baixarAutomaticamente && !formaPagamentoBehavior.ehCartao ? (
+          <div className="space-y-2">
+            <label className={fieldLabelClass}>Data Liquidação</label>
             <Controller
               control={control}
               name="dataLiquidacao"
