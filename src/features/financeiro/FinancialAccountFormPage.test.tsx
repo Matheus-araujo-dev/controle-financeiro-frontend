@@ -147,6 +147,10 @@ describe('FinancialAccountFormPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lançamento' }));
 
+    // Recurring entry: scope dialog appears — choose "only this occurrence"
+    expect(await screen.findByText(/Atualizar lançamento recorrente/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Apenas esta' }));
+
     await waitFor(() =>
       expect(config.update).toHaveBeenCalledWith('123', {
         ...validValues,
