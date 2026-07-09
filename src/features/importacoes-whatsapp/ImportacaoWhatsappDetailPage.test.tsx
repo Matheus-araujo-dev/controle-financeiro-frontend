@@ -194,7 +194,9 @@ describe('ImportacaoWhatsappDetailPage', () => {
           limiteEfetivo: 10000,
           limiteComprometido: 0,
           limiteDisponivel: 10000,
-          ativo: true
+          ativo: true,
+          icone: null,
+          cor: null
         }
       ],
       page: 1,

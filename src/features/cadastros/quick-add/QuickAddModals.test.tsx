@@ -95,6 +95,8 @@ describe('quick add modals', () => {
       limiteComprometido: 0,
       limiteDisponivel: null,
       ativo: true,
+      icone: null,
+      cor: null,
       createdAtUtc: '2026-06-21T00:00:00Z',
       updatedAtUtc: '2026-06-21T00:00:00Z'
     });
@@ -152,6 +154,8 @@ describe('quick add modals', () => {
       limiteCartoesComprometido: 0,
       limiteCartoesDisponivel: null,
       ativo: true,
+      icone: null,
+      cor: null,
       createdAtUtc: '2026-06-21T00:00:00Z',
       updatedAtUtc: '2026-06-21T00:00:00Z'
     });

@@ -120,6 +120,8 @@ export type ContaBancariaResumo = {
   limiteCartoesComprometido: number;
   limiteCartoesDisponivel: number | null;
   ativo: boolean;
+  icone: string | null;
+  cor: string | null;
 };
 
 export type ContaBancariaDetalhe = ContaBancariaResumo & {
@@ -137,6 +139,8 @@ export type ContaBancariaPayload = {
   dataSaldoInicial: string;
   limiteCartoesCompartilhado: number | null;
   ativo: boolean;
+  icone?: string | null;
+  cor?: string | null;
 };
 
 export type ContaBancariaFilters = ListQueryBase & {
@@ -169,6 +173,8 @@ export type CartaoResumo = {
   limiteComprometido: number;
   limiteDisponivel: number | null;
   ativo: boolean;
+  icone: string | null;
+  cor: string | null;
 };
 
 export type CartaoDetalhe = CartaoResumo & {
@@ -185,6 +191,8 @@ export type CartaoPayload = {
   contaBancariaPagamentoPadraoId: string | null;
   limiteCredito: number | null;
   ativo: boolean;
+  icone?: string | null;
+  cor?: string | null;
 };
 
 export type CartaoFilters = ListQueryBase & {
