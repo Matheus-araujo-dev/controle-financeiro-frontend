@@ -48,6 +48,7 @@ export const navigationStructure: NavGroup[] = [
     label: 'Planejamento',
     items: [
       { key: '/planos', label: 'Planos de poupança' },
+      { key: '/investimentos', label: 'Investimentos' },
       { key: '/compras-planejadas', label: 'Planejador de compras' }
     ]
   },
