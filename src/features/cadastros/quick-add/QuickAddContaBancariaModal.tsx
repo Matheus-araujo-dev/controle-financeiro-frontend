@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { formFieldClass, formLabelClass } from '../../../components/forms/FormPrimitives';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
+import { BankIconPicker } from '../BankIconPicker';
+import { ColorPicker } from '../ColorPicker';
 import { QuickAddModal } from './QuickAddModal';
 
 type Props = {
@@ -16,6 +18,8 @@ function todayIso() {
 export function QuickAddContaBancariaModal({ open, onClose, onSuccess }: Props) {
   const [nome, setNome] = useState('');
   const [banco, setBanco] = useState('');
+  const [icone, setIcone] = useState<string>('account_balance');
+  const [cor, setCor] = useState<string>('#2bf58e');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -40,7 +44,9 @@ export function QuickAddContaBancariaModal({ open, onClose, onSuccess }: Props) 
         saldoInicial: 0,
         dataSaldoInicial: todayIso(),
         limiteCartoesCompartilhado: null,
-        ativo: true
+        ativo: true,
+        icone,
+        cor
       });
       onSuccess(result.id, `${result.nome} - ${result.banco}`);
       handleClose();
@@ -54,6 +60,8 @@ export function QuickAddContaBancariaModal({ open, onClose, onSuccess }: Props) 
   function handleClose() {
     setNome('');
     setBanco('');
+    setIcone('account_balance');
+    setCor('#2bf58e');
     setError(undefined);
     onClose();
   }
@@ -78,6 +86,16 @@ export function QuickAddContaBancariaModal({ open, onClose, onSuccess }: Props) 
       <div className="space-y-2">
         <label className={formLabelClass}>Banco</label>
         <input value={banco} onChange={(event) => setBanco(event.target.value)} placeholder="Ex: Nubank, Itaú, Bradesco" className={formFieldClass} />
+      </div>
+
+      <div className="space-y-2">
+        <label className={formLabelClass}>Ícone</label>
+        <BankIconPicker value={icone} onChange={setIcone} />
+      </div>
+
+      <div className="space-y-2">
+        <label className={formLabelClass}>Cor</label>
+        <ColorPicker value={cor} onChange={setCor} />
       </div>
 
       <p className="text-[11px] text-on-surface-variant">
