@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller } from 'react-hook-form';
 
 import { CurrencyInput } from '../../../shared/CurrencyInput';
@@ -14,7 +14,7 @@ type TermsValueSectionProps = {
 };
 
 export function TermsValueSection({ form, moduloLabel = 'pagar' }: TermsValueSectionProps) {
-  const { id, control, errors, canEdit, watchedValues, setValue } = form;
+  const { id, control, errors, canEdit, watchedValues, setValue, formaPagamentoBehavior } = form;
   const [jaLiquidada, setJaLiquidada] = useState(false);
 
   function handleToggleLiquidada(valor: boolean) {
@@ -26,6 +26,18 @@ export function TermsValueSection({ form, moduloLabel = 'pagar' }: TermsValueSec
       setValue('dataLiquidacao', '');
     }
   }
+
+  useEffect(() => {
+    if (id) return;
+    const novoEstado = formaPagamentoBehavior.baixarAutomaticamente;
+    setJaLiquidada(novoEstado);
+    if (novoEstado) {
+      const dataAtual = watchedValues.dataVencimento;
+      if (dataAtual) setValue('dataLiquidacao', dataAtual);
+    } else {
+      setValue('dataLiquidacao', '');
+    }
+  }, [watchedValues.formaPagamentoId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleDataChange(novaData: string, fieldOnChange: (v: string) => void) {
     fieldOnChange(novaData);
