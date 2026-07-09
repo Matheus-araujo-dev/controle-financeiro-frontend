@@ -14,6 +14,7 @@ import { QuickAddPessoaModal } from '../../features/cadastros/quick-add/QuickAdd
 import { QuickAddFormaPagamentoModal } from '../../features/cadastros/quick-add/QuickAddFormaPagamentoModal';
 import { QuickAddContaGerencialModal } from '../../features/cadastros/quick-add/QuickAddContaGerencialModal';
 import { QuickAddCartaoModal } from '../../features/cadastros/quick-add/QuickAddCartaoModal';
+import { QuickAddContaBancariaModal } from '../../features/cadastros/quick-add/QuickAddContaBancariaModal';
 import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
 import type { ComboBoxOption } from '../forms/ComboBox';
 
@@ -21,6 +22,7 @@ type Option = { label: string; value: string };
 type ContaGerencialOption = ComboBoxOption;
 type QuickLaunchTipo = 'pagar' | 'receber' | 'transferencia';
 type QuickAddTarget = 'pessoaId' | 'responsavelId' | null;
+type QuickAddContaBancariaTarget = 'origem' | 'destino' | null;
 
 function hojeISO() {
   return new Date().toISOString().slice(0, 10);
@@ -75,6 +77,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [valor, setValor] = useState(0);
   const initialDate = useRef(hojeISO());
   const [dataVencimento, setDataVencimento] = useState(initialDate.current);
+  const [jaLiquidada, setJaLiquidada] = useState(false);
+  const [dataLiquidacao, setDataLiquidacao] = useState(hojeISO());
   const [pessoaId, setPessoaId] = useState('');
   const [responsavelId, setResponsavelId] = useState('');
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
@@ -113,15 +117,17 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
 
   // Itens adicionados via QuickAdd nesta sessão (aparecem no topo da lista)
   const [extraPessoas, setExtraPessoas] = useState<Option[]>([]);
-  const [extraFormas, setExtraFormas] = useState<Array<Option & { ehCartao: boolean }>>([]);
+  const [extraFormas, setExtraFormas] = useState<Array<Option & { ehCartao: boolean; baixarAutomaticamente: boolean }>>([]);
   const [extraCartoes, setExtraCartoes] = useState<Option[]>([]);
   const [extraContasDespesa, setExtraContasDespesa] = useState<ContaGerencialOption[]>([]);
   const [extraContasReceita, setExtraContasReceita] = useState<ContaGerencialOption[]>([]);
+  const [extraContasBancarias, setExtraContasBancarias] = useState<Option[]>([]);
 
   const [quickAddPessoaTarget, setQuickAddPessoaTarget] = useState<QuickAddTarget>(null);
   const [quickAddFormaOpen, setQuickAddFormaOpen] = useState(false);
   const [quickAddContaOpen, setQuickAddContaOpen] = useState(false);
   const [quickAddCartaoOpen, setQuickAddCartaoOpen] = useState(false);
+  const [quickAddContaBancariaTarget, setQuickAddContaBancariaTarget] = useState<QuickAddContaBancariaTarget>(null);
 
   // React Query: cache com staleTime alto — re-abrir o modal não refaz chamadas
   const [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult] = useQueries({
@@ -158,8 +164,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
   }, [extraPessoas, pessoasResult.data]);
 
-  const formas = useMemo<Array<Option & { ehCartao: boolean }>>(() => {
-    const fromServer = formasResult.data?.items.map((f) => ({ label: f.nome, value: f.id, ehCartao: f.ehCartao })) ?? [];
+  const formas = useMemo<Array<Option & { ehCartao: boolean; baixarAutomaticamente: boolean }>>(() => {
+    const fromServer = formasResult.data?.items.map((f) => ({ label: f.nome, value: f.id, ehCartao: f.ehCartao, baixarAutomaticamente: f.baixarAutomaticamente })) ?? [];
     return [...extraFormas, ...fromServer.filter((f) => !extraFormas.some((e) => e.value === f.value))];
   }, [extraFormas, formasResult.data]);
 
@@ -209,10 +215,10 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     }
   }, [pessoaId, tipo, contaGerencialId, pessoaContaGerencialMap]);
 
-  const contasBancarias = useMemo<Option[]>(
-    () => (contasBancariasResult.data?.items ?? []).map((c) => ({ label: c.nome, value: c.id })),
-    [contasBancariasResult.data]
-  );
+  const contasBancarias = useMemo<Option[]>(() => {
+    const fromServer = (contasBancariasResult.data?.items ?? []).map((c) => ({ label: c.nome, value: c.id }));
+    return [...extraContasBancarias, ...fromServer.filter((c) => !extraContasBancarias.some((e) => e.value === c.value))];
+  }, [extraContasBancarias, contasBancariasResult.data]);
 
   const someQueryErrored = [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult].some((r) => r.isError);
   useEffect(() => {
@@ -302,6 +308,16 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     }
   }, [exigeCartao]);
 
+  // Auto-toggle "já liquidada" quando a forma de pagamento tem baixa automática
+  useEffect(() => {
+    const forma = formas.find((f) => f.value === formaPagamentoId);
+    const deveToggle = Boolean(forma?.baixarAutomaticamente && !forma.ehCartao);
+    setJaLiquidada(deveToggle);
+    if (deveToggle) {
+      setDataLiquidacao(dataVencimento);
+    }
+  }, [formaPagamentoId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const podeSalvar = tipo === 'transferencia'
     ? valor > 0 && Boolean(contaOrigemId) && Boolean(contaDestinoId) && contaOrigemId !== contaDestinoId
     : descricao.trim().length > 0 &&
@@ -334,7 +350,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
           formaPagamentoId,
           cartaoId: exigeCartao ? cartaoId : null,
           contaBancariaId: null,
-          dataLiquidacao: null,
+          dataLiquidacao: jaLiquidada ? dataLiquidacao : null,
           valorOriginal: valor,
           valorDesconto: 0,
           valorJuros: 0,
@@ -377,6 +393,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     setCartaoId('');
     setContaOrigemId('');
     setContaDestinoId('');
+    setJaLiquidada(false);
   }
 
   function handlePessoaSuccess(target: QuickAddTarget, newId: string, label: string) {
@@ -387,7 +404,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   }
 
   function handleFormaSuccess(newId: string, label: string) {
-    setExtraFormas((current) => mergeOption(current, { value: newId, label, ehCartao: false }));
+    setExtraFormas((current) => mergeOption(current, { value: newId, label, ehCartao: false, baixarAutomaticamente: false }));
     setFormaPagamentoId(newId);
     setQuickAddFormaOpen(false);
   }
@@ -408,6 +425,17 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     setCartaoId(newId);
     setQuickAddCartaoOpen(false);
   }
+
+  function handleContaBancariaSuccess(target: QuickAddContaBancariaTarget, newId: string, label: string) {
+    setExtraContasBancarias((current) => mergeOption(current, { value: newId, label }));
+    if (target === 'origem') setContaOrigemId(newId);
+    if (target === 'destino') setContaDestinoId(newId);
+    setQuickAddContaBancariaTarget(null);
+  }
+
+  const toggleLabel = tipo === 'receber' ? 'Já recebida?' : 'Já liquidada?';
+  const toggleBadgeLabel = tipo === 'receber' ? 'Recebida' : 'Liquidada';
+  const dataLiquidacaoLabel = tipo === 'receber' ? 'Data de Recebimento' : 'Data de Liquidação';
 
   const modal = (
     <div className="fixed inset-0 z-[1000] bg-black/75 px-4 py-6 backdrop-blur-md">
@@ -459,6 +487,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                     onChange={setContaOrigemId}
                     options={contasBancarias.filter((c) => c.value !== contaDestinoId)}
                     placeholder="Selecionar conta..."
+                    onAddNew={() => setQuickAddContaBancariaTarget('origem')}
+                    addNewLabel="Nova conta bancária"
                   />
                 </div>
 
@@ -470,6 +500,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                     onChange={setContaDestinoId}
                     options={contasBancarias.filter((c) => c.value !== contaOrigemId)}
                     placeholder="Selecionar conta..."
+                    onAddNew={() => setQuickAddContaBancariaTarget('destino')}
+                    addNewLabel="Nova conta bancária"
                   />
                 </div>
 
@@ -535,7 +567,10 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   <DateInput
                     ariaLabel={exigeCartao ? 'Data da compra' : 'Vencimento'}
                     value={dataVencimento}
-                    onChange={setDataVencimento}
+                    onChange={(v) => {
+                      setDataVencimento(v);
+                      if (jaLiquidada) setDataLiquidacao(v);
+                    }}
                   />
                 </div>
 
@@ -550,6 +585,49 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                       placeholder="Selecionar cartão..."
                       onAddNew={() => setQuickAddCartaoOpen(true)}
                       addNewLabel="Novo cartão"
+                    />
+                  </div>
+                ) : null}
+
+                {!exigeCartao ? (
+                  <div className="flex items-center gap-3 md:col-span-2">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={jaLiquidada}
+                      onClick={() => {
+                        const next = !jaLiquidada;
+                        setJaLiquidada(next);
+                        if (next) setDataLiquidacao(dataVencimento);
+                      }}
+                      className={[
+                        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
+                        jaLiquidada ? 'bg-primary' : 'bg-white/15',
+                      ].join(' ')}
+                    >
+                      <span
+                        className={[
+                          'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
+                          jaLiquidada ? 'translate-x-5' : 'translate-x-0',
+                        ].join(' ')}
+                      />
+                    </button>
+                    <span className="text-sm text-on-surface-variant">{toggleLabel}</span>
+                    {jaLiquidada ? (
+                      <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
+                        {toggleBadgeLabel}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {jaLiquidada && !exigeCartao ? (
+                  <div className="space-y-2">
+                    <label className={formLabelClass}>{dataLiquidacaoLabel}</label>
+                    <DateInput
+                      ariaLabel={dataLiquidacaoLabel}
+                      value={dataLiquidacao}
+                      onChange={setDataLiquidacao}
                     />
                   </div>
                 ) : null}
@@ -672,6 +750,11 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
         open={quickAddCartaoOpen}
         onClose={() => setQuickAddCartaoOpen(false)}
         onSuccess={handleCartaoSuccess}
+      />
+      <QuickAddContaBancariaModal
+        open={quickAddContaBancariaTarget !== null}
+        onClose={() => setQuickAddContaBancariaTarget(null)}
+        onSuccess={(newId, label) => handleContaBancariaSuccess(quickAddContaBancariaTarget, newId, label)}
       />
     </>,
     document.body
