@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
 import { formCompactFieldClass } from '../../../components/forms/FormPrimitives';
 import { DateInput } from '../../../components/forms/DateInput';
 import { PageState } from '../../../components/states/PageState';
@@ -138,11 +138,99 @@ function OrcamentoRow({ item, saving, onSalvarMeta }: OrcamentoRowProps) {
   );
 }
 
+function getLastNMonths(n: number, base: string): string[] {
+  const [year, month] = base.split('-').map(Number);
+  const result: string[] = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(year, month - 1 - i, 1);
+    result.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+  return result;
+}
+
+function MultiPeriodoView({ competencias }: { competencias: string[] }) {
+  const queries = useQueries({
+    queries: competencias.map((comp) => ({
+      queryKey: ['orcamento', 'competencia', comp],
+      queryFn: () => orcamentosApi.obterPorCompetencia(comp),
+      staleTime: 30_000
+    }))
+  });
+
+  const datasets = useMemo(
+    () => queries.map((q) => q.data).filter((d): d is OrcamentoCompetencia => !!d),
+    [queries]
+  );
+
+  const allCategories = useMemo(() => {
+    const map = new Map<string, string>();
+    datasets.forEach((d) =>
+      d.itens.forEach((item) => {
+        if (!map.has(item.contaGerencialId)) map.set(item.contaGerencialId, item.contaGerencialDescricao);
+      })
+    );
+    return [...map.entries()].map(([id, desc]) => ({ id, desc }));
+  }, [datasets]);
+
+  const loading = queries.some((q) => q.isPending);
+
+  if (loading) return <PageState state="loading" title="Carregando comparativo" />;
+  if (allCategories.length === 0) return <PageState state="empty" title="Sem dados no período" subtitle="Ajuste o mês de referência." />;
+
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-white/5">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-white/10 bg-surface-container">
+            <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Categoria</th>
+            {competencias.map((c) => (
+              <th key={c} className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap">
+                {new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' }).format(
+                  new Date(Number(c.split('-')[0]), Number(c.split('-')[1]) - 1, 1)
+                )}
+              </th>
+            ))}
+            <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Média</th>
+            <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Máx</th>
+          </tr>
+        </thead>
+        <tbody>
+          {allCategories.map(({ id, desc }) => {
+            const values = datasets.map((d) => d.itens.find((i) => i.contaGerencialId === id)?.valorRealizado ?? 0);
+            const avg = values.reduce((s, v) => s + v, 0) / (values.length || 1);
+            const max = Math.max(...values);
+            return (
+              <tr key={id} className="border-b border-white/5 hover:bg-primary/5">
+                <td className="px-4 py-3 font-semibold text-on-surface max-w-[180px] truncate">{desc}</td>
+                {competencias.map((c, idx) => {
+                  const val = datasets[idx]?.itens.find((i) => i.contaGerencialId === id)?.valorRealizado ?? 0;
+                  const meta = datasets[idx]?.itens.find((i) => i.contaGerencialId === id)?.valorMeta ?? null;
+                  const pct = meta ? (val / meta) * 100 : null;
+                  return (
+                    <td key={c} className="px-4 py-3 text-right">
+                      <span className={pct !== null && pct > 100 ? 'text-error font-bold' : 'text-on-surface'}>
+                        {formatCurrencyBRL(val)}
+                      </span>
+                    </td>
+                  );
+                })}
+                <td className="px-4 py-3 text-right font-bold text-primary">{formatCurrencyBRL(avg)}</td>
+                <td className="px-4 py-3 text-right font-bold text-on-surface-variant">{formatCurrencyBRL(max)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function OrcamentoPage() {
   const queryClient = useQueryClient();
   const [competencia, setCompetencia] = useState<string>(getCurrentCompetencia());
   const [savingContaId, setSavingContaId] = useState<string>();
   const [actionError, setActionError] = useState<string>();
+  const [multiPeriodo, setMultiPeriodo] = useState(false);
 
   const { data: orcamento, isLoading, error } = useQuery({
     queryKey: ['orcamento', 'competencia', competencia],
@@ -183,20 +271,38 @@ export function OrcamentoPage() {
   const totalPercentual = orcamento?.percentualConsumido ?? 0;
   const saldoDisponivel = (orcamento?.totalMeta ?? 0) - (orcamento?.totalRealizado ?? 0);
 
+  const multiCompetencias = getLastNMonths(6, competencia);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <p className="text-sm text-on-surface-variant">
-          Metas por categoria de despesa em {formatCompetencia(competencia)}.
+          {multiPeriodo
+            ? `Comparativo dos últimos 6 meses até ${formatCompetencia(competencia)}.`
+            : `Metas por categoria de despesa em ${formatCompetencia(competencia)}.`}
         </p>
-        <DateInput
-          compact
-          mode="month"
-          ariaLabel="Competência do orçamento"
-          value={competencia}
-          onChange={(value) => setCompetencia(value || getCurrentCompetencia())}
-          className="max-w-[220px]"
-        />
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMultiPeriodo((v) => !v)}
+            className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+              multiPeriodo
+                ? 'border-primary/30 bg-primary/15 text-primary'
+                : 'border-white/10 bg-surface-container text-on-surface-variant hover:text-primary hover:border-primary/20'
+            }`}
+          >
+            <span className="material-symbols-outlined text-sm">calendar_view_month</span>
+            {multiPeriodo ? 'Comparativo 6m' : 'Ver comparativo'}
+          </button>
+          <DateInput
+            compact
+            mode="month"
+            ariaLabel="Competência do orçamento"
+            value={competencia}
+            onChange={(value) => setCompetencia(value || getCurrentCompetencia())}
+            className="max-w-[220px]"
+          />
+        </div>
       </div>
 
       {errorMessage && (
@@ -242,16 +348,20 @@ export function OrcamentoPage() {
         />
       )}
 
-      <div className="space-y-3">
-        {[...(orcamento?.itens ?? [])].sort((a, b) => (a.contaGerencialCodigo ?? '').localeCompare(b.contaGerencialCodigo ?? '', 'pt-BR', { numeric: true })).map((item) => (
-          <OrcamentoRow
-            key={item.contaGerencialId}
-            item={item}
-            saving={savingContaId === item.contaGerencialId}
-            onSalvarMeta={handleSalvarMeta}
-          />
-        ))}
-      </div>
+      {multiPeriodo ? (
+        <MultiPeriodoView competencias={multiCompetencias} />
+      ) : (
+        <div className="space-y-3">
+          {[...(orcamento?.itens ?? [])].sort((a, b) => (a.contaGerencialCodigo ?? '').localeCompare(b.contaGerencialCodigo ?? '', 'pt-BR', { numeric: true })).map((item) => (
+            <OrcamentoRow
+              key={item.contaGerencialId}
+              item={item}
+              saving={savingContaId === item.contaGerencialId}
+              onSalvarMeta={handleSalvarMeta}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
