@@ -19,7 +19,7 @@ import type { ComboBoxOption } from '../forms/ComboBox';
 
 type Option = { label: string; value: string };
 type ContaGerencialOption = ComboBoxOption;
-type QuickLaunchTipo = 'pagar' | 'receber';
+type QuickLaunchTipo = 'pagar' | 'receber' | 'transferencia';
 type QuickAddTarget = 'pessoaId' | 'responsavelId' | null;
 
 function hojeISO() {
@@ -80,6 +80,9 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
   const [cartaoId, setCartaoId] = useState('');
   const [contaGerencialId, setContaGerencialId] = useState('');
+  // transferência
+  const [contaOrigemId, setContaOrigemId] = useState('');
+  const [contaDestinoId, setContaDestinoId] = useState('');
   const [saving, setSaving] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const lastAutoFilledContaRef = useRef<string | null>(null);
@@ -91,6 +94,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     responsavelId !== '' ||
     formaPagamentoId !== '' ||
     contaGerencialId !== '' ||
+    contaOrigemId !== '' ||
+    contaDestinoId !== '' ||
     dataVencimento !== initialDate.current;
 
   const isDirtyRef = useRef(isDirty);
@@ -119,13 +124,14 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [quickAddCartaoOpen, setQuickAddCartaoOpen] = useState(false);
 
   // React Query: cache com staleTime alto — re-abrir o modal não refaz chamadas
-  const [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult] = useQueries({
+  const [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult] = useQueries({
     queries: [
       { queryKey: ['ql-pessoas'], queryFn: () => cadastrosApi.pessoas.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-formas'], queryFn: () => cadastrosApi.formasPagamento.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-cartoes'], queryFn: () => cadastrosApi.cartoes.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-contas-despesa'], queryFn: () => cadastrosApi.contasGerenciais.listar({ page: 1, pageSize: 500, search: '', tipo: 'Despesa', ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-contas-receita'], queryFn: () => cadastrosApi.contasGerenciais.listar({ page: 1, pageSize: 500, search: '', tipo: 'Receita', ativo: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-contas-bancarias'], queryFn: () => cadastrosApi.contasBancarias.listar({ page: 1, pageSize: 200, search: '', ativo: true }), staleTime: STALE_5MIN },
     ],
   });
 
@@ -203,7 +209,12 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     }
   }, [pessoaId, tipo, contaGerencialId, pessoaContaGerencialMap]);
 
-  const someQueryErrored = [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult].some((r) => r.isError);
+  const contasBancarias = useMemo<Option[]>(
+    () => (contasBancariasResult.data?.items ?? []).map((c) => ({ label: c.nome, value: c.id })),
+    [contasBancariasResult.data]
+  );
+
+  const someQueryErrored = [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult].some((r) => r.isError);
   useEffect(() => {
     if (someQueryErrored) {
       notify('error', 'Falha ao carregar opções do lançamento rápido');
@@ -291,56 +302,67 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     }
   }, [exigeCartao]);
 
-  const podeSalvar =
-    descricao.trim().length > 0 &&
-    valor > 0 &&
-    Boolean(pessoaId) &&
-    Boolean(responsavelId) &&
-    Boolean(formaPagamentoId) &&
-    Boolean(contaGerencialId) &&
-    (!exigeCartao || Boolean(cartaoId));
+  const podeSalvar = tipo === 'transferencia'
+    ? valor > 0 && Boolean(contaOrigemId) && Boolean(contaDestinoId) && contaOrigemId !== contaDestinoId
+    : descricao.trim().length > 0 &&
+      valor > 0 &&
+      Boolean(pessoaId) &&
+      Boolean(responsavelId) &&
+      Boolean(formaPagamentoId) &&
+      Boolean(contaGerencialId) &&
+      (!exigeCartao || Boolean(cartaoId));
 
   async function handleSubmit() {
     if (!podeSalvar) return;
 
     setSaving(true);
     try {
-      const base = {
-        numeroDocumento: null,
-        dataEmissao: exigeCartao ? dataVencimento : hojeISO(),
-        dataVencimento,
-        formaPagamentoId,
-        cartaoId: exigeCartao ? cartaoId : null,
-        contaBancariaId: null,
-        dataLiquidacao: null,
-        valorOriginal: valor,
-        valorDesconto: 0,
-        valorJuros: 0,
-        valorMulta: 0,
-        quantidadeParcelas: 1,
-        descricao: descricao.trim(),
-        observacao: null,
-        rateios: [{ contaGerencialId, valor }],
-        recorrencia: null
-      };
-
-      if (tipo === 'pagar') {
-        await financeiroApi.contasPagar.criar({
-          ...base,
-          origemCompraPlanejadaId: null,
-          responsavelCompraId: responsavelId,
-          recebedorId: pessoaId,
-          dataCompra: null
+      if (tipo === 'transferencia') {
+        await financeiroApi.transferencias.criar({
+          contaBancariaOrigemId: contaOrigemId,
+          contaBancariaDestinoId: contaDestinoId,
+          valor,
+          dataTransferencia: dataVencimento,
+          descricao: descricao.trim() || undefined
         });
+        notify('success', 'Transferência registrada');
       } else {
-        await financeiroApi.contasReceber.criar({
-          ...base,
-          responsavelId,
-          pagadorId: pessoaId
-        });
-      }
+        const base = {
+          numeroDocumento: null,
+          dataEmissao: exigeCartao ? dataVencimento : hojeISO(),
+          dataVencimento,
+          formaPagamentoId,
+          cartaoId: exigeCartao ? cartaoId : null,
+          contaBancariaId: null,
+          dataLiquidacao: null,
+          valorOriginal: valor,
+          valorDesconto: 0,
+          valorJuros: 0,
+          valorMulta: 0,
+          quantidadeParcelas: 1,
+          descricao: descricao.trim(),
+          observacao: null,
+          rateios: [{ contaGerencialId, valor }],
+          recorrencia: null
+        };
 
-      notify('success', 'Lançamento criado', descricao.trim());
+        if (tipo === 'pagar') {
+          await financeiroApi.contasPagar.criar({
+            ...base,
+            origemCompraPlanejadaId: null,
+            responsavelCompraId: responsavelId,
+            recebedorId: pessoaId,
+            dataCompra: null
+          });
+        } else {
+          await financeiroApi.contasReceber.criar({
+            ...base,
+            responsavelId,
+            pagadorId: pessoaId
+          });
+        }
+        notify('success', 'Lançamento criado', descricao.trim());
+      }
       onClose();
     } catch (error) {
       notify('error', 'Falha ao criar lançamento', getApiErrorMessage(error));
@@ -353,6 +375,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     setTipo(nextTipo);
     setContaGerencialId('');
     setCartaoId('');
+    setContaOrigemId('');
+    setContaDestinoId('');
   }
 
   function handlePessoaSuccess(target: QuickAddTarget, newId: string, label: string) {
@@ -406,10 +430,11 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-surface-container p-1">
+            <div className="mb-6 grid grid-cols-3 gap-2 rounded-xl bg-surface-container p-1">
               {[
                 { label: 'Conta a pagar', value: 'pagar' as const },
-                { label: 'Conta a receber', value: 'receber' as const }
+                { label: 'Conta a receber', value: 'receber' as const },
+                { label: 'Transferência', value: 'transferencia' as const }
               ].map((option) => (
                 <button
                   key={option.value}
@@ -424,108 +449,157 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="space-y-2 md:col-span-2">
-                <label className={formLabelClass}>Descrição</label>
-                <input
-                  className={formFieldClass}
-                  value={descricao}
-                  onChange={(event) => setDescricao(event.target.value)}
-                  placeholder={tipo === 'pagar' ? 'Ex: Mercado da semana' : 'Ex: Salário'}
-                  autoFocus
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className={formLabelClass}>Valor</label>
-                <CurrencyInput value={valor} onChange={(nextValue) => setValor(nextValue ?? 0)} className={formFieldClass} />
-              </div>
-
-              <div className="space-y-2">
-                <label className={formLabelClass}>Forma de pagamento</label>
-                <ComboBox
-                  aria-label="Forma de pagamento"
-                  value={formaPagamentoId}
-                  onChange={(value) => {
-                    setFormaPagamentoId(value);
-                    if (!formas.find((forma) => forma.value === value)?.ehCartao) {
-                      setCartaoId('');
-                    }
-                  }}
-                  options={formas}
-                  placeholder="Selecionar..."
-                  onAddNew={() => setQuickAddFormaOpen(true)}
-                  addNewLabel="Nova forma de pagamento"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className={formLabelClass}>{exigeCartao ? 'Data da compra' : 'Vencimento'}</label>
-                <DateInput
-                  ariaLabel={exigeCartao ? 'Data da compra' : 'Vencimento'}
-                  value={dataVencimento}
-                  onChange={setDataVencimento}
-                />
-              </div>
-
-              {exigeCartao ? (
+            {tipo === 'transferencia' ? (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className={formLabelClass}>Cartão de crédito</label>
+                  <label className={formLabelClass}>Conta origem</label>
                   <ComboBox
-                    aria-label="Cartão de crédito"
-                    value={cartaoId}
-                    onChange={setCartaoId}
-                    options={cartoes}
-                    placeholder="Selecionar cartão..."
-                    onAddNew={() => setQuickAddCartaoOpen(true)}
-                    addNewLabel="Novo cartão"
+                    aria-label="Conta origem"
+                    value={contaOrigemId}
+                    onChange={setContaOrigemId}
+                    options={contasBancarias.filter((c) => c.value !== contaDestinoId)}
+                    placeholder="Selecionar conta..."
                   />
                 </div>
-              ) : null}
 
-              <div className="space-y-2">
-                <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
-                <ComboBox
-                  aria-label={tipo === 'pagar' ? 'Recebedor' : 'Pagador'}
-                  value={pessoaId}
-                  onChange={setPessoaId}
-                  options={pessoas}
-                  placeholder="Selecionar pessoa..."
-                  onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
-                  addNewLabel="Nova pessoa"
-                />
-              </div>
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Conta destino</label>
+                  <ComboBox
+                    aria-label="Conta destino"
+                    value={contaDestinoId}
+                    onChange={setContaDestinoId}
+                    options={contasBancarias.filter((c) => c.value !== contaOrigemId)}
+                    placeholder="Selecionar conta..."
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <label className={formLabelClass}>Responsável</label>
-                <ComboBox
-                  aria-label="Responsável"
-                  value={responsavelId}
-                  onChange={setResponsavelId}
-                  options={responsaveis}
-                  placeholder="Selecionar responsável..."
-                  onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
-                  addNewLabel="Nova pessoa"
-                />
-              </div>
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Valor</label>
+                  <CurrencyInput value={valor} onChange={(nextValue) => setValor(nextValue ?? 0)} className={formFieldClass} />
+                </div>
 
-              <div className="space-y-2">
-                <label className={formLabelClass}>Conta gerencial</label>
-                <ComboBox
-                  aria-label="Conta gerencial"
-                  value={contaGerencialId}
-                  onChange={setContaGerencialId}
-                  options={contasGerenciais}
-                  placeholder="Selecionar..."
-                  onAddNew={() => setQuickAddContaOpen(true)}
-                  addNewLabel="Nova conta gerencial"
-                />
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Data</label>
+                  <DateInput ariaLabel="Data da transferência" value={dataVencimento} onChange={setDataVencimento} />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <label className={formLabelClass}>Descrição (opcional)</label>
+                  <input
+                    className={formFieldClass}
+                    value={descricao}
+                    onChange={(event) => setDescricao(event.target.value)}
+                    placeholder="Ex: Reserva de emergência"
+                    autoFocus
+                  />
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="space-y-2 md:col-span-2">
+                  <label className={formLabelClass}>Descrição</label>
+                  <input
+                    className={formFieldClass}
+                    value={descricao}
+                    onChange={(event) => setDescricao(event.target.value)}
+                    placeholder={tipo === 'pagar' ? 'Ex: Mercado da semana' : 'Ex: Salário'}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Valor</label>
+                  <CurrencyInput value={valor} onChange={(nextValue) => setValor(nextValue ?? 0)} className={formFieldClass} />
+                </div>
+
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Forma de pagamento</label>
+                  <ComboBox
+                    aria-label="Forma de pagamento"
+                    value={formaPagamentoId}
+                    onChange={(value) => {
+                      setFormaPagamentoId(value);
+                      if (!formas.find((forma) => forma.value === value)?.ehCartao) {
+                        setCartaoId('');
+                      }
+                    }}
+                    options={formas}
+                    placeholder="Selecionar..."
+                    onAddNew={() => setQuickAddFormaOpen(true)}
+                    addNewLabel="Nova forma de pagamento"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className={formLabelClass}>{exigeCartao ? 'Data da compra' : 'Vencimento'}</label>
+                  <DateInput
+                    ariaLabel={exigeCartao ? 'Data da compra' : 'Vencimento'}
+                    value={dataVencimento}
+                    onChange={setDataVencimento}
+                  />
+                </div>
+
+                {exigeCartao ? (
+                  <div className="space-y-2">
+                    <label className={formLabelClass}>Cartão de crédito</label>
+                    <ComboBox
+                      aria-label="Cartão de crédito"
+                      value={cartaoId}
+                      onChange={setCartaoId}
+                      options={cartoes}
+                      placeholder="Selecionar cartão..."
+                      onAddNew={() => setQuickAddCartaoOpen(true)}
+                      addNewLabel="Novo cartão"
+                    />
+                  </div>
+                ) : null}
+
+                <div className="space-y-2">
+                  <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
+                  <ComboBox
+                    aria-label={tipo === 'pagar' ? 'Recebedor' : 'Pagador'}
+                    value={pessoaId}
+                    onChange={setPessoaId}
+                    options={pessoas}
+                    placeholder="Selecionar pessoa..."
+                    onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
+                    addNewLabel="Nova pessoa"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Responsável</label>
+                  <ComboBox
+                    aria-label="Responsável"
+                    value={responsavelId}
+                    onChange={setResponsavelId}
+                    options={responsaveis}
+                    placeholder="Selecionar responsável..."
+                    onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
+                    addNewLabel="Nova pessoa"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Conta gerencial</label>
+                  <ComboBox
+                    aria-label="Conta gerencial"
+                    value={contaGerencialId}
+                    onChange={setContaGerencialId}
+                    options={contasGerenciais}
+                    placeholder="Selecionar..."
+                    onAddNew={() => setQuickAddContaOpen(true)}
+                    addNewLabel="Nova conta gerencial"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="mt-8 border-t border-white/5 pt-5">
               <p className="text-xs text-on-surface-variant">
-                Precisa de parcelas, rateio detalhado ou recorrência? Use o formulário completo em Contas a pagar/receber.
+                {tipo === 'transferencia'
+                  ? 'A transferência cria automaticamente as movimentações de saída e entrada nas contas.'
+                  : 'Precisa de parcelas, rateio detalhado ou recorrência? Use o formulário completo em Contas a pagar/receber.'}
               </p>
             </div>
 
@@ -534,7 +608,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                 Cancelar
               </Button>
               <Button type="button" size="lg" disabled={!podeSalvar || saving} loading={saving} onClick={() => void handleSubmit()}>
-                Lançar
+                {tipo === 'transferencia' ? 'Transferir' : 'Lançar'}
               </Button>
             </div>
           </div>
