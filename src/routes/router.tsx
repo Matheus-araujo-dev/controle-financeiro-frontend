@@ -17,6 +17,7 @@ const AuthCallbackPage = lazy(() => import('../pages/AuthCallbackPage').then(m =
 const AgenteChatPage = lazy(() => import('../features/agente/AgenteChatPage').then(m => ({ default: m.AgenteChatPage })));
 const WhatsappVinculoPage = lazy(() => import('../features/agente/WhatsappVinculoPage').then(m => ({ default: m.WhatsappVinculoPage })));
 const PlanosPage = lazy(() => import('../features/planos/PlanosPage').then(m => ({ default: m.PlanosPage })));
+const InvestimentosPage = lazy(() => import('../features/investimentos/InvestimentosPage').then(m => ({ default: m.InvestimentosPage })));
 
 export const appRoutes: RouteObject[] = [
   {
@@ -74,6 +75,11 @@ export const appRoutes: RouteObject[] = [
         path: 'planos',
         element: <PlanosPage />,
         handle: { title: 'Planos de poupança' }
+      },
+      {
+        path: 'investimentos',
+        element: <InvestimentosPage />,
+        handle: { title: 'Investimentos' }
       },
       {
         path: 'agente/chat',
