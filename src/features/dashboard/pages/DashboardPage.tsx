@@ -9,6 +9,7 @@ import { DashboardCashPulse } from '../components/DashboardCashPulse';
 import { DashboardOperationalAgenda } from '../components/DashboardOperationalAgenda';
 import { DashboardTransactionList } from '../components/DashboardTransactionList';
 import { DashboardAiInsights } from '../components/DashboardAiInsights';
+import { DashboardSaldoPorConta } from '../components/DashboardSaldoPorConta';
 import { DateInput } from '../../../components/forms/DateInput';
 import { PageState } from '../../../components/states/PageState';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
@@ -157,7 +158,8 @@ export function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <DashboardFaturasCartao />
-          <div className="lg:col-span-2">
+          <DashboardSaldoPorConta contas={contasBancariasData?.items ?? []} />
+          <div className="lg:col-span-1">
             <DashboardTransactionList
               movimentacoes={summary?.movimentacoesRecentes ?? []}
               onViewAll={() => {

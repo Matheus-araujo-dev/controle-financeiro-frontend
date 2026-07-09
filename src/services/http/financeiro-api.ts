@@ -27,7 +27,10 @@ import type {
   RecorrenciaFilters,
   RecorrenciaListItem,
   RecorrenciaListResponse,
-  PagedFinanceiro
+  PagedFinanceiro,
+  TransferenciaResumo,
+  TransferenciaPayload,
+  TransferenciaFilters
 } from '../../types/financeiro';
 
 // ── Tipos de importação de fatura ────────────────────────────────────────────
@@ -99,6 +102,11 @@ async function put<T>(url: string, payload: unknown) {
   return response.data;
 }
 
+async function del<T>(url: string) {
+  const response = await apiClient.delete<T>(url);
+  return response.data;
+}
+
 export const financeiroApi = {
   contasPagar: {
     listar: (params: ContaPagarFilters) =>
@@ -153,6 +161,13 @@ export const financeiroApi = {
       confirmar: (payload: ConfirmarImportacaoPayload): Promise<ConfirmarImportacaoResponse> =>
         post<ConfirmarImportacaoResponse>('/faturas/importar/confirmar', payload),
     },
+  },
+  transferencias: {
+    listar: (params: TransferenciaFilters) =>
+      getPaged<TransferenciaResumo>('/transferencias', params as Record<string, unknown>),
+    obterPorId: (id: string) => getById<TransferenciaResumo>(`/transferencias/${id}`),
+    criar: (payload: TransferenciaPayload) => post<TransferenciaResumo>('/transferencias', payload),
+    cancelar: (id: string) => del<TransferenciaResumo>(`/transferencias/${id}`)
   },
   recorrencias: {
     listar: (params: RecorrenciaFilters) =>
