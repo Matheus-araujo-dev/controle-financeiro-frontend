@@ -35,7 +35,9 @@ export type ReportKey =
   | 'compras'
   | 'comparativo'
   | 'dre'
-  | 'alertas';
+  | 'alertas'
+  | 'analises'
+  | 'balanco-mensal';
 
 export type ReportState = {
   resumo?: DashboardResumo;
@@ -65,7 +67,9 @@ export const reportTabs: Array<{ key: ReportKey; label: string; icon: string }> 
   { key: 'compras', label: 'Compras planejadas', icon: 'shopping_cart' },
   { key: 'comparativo', label: 'Comparativo mensal', icon: 'bar_chart' },
   { key: 'dre', label: 'DRE doméstica', icon: 'receipt_long' },
-  { key: 'alertas', label: 'Alertas inteligentes', icon: 'notifications_active' }
+  { key: 'alertas', label: 'Alertas inteligentes', icon: 'notifications_active' },
+  { key: 'analises', label: 'Análises', icon: 'analytics' },
+  { key: 'balanco-mensal', label: 'Balanço mensal', icon: 'ssid_chart' }
 ];
 
 export const comparativoMesesOptions = [

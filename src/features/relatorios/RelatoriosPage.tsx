@@ -786,6 +786,149 @@ export function RelatoriosPage() {
           )}
         </div>
       ) : null}
+
+      {activeReport === 'analises' ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <MetricCard label="Total receitas" value={formatCurrencyBRL(data.contasGerenciais?.totalReceitas ?? 0)} tone="success" />
+            <MetricCard label="Total despesas" value={formatCurrencyBRL(data.contasGerenciais?.totalDespesas ?? 0)} tone="danger" />
+            <MetricCard
+              label="Resultado"
+              value={formatCurrencyBRL(data.contasGerenciais?.saldo ?? 0)}
+              tone={(data.contasGerenciais?.saldo ?? 0) >= 0 ? 'success' : 'danger'}
+            />
+          </div>
+
+          <div className="rounded-3xl border border-white/5 bg-surface-container-low p-6 space-y-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Despesas por categoria</p>
+            {contasGerenciais.filter((c) => c.tipo === 'Despesa').length === 0 ? (
+              <PageState state="empty" title="Sem despesas no período" subtitle="Nenhuma despesa foi lançada neste mês." />
+            ) : (
+              <div className="space-y-3">
+                {contasGerenciais
+                  .filter((c) => c.tipo === 'Despesa')
+                  .sort((a, b) => b.valorTotal - a.valorTotal)
+                  .map((item) => {
+                    const pct = data.contasGerenciais?.totalDespesas
+                      ? (item.valorTotal / data.contasGerenciais.totalDespesas) * 100
+                      : 0;
+                    return (
+                      <div key={item.contaGerencialId}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-semibold text-on-surface">{item.descricao}</span>
+                          <div className="text-right">
+                            <span className="text-sm font-bold text-error">{formatCurrencyBRL(item.valorTotal)}</span>
+                            <span className="ml-2 text-xs text-on-surface-variant">{pct.toFixed(1)}%</span>
+                          </div>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-white/5">
+                          <div className="h-full bg-error/70" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-3xl border border-white/5 bg-surface-container-low p-6 space-y-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Receitas vs Despesas — gráfico</p>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart
+                data={[
+                  {
+                    name: 'Receitas',
+                    valor: data.contasGerenciais?.totalReceitas ?? 0,
+                    fill: '#2bf58e'
+                  },
+                  {
+                    name: 'Despesas',
+                    valor: data.contasGerenciais?.totalDespesas ?? 0,
+                    fill: '#ef4444'
+                  }
+                ]}
+                margin={{ top: 8, right: 0, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="name" tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={(v) => formatCurrencyBRL(v)} tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 11 }} axisLine={false} tickLine={false} width={90} />
+                <Tooltip formatter={(v) => formatCurrencyBRL(Number(v))} contentStyle={{ background: '#1a1f2c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
+                <Bar dataKey="valor" radius={[6, 6, 0, 0]} fill="#2bf58e" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      ) : null}
+
+      {activeReport === 'balanco-mensal' ? (
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <FilterCombo
+              label="Período"
+              options={comparativoMesesOptions}
+              value={[comparativoMeses]}
+              onChange={(v) => setComparativoMeses(v[0] ?? '6')}
+            />
+          </div>
+
+          {(data.comparativo?.itens.length ?? 0) === 0 ? (
+            <PageState state="empty" title="Sem dados comparativos" subtitle="Registre lançamentos para visualizar o balanço mensal." />
+          ) : (
+            <>
+              <div className="rounded-3xl border border-white/5 bg-surface-container-low p-6 space-y-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Receitas e Despesas mensais</p>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart
+                    data={(data.comparativo?.itens ?? []).map((item) => ({
+                      mes: item.competenciaLabel,
+                      Receitas: item.receitas,
+                      Despesas: item.despesas,
+                      Saldo: item.saldo
+                    }))}
+                    margin={{ top: 8, right: 0, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="mes" tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={(v) => formatCurrencyBRL(v)} tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 10 }} axisLine={false} tickLine={false} width={90} />
+                    <Tooltip formatter={(v) => formatCurrencyBRL(Number(v))} contentStyle={{ background: '#1a1f2c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="Receitas" fill="#2bf58e" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Saldo" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <ReportTable headers={['Mês', 'Receitas', 'Var.', 'Despesas', 'Var.', 'Saldo']} emptyText="">
+                {(data.comparativo?.itens ?? []).map((item) => (
+                  <tr key={item.competencia} className="hover:bg-primary/5">
+                    <td className="px-5 py-4 font-bold text-on-surface">{item.competenciaLabel}</td>
+                    <td className="px-5 py-4 text-primary font-bold">{formatCurrencyBRL(item.receitas)}</td>
+                    <td className="px-5 py-4 text-xs">
+                      {item.variacaoReceitas !== null ? (
+                        <span className={item.variacaoReceitas >= 0 ? 'text-primary' : 'text-error'}>
+                          {item.variacaoReceitas >= 0 ? '+' : ''}{item.variacaoReceitas.toFixed(1)}%
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td className="px-5 py-4 text-error font-bold">{formatCurrencyBRL(item.despesas)}</td>
+                    <td className="px-5 py-4 text-xs">
+                      {item.variacaoDespesas !== null ? (
+                        <span className={item.variacaoDespesas <= 0 ? 'text-primary' : 'text-error'}>
+                          {item.variacaoDespesas >= 0 ? '+' : ''}{item.variacaoDespesas.toFixed(1)}%
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td className={`px-5 py-4 font-extrabold ${item.saldo >= 0 ? 'text-primary' : 'text-error'}`}>
+                      {formatCurrencyBRL(item.saldo)}
+                    </td>
+                  </tr>
+                ))}
+              </ReportTable>
+            </>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

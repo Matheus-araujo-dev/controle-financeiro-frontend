@@ -10,6 +10,9 @@ import { DashboardOperationalAgenda } from '../components/DashboardOperationalAg
 import { DashboardTransactionList } from '../components/DashboardTransactionList';
 import { DashboardAiInsights } from '../components/DashboardAiInsights';
 import { DashboardSaldoPorConta } from '../components/DashboardSaldoPorConta';
+import { DashboardResumoFinanceiro } from '../components/DashboardResumoFinanceiro';
+import { DashboardRealizadoVsPlanejado } from '../components/DashboardRealizadoVsPlanejado';
+import { DashboardCartoesBreakdown } from '../components/DashboardCartoesBreakdown';
 import { DateInput } from '../../../components/forms/DateInput';
 import { PageState } from '../../../components/states/PageState';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
@@ -55,6 +58,13 @@ export function DashboardPage() {
     queryKey: ['orcamento', 'corrente', CURRENT_MONTH],
     queryFn: () => orcamentosApi.obterPorCompetencia(CURRENT_MONTH),
     staleTime: 5 * 60_000
+  });
+
+  const { data: contasGerenciaisData } = useQuery({
+    queryKey: ['dashboard', 'contas-gerenciais-resumo', referenceMonth],
+    queryFn: () => dashboardApi.obterResumoContasGerenciais({ mesReferencia: referenceMonth }),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
   });
 
   const contaBancariaOptions = (contasBancariasData?.items ?? []).map((c) => ({ label: c.nome, value: c.id }));
@@ -169,6 +179,15 @@ export function DashboardPage() {
               }}
             />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <DashboardResumoFinanceiro data={contasGerenciaisData} referenceMonth={referenceMonth} />
+          <DashboardRealizadoVsPlanejado
+            contasGerenciais={contasGerenciaisData?.itens ?? []}
+            orcamento={orcamentoData}
+          />
+          <DashboardCartoesBreakdown />
         </div>
 
         <DashboardAiInsights mesReferencia={referenceMonth} />
