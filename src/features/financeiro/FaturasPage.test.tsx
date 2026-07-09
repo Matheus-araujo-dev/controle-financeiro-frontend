@@ -58,7 +58,9 @@ describe('FaturasPage', () => {
           limiteEfetivo: null,
           limiteComprometido: 0,
           limiteDisponivel: null,
-          ativo: true
+          ativo: true,
+          icone: null,
+          cor: null
         }
       ],
       page: 1,

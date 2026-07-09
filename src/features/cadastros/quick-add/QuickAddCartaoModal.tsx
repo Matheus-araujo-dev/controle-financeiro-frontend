@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { formCompactFieldClass, formFieldClass, formLabelClass } from '../../../components/forms/FormPrimitives';
 import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../../shared/number-input';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
+import { BankIconPicker } from '../BankIconPicker';
+import { ColorPicker } from '../ColorPicker';
 import { QuickAddModal } from './QuickAddModal';
 
 type Props = {
@@ -16,6 +18,8 @@ export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
   const [numeroFinal, setNumeroFinal] = useState('');
   const [diaFechamento, setDiaFechamento] = useState(1);
   const [diaVencimento, setDiaVencimento] = useState(10);
+  const [icone, setIcone] = useState<string>('credit_card');
+  const [cor, setCor] = useState<string>('#2bf58e');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -53,7 +57,9 @@ export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
         diaVencimentoFatura: diaVencimento,
         contaBancariaPagamentoPadraoId: null,
         limiteCredito: null,
-        ativo: true
+        ativo: true,
+        icone,
+        cor
       });
       onSuccess(result.id, `${result.nome} - final ${result.numeroFinal}`);
       handleClose();
@@ -70,6 +76,8 @@ export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
     setNumeroFinal('');
     setDiaFechamento(1);
     setDiaVencimento(10);
+    setIcone('credit_card');
+    setCor('#2bf58e');
     setError(undefined);
     onClose();
   }
@@ -134,6 +142,16 @@ export function QuickAddCartaoModal({ open, onClose, onSuccess }: Props) {
             className={formCompactFieldClass}
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className={formLabelClass}>Ícone</label>
+        <BankIconPicker value={icone} onChange={setIcone} />
+      </div>
+
+      <div className="space-y-2">
+        <label className={formLabelClass}>Cor</label>
+        <ColorPicker value={cor} onChange={setCor} />
       </div>
     </QuickAddModal>
   );
