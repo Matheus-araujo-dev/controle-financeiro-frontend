@@ -40,7 +40,14 @@ export const navigationStructure: NavGroup[] = [
       { key: '/formas-pagamento', label: 'Formas de pagamento' },
       { key: '/contas-bancarias', label: 'Contas bancárias' },
       { key: '/cartoes', label: 'Cartões' },
-      { key: '/contas-gerenciais', label: 'Contas gerenciais' },
+      { key: '/contas-gerenciais', label: 'Contas gerenciais' }
+    ]
+  },
+  {
+    key: 'planejamento',
+    label: 'Planejamento',
+    items: [
+      { key: '/planos', label: 'Planos de poupança' },
       { key: '/compras-planejadas', label: 'Planejador de compras' }
     ]
   },
