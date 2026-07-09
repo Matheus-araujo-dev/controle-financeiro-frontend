@@ -36,6 +36,7 @@ const navIcons: Record<string, string> = {
   '/contas-gerenciais': 'account_tree',
   '/compras-planejadas': 'shopping_cart',
   '/planos': 'savings',
+  '/investimentos': 'trending_up',
   '/familia': 'diversity_3',
   '/agente/chat': 'smart_toy',
   '/agente/whatsapp': 'phone_iphone'
