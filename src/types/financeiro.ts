@@ -434,3 +434,34 @@ export type PagarFaturaPayload = {
 };
 
 export type PagedFinanceiro<T, TSummary = unknown> = PagedResult<T, TSummary>;
+
+export type TransferenciaResumo = {
+  id: string;
+  contaBancariaOrigemId: string;
+  origemNome: string;
+  contaBancariaDestinoId: string;
+  destinoNome: string;
+  valor: number;
+  dataTransferencia: string;
+  descricao: string | null;
+  cancelada: boolean;
+  createdAtUtc: string;
+};
+
+export type TransferenciaPayload = {
+  contaBancariaOrigemId: string;
+  contaBancariaDestinoId: string;
+  valor: number;
+  dataTransferencia: string;
+  descricao?: string;
+};
+
+export type TransferenciaFilters = {
+  page: number;
+  pageSize: number;
+  contaBancariaOrigemId?: string;
+  contaBancariaDestinoId?: string;
+  dataInicial?: string;
+  dataFinal?: string;
+  cancelada?: boolean;
+};
