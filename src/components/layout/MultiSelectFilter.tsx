@@ -12,6 +12,7 @@ interface MultiSelectFilterProps {
   placeholder?: string;
   icon?: ReactNode;
   ariaLabel?: string;
+  searchable?: boolean;
 }
 
 function CheckIcon() {
@@ -36,14 +37,21 @@ export function MultiSelectFilter({
   onChange,
   placeholder = 'Todos',
   icon,
-  ariaLabel
+  ariaLabel,
+  searchable = false
 }: MultiSelectFilterProps) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) {
+      setSearch('');
       return;
+    }
+    if (searchable) {
+      setTimeout(() => searchRef.current?.focus(), 0);
     }
 
     function handleClickOutside(event: MouseEvent) {
@@ -54,7 +62,7 @@ export function MultiSelectFilter({
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [open]);
+  }, [open, searchable]);
 
   const selected = options.filter((option) => value.includes(option.value));
   const label =
@@ -63,6 +71,10 @@ export function MultiSelectFilter({
       : selected.length === 1
         ? selected[0].label
         : `${selected.length} selecionados`;
+
+  const filteredOptions = searchable && search.trim()
+    ? options.filter((option) => option.label.toLowerCase().includes(search.toLowerCase()))
+    : options;
 
   function toggle(optionValue: string) {
     onChange(value.includes(optionValue) ? value.filter((item) => item !== optionValue) : [...value, optionValue]);
@@ -107,33 +119,49 @@ export function MultiSelectFilter({
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-2xl border border-white/10 bg-surface-container-high p-1 shadow-xl">
-          {options.length === 0 ? (
-            <p className="px-3 py-2 text-sm text-on-surface-variant">Sem opções</p>
-          ) : (
-            options.map((option) => {
-              const checked = value.includes(option.value);
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => toggle(option.value)}
-                  className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-primary/20 hover:text-primary ${
-                    checked ? 'bg-primary/20 text-primary' : 'text-on-surface'
-                  }`}
-                >
-                  <span
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                      checked ? 'border-primary/70 bg-primary/20 text-primary' : 'border-white/20 text-transparent'
+        <div className="absolute z-20 mt-1 w-full rounded-2xl border border-white/10 bg-surface-container-high shadow-xl">
+          {searchable && (
+            <div className="border-b border-white/10 px-2 py-2">
+              <input
+                ref={searchRef}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar..."
+                className="w-full rounded-xl bg-surface-container px-3 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-1 focus:ring-primary/40"
+              />
+            </div>
+          )}
+          <div className="max-h-56 overflow-auto p-1">
+            {filteredOptions.length === 0 ? (
+              <p className="px-3 py-2 text-sm text-on-surface-variant">
+                {search ? 'Nenhum resultado' : 'Sem opções'}
+              </p>
+            ) : (
+              filteredOptions.map((option) => {
+                const checked = value.includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => toggle(option.value)}
+                    className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-primary/20 hover:text-primary ${
+                      checked ? 'bg-primary/20 text-primary' : 'text-on-surface'
                     }`}
                   >
-                    {checked && <CheckIcon />}
-                  </span>
-                  <span>{option.label}</span>
-                </button>
-              );
-            })
-          )}
+                    <span
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                        checked ? 'border-primary/70 bg-primary/20 text-primary' : 'border-white/20 text-transparent'
+                      }`}
+                    >
+                      {checked && <CheckIcon />}
+                    </span>
+                    <span>{option.label}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -62,6 +62,7 @@ type ListFilters = {
   sortDirection?: 'Asc' | 'Desc';
   recebedorIds?: string[];
   pagadorIds?: string[];
+  responsavelIds?: string[];
   formaPagamentoIds?: string[];
 };
 
@@ -166,18 +167,23 @@ export function FinancialAccountListPage({
   const { data: optionsData } = useQuery({
     queryKey: [config.key, 'filter-options'],
     queryFn: async () => {
-      const [pessoas, formas, contas] = await Promise.all([
+      const [pessoas, responsaveis, formas, contas] = await Promise.all([
         config.loadPessoaOptions(),
+        config.loadResponsavelOptions(),
         config.loadFormaPagamentoOptions(),
         config.loadContaBancariaOptions()
       ]);
-      return { pessoas, formas, contas };
+      return { pessoas, responsaveis, formas, contas };
     },
     staleTime: 5 * 60_000
   });
 
   const pessoaOptions = useMemo(
     () => (optionsData?.pessoas ?? []).map((item) => ({ label: item.label, value: item.value })),
+    [optionsData]
+  );
+  const responsavelOptions = useMemo(
+    () => (optionsData?.responsaveis ?? []).map((item) => ({ label: item.label, value: item.value })),
     [optionsData]
   );
   const formaPagamentoOptions = useMemo(
@@ -245,6 +251,14 @@ export function FinancialAccountListPage({
       ...(isPagar
         ? { recebedorIds: values.length ? values : undefined }
         : { pagadorIds: values.length ? values : undefined })
+    }));
+  }
+
+  function updateResponsavelFilter(values: string[]) {
+    setFilters((current) => ({
+      ...current,
+      page: 1,
+      responsavelIds: values.length ? values : undefined
     }));
   }
 
@@ -487,6 +501,18 @@ export function FinancialAccountListPage({
               options={pessoaOptions}
               value={pessoaSelecionada}
               onChange={updatePersonFilter}
+              searchable
+            />
+          </FilterField>
+
+          <FilterField label="Responsável">
+            <MultiSelectFilter
+              ariaLabel="Responsável"
+              placeholder="Todos"
+              options={responsavelOptions}
+              value={filters.responsavelIds ?? []}
+              onChange={updateResponsavelFilter}
+              searchable
             />
           </FilterField>
 
