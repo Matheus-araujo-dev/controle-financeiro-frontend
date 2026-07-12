@@ -135,7 +135,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     // Para cartão, sincroniza dataVencimento = dataCompra (o sistema usará a fatura correspondente)
     const dataRef = watchedValues.dataCompra || today;
     if (watchedValues.dataVencimento !== dataRef) {
-      setValue('dataVencimento', dataRef, { shouldValidate: false, shouldDirty: false });
+      setValue('dataVencimento', dataRef, { shouldValidate: true, shouldDirty: false });
     }
   }, [formaPagamentoBehavior.ehCartao, watchedValues.dataCompra, setValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
