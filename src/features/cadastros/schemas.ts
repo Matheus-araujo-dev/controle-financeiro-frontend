@@ -95,7 +95,9 @@ export const cartaoSchema = z.object({
     .max(31, 'Dia de vencimento deve estar entre 1 e 31.'),
   contaBancariaPagamentoPadraoId: z.string().trim(),
   limiteCredito: z.number().nullable(),
-  ativo: z.boolean()
+  ativo: z.boolean(),
+  icone: z.string().nullable().optional(),
+  cor: z.string().nullable().optional()
 });
 
 export const contaGerencialSchema = z.object({

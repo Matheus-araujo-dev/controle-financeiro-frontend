@@ -55,7 +55,7 @@ export type SelectOption = {
 export type FormFieldConfig<TPayload> = {
   name: keyof TPayload & string;
   label: string;
-  kind: 'text' | 'textarea' | 'select' | 'switch' | 'number' | 'date';
+  kind: 'text' | 'textarea' | 'select' | 'switch' | 'number' | 'date' | 'bank-icon-picker' | 'color-picker';
   numberFormat?: 'currency';
   mask?: InputMaskKind;
   nullable?: boolean;
@@ -619,7 +619,9 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
       loadOptions: loadContaBancariaOptions
     },
     { name: 'limiteCredito', label: 'Limite individual', kind: 'number', step: 0.01, nullable: true, numberFormat: 'currency' },
-    { name: 'ativo', label: 'Ativo', kind: 'switch' }
+    { name: 'ativo', label: 'Ativo', kind: 'switch' },
+    { name: 'icone', label: 'Ícone', kind: 'bank-icon-picker' },
+    { name: 'cor', label: 'Cor', kind: 'color-picker' }
   ],
   schema: cartaoSchema,
   defaultFilters: { page: 1, pageSize: 20, search: '' },
@@ -631,7 +633,9 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
     diaVencimentoFatura: 1,
     contaBancariaPagamentoPadraoId: '',
     limiteCredito: null,
-    ativo: true
+    ativo: true,
+    icone: 'credit_card',
+    cor: '#2bf58e'
   },
   list: cadastrosApi.cartoes.listar,
   detail: cadastrosApi.cartoes.obterPorId,
@@ -653,7 +657,9 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
     diaVencimentoFatura: detail.diaVencimentoFatura,
     contaBancariaPagamentoPadraoId: detail.contaBancariaPagamentoPadraoId ?? '',
     limiteCredito: detail.limiteCredito,
-    ativo: detail.ativo
+    ativo: detail.ativo,
+    icone: detail.icone ?? 'credit_card',
+    cor: detail.cor ?? '#2bf58e'
   }),
   exportColumns: [
     { header: 'Nome', value: (r: CartaoResumo) => r.nome },
