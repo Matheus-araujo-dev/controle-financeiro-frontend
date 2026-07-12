@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import { AppDataTable } from '../../components/data/AppDataTable';
+import { AppDataTable, type AppTableChange } from '../../components/data/AppDataTable';
 import { ComboBox } from '../../components/forms/ComboBox';
 import { DateInput } from '../../components/forms/DateInput';
 import { NeonBadge } from '../../components/neon-ledger/NeonBadge';
@@ -42,7 +42,9 @@ export function FaturaDetailPage() {
   const [actionError, setActionError] = useState<string>();
   const hasInitializedPayment = useRef(false);
   const [itemsPage, setItemsPage] = useState(1);
-  const [itemsPageSize, setItemsPageSize] = useState(20);
+  const [itemsPageSize, setItemsPageSize] = useState(50);
+  const [itemsSortBy, setItemsSortBy] = useState<string | undefined>(undefined);
+  const [itemsSortDirection, setItemsSortDirection] = useState<'Asc' | 'Desc'>('Asc');
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['faturas', 'detail', id],
@@ -122,9 +124,15 @@ export function FaturaDetailPage() {
     onError: (err) => setActionError(err instanceof Error ? err.message : 'Falha ao estornar o pagamento da fatura.')
   });
 
+  const handleItensTableChange: AppTableChange<FaturaItem> = (_pagination, _filters, sorter) => {
+    setItemsPage(1);
+    setItemsSortBy(sorter.columnKey ?? undefined);
+    setItemsSortDirection(sorter.order === 'descend' ? 'Desc' : 'Asc');
+  };
+
   const { data: itensData, isFetching: loadingItens } = useQuery({
-    queryKey: ['faturas', 'itens', id, itemsPage, itemsPageSize],
-    queryFn: () => financeiroApi.faturas.listarItens(id!, { page: itemsPage, pageSize: itemsPageSize }),
+    queryKey: ['faturas', 'itens', id, itemsPage, itemsPageSize, itemsSortBy, itemsSortDirection],
+    queryFn: () => financeiroApi.faturas.listarItens(id!, { page: itemsPage, pageSize: itemsPageSize, sortBy: itemsSortBy, sortDirection: itemsSortDirection }),
     enabled: !!id,
     staleTime: 30_000,
     placeholderData: (prev) => prev
@@ -351,12 +359,13 @@ export function FaturaDetailPage() {
             total: itensData?.totalItems ?? detail.quantidadeItens,
             onChange: (page, size) => { setItemsPage(page); setItemsPageSize(size); }
           }}
+          onTableChange={handleItensTableChange}
           columns={[
             {
               title: 'Descrição',
               dataIndex: 'descricao',
               key: 'descricao',
-              sorter: false,
+              sorter: true,
               mobileRole: 'title',
               render: (value, record) => (
                 <div>
@@ -367,12 +376,12 @@ export function FaturaDetailPage() {
                 </div>
               )
             },
-            { title: 'Recebedor', dataIndex: 'recebedorNome', key: 'recebedorNome', sorter: false, mobileRole: 'subtitle' },
+            { title: 'Recebedor', dataIndex: 'recebedorNome', key: 'recebedorNome', sorter: true, mobileRole: 'subtitle' },
             {
               title: 'Data da compra',
               dataIndex: 'dataCompra',
               key: 'dataCompra',
-              sorter: false,
+              sorter: true,
               mobileRole: 'date',
               render: (value) => formatDateBR(String(value))
             },
@@ -380,7 +389,7 @@ export function FaturaDetailPage() {
               title: 'Valor',
               dataIndex: 'valorLiquido',
               key: 'valorLiquido',
-              sorter: false,
+              sorter: true,
               mobileRole: 'value',
               render: (value, record) => (
                 <span className={`font-bold ${record.ehEstorno ? 'text-primary' : ''}`}>
@@ -392,7 +401,7 @@ export function FaturaDetailPage() {
               title: 'Status',
               dataIndex: 'statusCodigo',
               key: 'statusCodigo',
-              sorter: false,
+              sorter: true,
               mobileRole: 'status',
               render: (value, record) => (
                 <NeonBadge variant={record.ehEstorno ? 'primary' : accountStatusBadgeVariant(String(value))} size="sm">
