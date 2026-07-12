@@ -146,6 +146,8 @@ export const financeiroApi = {
   faturas: {
     listar: (params: FaturaFilters) => getPaged<FaturaResumo, FaturaListSummary>('/faturas', normalizeFaturaFilters(params)),
     obterPorId: (id: string) => getById<FaturaDetalhe>(`/faturas/${id}`),
+    listarItens: (faturaId: string, params: { page: number; pageSize: number; search?: string }) =>
+      getPaged<FaturaItem>(`/faturas/${faturaId}/itens`, params as Record<string, unknown>),
     pagar: (id: string, payload: PagarFaturaPayload) => post<FaturaDetalhe>(`/faturas/${id}/pagar`, payload),
     fechar: (id: string) => post<FaturaDetalhe>(`/faturas/${id}/fechar`),
     estornar: (id: string) => post<FaturaDetalhe>(`/faturas/${id}/estornar`),

@@ -19,7 +19,9 @@ vi.mock('../../services/http/financeiro-api', () => ({
     faturas: {
       listar: vi.fn(),
       obterPorId: vi.fn(),
+      listarItens: vi.fn(),
       pagar: vi.fn(),
+      fechar: vi.fn(),
       estornar: vi.fn()
     }
   }
@@ -65,6 +67,16 @@ describe('FaturaDetailPage', () => {
       totalItems: 1,
       totalPages: 1
     } as never);
+    const mockItem = {
+      contaPagarId: 'cp1',
+      descricao: 'Compra cartao abril A',
+      recebedorNome: 'Fornecedor X',
+      dataCompra: '2026-04-05',
+      valorLiquido: 100,
+      statusCodigo: 'PENDENTE',
+      numeroParcela: 1,
+      quantidadeParcelas: 1
+    };
     vi.mocked(financeiroApi.faturas.obterPorId).mockResolvedValue({
       id: 'f1',
       cartaoId: 'c1',
@@ -80,21 +92,17 @@ describe('FaturaDetailPage', () => {
       statusCodigo: 'ABERTA',
       statusNome: 'Aberta',
       observacao: null,
-      itens: [
-        {
-          contaPagarId: 'cp1',
-          descricao: 'Compra cartao abril A',
-          recebedorNome: 'Fornecedor X',
-          dataCompra: '2026-04-05',
-          valorLiquido: 100,
-          statusCodigo: 'PENDENTE',
-          numeroParcela: 1,
-          quantidadeParcelas: 1
-        }
-      ],
+      itens: [mockItem],
       createdAtUtc: '2026-04-10T00:00:00Z',
       updatedAtUtc: '2026-04-10T00:00:00Z'
     });
+    vi.mocked(financeiroApi.faturas.listarItens).mockResolvedValue({
+      items: [mockItem],
+      page: 1,
+      pageSize: 20,
+      totalItems: 1,
+      totalPages: 1
+    } as never);
     vi.mocked(financeiroApi.faturas.pagar).mockResolvedValue({
       id: 'f1',
       cartaoId: 'c1',
@@ -164,6 +172,22 @@ describe('FaturaDetailPage', () => {
       pageSize: 100,
       totalItems: 0,
       totalPages: 0
+    } as never);
+    vi.mocked(financeiroApi.faturas.listarItens).mockResolvedValue({
+      items: [{
+        contaPagarId: 'cp1',
+        descricao: 'Compra cartao abril A',
+        recebedorNome: 'Fornecedor X',
+        dataCompra: '2026-04-05',
+        valorLiquido: 100,
+        statusCodigo: 'LIQUIDADA',
+        numeroParcela: 1,
+        quantidadeParcelas: 1
+      }],
+      page: 1,
+      pageSize: 20,
+      totalItems: 1,
+      totalPages: 1
     } as never);
     vi.mocked(financeiroApi.faturas.obterPorId).mockResolvedValue({
       id: 'f1',
