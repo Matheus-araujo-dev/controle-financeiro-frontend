@@ -76,7 +76,9 @@ export const contaBancariaSchema = z.object({
   saldoInicial: z.number(),
   dataSaldoInicial: requiredText('Data do saldo inicial'),
   limiteCartoesCompartilhado: z.number().nullable(),
-  ativo: z.boolean()
+  ativo: z.boolean(),
+  icone: z.string().nullable(),
+  cor: z.string().nullable()
 });
 
 export const cartaoSchema = z.object({

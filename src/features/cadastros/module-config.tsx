@@ -497,7 +497,9 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
     { name: 'saldoInicial', label: 'Saldo inicial', kind: 'number', step: 0.01, numberFormat: 'currency' },
     { name: 'dataSaldoInicial', label: 'Data do saldo inicial', kind: 'date' },
     { name: 'limiteCartoesCompartilhado', label: 'Limite compartilhado dos cartões', kind: 'number', step: 0.01, nullable: true, numberFormat: 'currency' },
-    { name: 'ativo', label: 'Ativo', kind: 'switch' }
+    { name: 'ativo', label: 'Ativo', kind: 'switch' },
+    { name: 'icone', label: 'Ícone', kind: 'bank-icon-picker' },
+    { name: 'cor', label: 'Cor', kind: 'color-picker' }
   ],
   schema: contaBancariaSchema,
   defaultFilters: { page: 1, pageSize: 20, search: '' },
@@ -510,7 +512,9 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
     saldoInicial: 0,
     dataSaldoInicial: '',
     limiteCartoesCompartilhado: null,
-    ativo: true
+    ativo: true,
+    icone: null,
+    cor: null
   },
   list: cadastrosApi.contasBancarias.listar,
   detail: cadastrosApi.contasBancarias.obterPorId,
@@ -525,7 +529,9 @@ export const contasBancariasModuleConfig: MasterDataModuleConfig<
     saldoInicial: detail.saldoInicial,
     dataSaldoInicial: detail.dataSaldoInicial,
     limiteCartoesCompartilhado: detail.limiteCartoesCompartilhado,
-    ativo: detail.ativo
+    ativo: detail.ativo,
+    icone: detail.icone ?? null,
+    cor: detail.cor ?? null
   }),
   exportColumns: [
     { header: 'Nome', value: (r: ContaBancariaResumo) => r.nome },
