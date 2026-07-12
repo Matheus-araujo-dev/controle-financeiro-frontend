@@ -26,6 +26,8 @@ import { CurrencyInput } from '../../shared/CurrencyInput';
 import { handleIntegerPaste, keepOnlyDigits, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
 import { QuickAddPessoaModal } from './quick-add/QuickAddPessoaModal';
 import { QuickAddContaBancariaModal } from './quick-add/QuickAddContaBancariaModal';
+import { BankIconPicker } from './BankIconPicker';
+import { ColorPicker } from './ColorPicker';
 
 function buildFieldOptions(field: FormFieldConfig<Record<string, unknown>>, loadedOptions: Record<string, SelectOption[]>) {
   return [...(field.options ?? []), ...(loadedOptions[field.name] ?? [])];
@@ -154,7 +156,8 @@ function sectionPlanFor(key: string) {
         icon: 'event_repeat',
         fields: ['diaFechamentoFatura', 'diaVencimentoFatura', 'contaBancariaPagamentoPadraoId']
       },
-      { title: 'Limite e Status', eyebrow: 'Controle', icon: 'credit_score', fields: ['limiteCredito', 'ativo'] }
+      { title: 'Limite e Status', eyebrow: 'Controle', icon: 'credit_score', fields: ['limiteCredito', 'ativo'] },
+      { title: 'Visual', eyebrow: 'Aparência', icon: 'palette', fields: ['icone', 'cor'] }
     ],
     'contas-gerenciais': [
       { title: 'Estrutura Gerencial', eyebrow: 'Cadastro', icon: 'account_tree', fields: ['contaPaiId', 'codigo', 'descricao', 'tipo'] },
@@ -396,7 +399,7 @@ export function MasterDataFormPage({
 
   function renderField(field: FormFieldConfig<TPayload>) {
     const fieldError = errors[field.name as keyof typeof errors]?.message as string | undefined;
-    const fullWidth = field.kind === 'textarea' || ['nome', 'descricao', 'observacao'].includes(field.name);
+    const fullWidth = field.kind === 'textarea' || field.kind === 'bank-icon-picker' || field.kind === 'color-picker' || ['nome', 'descricao', 'observacao'].includes(field.name);
 
     return (
       <div key={field.name} className={`space-y-2 ${fullWidth ? 'md:col-span-2' : ''} ${field.kind === 'switch' ? 'self-end' : ''}`}>
@@ -519,6 +522,24 @@ export function MasterDataFormPage({
                   ariaLabel={field.label}
                   value={String(controlledField.value ?? '')}
                   onChange={(value) => controlledField.onChange(value)}
+                />
+              );
+            }
+
+            if (field.kind === 'bank-icon-picker') {
+              return (
+                <BankIconPicker
+                  value={controlledField.value as string | null | undefined}
+                  onChange={controlledField.onChange}
+                />
+              );
+            }
+
+            if (field.kind === 'color-picker') {
+              return (
+                <ColorPicker
+                  value={controlledField.value as string | null | undefined}
+                  onChange={controlledField.onChange}
                 />
               );
             }
