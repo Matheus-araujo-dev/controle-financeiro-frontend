@@ -84,6 +84,12 @@ export type FinanceiroFormValues = {
   recorrenciaGerarAteData: string;
 };
 
+export type MeioPagamento = {
+  contaBancariaId: string;
+  formaPagamentoId: string;
+  valor: number;
+};
+
 export type FinanceiroLiquidacaoFormValues = {
   valorLiquidacao: number;
   dataLiquidacao: string;
@@ -92,6 +98,7 @@ export type FinanceiroLiquidacaoFormValues = {
   atualizarValorConta: boolean;
   atualizarRecorrencia: boolean;
   cancelarValorRestante: boolean;
+  meiosPagamento?: MeioPagamento[];
 };
 
 export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> = {
@@ -133,6 +140,7 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   loadRateioOptions: () => Promise<RateioOption[]>;
   resolveCreateDefaults?: (searchParams: URLSearchParams) => Promise<Partial<FinanceiroFormValues> | null>;
   buildSummaryItems?: (summary: FinanceiroResumo) => SummaryCardItem[];
+  checkDuplicate?: (descricao: string, dataVencimento: string) => Promise<boolean>;
 };
 
 const statusOptions: Array<SelectOption & { code?: StatusContaCodigo }> = [
@@ -609,7 +617,18 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
       ]
     };
   },
-  buildSummaryItems: (summary) => buildContaFinanceiraSummaryItems(summary as ContaFinanceiraListSummary)
+  buildSummaryItems: (summary) => buildContaFinanceiraSummaryItems(summary as ContaFinanceiraListSummary),
+  checkDuplicate: async (descricao, dataVencimento) => {
+    const result = await financeiroApi.contasPagar.listar({
+      page: 1,
+      pageSize: 5,
+      search: descricao,
+      dataInicial: dataVencimento,
+      dataFinal: dataVencimento,
+      statusCodigo: ['PENDENTE', 'VENCIDA', 'FUTURO', 'PARCIAL']
+    });
+    return result.totalItems > 0;
+  }
 };
 
 export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResumo, ContaReceberDetalhe, ContaReceberFilters> = {
@@ -696,7 +715,18 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
   loadContaBancariaOptions,
   loadCartaoOptions,
   loadRateioOptions: () => loadRateioOptions('Receita'),
-  buildSummaryItems: (summary) => buildContaFinanceiraSummaryItems(summary as ContaFinanceiraListSummary)
+  buildSummaryItems: (summary) => buildContaFinanceiraSummaryItems(summary as ContaFinanceiraListSummary),
+  checkDuplicate: async (descricao, dataVencimento) => {
+    const result = await financeiroApi.contasReceber.listar({
+      page: 1,
+      pageSize: 5,
+      search: descricao,
+      dataInicial: dataVencimento,
+      dataFinal: dataVencimento,
+      statusCodigo: ['PENDENTE', 'VENCIDA', 'FUTURO', 'PARCIAL']
+    });
+    return result.totalItems > 0;
+  }
 };
 
 export { statusFilterOptions, statusOptions };

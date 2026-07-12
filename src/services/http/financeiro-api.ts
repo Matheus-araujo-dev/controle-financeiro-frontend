@@ -147,6 +147,7 @@ export const financeiroApi = {
     listar: (params: FaturaFilters) => getPaged<FaturaResumo, FaturaListSummary>('/faturas', normalizeFaturaFilters(params)),
     obterPorId: (id: string) => getById<FaturaDetalhe>(`/faturas/${id}`),
     pagar: (id: string, payload: PagarFaturaPayload) => post<FaturaDetalhe>(`/faturas/${id}/pagar`, payload),
+    fechar: (id: string) => post<FaturaDetalhe>(`/faturas/${id}/fechar`),
     estornar: (id: string) => post<FaturaDetalhe>(`/faturas/${id}/estornar`),
     importar: {
       preview: async (cartaoId: string, arquivo: File): Promise<ImportacaoFaturaPreview> => {
