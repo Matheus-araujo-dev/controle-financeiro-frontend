@@ -16,10 +16,11 @@ import { QuickAddContaGerencialModal } from '../../features/cadastros/quick-add/
 import { QuickAddCartaoModal } from '../../features/cadastros/quick-add/QuickAddCartaoModal';
 import { QuickAddContaBancariaModal } from '../../features/cadastros/quick-add/QuickAddContaBancariaModal';
 import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
+import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
 import type { ComboBoxOption } from '../forms/ComboBox';
 
 type Option = { label: string; value: string };
-type ContaGerencialOption = ComboBoxOption;
+type ContaGerencialOption = ComboBoxOption & { responsavelPadraoId?: string | null };
 type QuickLaunchTipo = 'pagar' | 'receber' | 'transferencia';
 type QuickAddTarget = 'pessoaId' | 'responsavelId' | null;
 type QuickAddContaBancariaTarget = 'origem' | 'destino' | null;
@@ -75,6 +76,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [tipo, setTipo] = useState<QuickLaunchTipo>('pagar');
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState(0);
+  const [quantidadeParcelas, setQuantidadeParcelas] = useState(1);
   const initialDate = useRef(hojeISO());
   const [dataVencimento, setDataVencimento] = useState(initialDate.current);
   const [jaLiquidada, setJaLiquidada] = useState(false);
@@ -90,6 +92,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [saving, setSaving] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const lastAutoFilledContaRef = useRef<string | null>(null);
+  const lastAutoFilledResponsavelRef = useRef<string | null>(null);
 
   const isDirty =
     descricao.trim() !== '' ||
@@ -175,9 +178,11 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   }, [extraCartoes, cartoesResult.data]);
 
   const contasDespesa = useMemo<ContaGerencialOption[]>(() => {
-    const fromServer = mapContaGerencialHierarchyData(despesaResult.data?.items ?? []).map(({ value, main, chain }) => ({
+    const items = despesaResult.data?.items ?? [];
+    const fromServer = mapContaGerencialHierarchyData(items).map(({ value, main, chain }) => ({
       value,
       displayText: main,
+      responsavelPadraoId: items.find((i) => i.id === value)?.responsavelPadraoId ?? null,
       label: chain ? (
         <span>
           {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
@@ -188,9 +193,11 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   }, [extraContasDespesa, despesaResult.data]);
 
   const contasReceita = useMemo<ContaGerencialOption[]>(() => {
-    const fromServer = mapContaGerencialHierarchyData(receitaResult.data?.items ?? []).map(({ value, main, chain }) => ({
+    const items = receitaResult.data?.items ?? [];
+    const fromServer = mapContaGerencialHierarchyData(items).map(({ value, main, chain }) => ({
       value,
       displayText: main,
+      responsavelPadraoId: items.find((i) => i.id === value)?.responsavelPadraoId ?? null,
       label: chain ? (
         <span>
           {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
@@ -200,6 +207,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     return [...extraContasReceita, ...fromServer.filter((c) => !extraContasReceita.some((e) => e.value === c.value))];
   }, [extraContasReceita, receitaResult.data]);
 
+  // Auto-fill conta gerencial a partir da pessoa selecionada
   useEffect(() => {
     if (!pessoaId) return;
     const contaIds = pessoaContaGerencialMap.get(pessoaId);
@@ -214,6 +222,19 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       lastAutoFilledContaRef.current = null;
     }
   }, [pessoaId, tipo, contaGerencialId, pessoaContaGerencialMap]);
+
+  // Auto-fill responsável a partir da conta gerencial selecionada
+  const contasGerenciais = tipo === 'pagar' ? contasDespesa : contasReceita;
+  useEffect(() => {
+    if (!contaGerencialId) return;
+    const option = contasGerenciais.find((c) => c.value === contaGerencialId);
+    const responsavelPadraoId = option?.responsavelPadraoId;
+    if (!responsavelPadraoId) return;
+    const manuallyChanged = responsavelId && responsavelId !== lastAutoFilledResponsavelRef.current;
+    if (manuallyChanged) return;
+    setResponsavelId(responsavelPadraoId);
+    lastAutoFilledResponsavelRef.current = responsavelPadraoId;
+  }, [contaGerencialId, contasGerenciais, responsavelId]);
 
   const contasBancarias = useMemo<Option[]>(() => {
     const fromServer = (contasBancariasResult.data?.items ?? []).map((c) => ({ label: c.nome, value: c.id }));
@@ -300,7 +321,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
 
   const formaSelecionada = useMemo(() => formas.find((forma) => forma.value === formaPagamentoId), [formas, formaPagamentoId]);
   const exigeCartao = tipo === 'pagar' && Boolean(formaSelecionada?.ehCartao);
-  const contasGerenciais = tipo === 'pagar' ? contasDespesa : contasReceita;
 
   useEffect(() => {
     if (!exigeCartao) {
@@ -355,7 +375,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
           valorDesconto: 0,
           valorJuros: 0,
           valorMulta: 0,
-          quantidadeParcelas: 1,
+          quantidadeParcelas,
           descricao: descricao.trim(),
           observacao: null,
           rateios: [{ contaGerencialId, valor }],
@@ -436,6 +456,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const toggleLabel = tipo === 'receber' ? 'Já recebida?' : 'Já liquidada?';
   const toggleBadgeLabel = tipo === 'receber' ? 'Recebida' : 'Liquidada';
   const dataLiquidacaoLabel = tipo === 'receber' ? 'Data de Recebimento' : 'Data de Liquidação';
+  const vencimentoLabel = exigeCartao ? 'Data da compra' : jaLiquidada ? dataLiquidacaoLabel : 'Vencimento';
 
   const modal = (
     <div className="fixed inset-0 z-[1000] bg-black/75 px-4 py-6 backdrop-blur-md">
@@ -528,6 +549,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Row 1: Descrição */}
                 <div className="space-y-2 md:col-span-2">
                   <label className={formLabelClass}>Descrição</label>
                   <input
@@ -539,11 +561,26 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   />
                 </div>
 
+                {/* Row 2: Valor | Parcelas */}
                 <div className="space-y-2">
                   <label className={formLabelClass}>Valor</label>
                   <CurrencyInput value={valor} onChange={(nextValue) => setValor(nextValue ?? 0)} className={formFieldClass} />
                 </div>
 
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Parcelas</label>
+                  <input
+                    aria-label="Número de parcelas"
+                    inputMode="numeric"
+                    value={String(quantidadeParcelas)}
+                    onKeyDown={preventScientificNotation}
+                    onPaste={handleIntegerPaste}
+                    onChange={(e) => setQuantidadeParcelas(Math.max(1, parseIntegerInput(e.target.value) ?? 1))}
+                    className={formFieldClass}
+                  />
+                </div>
+
+                {/* Row 3: Forma de pagamento | Cartão (se cartão) */}
                 <div className="space-y-2">
                   <label className={formLabelClass}>Forma de pagamento</label>
                   <ComboBox
@@ -562,18 +599,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className={formLabelClass}>{exigeCartao ? 'Data da compra' : 'Vencimento'}</label>
-                  <DateInput
-                    ariaLabel={exigeCartao ? 'Data da compra' : 'Vencimento'}
-                    value={dataVencimento}
-                    onChange={(v) => {
-                      setDataVencimento(v);
-                      if (jaLiquidada) setDataLiquidacao(v);
-                    }}
-                  />
-                </div>
-
                 {exigeCartao ? (
                   <div className="space-y-2">
                     <label className={formLabelClass}>Cartão de crédito</label>
@@ -587,39 +612,52 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                       addNewLabel="Novo cartão"
                     />
                   </div>
-                ) : null}
-
-                {!exigeCartao ? (
-                  <div className="flex items-center gap-3 md:col-span-2">
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={jaLiquidada}
-                      onClick={() => {
-                        const next = !jaLiquidada;
-                        setJaLiquidada(next);
-                        if (next) setDataLiquidacao(dataVencimento);
-                      }}
-                      className={[
-                        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-                        jaLiquidada ? 'bg-primary' : 'bg-white/15',
-                      ].join(' ')}
-                    >
-                      <span
+                ) : (
+                  <div className="flex items-end pb-1">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={jaLiquidada}
+                        onClick={() => {
+                          const next = !jaLiquidada;
+                          setJaLiquidada(next);
+                          if (next) setDataLiquidacao(dataVencimento);
+                        }}
                         className={[
-                          'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
-                          jaLiquidada ? 'translate-x-5' : 'translate-x-0',
+                          'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
+                          jaLiquidada ? 'bg-primary' : 'bg-white/15',
                         ].join(' ')}
-                      />
-                    </button>
-                    <span className="text-sm text-on-surface-variant">{toggleLabel}</span>
-                    {jaLiquidada ? (
-                      <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
-                        {toggleBadgeLabel}
-                      </span>
-                    ) : null}
+                      >
+                        <span
+                          className={[
+                            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
+                            jaLiquidada ? 'translate-x-5' : 'translate-x-0',
+                          ].join(' ')}
+                        />
+                      </button>
+                      <span className="text-sm text-on-surface-variant">{toggleLabel}</span>
+                      {jaLiquidada ? (
+                        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
+                          {toggleBadgeLabel}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                ) : null}
+                )}
+
+                {/* Row 4: Vencimento | Data de liquidação (quando liquidada) */}
+                <div className="space-y-2">
+                  <label className={formLabelClass}>{vencimentoLabel}</label>
+                  <DateInput
+                    ariaLabel={vencimentoLabel}
+                    value={dataVencimento}
+                    onChange={(v) => {
+                      setDataVencimento(v);
+                      if (jaLiquidada) setDataLiquidacao(v);
+                    }}
+                  />
+                </div>
 
                 {jaLiquidada && !exigeCartao ? (
                   <div className="space-y-2">
@@ -630,8 +668,9 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                       onChange={setDataLiquidacao}
                     />
                   </div>
-                ) : null}
+                ) : <div />}
 
+                {/* Row 5: Recebedor/Pagador | Conta gerencial */}
                 <div className="space-y-2">
                   <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
                   <ComboBox
@@ -641,19 +680,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                     options={pessoas}
                     placeholder="Selecionar pessoa..."
                     onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
-                    addNewLabel="Nova pessoa"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className={formLabelClass}>Responsável</label>
-                  <ComboBox
-                    aria-label="Responsável"
-                    value={responsavelId}
-                    onChange={setResponsavelId}
-                    options={responsaveis}
-                    placeholder="Selecionar responsável..."
-                    onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
                     addNewLabel="Nova pessoa"
                   />
                 </div>
@@ -670,6 +696,23 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                     addNewLabel="Nova conta gerencial"
                   />
                 </div>
+
+                {/* Row 6: Responsável */}
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Responsável</label>
+                  <ComboBox
+                    aria-label="Responsável"
+                    value={responsavelId}
+                    onChange={(v) => {
+                      setResponsavelId(v);
+                      lastAutoFilledResponsavelRef.current = v || null;
+                    }}
+                    options={responsaveis}
+                    placeholder="Selecionar responsável..."
+                    onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
+                    addNewLabel="Nova pessoa"
+                  />
+                </div>
               </div>
             )}
 
@@ -677,7 +720,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               <p className="text-xs text-on-surface-variant">
                 {tipo === 'transferencia'
                   ? 'A transferência cria automaticamente as movimentações de saída e entrada nas contas.'
-                  : 'Precisa de parcelas, rateio detalhado ou recorrência? Use o formulário completo em Contas a pagar/receber.'}
+                  : 'Precisa de rateio detalhado ou recorrência? Use o formulário completo em Contas a pagar/receber.'}
               </p>
             </div>
 

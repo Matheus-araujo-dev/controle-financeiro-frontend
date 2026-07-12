@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { QuickLaunchButton } from './QuickLaunchButton';
@@ -334,5 +334,52 @@ describe('QuickLaunchButton', () => {
     await waitFor(() =>
       expect(notify).toHaveBeenCalledWith('error', expect.stringMatching(/falha ao carregar op..es do lan.amento r.pido/i))
     );
+  });
+
+  it('passes quantidadeParcelas in the API payload', async () => {
+    const { user, dialog } = await openQuickLaunch();
+
+    await user.type(within(dialog).getByPlaceholderText(/mercado/i), 'Teste parcelas');
+    await user.type(within(dialog).getByLabelText('Valor'), '300');
+    fireEvent.change(within(dialog).getByLabelText('Número de parcelas'), { target: { value: '3' } });
+    await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
+    await user.selectOptions(within(dialog).getByLabelText(/respons.vel/i), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-pix');
+    await user.selectOptions(within(dialog).getByLabelText('Conta gerencial'), 'cd1');
+
+    await user.click(within(dialog).getByRole('button', { name: /^Lan./i }));
+
+    await waitFor(() => expect(financeiroApi.contasPagar.criar).toHaveBeenCalledTimes(1));
+    expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
+      expect.objectContaining({ quantidadeParcelas: 3 })
+    );
+  });
+
+  it('auto-fills responsável from conta gerencial responsavelPadraoId', async () => {
+    vi.mocked(cadastrosApi.contasGerenciais.listar).mockImplementation((filters: { tipo?: string }) => {
+      if (filters.tipo === 'Receita') return Promise.resolve(receitasResponse as never);
+      return Promise.resolve({
+        items: [
+          { id: 'cd1', codigo: '1.1', descricao: 'Mercado', aceitaLancamentos: true, responsavelPadraoId: 'r1' }
+        ]
+      } as never);
+    });
+
+    const { user, dialog } = await openQuickLaunch();
+
+    await user.selectOptions(await within(dialog).findByLabelText('Conta gerencial'), 'cd1');
+
+    await waitFor(() => {
+      const select = within(dialog).getByLabelText(/respons.vel/i) as HTMLSelectElement;
+      expect(select.value).toBe('r1');
+    });
+  });
+
+  it('renders "Já liquidada?" toggle inline alongside the payment form (not full-row)', async () => {
+    const { dialog } = await openQuickLaunch();
+
+    const toggle = await within(dialog).findByRole('switch');
+    // The toggle must NOT be in a md:col-span-2 container (it's now inline, sharing a row)
+    expect(toggle.closest('[class*="col-span-2"]')).toBeNull();
   });
 });
