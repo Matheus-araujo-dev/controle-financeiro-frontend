@@ -146,7 +146,8 @@ function sectionPlanFor(key: string) {
         icon: 'savings',
         fields: ['saldoInicial', 'dataSaldoInicial', 'limiteCartoesCompartilhado']
       },
-      { title: 'Configurações', eyebrow: 'Status', icon: 'toggle_on', fields: ['ativo'] }
+      { title: 'Configurações', eyebrow: 'Status', icon: 'toggle_on', fields: ['ativo'] },
+      { title: 'Visual', eyebrow: 'Aparência', icon: 'palette', fields: ['icone', 'cor'] }
     ],
     cartoes: [
       { title: 'Dados do Cartão', eyebrow: 'Cadastro', icon: 'credit_card', fields: ['nome', 'bandeira', 'numeroFinal'] },
