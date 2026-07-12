@@ -109,35 +109,39 @@ export function TermsValueSection({ form, moduloLabel = 'pagar' }: TermsValueSec
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-y-8">
-        <div className="space-y-2.5">
-          <label className={fieldLabelClass}>Data Emissão</label>
-          <Controller
-            control={control}
-            name="dataEmissao"
-            render={({ field }) => <DateInput mode="date" value={field.value} onChange={field.onChange} disabled={!canEdit} />}
-          />
-          {errors.dataEmissao ? <span className={errorTextClass}>{errors.dataEmissao.message}</span> : null}
-        </div>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+        {!ehCartao ? (
+          <div className="space-y-2.5">
+            <label className={fieldLabelClass}>Data Emissão</label>
+            <Controller
+              control={control}
+              name="dataEmissao"
+              render={({ field }) => <DateInput mode="date" value={field.value} onChange={field.onChange} disabled={!canEdit} />}
+            />
+            {errors.dataEmissao ? <span className={errorTextClass}>{errors.dataEmissao.message}</span> : null}
+          </div>
+        ) : null}
 
-        <div className="space-y-2.5">
-          <label className={[fieldLabelClass, jaLiquidada ? 'text-primary' : ''].join(' ')}>{labelData}</label>
-          <Controller
-            control={control}
-            name="dataVencimento"
-            render={({ field }) => (
-              <div className={errors.dataVencimento ? 'rounded-xl ring-1 ring-error' : ''}>
-                <DateInput
-                  mode="date"
-                  value={field.value}
-                  onChange={(v) => handleDataChange(v, field.onChange)}
-                  disabled={!canEdit}
-                />
-              </div>
-            )}
-          />
-          {errors.dataVencimento ? <span className={errorTextClass}>{errors.dataVencimento.message}</span> : null}
-        </div>
+        {!ehCartao ? (
+          <div className="space-y-2.5">
+            <label className={[fieldLabelClass, jaLiquidada ? 'text-primary' : ''].join(' ')}>{labelData}</label>
+            <Controller
+              control={control}
+              name="dataVencimento"
+              render={({ field }) => (
+                <div className={errors.dataVencimento ? 'rounded-xl ring-1 ring-error' : ''}>
+                  <DateInput
+                    mode="date"
+                    value={field.value}
+                    onChange={(v) => handleDataChange(v, field.onChange)}
+                    disabled={!canEdit}
+                  />
+                </div>
+              )}
+            />
+            {errors.dataVencimento ? <span className={errorTextClass}>{errors.dataVencimento.message}</span> : null}
+          </div>
+        ) : null}
 
         <div className="space-y-2.5">
           <label className={fieldLabelClass}>Parcelas</label>
@@ -161,79 +165,49 @@ export function TermsValueSection({ form, moduloLabel = 'pagar' }: TermsValueSec
           />
           {errors.quantidadeParcelas ? <span className={errorTextClass}>{errors.quantidadeParcelas.message}</span> : null}
         </div>
-      </div>
 
-      <div className="mt-3 space-y-3">
-        <div className="flex items-center gap-2">
-          <span className={fieldLabelClass}>Valor</span>
-          {qtdParcelas > 1 ? (
-            <div className="ml-auto flex rounded-lg border border-white/10 bg-surface-container p-0.5 text-xs font-medium">
-              <button
-                type="button"
-                onClick={() => handleParcelaModeToggle('total')}
-                className={[
-                  'rounded-md px-2.5 py-1 transition-colors',
-                  parcelamentoMode === 'total'
-                    ? 'bg-primary/20 text-primary'
-                    : 'text-on-surface-variant hover:text-on-surface',
-                ].join(' ')}
-              >
-                Total ÷ {qtdParcelas}x
-              </button>
-              <button
-                type="button"
-                onClick={() => handleParcelaModeToggle('parcela')}
-                className={[
-                  'rounded-md px-2.5 py-1 transition-colors',
-                  parcelamentoMode === 'parcela'
-                    ? 'bg-primary/20 text-primary'
-                    : 'text-on-surface-variant hover:text-on-surface',
-                ].join(' ')}
-              >
-                Parcela × {qtdParcelas}x
-              </button>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2">
+            <label className={fieldLabelClass}>{parcelamentoMode === 'parcela' && qtdParcelas > 1 ? 'Valor Parcela' : qtdParcelas > 1 ? 'Valor Total' : 'Valor'}</label>
+            {qtdParcelas > 1 ? (
+              <div className="ml-auto flex rounded-lg border border-white/10 bg-surface-container p-0.5 text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => handleParcelaModeToggle('total')}
+                  className={['rounded-md px-1.5 py-0.5 transition-colors', parcelamentoMode === 'total' ? 'bg-primary/20 text-primary' : 'text-on-surface-variant hover:text-on-surface'].join(' ')}
+                  title={`Total ÷ ${qtdParcelas}x`}
+                >
+                  ÷{qtdParcelas}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleParcelaModeToggle('parcela')}
+                  className={['rounded-md px-1.5 py-0.5 transition-colors', parcelamentoMode === 'parcela' ? 'bg-primary/20 text-primary' : 'text-on-surface-variant hover:text-on-surface'].join(' ')}
+                  title={`Parcela × ${qtdParcelas}x`}
+                >
+                  ×{qtdParcelas}
+                </button>
+              </div>
+            ) : null}
+          </div>
           {parcelamentoMode === 'total' || qtdParcelas <= 1 ? (
-            <div className="space-y-2.5">
-              <label className={fieldLabelClass}>
-                {qtdParcelas > 1 ? 'Valor Total' : 'Valor Original'}
-              </label>
-              <Controller
-                control={control}
-                name="valorOriginal"
-                render={({ field }) => (
-                  <CurrencyInput
-                    value={field.value}
-                    onChange={handleValorOriginalChange}
-                    disabled={!canEdit}
-                    className={nativeCompactFieldClass}
-                  />
-                )}
-              />
-              {qtdParcelas > 1 ? (
-                <p className="text-[11px] text-on-surface-variant/70">
-                  Parcela: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorParcela)}
-                </p>
-              ) : null}
-            </div>
+            <Controller
+              control={control}
+              name="valorOriginal"
+              render={({ field }) => (
+                <CurrencyInput value={field.value} onChange={handleValorOriginalChange} disabled={!canEdit} className={nativeCompactFieldClass} />
+              )}
+            />
           ) : (
-            <div className="space-y-2.5">
-              <label className={fieldLabelClass}>Valor por Parcela</label>
-              <CurrencyInput
-                value={valorParcela}
-                onChange={handleValorParcelaChange}
-                disabled={!canEdit}
-                className={nativeCompactFieldClass}
-              />
-              <p className="text-[11px] text-on-surface-variant/70">
-                Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorOriginal)}
-              </p>
-            </div>
+            <CurrencyInput value={valorParcela} onChange={handleValorParcelaChange} disabled={!canEdit} className={nativeCompactFieldClass} />
           )}
+          {qtdParcelas > 1 ? (
+            <p className="text-[11px] text-on-surface-variant/70">
+              {parcelamentoMode === 'total'
+                ? `Parcela: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorParcela)}`
+                : `Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorOriginal)}`}
+            </p>
+          ) : null}
         </div>
       </div>
     </FormSection>

@@ -174,8 +174,8 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="space-y-2 md:col-span-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="space-y-2 md:col-span-3">
           <label className={fieldLabelClass}>Descrição</label>
           <Controller
             control={control}
@@ -194,7 +194,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
           />
         </div>
 
-        <div className="space-y-2 md:col-span-2">
+        <div className="space-y-2">
           <label className={fieldLabelClass}>{personLabel}</label>
           <Controller
             control={control}
@@ -221,7 +221,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
           />
         </div>
 
-        <div className="space-y-2 md:col-span-2">
+        <div className="space-y-2">
           <label className={fieldLabelClass}>Categoria · conta gerencial</label>
           <Controller
             control={control}
@@ -262,7 +262,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
           </p>
         </div>
 
-        <div className="space-y-2 md:col-span-2">
+        <div className="space-y-2">
           <label className={fieldLabelClass}>Responsável</label>
           <Controller
             control={control}

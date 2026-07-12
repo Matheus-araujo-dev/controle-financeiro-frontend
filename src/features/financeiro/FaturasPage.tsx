@@ -273,6 +273,7 @@ export function FaturasPage() {
                     cartaoIds: next.length ? next : undefined
                   }))
                 }
+                searchable
               />
             </FilterField>
             <FilterField label="Status">

@@ -193,7 +193,7 @@ export function ComboBox({
     onBlur?.();
   }
 
-  function selectOption(option: ComboBoxOption) {
+  function selectOption(option: ComboBoxOption, fromKeyboard = false) {
     if (option.disabled) {
       return;
     }
@@ -201,7 +201,8 @@ export function ComboBox({
     onChange?.(option.value);
     setQuery(option.displayText ?? getTextFromNode(option.label));
     setOpen(false);
-    inputRef.current?.blur();
+    // Ao selecionar via teclado, mantém foco no input para o Tab seguinte funcionar
+    if (!fromKeyboard) inputRef.current?.blur();
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -243,7 +244,7 @@ export function ComboBox({
         highlightedIndex >= 0
           ? filteredOptions[highlightedIndex]
           : filteredOptions.find((o) => !o.disabled);
-      if (target) selectOption(target);
+      if (target) selectOption(target, true);
       return;
     }
   }
