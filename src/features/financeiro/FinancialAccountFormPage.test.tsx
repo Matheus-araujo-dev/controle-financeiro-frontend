@@ -113,7 +113,7 @@ describe('FinancialAccountFormPage', () => {
     await waitFor(() => expect(config.loadPessoaOptions).toHaveBeenCalled());
     expect(screen.getByText(/Recorrência Automática/i)).toBeInTheDocument();
     expect(screen.getByText('Rateio por Centro de Custo')).toBeInTheDocument();
-    expect(screen.getByText(/Observações Adicionais/i)).toBeInTheDocument();
+    expect(screen.getByText(/Detalhes e Observações/i)).toBeInTheDocument();
     expect(screen.getByDisplayValue('08/2026')).toBeInTheDocument();
     expect(screen.getByText(/05\/2026/)).toBeInTheDocument();
   }, 20000);
@@ -239,6 +239,46 @@ describe('FinancialAccountFormPage', () => {
     expect(await screen.findByDisplayValue('Despesa de teste')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Liquidar' })).not.toBeInTheDocument();
   }, 30000);
+
+  it('hides "Já liquidada?" toggle when payment method is a card', async () => {
+    const config = createConfig();
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
+
+    await waitFor(() => expect(config.loadFormaPagamentoOptions).toHaveBeenCalled());
+    // f1 is a card (ehCartao: true) — toggle must not appear
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+  }, 20000);
+
+  it('shows parcelamento mode toggle when parcelas > 1', async () => {
+    const config = createConfig();
+    // ehRecorrente must be false so normalizeRecurringFormValues does not reset quantidadeParcelas to 1
+    config.defaultValues = { ...validValues, ehRecorrente: false, quantidadeParcelas: 3, valorOriginal: 300 };
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
+
+    await waitFor(() => expect(config.loadPessoaOptions).toHaveBeenCalled());
+    expect(await screen.findByText('Total ÷ 3x')).toBeInTheDocument();
+    expect(screen.getByText('Parcela × 3x')).toBeInTheDocument();
+  }, 20000);
+
+  it('auto-fills responsável from conta gerencial responsavelPadraoId', async () => {
+    const config = createConfig();
+    config.loadRateioOptions = vi.fn().mockResolvedValue([
+      { label: 'Despesas gerais', value: 'cg1', responsavelPadraoId: 'p3' }
+    ]);
+    config.loadResponsavelOptions = vi.fn().mockResolvedValue([
+      { label: 'Responsável', value: 'p2' },
+      { label: 'Gerente', value: 'p3' }
+    ]);
+    // Start with no responsavelId so auto-fill can apply
+    config.defaultValues = { ...validValues, responsavelId: '', rateios: [{ contaGerencialId: 'cg1', valor: 95 }] };
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
+
+    await waitFor(() => expect(config.loadRateioOptions).toHaveBeenCalled());
+    // After options load, the ComboBox for Responsável should display the auto-filled label
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Gerente')).toBeInTheDocument();
+    });
+  }, 20000);
 
   it('applies server validation errors to the form', async () => {
     const config = createConfig();
