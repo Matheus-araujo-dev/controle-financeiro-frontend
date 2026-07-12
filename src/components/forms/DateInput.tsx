@@ -118,6 +118,8 @@ export function DateInput({
   const rootRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Após restaurar foco programaticamente, suprime a reabertura do calendário pelo onFocus
+  const suppressNextOpen = useRef(false);
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState<string | null>(null);
   const [popupStyle, setPopupStyle] = useState<CSSProperties>({});
@@ -195,12 +197,17 @@ export function DateInput({
     const iso = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     onChange?.(iso);
     close();
+    // Restaura foco ao input após remoção do portal; suprime reabertura do calendário
+    suppressNextOpen.current = true;
+    inputRef.current?.focus();
   }
 
   function selectMonth(year: number, month: number) {
     const iso = `${year}-${String(month).padStart(2, '0')}`;
     onChange?.(iso);
     close();
+    suppressNextOpen.current = true;
+    inputRef.current?.focus();
   }
 
   const popup = open && !disabled ? (
@@ -217,6 +224,7 @@ export function DateInput({
             <button
               type="button"
               className="grid h-8 w-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-primary/15 hover:text-primary"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 const next = new Date(viewYear, viewMonth - 2, 1);
                 setViewYear(next.getFullYear());
@@ -232,6 +240,7 @@ export function DateInput({
             <button
               type="button"
               className="grid h-8 w-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-primary/15 hover:text-primary"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 const next = new Date(viewYear, viewMonth, 1);
                 setViewYear(next.getFullYear());
@@ -263,6 +272,7 @@ export function DateInput({
                   key={`${cell.day}-${index}`}
                   type="button"
                   aria-label={`${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`}
+                  onMouseDown={(e) => e.preventDefault()}
                   className={`h-8 rounded-lg text-sm font-semibold transition-colors ${
                     cell.inMonth
                       ? isSelected
@@ -298,6 +308,7 @@ export function DateInput({
             <button
               type="button"
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => onChange?.('')}
             >
               Limpar
@@ -305,6 +316,7 @@ export function DateInput({
             <button
               type="button"
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 const today = new Date();
                 selectDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
@@ -320,6 +332,7 @@ export function DateInput({
             <button
               type="button"
               className="grid h-8 w-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-primary/15 hover:text-primary"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => setViewYear((current) => current - 1)}
               aria-label="Ano anterior"
             >
@@ -329,6 +342,7 @@ export function DateInput({
             <button
               type="button"
               className="grid h-8 w-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-primary/15 hover:text-primary"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => setViewYear((current) => current + 1)}
               aria-label="Próximo ano"
             >
@@ -346,6 +360,7 @@ export function DateInput({
                   key={label}
                   type="button"
                   aria-label={`${label} ${viewYear}`}
+                  onMouseDown={(e) => e.preventDefault()}
                   className={`flex h-11 w-full items-center justify-center rounded-lg px-3 text-sm font-semibold capitalize transition-colors ${
                     isSelected ? 'bg-primary/20 text-primary' : 'text-on-surface hover:bg-primary/15 hover:text-primary'
                   }`}
@@ -361,6 +376,7 @@ export function DateInput({
             <button
               type="button"
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => onChange?.('')}
             >
               Limpar
@@ -368,6 +384,7 @@ export function DateInput({
             <button
               type="button"
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 const today = new Date();
                 selectMonth(today.getFullYear(), today.getMonth() + 1);
@@ -396,10 +413,19 @@ export function DateInput({
 
   function handleTextKeyDown(e: ReactKeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
+      e.preventDefault(); // Evita submit do formulário pai ao confirmar data por teclado
       const iso = parseMaskedToIso(typed ?? '', mode);
       if (iso) { onChange?.(iso); setTyped(null); setOpen(false); }
     }
-    if (e.key === 'Escape') { setTyped(null); setOpen(false); }
+    if (e.key === 'Escape') {
+      if (open) {
+        e.preventDefault();
+        // Impede que handlers de documento (ex: QuickLaunchModal) capturem este Escape
+        e.nativeEvent.stopImmediatePropagation();
+      }
+      setTyped(null);
+      setOpen(false);
+    }
   }
 
   const inputDisplayValue = typed !== null ? typed : (value ? formatDisplayValue(mode, value) : '');
@@ -421,7 +447,11 @@ export function DateInput({
           value={inputDisplayValue}
           onChange={handleTextChange}
           onKeyDown={handleTextKeyDown}
-          onFocus={() => { if (!disabled) setOpen(true); }}
+          onFocus={() => {
+            if (disabled) return;
+            if (suppressNextOpen.current) { suppressNextOpen.current = false; return; }
+            setOpen(true);
+          }}
           className={`min-w-0 flex-1 bg-transparent px-4 font-medium text-on-surface outline-none placeholder:text-outline/50 disabled:cursor-not-allowed ${compact ? 'text-sm' : ''}`}
         />
         <button

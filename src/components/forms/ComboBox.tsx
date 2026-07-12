@@ -208,6 +208,10 @@ export function ComboBox({
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'Escape') {
       event.preventDefault();
+      if (open) {
+        // Impede que handlers de documento (ex: QuickLaunchModal) capturem este Escape
+        event.nativeEvent.stopImmediatePropagation();
+      }
       close();
       return;
     }
