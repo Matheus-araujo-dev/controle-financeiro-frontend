@@ -407,7 +407,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
             origemCompraPlanejadaId: null,
             responsavelCompraId: responsavelId,
             recebedorId: pessoaId,
-            dataCompra: null
+            dataCompra: exigeCartao ? dataVencimento : null
           });
           notify('success', 'Lançamento criado', base.descricao);
         }
