@@ -13,6 +13,8 @@ import { DashboardSaldoPorConta } from '../components/DashboardSaldoPorConta';
 import { DashboardResumoFinanceiro } from '../components/DashboardResumoFinanceiro';
 import { DashboardRealizadoVsPlanejado } from '../components/DashboardRealizadoVsPlanejado';
 import { DashboardCartoesBreakdown } from '../components/DashboardCartoesBreakdown';
+import { DashboardPlanos } from '../components/DashboardPlanos';
+import { DashboardInvestimentos } from '../components/DashboardInvestimentos';
 import { DateInput } from '../../../components/forms/DateInput';
 import { PageState } from '../../../components/states/PageState';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
@@ -189,6 +191,11 @@ export function DashboardPage() {
             orcamento={orcamentoData}
           />
           <DashboardCartoesBreakdown />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <DashboardPlanos />
+          <DashboardInvestimentos />
         </div>
 
         <DashboardAiInsights mesReferencia={referenceMonth} />
