@@ -27,6 +27,7 @@ import type {
   RecorrenciaFilters,
   RecorrenciaListItem,
   RecorrenciaListResponse,
+  FaturaItem,
   PagedFinanceiro,
   TransferenciaResumo,
   TransferenciaPayload,

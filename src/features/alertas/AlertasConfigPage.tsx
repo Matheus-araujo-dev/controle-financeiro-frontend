@@ -9,11 +9,13 @@ import type { ConfiguracaoNotificacao } from '../../types/alertas';
 
 // ── Push subscription helpers ─────────────────────────────────────────────────
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);
-  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+  const bytes = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) bytes[i] = rawData.charCodeAt(i);
+  return bytes.buffer as ArrayBuffer;
 }
 
 async function subscribeToPush(vapidPublicKey: string): Promise<PushSubscription | null> {
@@ -257,8 +259,8 @@ export function AlertasConfigPage() {
 
   const patch = (partial: Partial<ConfiguracaoNotificacao>) => setForm(f => ({ ...f, ...partial }));
 
-  if (isLoading) return <PageState variant="loading" />;
-  if (isError) return <PageState variant="error" title="Erro ao carregar configurações" />;
+  if (isLoading) return <PageState state="loading" />;
+  if (isError) return <PageState state="error" title="Erro ao carregar configurações" subtitle="Tente recarregar a página" />;
 
   const pushEnabled = pushSupported && pushPermission === 'granted' && !!activePushEndpoint;
 
