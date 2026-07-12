@@ -118,7 +118,7 @@ export function DateInput({
   const rootRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  // Após restaurar foco programaticamente, suprime a reabertura do calendário pelo onFocus
+  // Evita que o foco programático (após seleção por clique) reabra o calendário
   const suppressNextOpen = useRef(false);
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState<string | null>(null);
@@ -197,7 +197,7 @@ export function DateInput({
     const iso = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     onChange?.(iso);
     close();
-    // Restaura foco ao input após remoção do portal; suprime reabertura do calendário
+    // Restaura foco ao input após remoção do portal do calendário (evita que o foco vá pro body)
     suppressNextOpen.current = true;
     inputRef.current?.focus();
   }
@@ -307,6 +307,7 @@ export function DateInput({
           <div className="mt-3 flex items-center justify-between">
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onChange?.('')}
@@ -315,6 +316,7 @@ export function DateInput({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
@@ -375,6 +377,7 @@ export function DateInput({
           <div className="mt-3 flex items-center justify-between">
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onChange?.('')}
@@ -383,6 +386,7 @@ export function DateInput({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
@@ -420,7 +424,7 @@ export function DateInput({
     if (e.key === 'Escape') {
       if (open) {
         e.preventDefault();
-        // Impede que handlers de documento (ex: QuickLaunchModal) capturem este Escape
+        // Impede que o handler de documento do modal capture este Escape
         e.nativeEvent.stopImmediatePropagation();
       }
       setTyped(null);

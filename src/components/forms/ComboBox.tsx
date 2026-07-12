@@ -209,7 +209,7 @@ export function ComboBox({
     if (event.key === 'Escape') {
       event.preventDefault();
       if (open) {
-        // Impede que handlers de documento (ex: QuickLaunchModal) capturem este Escape
+        // Impede que o handler de documento do modal (QuickLaunchModal) também capture este Escape
         event.nativeEvent.stopImmediatePropagation();
       }
       close();
