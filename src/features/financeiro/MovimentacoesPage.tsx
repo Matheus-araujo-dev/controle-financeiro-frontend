@@ -10,6 +10,7 @@ import {
   ShoppingCartOutlined,
   WalletOutlined,
   FilterOutlined,
+  TeamOutlined,
   UserOutlined
 } from '@ant-design/icons';
 import { DateInput } from '../../components/forms/DateInput';
@@ -95,6 +96,7 @@ const defaultMovimentacaoFilters: MovimentacaoFilters = {
   dataFinal: undefined,
   contaBancariaIds: undefined,
   responsavelIds: undefined,
+  pessoaIds: undefined,
   tipo: undefined,
 };
 
@@ -146,6 +148,7 @@ export function MovimentacoesPage() {
     label: item.nome,
     value: item.id
   }));
+  const pessoaOptions: FilterOption[] = responsavelOptions;
 
   const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar as movimentações.' : undefined;
 
@@ -226,8 +229,8 @@ export function MovimentacoesPage() {
 
         </div>
 
-        {/* Linha 2: Conta + Responsável + Busca */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_2fr] gap-3">
+        {/* Linha 2: Conta + Pessoa + Responsável + Busca */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_2fr] gap-3">
           <FilterField label="Conta bancária">
             <MultiSelectFilter
               ariaLabel="Filtro de conta bancária"
@@ -237,6 +240,20 @@ export function MovimentacoesPage() {
               value={filters.contaBancariaIds ?? []}
               onChange={(next) =>
                 setFilters((prev) => ({ ...prev, contaBancariaIds: next.length ? next : undefined, page: 1 }))
+              }
+              searchable
+            />
+          </FilterField>
+
+          <FilterField label="Pessoa">
+            <MultiSelectFilter
+              ariaLabel="Filtro de pessoa (recebedor/pagador)"
+              icon={<TeamOutlined />}
+              placeholder="Todas as pessoas"
+              options={pessoaOptions}
+              value={filters.pessoaIds ?? []}
+              onChange={(next) =>
+                setFilters((prev) => ({ ...prev, pessoaIds: next.length ? next : undefined, page: 1 }))
               }
               searchable
             />

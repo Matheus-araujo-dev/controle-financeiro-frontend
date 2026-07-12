@@ -59,10 +59,14 @@ export function normalizeMovimentacaoFilters(params: MovimentacaoFilters): Recor
   const responsavelIds = Array.isArray(params.responsavelIds)
     ? params.responsavelIds.filter((value) => value.trim().length > 0)
     : [];
+  const pessoaIds = Array.isArray(params.pessoaIds)
+    ? params.pessoaIds.filter((value) => value.trim().length > 0)
+    : [];
 
   return {
     ...params,
     contaBancariaIds: contaBancariaIds.length ? contaBancariaIds.join(',') : undefined,
-    responsavelIds: responsavelIds.length ? responsavelIds.join(',') : undefined
+    responsavelIds: responsavelIds.length ? responsavelIds.join(',') : undefined,
+    pessoaIds: pessoaIds.length ? pessoaIds.join(',') : undefined
   };
 }

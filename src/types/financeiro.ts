@@ -358,6 +358,7 @@ export type MovimentacaoFilters = ListQueryBase & {
   contaBancariaId?: string;
   contaBancariaIds?: string[];
   responsavelIds?: string[];
+  pessoaIds?: string[];
   statusCodigo?: string;
   tipo?: TipoMovimentacao;
   natureza?: NaturezaMovimentacao;
