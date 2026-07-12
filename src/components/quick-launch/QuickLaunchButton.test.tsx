@@ -156,8 +156,9 @@ vi.mock('../../services/http/cadastros-api', () => ({
 
 vi.mock('../../services/http/financeiro-api', () => ({
   financeiroApi: {
-    contasPagar: { criar: vi.fn() },
-    contasReceber: { criar: vi.fn() }
+    contasPagar: { criar: vi.fn(), listar: vi.fn() },
+    contasReceber: { criar: vi.fn(), listar: vi.fn() },
+    transferencias: { criar: vi.fn() }
   }
 }));
 
@@ -240,6 +241,8 @@ describe('QuickLaunchButton', () => {
     mockSuccessfulOptions();
     vi.mocked(financeiroApi.contasPagar.criar).mockResolvedValue({} as never);
     vi.mocked(financeiroApi.contasReceber.criar).mockResolvedValue({} as never);
+    vi.mocked(financeiroApi.contasPagar.listar).mockResolvedValue({ totalItems: 0, items: [], page: 1, pageSize: 5, totalPages: 0 } as never);
+    vi.mocked(financeiroApi.contasReceber.listar).mockResolvedValue({ totalItems: 0, items: [], page: 1, pageSize: 5, totalPages: 0 } as never);
   });
 
   it('opens the modal, isolates the shell and closes with escape', async () => {
