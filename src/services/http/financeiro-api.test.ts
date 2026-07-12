@@ -212,7 +212,8 @@ describe('financeiroApi', () => {
       pageSize: 20,
       search: 'receita',
       contaBancariaIds: ['cb1', 'cb2'],
-      responsavelIds: ['rp1', 'rp2']
+      responsavelIds: ['rp1', 'rp2'],
+      pessoaIds: ['p1', 'p2']
     });
     await financeiroApi.movimentacoes.obterPorId('m1');
 
@@ -293,7 +294,8 @@ describe('financeiroApi', () => {
         pageSize: 20,
         search: 'receita',
         contaBancariaIds: 'cb1,cb2',
-        responsavelIds: 'rp1,rp2'
+        responsavelIds: 'rp1,rp2',
+        pessoaIds: 'p1,p2'
       }
     });
     expect(apiClient.get).toHaveBeenCalledWith('/movimentacoes/m1');
