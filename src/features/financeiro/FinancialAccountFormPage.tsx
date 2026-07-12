@@ -12,6 +12,7 @@ import { RateioSection } from './financial-account-form/RateioSection';
 import { SummarySidebar } from './financial-account-form/SummarySidebar';
 import { fieldLabelClass, nativeCompactFieldClass, nativeFieldWithPaddingClass, nativeTextareaClass } from './financial-account-form/field-classes';
 import { useFinancialAccountForm } from './financial-account-form/useFinancialAccountForm';
+import { DuplicateAlertModal } from './financial-account-form/DuplicateAlertModal';
 
 export function FinancialAccountFormPage({
   config
@@ -20,7 +21,10 @@ export function FinancialAccountFormPage({
   config: FinanceiroModuleConfig<any, any, any>;
 }) {
   const form = useFinancialAccountForm(config);
-  const { id, control, canEdit, loading, errorMessage, isSubmitting, handleSubmit, onSubmit } = form;
+  const {
+    id, control, canEdit, loading, errorMessage, isSubmitting, handleSubmit, onSubmit,
+    pendingDuplicateValues, createDespiteDuplicate, cancelDuplicateCheck
+  } = form;
   const isReceita = config.key === 'contas-receber';
 
   if (loading) return <PageState state="loading" title="Carregando lançamento..." />;
@@ -118,6 +122,13 @@ export function FinancialAccountFormPage({
           <SummarySidebar form={form} />
         </div>
       </form>
+
+      <DuplicateAlertModal
+        open={!!pendingDuplicateValues}
+        loading={isSubmitting}
+        onConfirm={createDespiteDuplicate}
+        onCancel={cancelDuplicateCheck}
+      />
     </div>
   );
 }

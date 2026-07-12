@@ -6,7 +6,7 @@ import { DateInput } from '../../components/forms/DateInput';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { QuickAddContaBancariaModal } from '../cadastros/quick-add/QuickAddContaBancariaModal';
 import { QuickAddFormaPagamentoModal } from '../cadastros/quick-add/QuickAddFormaPagamentoModal';
-import type { FinanceiroLiquidacaoFormValues, SelectOption } from './module-config';
+import type { FinanceiroLiquidacaoFormValues, MeioPagamento, SelectOption } from './module-config';
 
 type Props = {
   open: boolean;
@@ -48,14 +48,15 @@ export function LiquidarModal({
   const valorRestante = valorPago != null ? valorLiquido - valorPago : valorLiquido;
 
   const [step, setStep] = useState<Step>('form');
-  const [valorLiq, setValorLiq] = useState(valorRestante);
   const [data, setData] = useState(todayIso());
-  const [contaBancariaId, setContaBancariaId] = useState(defaultContaBancariaId ?? '');
-  const [formaPagId, setFormaPagId] = useState(formaPagamentoId ?? '');
+  const [paymentRows, setPaymentRows] = useState<MeioPagamento[]>([
+    { contaBancariaId: defaultContaBancariaId ?? '', formaPagamentoId: formaPagamentoId ?? '', valor: valorRestante }
+  ]);
   const [extraContasBancarias, setExtraContasBancarias] = useState<SelectOption[]>([]);
   const [extraFormasPagamento, setExtraFormasPagamento] = useState<SelectOption[]>([]);
-  const [addContaBancariaOpen, setAddContaBancariaOpen] = useState(false);
-  const [addFormaPagamentoOpen, setAddFormaPagamentoOpen] = useState(false);
+  // Tracks which row a QuickAdd modal targets
+  const [addContaBancariaRowIdx, setAddContaBancariaRowIdx] = useState<number | null>(null);
+  const [addFormaPagamentoRowIdx, setAddFormaPagamentoRowIdx] = useState<number | null>(null);
 
   // opções step 2
   const [atualizarValorConta, setAtualizarValorConta] = useState(true);
@@ -65,10 +66,10 @@ export function LiquidarModal({
   useEffect(() => {
     if (open) {
       setStep('form');
-      setValorLiq(valorRestante);
       setData(todayIso());
-      setContaBancariaId(defaultContaBancariaId ?? '');
-      setFormaPagId(formaPagamentoId ?? '');
+      setPaymentRows([
+        { contaBancariaId: defaultContaBancariaId ?? '', formaPagamentoId: formaPagamentoId ?? '', valor: valorRestante }
+      ]);
       setAtualizarValorConta(true);
       setAtualizarRecorrencia(false);
       setCancelarValorRestante(false);
@@ -82,14 +83,32 @@ export function LiquidarModal({
 
   if (!open) return null;
 
+  const valorLiq = paymentRows.reduce((sum, r) => sum + r.valor, 0);
+  const primaryRow = paymentRows[0] ?? { contaBancariaId: '', formaPagamentoId: '', valor: 0 };
   const valorFinal = (valorPago ?? 0) + valorLiq;
   const diferenca = valorLiq - valorRestante;
   const isIgual = Math.abs(diferenca) < 0.01;
   const isMaior = diferenca > 0.01;
   const isMenor = diferenca < -0.01;
+  const multiRow = paymentRows.length > 1;
+
+  function updateRow(idx: number, patch: Partial<MeioPagamento>) {
+    setPaymentRows((prev) => prev.map((r, i) => i === idx ? { ...r, ...patch } : r));
+  }
+
+  function addRow() {
+    setPaymentRows((prev) => [
+      ...prev,
+      { contaBancariaId: defaultContaBancariaId ?? '', formaPagamentoId: formaPagamentoId ?? '', valor: 0 }
+    ]);
+  }
+
+  function removeRow(idx: number) {
+    setPaymentRows((prev) => prev.filter((_, i) => i !== idx));
+  }
 
   function avancarOuConfirmar() {
-    if (!contaBancariaId) return;
+    if (!primaryRow.contaBancariaId || valorLiq <= 0) return;
     if (isIgual) {
       submitLiquidacao();
     } else {
@@ -101,11 +120,12 @@ export function LiquidarModal({
     onConfirmar({
       valorLiquidacao: valorLiq,
       dataLiquidacao: data,
-      contaBancariaId,
-      formaPagamentoId: formaPagId,
+      contaBancariaId: primaryRow.contaBancariaId,
+      formaPagamentoId: primaryRow.formaPagamentoId,
       atualizarValorConta: isMaior ? atualizarValorConta : false,
       atualizarRecorrencia,
-      cancelarValorRestante: isMenor ? cancelarValorRestante : false
+      cancelarValorRestante: isMenor ? cancelarValorRestante : false,
+      meiosPagamento: multiRow ? paymentRows : undefined
     });
   }
 
@@ -137,22 +157,7 @@ export function LiquidarModal({
 
         {step === 'form' ? (
           <div className="space-y-4">
-            <div>
-              <label className={fieldLabel}>Valor pago</label>
-              <CurrencyInput
-                value={valorLiq}
-                onChange={(v) => setValorLiq(v ?? 0)}
-                className={fieldClass}
-              />
-              {!isIgual && (
-                <p className={`mt-1 text-xs font-medium ${isMaior ? 'text-warning' : 'text-on-surface-variant'}`}>
-                  {isMaior
-                    ? `${formatCurrencyBRL(diferenca)} acima do valor original`
-                    : `${formatCurrencyBRL(Math.abs(diferenca))} abaixo do valor original`}
-                </p>
-              )}
-            </div>
-
+            {/* Date — single for all rows */}
             <div>
               <label className={fieldLabel}>Data do pagamento</label>
               <DateInput
@@ -162,29 +167,108 @@ export function LiquidarModal({
               />
             </div>
 
-            <div>
-              <label className={fieldLabel}>Conta bancária</label>
-              <ComboBox
-                value={contaBancariaId}
-                placeholder="Selecionar conta..."
-                options={allContasBancarias.map((o) => ({ value: o.value, label: o.label }))}
-                onChange={setContaBancariaId}
-                onAddNew={() => setAddContaBancariaOpen(true)}
-                addNewLabel="Nova conta bancária"
-              />
-            </div>
+            {/* Payment rows */}
+            {paymentRows.map((row, idx) => (
+              <div key={idx} className={multiRow ? 'rounded-2xl border border-white/8 bg-surface-container p-4 space-y-3' : 'space-y-4'}>
+                {multiRow && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                      Meio {idx + 1}
+                    </span>
+                    {paymentRows.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeRow(idx)}
+                        className="text-on-surface-variant hover:text-error transition-colors"
+                        aria-label={`Remover meio ${idx + 1}`}
+                      >
+                        <span className="material-symbols-outlined text-lg">close</span>
+                      </button>
+                    )}
+                  </div>
+                )}
 
-            <div>
-              <label className={fieldLabel}>Forma de pagamento</label>
-              <ComboBox
-                value={formaPagId}
-                placeholder="Selecionar..."
-                options={allFormasPagamento.map((o) => ({ value: o.value, label: o.label }))}
-                onChange={setFormaPagId}
-                onAddNew={() => setAddFormaPagamentoOpen(true)}
-                addNewLabel="Nova forma de pagamento"
-              />
-            </div>
+                {!multiRow && (
+                  <div>
+                    <label className={fieldLabel}>Valor pago</label>
+                    <CurrencyInput
+                      value={row.valor}
+                      onChange={(v) => updateRow(idx, { valor: v ?? 0 })}
+                      className={fieldClass}
+                    />
+                    {!isIgual && (
+                      <p className={`mt-1 text-xs font-medium ${isMaior ? 'text-warning' : 'text-on-surface-variant'}`}>
+                        {isMaior
+                          ? `${formatCurrencyBRL(diferenca)} acima do valor original`
+                          : `${formatCurrencyBRL(Math.abs(diferenca))} abaixo do valor original`}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <label className={fieldLabel}>Conta bancária</label>
+                  <ComboBox
+                    value={row.contaBancariaId}
+                    placeholder="Selecionar conta..."
+                    options={allContasBancarias.map((o) => ({ value: o.value, label: o.label }))}
+                    onChange={(v) => updateRow(idx, { contaBancariaId: v })}
+                    onAddNew={() => setAddContaBancariaRowIdx(idx)}
+                    addNewLabel="Nova conta bancária"
+                  />
+                </div>
+
+                <div>
+                  <label className={fieldLabel}>Forma de pagamento</label>
+                  <ComboBox
+                    value={row.formaPagamentoId}
+                    placeholder="Selecionar..."
+                    options={allFormasPagamento.map((o) => ({ value: o.value, label: o.label }))}
+                    onChange={(v) => updateRow(idx, { formaPagamentoId: v })}
+                    onAddNew={() => setAddFormaPagamentoRowIdx(idx)}
+                    addNewLabel="Nova forma de pagamento"
+                  />
+                </div>
+
+                {multiRow && (
+                  <div>
+                    <label className={fieldLabel}>Valor</label>
+                    <CurrencyInput
+                      value={row.valor}
+                      onChange={(v) => updateRow(idx, { valor: v ?? 0 })}
+                      className={fieldClass}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Multi-row total + diff */}
+            {multiRow && (
+              <div className="space-y-1 px-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-on-surface-variant">Total</span>
+                  <span className="font-bold text-on-surface">{formatCurrencyBRL(valorLiq)}</span>
+                </div>
+                {!isIgual && (
+                  <p className={`text-xs font-medium ${isMaior ? 'text-warning' : 'text-on-surface-variant'}`}>
+                    {isMaior
+                      ? `${formatCurrencyBRL(diferenca)} acima do valor original`
+                      : `${formatCurrencyBRL(Math.abs(diferenca))} abaixo do valor original`}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Add row button */}
+            <button
+              type="button"
+              onClick={addRow}
+              className="flex items-center gap-1 text-xs text-primary hover:underline"
+            >
+              <span className="material-symbols-outlined text-base">add</span>
+              Dividir em mais meios de pagamento
+            </button>
 
             {error ? <p className="text-sm font-medium text-error">{error}</p> : null}
 
@@ -193,7 +277,7 @@ export function LiquidarModal({
               <Button
                 type="button"
                 variant="primary"
-                disabled={!contaBancariaId || valorLiq <= 0 || loading}
+                disabled={!primaryRow.contaBancariaId || valorLiq <= 0 || loading}
                 loading={loading && isIgual}
                 onClick={avancarOuConfirmar}
               >
@@ -289,19 +373,19 @@ export function LiquidarModal({
         )}
       </div>
       <QuickAddModalsForLiquidar
-        addContaBancariaOpen={addContaBancariaOpen}
-        addFormaPagamentoOpen={addFormaPagamentoOpen}
-        onContaBancariaClose={() => setAddContaBancariaOpen(false)}
-        onFormaPagamentoClose={() => setAddFormaPagamentoOpen(false)}
+        addContaBancariaOpen={addContaBancariaRowIdx !== null}
+        addFormaPagamentoOpen={addFormaPagamentoRowIdx !== null}
+        onContaBancariaClose={() => setAddContaBancariaRowIdx(null)}
+        onFormaPagamentoClose={() => setAddFormaPagamentoRowIdx(null)}
         onContaBancariaSuccess={(id, label) => {
           setExtraContasBancarias((prev) => [{ value: id, label }, ...prev.filter((o) => o.value !== id)]);
-          setContaBancariaId(id);
-          setAddContaBancariaOpen(false);
+          if (addContaBancariaRowIdx !== null) updateRow(addContaBancariaRowIdx, { contaBancariaId: id });
+          setAddContaBancariaRowIdx(null);
         }}
         onFormaPagamentoSuccess={(id, label) => {
           setExtraFormasPagamento((prev) => [{ value: id, label }, ...prev.filter((o) => o.value !== id)]);
-          setFormaPagId(id);
-          setAddFormaPagamentoOpen(false);
+          if (addFormaPagamentoRowIdx !== null) updateRow(addFormaPagamentoRowIdx, { formaPagamentoId: id });
+          setAddFormaPagamentoRowIdx(null);
         }}
       />
     </div>

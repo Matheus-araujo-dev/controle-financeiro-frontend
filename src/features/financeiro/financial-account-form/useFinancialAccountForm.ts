@@ -49,6 +49,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [grupoParcelamentoId, setGrupoParcelamentoId] = useState<string | null | undefined>(undefined);
   const [numeroParcela, setNumeroParcela] = useState<number | undefined>(undefined);
   const [pendingValues, setPendingValues] = useState<FinanceiroFormValues | null>(null);
+  const [pendingDuplicateValues, setPendingDuplicateValues] = useState<FinanceiroFormValues | null>(null);
 
   const {
     control,
@@ -206,24 +207,14 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
 
   const onCancel = useCallback(() => navigate(config.routeBase), [navigate, config.routeBase]);
 
-  const onSubmit = useCallback(
+  const doCreate = useCallback(
     async (values: FinanceiroFormValues) => {
-      if (id && canAlterarFuturas) {
-        setPendingValues(values);
-        return;
-      }
       try {
-        if (id) {
-          await config.update(id, values);
-          navigate(config.routeBase);
+        const created = await config.create(values);
+        const preview = extractCardInvoicePreview(created);
+        if (created?.id && preview) {
+          navigate(`${config.routeBase}/${created.id}`);
           return;
-        } else {
-          const created = await config.create(values);
-          const preview = extractCardInvoicePreview(created);
-          if (created?.id && preview) {
-            navigate(`${config.routeBase}/${created.id}`);
-            return;
-          }
         }
         navigate(config.routeBase);
       } catch (error) {
@@ -238,8 +229,53 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         setErrorMessage(error instanceof Error ? error.message : 'Falha ao salvar o lançamento.');
       }
     },
-    [id, canAlterarFuturas, config, navigate, setError]
+    [config, navigate, setError]
   );
+
+  const onSubmit = useCallback(
+    async (values: FinanceiroFormValues) => {
+      if (id && canAlterarFuturas) {
+        setPendingValues(values);
+        return;
+      }
+      try {
+        if (id) {
+          await config.update(id, values);
+          navigate(config.routeBase);
+          return;
+        } else {
+          if (config.checkDuplicate) {
+            const isDuplicate = await config.checkDuplicate(values.descricao, values.dataVencimento);
+            if (isDuplicate) {
+              setPendingDuplicateValues(values);
+              return;
+            }
+          }
+          await doCreate(values);
+        }
+      } catch (error) {
+        const apiError = error as AxiosError<ApiErrorResponse>;
+        const validationErrors = apiError.response?.data?.errors;
+        if (validationErrors) {
+          applyServerValidationErrors(validationErrors, (field, message) =>
+            setError(field as keyof FinanceiroFormValues, { type: 'server', message })
+          );
+          return;
+        }
+        setErrorMessage(error instanceof Error ? error.message : 'Falha ao salvar o lançamento.');
+      }
+    },
+    [id, canAlterarFuturas, config, navigate, setError, doCreate]
+  );
+
+  const createDespiteDuplicate = useCallback(async () => {
+    if (!pendingDuplicateValues) return;
+    const values = pendingDuplicateValues;
+    setPendingDuplicateValues(null);
+    await doCreate(values);
+  }, [pendingDuplicateValues, doCreate]);
+
+  const cancelDuplicateCheck = useCallback(() => setPendingDuplicateValues(null), []);
 
   const handleSaveError = useCallback(
     (error: unknown) => {
@@ -381,6 +417,9 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     numeroParcela,
     cancelar,
     estornar,
+    pendingDuplicateValues,
+    createDespiteDuplicate,
+    cancelDuplicateCheck,
     reloadPessoaOptions,
     reloadResponsavelOptions,
     reloadFormaPagamentoOptions,

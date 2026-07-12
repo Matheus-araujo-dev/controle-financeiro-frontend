@@ -20,7 +20,9 @@ type PaymentValues = {
 };
 
 function statusBadgeVariant(statusCodigo: string) {
-  return statusCodigo === 'PAGA' ? 'primary' : 'warning';
+  if (statusCodigo === 'PAGA') return 'primary';
+  if (statusCodigo === 'FECHADA') return 'neutral';
+  return 'warning';
 }
 
 function accountStatusBadgeVariant(statusCodigo: string) {
@@ -89,6 +91,18 @@ export function FaturaDetailPage() {
     onError: (err) => setActionError(err instanceof Error ? err.message : 'Falha ao pagar a fatura.')
   });
 
+  const fecharMutation = useMutation({
+    mutationFn: () => financeiroApi.faturas.fechar(id!),
+    onSuccess: (response) => {
+      queryClient.setQueryData(['faturas', 'detail', id], (old: typeof data) => ({
+        ...old,
+        detail: response
+      }));
+      setActionError(undefined);
+    },
+    onError: (err) => setActionError(err instanceof Error ? err.message : 'Falha ao fechar a fatura.')
+  });
+
   const estornarMutation = useMutation({
     mutationFn: () => financeiroApi.faturas.estornar(id!),
     onSuccess: (response) => {
@@ -108,7 +122,7 @@ export function FaturaDetailPage() {
 
   const detail = data?.detail;
   const contaOptions = data?.contaOptions ?? [];
-  const saving = pagarMutation.isPending || estornarMutation.isPending;
+  const saving = pagarMutation.isPending || estornarMutation.isPending || fecharMutation.isPending;
   const errorMessage = actionError ?? (error instanceof Error ? error.message : error ? 'Falha ao carregar a fatura.' : undefined);
 
   const kpiCards = useMemo(() => {
@@ -141,7 +155,7 @@ export function FaturaDetailPage() {
   if (isLoading) return <PageState state="loading" title="Carregando fatura..." />;
   if (!detail) return <PageState state="error" title="Falha ao carregar fatura" subtitle={errorMessage ?? 'Fatura não encontrada.'} />;
 
-  const paymentPending = detail.statusCodigo === 'ABERTA';
+  const paymentPending = detail.statusCodigo === 'ABERTA' || detail.statusCodigo === 'FECHADA';
   const canSubmitPayment = paymentValues.dataPagamento.trim() !== '' && paymentValues.contaBancariaPagamentoId.trim() !== '';
 
   return (
@@ -159,6 +173,19 @@ export function FaturaDetailPage() {
           <NeonBadge variant={statusBadgeVariant(detail.statusCodigo)}>
             {detail.statusNome}
           </NeonBadge>
+          {detail.statusCodigo === 'ABERTA' && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={saving}
+              loading={fecharMutation.isPending}
+              onClick={() => fecharMutation.mutate()}
+            >
+              <span className="material-symbols-outlined text-base">lock</span>
+              Fechar fatura
+            </Button>
+          )}
           <Link to="/faturas">
             <Button type="button" variant="secondary" size="sm">
               <span className="material-symbols-outlined text-base">arrow_back</span>
@@ -202,9 +229,11 @@ export function FaturaDetailPage() {
               {paymentPending ? 'Registrar pagamento' : 'Resumo do pagamento'}
             </h2>
             <p className="mt-0.5 text-sm text-on-surface-variant">
-              {paymentPending
-                ? 'Informe a data, a conta bancária e uma observação opcional para registrar a saída do caixa.'
-                : 'A fatura já foi liquidada. Dados do pagamento registrado abaixo.'}
+              {detail.statusCodigo === 'FECHADA'
+                ? 'Fatura fechada para novos lançamentos. Registre o pagamento para quitá-la.'
+                : paymentPending
+                  ? 'Informe a data, a conta bancária e uma observação opcional para registrar a saída do caixa.'
+                  : 'A fatura já foi liquidada. Dados do pagamento registrado abaixo.'}
             </p>
           </div>
           <NeonBadge variant={statusBadgeVariant(detail.statusCodigo)}>
