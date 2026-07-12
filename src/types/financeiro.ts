@@ -193,6 +193,7 @@ export type ContaPagarFilters = ListQueryBase & {
   recebedorIds?: string[];
   formaPagamentoId?: string;
   formaPagamentoIds?: string[];
+  responsavelIds?: string[];
   statusCodigo?: StatusContaCodigo | StatusContaCodigo[];
   statusCodigos?: StatusContaCodigo[];
   dataEmissaoInicial?: string;
@@ -293,6 +294,7 @@ export type ContaReceberFilters = ListQueryBase & {
   pagadorIds?: string[];
   formaPagamentoId?: string;
   formaPagamentoIds?: string[];
+  responsavelIds?: string[];
   statusCodigo?: StatusContaCodigo | StatusContaCodigo[];
   statusCodigos?: StatusContaCodigo[];
   dataEmissaoInicial?: string;
