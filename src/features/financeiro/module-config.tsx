@@ -3,7 +3,7 @@ import type { SummaryCardItem } from '../../components/data/ListSummaryCards';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
-import { checkContaPagarDuplicate, checkContaReceberDuplicate } from './financial-rules';
+import { checkContaPagarDuplicate, checkContaReceberDuplicate, type DuplicateItemSummary } from './financial-rules';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR, toMonthInputValue } from '../../shared/date';
 import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
@@ -141,7 +141,7 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   loadRateioOptions: () => Promise<RateioOption[]>;
   resolveCreateDefaults?: (searchParams: URLSearchParams) => Promise<Partial<FinanceiroFormValues> | null>;
   buildSummaryItems?: (summary: FinanceiroResumo) => SummaryCardItem[];
-  checkDuplicate?: (descricao: string, dataVencimento: string) => Promise<boolean>;
+  checkDuplicate?: (descricao: string, dataVencimento: string, pessoaId?: string, valor?: number) => Promise<DuplicateItemSummary[] | null>;
 };
 
 const statusOptions: Array<SelectOption & { code?: StatusContaCodigo }> = [
