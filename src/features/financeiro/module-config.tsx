@@ -46,6 +46,8 @@ export type FormaPagamentoOption = SelectOption & {
   baixarAutomaticamente: boolean;
 };
 
+export type RateioOption = ComboBoxOption & { responsavelPadraoId?: string | null };
+
 export type FinanceiroRateioFormValue = {
   contaGerencialId: string;
   valor: number;
@@ -128,7 +130,7 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   loadFormaPagamentoOptions: () => Promise<FormaPagamentoOption[]>;
   loadContaBancariaOptions: () => Promise<SelectOption[]>;
   loadCartaoOptions: () => Promise<SelectOption[]>;
-  loadRateioOptions: () => Promise<ComboBoxOption[]>;
+  loadRateioOptions: () => Promise<RateioOption[]>;
   resolveCreateDefaults?: (searchParams: URLSearchParams) => Promise<Partial<FinanceiroFormValues> | null>;
   buildSummaryItems?: (summary: FinanceiroResumo) => SummaryCardItem[];
 };
@@ -353,7 +355,7 @@ async function loadCartaoOptions() {
   }));
 }
 
-async function loadRateioOptions(tipo: ContaGerencialTipo): Promise<ComboBoxOption[]> {
+async function loadRateioOptions(tipo: ContaGerencialTipo): Promise<RateioOption[]> {
   const response = await cadastrosApi.contasGerenciais.listar({
     page: 1,
     pageSize: 500,
@@ -362,9 +364,12 @@ async function loadRateioOptions(tipo: ContaGerencialTipo): Promise<ComboBoxOpti
     ativo: true
   });
 
+  const responsavelMap = new Map(response.items.map((i) => [i.id, i.responsavelPadraoId ?? null]));
+
   return mapContaGerencialHierarchyData(response.items).map(({ value, main, chain }) => ({
     value,
     displayText: main,
+    responsavelPadraoId: responsavelMap.get(value) ?? null,
     label: chain ? (
       <>
         {main}{' '}

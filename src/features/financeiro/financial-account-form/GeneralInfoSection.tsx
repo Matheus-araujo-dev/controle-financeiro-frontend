@@ -44,7 +44,9 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
   const descricaoWatched = useWatch({ control, name: 'descricao' });
   const categoriaAtual = useWatch({ control, name: 'rateios.0.contaGerencialId' });
   const pessoaWatched = useWatch({ control, name: 'pessoaId' });
+  const responsavelAtual = useWatch({ control, name: 'responsavelId' });
   const lastAutoFilledContaRef = useRef<string | null>(null);
+  const lastAutoFilledResponsavelRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!pessoaWatched) return;
@@ -63,6 +65,17 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
       lastAutoFilledContaRef.current = null;
     }
   }, [pessoaWatched, pessoaOptions, categoriaAtual, personRole, setValue]);
+
+  useEffect(() => {
+    if (!categoriaAtual) return;
+    const option = rateioOptions.find((o) => o.value === categoriaAtual);
+    const responsavelId = option?.responsavelPadraoId;
+    if (!responsavelId) return;
+    const manuallyChanged = responsavelAtual && responsavelAtual !== lastAutoFilledResponsavelRef.current;
+    if (manuallyChanged) return;
+    setValue('responsavelId', responsavelId);
+    lastAutoFilledResponsavelRef.current = responsavelId;
+  }, [categoriaAtual, rateioOptions, responsavelAtual, setValue]);
 
   useEffect(() => {
     if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current);
@@ -181,7 +194,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 md:col-span-2">
           <label className={fieldLabelClass}>{personLabel}</label>
           <Controller
             control={control}
@@ -203,33 +216,6 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
                   </ComboBox>
                 </div>
                 {errors.pessoaId ? <span className={errorTextClass}>{errors.pessoaId.message}</span> : null}
-              </div>
-            )}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className={fieldLabelClass}>Responsável</label>
-          <Controller
-            control={control}
-            name="responsavelId"
-            render={({ field }) => (
-              <div className="space-y-1">
-                <div className={errors.responsavelId ? 'rounded-xl ring-1 ring-error' : ''}>
-                  <ComboBox
-                    {...field}
-                    disabled={!canEdit}
-                    onAddNew={canEdit ? () => setPessoaModalTarget('responsavelId') : undefined}
-                  >
-                    <option value="">Selecionar...</option>
-                    {responsavelOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </ComboBox>
-                </div>
-                {errors.responsavelId ? <span className={errorTextClass}>{errors.responsavelId.message}</span> : null}
               </div>
             )}
           />
@@ -277,12 +263,28 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <label className={fieldLabelClass}>Nº Documento</label>
+          <label className={fieldLabelClass}>Responsável</label>
           <Controller
             control={control}
-            name="numeroDocumento"
-            render={({ field: { value, ...rest } }) => (
-              <input {...rest} value={value ?? ''} disabled={!canEdit} className={nativeFieldWithPaddingClass} placeholder="000.000" />
+            name="responsavelId"
+            render={({ field }) => (
+              <div className="space-y-1">
+                <div className={errors.responsavelId ? 'rounded-xl ring-1 ring-error' : ''}>
+                  <ComboBox
+                    {...field}
+                    disabled={!canEdit}
+                    onAddNew={canEdit ? () => setPessoaModalTarget('responsavelId') : undefined}
+                  >
+                    <option value="">Selecionar...</option>
+                    {responsavelOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </ComboBox>
+                </div>
+                {errors.responsavelId ? <span className={errorTextClass}>{errors.responsavelId.message}</span> : null}
+              </div>
             )}
           />
         </div>

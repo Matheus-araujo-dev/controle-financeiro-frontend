@@ -13,9 +13,14 @@ type TermsValueSectionProps = {
   moduloLabel?: string;
 };
 
+type ParcelamentoMode = 'total' | 'parcela';
+
 export function TermsValueSection({ form, moduloLabel = 'pagar' }: TermsValueSectionProps) {
   const { id, control, errors, canEdit, watchedValues, setValue, formaPagamentoBehavior } = form;
   const [jaLiquidada, setJaLiquidada] = useState(false);
+  const [parcelamentoMode, setParcelamentoMode] = useState<ParcelamentoMode>('total');
+
+  const ehCartao = formaPagamentoBehavior.ehCartao;
 
   function handleToggleLiquidada(valor: boolean) {
     setJaLiquidada(valor);
@@ -29,6 +34,11 @@ export function TermsValueSection({ form, moduloLabel = 'pagar' }: TermsValueSec
 
   useEffect(() => {
     if (id) return;
+    if (ehCartao) {
+      setJaLiquidada(false);
+      setValue('dataLiquidacao', '');
+      return;
+    }
     const novoEstado = formaPagamentoBehavior.baixarAutomaticamente;
     setJaLiquidada(novoEstado);
     if (novoEstado) {
@@ -52,9 +62,26 @@ export function TermsValueSection({ form, moduloLabel = 'pagar' }: TermsValueSec
 
   const toggleLabel = moduloLabel === 'receber' ? 'Já recebida?' : 'Já liquidada?';
 
+  const qtdParcelas = watchedValues.quantidadeParcelas ?? 1;
+  const valorOriginal = watchedValues.valorOriginal ?? 0;
+  const valorParcela = qtdParcelas > 0 ? valorOriginal / qtdParcelas : 0;
+
+  function handleParcelaModeToggle(mode: ParcelamentoMode) {
+    setParcelamentoMode(mode);
+  }
+
+  function handleValorOriginalChange(val: number | null) {
+    setValue('valorOriginal', val ?? 0);
+  }
+
+  function handleValorParcelaChange(val: number | null) {
+    const parcela = val ?? 0;
+    setValue('valorOriginal', parcela * qtdParcelas);
+  }
+
   return (
-    <FormSection title="Prazos e Valor" eyebrow="Passo 2" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_month</span>}>
-      {!id ? (
+    <FormSection title="Prazos e Valor" eyebrow="Passo 3" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_month</span>}>
+      {!id && !ehCartao ? (
         <div className="mb-4 flex items-center gap-3">
           <button
             type="button"
@@ -136,46 +163,77 @@ export function TermsValueSection({ form, moduloLabel = 'pagar' }: TermsValueSec
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="space-y-2.5">
-          <label className={fieldLabelClass}>Valor Original</label>
-          <Controller
-            control={control}
-            name="valorOriginal"
-            render={({ field }) => (
-              <CurrencyInput value={field.value} onChange={(val) => field.onChange(val ?? 0)} disabled={!canEdit} className={nativeCompactFieldClass} />
-            )}
-          />
+      <div className="mt-3 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className={fieldLabelClass}>Valor</span>
+          {qtdParcelas > 1 ? (
+            <div className="ml-auto flex rounded-lg border border-white/10 bg-surface-container p-0.5 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => handleParcelaModeToggle('total')}
+                className={[
+                  'rounded-md px-2.5 py-1 transition-colors',
+                  parcelamentoMode === 'total'
+                    ? 'bg-primary/20 text-primary'
+                    : 'text-on-surface-variant hover:text-on-surface',
+                ].join(' ')}
+              >
+                Total ÷ {qtdParcelas}x
+              </button>
+              <button
+                type="button"
+                onClick={() => handleParcelaModeToggle('parcela')}
+                className={[
+                  'rounded-md px-2.5 py-1 transition-colors',
+                  parcelamentoMode === 'parcela'
+                    ? 'bg-primary/20 text-primary'
+                    : 'text-on-surface-variant hover:text-on-surface',
+                ].join(' ')}
+              >
+                Parcela × {qtdParcelas}x
+              </button>
+            </div>
+          ) : null}
         </div>
-        <div className="space-y-2.5">
-          <label className={fieldLabelClass}>Desconto</label>
-          <Controller
-            control={control}
-            name="valorDesconto"
-            render={({ field }) => (
-              <CurrencyInput value={field.value} onChange={(val) => field.onChange(val ?? 0)} disabled={!canEdit} className={nativeCompactFieldClass} />
-            )}
-          />
-        </div>
-        <div className="space-y-2.5">
-          <label className={fieldLabelClass}>Juros</label>
-          <Controller
-            control={control}
-            name="valorJuros"
-            render={({ field }) => (
-              <CurrencyInput value={field.value} onChange={(val) => field.onChange(val ?? 0)} disabled={!canEdit} className={nativeCompactFieldClass} />
-            )}
-          />
-        </div>
-        <div className="space-y-2.5">
-          <label className={fieldLabelClass}>Multa</label>
-          <Controller
-            control={control}
-            name="valorMulta"
-            render={({ field }) => (
-              <CurrencyInput value={field.value} onChange={(val) => field.onChange(val ?? 0)} disabled={!canEdit} className={nativeCompactFieldClass} />
-            )}
-          />
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {parcelamentoMode === 'total' || qtdParcelas <= 1 ? (
+            <div className="space-y-2.5">
+              <label className={fieldLabelClass}>
+                {qtdParcelas > 1 ? 'Valor Total' : 'Valor Original'}
+              </label>
+              <Controller
+                control={control}
+                name="valorOriginal"
+                render={({ field }) => (
+                  <CurrencyInput
+                    value={field.value}
+                    onChange={handleValorOriginalChange}
+                    disabled={!canEdit}
+                    className={nativeCompactFieldClass}
+                  />
+                )}
+              />
+              {qtdParcelas > 1 ? (
+                <p className="text-[11px] text-on-surface-variant/70">
+                  Parcela: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorParcela)}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              <label className={fieldLabelClass}>Valor por Parcela</label>
+              <CurrencyInput
+                value={valorParcela}
+                onChange={handleValorParcelaChange}
+                disabled={!canEdit}
+                className={nativeCompactFieldClass}
+              />
+              <p className="text-[11px] text-on-surface-variant/70">
+                Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorOriginal)}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </FormSection>
