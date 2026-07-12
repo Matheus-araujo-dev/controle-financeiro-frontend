@@ -64,7 +64,8 @@ export const navigationStructure: NavGroup[] = [
     key: 'conta',
     label: 'Conta',
     items: [
-      { key: '/familia', label: 'Espaços' }
+      { key: '/familia', label: 'Espaços' },
+      { key: '/alertas', label: 'Notificações' }
     ]
   }
 ];

@@ -38,6 +38,7 @@ const navIcons: Record<string, string> = {
   '/planos': 'savings',
   '/investimentos': 'trending_up',
   '/familia': 'diversity_3',
+  '/alertas': 'notifications',
   '/agente/chat': 'smart_toy',
   '/agente/whatsapp': 'phone_iphone'
 };
