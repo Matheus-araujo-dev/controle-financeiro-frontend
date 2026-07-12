@@ -523,6 +523,7 @@ export function FinancialAccountListPage({
               options={formaPagamentoOptions}
               value={filters.formaPagamentoIds ?? []}
               onChange={updateFormaPagamentoFilter}
+              searchable
             />
           </FilterField>
 
