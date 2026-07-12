@@ -224,6 +224,7 @@ export function DateInput({
             <button
               type="button"
               className="grid h-8 w-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-primary/15 hover:text-primary"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 const next = new Date(viewYear, viewMonth - 2, 1);
                 setViewYear(next.getFullYear());
@@ -239,6 +240,7 @@ export function DateInput({
             <button
               type="button"
               className="grid h-8 w-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-primary/15 hover:text-primary"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 const next = new Date(viewYear, viewMonth, 1);
                 setViewYear(next.getFullYear());
@@ -330,6 +332,7 @@ export function DateInput({
             <button
               type="button"
               className="grid h-8 w-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-primary/15 hover:text-primary"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => setViewYear((current) => current - 1)}
               aria-label="Ano anterior"
             >
@@ -339,6 +342,7 @@ export function DateInput({
             <button
               type="button"
               className="grid h-8 w-8 place-items-center rounded-lg text-on-surface-variant transition-colors hover:bg-primary/15 hover:text-primary"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => setViewYear((current) => current + 1)}
               aria-label="Próximo ano"
             >
