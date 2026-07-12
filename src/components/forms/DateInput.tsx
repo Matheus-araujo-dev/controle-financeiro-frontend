@@ -309,7 +309,6 @@ export function DateInput({
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
-              onMouseDown={(e) => e.preventDefault()}
               onClick={() => onChange?.('')}
             >
               Limpar
@@ -318,7 +317,6 @@ export function DateInput({
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
-              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 const today = new Date();
                 selectDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
@@ -379,7 +377,6 @@ export function DateInput({
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
-              onMouseDown={(e) => e.preventDefault()}
               onClick={() => onChange?.('')}
             >
               Limpar
@@ -388,7 +385,6 @@ export function DateInput({
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               className="text-sm font-medium text-primary transition-colors hover:text-primary-container"
-              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 const today = new Date();
                 selectMonth(today.getFullYear(), today.getMonth() + 1);
