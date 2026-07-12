@@ -79,6 +79,16 @@ export default tseslint.config(
     },
   },
 
+  // Service Worker — usa globals do contexto serviceworker (self, clients, etc.)
+  {
+    files: ['public/sw.js'],
+    languageOptions: {
+      globals: {
+        ...globals.serviceworker,
+      },
+    },
+  },
+
   // Arquivos de configuração e scripts rodam em Node.
   {
     files: [
