@@ -18,6 +18,7 @@ import { financialAccountFormSchema } from '../schemas';
 import { formatMonthYearBR } from '../../../shared/date';
 import { extractCardInvoicePreview, type CardInvoicePreview } from './card-invoice';
 import type { CancelarContaPagarPayload } from '../../../types/financeiro';
+import type { DuplicateItemSummary } from '../financial-rules';
 
 export function normalizeRecurringFormValues(values: FinanceiroFormValues): FinanceiroFormValues {
   if (!values.ehRecorrente || values.quantidadeParcelas === 1) {
@@ -50,6 +51,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [numeroParcela, setNumeroParcela] = useState<number | undefined>(undefined);
   const [pendingValues, setPendingValues] = useState<FinanceiroFormValues | null>(null);
   const [pendingDuplicateValues, setPendingDuplicateValues] = useState<FinanceiroFormValues | null>(null);
+  const [duplicateItems, setDuplicateItems] = useState<DuplicateItemSummary[] | null>(null);
 
   const {
     control,
@@ -251,8 +253,9 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
           return;
         } else {
           if (config.checkDuplicate) {
-            const isDuplicate = await config.checkDuplicate(values.descricao, values.dataVencimento);
-            if (isDuplicate) {
+            const duplicates = await config.checkDuplicate(values.descricao, values.dataVencimento, values.pessoaId, values.valorOriginal);
+            if (duplicates) {
+              setDuplicateItems(duplicates);
               setPendingDuplicateValues(values);
               return;
             }
@@ -278,10 +281,14 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     if (!pendingDuplicateValues) return;
     const values = pendingDuplicateValues;
     setPendingDuplicateValues(null);
+    setDuplicateItems(null);
     await doCreate(values);
   }, [pendingDuplicateValues, doCreate]);
 
-  const cancelDuplicateCheck = useCallback(() => setPendingDuplicateValues(null), []);
+  const cancelDuplicateCheck = useCallback(() => {
+    setPendingDuplicateValues(null);
+    setDuplicateItems(null);
+  }, []);
 
   const handleSaveError = useCallback(
     (error: unknown) => {
@@ -424,6 +431,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     cancelar,
     estornar,
     pendingDuplicateValues,
+    duplicateItems,
     createDespiteDuplicate,
     cancelDuplicateCheck,
     reloadPessoaOptions,

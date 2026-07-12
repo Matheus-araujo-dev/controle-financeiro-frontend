@@ -16,7 +16,7 @@ import { QuickAddContaGerencialModal } from '../../features/cadastros/quick-add/
 import { QuickAddCartaoModal } from '../../features/cadastros/quick-add/QuickAddCartaoModal';
 import { QuickAddContaBancariaModal } from '../../features/cadastros/quick-add/QuickAddContaBancariaModal';
 import { DuplicateAlertModal } from '../../features/financeiro/financial-account-form/DuplicateAlertModal';
-import { checkContaPagarDuplicate, checkContaReceberDuplicate } from '../../features/financeiro/financial-rules';
+import { checkContaPagarDuplicate, checkContaReceberDuplicate, type DuplicateItemSummary } from '../../features/financeiro/financial-rules';
 import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
 import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
 import type { ComboBoxOption } from '../forms/ComboBox';
@@ -94,7 +94,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [contaDestinoId, setContaDestinoId] = useState('');
   const [saving, setSaving] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
-  const [pendingLaunch, setPendingLaunch] = useState<(() => Promise<void>) | null>(null);
+  const [pendingLaunch, setPendingLaunch] = useState<{ fn: () => Promise<void>; items: DuplicateItemSummary[] } | null>(null);
   const lastAutoFilledContaRef = useRef<string | null>(null);
   const lastAutoFilledResponsavelRef = useRef<string | null>(null);
 
@@ -422,12 +422,12 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
 
     setSaving(true);
     try {
-      const isDuplicate = await (tipo === 'pagar'
-        ? checkContaPagarDuplicate(base.descricao, base.dataVencimento)
-        : checkContaReceberDuplicate(base.descricao, base.dataVencimento));
+      const duplicates = await (tipo === 'pagar'
+        ? checkContaPagarDuplicate(base.descricao, base.dataVencimento, pessoaId, valor)
+        : checkContaReceberDuplicate(base.descricao, base.dataVencimento, pessoaId, valor));
 
-      if (isDuplicate) {
-        setPendingLaunch(() => launchFn);
+      if (duplicates) {
+        setPendingLaunch({ fn: launchFn, items: duplicates });
         return;
       }
     } finally {
@@ -843,9 +843,10 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       <DuplicateAlertModal
         open={pendingLaunch !== null}
         loading={saving}
+        duplicates={pendingLaunch?.items ?? []}
         onConfirm={async () => {
           if (!pendingLaunch) return;
-          const fn = pendingLaunch;
+          const fn = pendingLaunch.fn;
           setPendingLaunch(null);
           await performLaunch(fn);
         }}
