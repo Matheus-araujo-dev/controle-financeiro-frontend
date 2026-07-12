@@ -91,6 +91,7 @@ export function DashboardPage() {
                 value={selectedContasBancarias}
                 onChange={setSelectedContasBancarias}
                 icon={<span className="material-symbols-outlined text-sm">account_balance</span>}
+                searchable
               />
             </div>
           )}
