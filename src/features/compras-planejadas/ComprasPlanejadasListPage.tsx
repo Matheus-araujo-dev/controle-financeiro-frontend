@@ -330,6 +330,7 @@ export function ComprasPlanejadasListPage() {
                 placeholder="Todas"
                 value={filters.contaGerencialId ? [filters.contaGerencialId] : []}
                 onChange={(next) => setFilters((prev) => ({ ...prev, page: 1, contaGerencialId: next[0] || undefined }))}
+                searchable
               />
             </FilterField>
             <FilterField label="Responsável">
@@ -339,6 +340,7 @@ export function ComprasPlanejadasListPage() {
                 placeholder="Todos"
                 value={filters.responsavelId ? [filters.responsavelId] : []}
                 onChange={(next) => setFilters((prev) => ({ ...prev, page: 1, responsavelId: next[0] || undefined }))}
+                searchable
               />
             </FilterField>
             <FilterField label="Valor mínimo">

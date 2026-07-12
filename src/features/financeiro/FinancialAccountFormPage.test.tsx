@@ -154,6 +154,7 @@ describe('FinancialAccountFormPage', () => {
     await waitFor(() =>
       expect(config.update).toHaveBeenCalledWith('123', {
         ...validValues,
+        dataVencimento: '2026-04-04', // auto-synced from dataCompra (ehCartao)
         recorrenciaDataInicio: '2026-05-20'
       })
     );
@@ -178,6 +179,7 @@ describe('FinancialAccountFormPage', () => {
     await waitFor(() =>
       expect(config.alterarFuturas).toHaveBeenCalledWith('123', {
         ...validValues,
+        dataVencimento: '2026-04-04', // auto-synced from dataCompra (ehCartao)
         recorrenciaDataInicio: '2026-05-20'
       })
     );
@@ -256,8 +258,8 @@ describe('FinancialAccountFormPage', () => {
     renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
 
     await waitFor(() => expect(config.loadPessoaOptions).toHaveBeenCalled());
-    expect(await screen.findByText('Total ÷ 3x')).toBeInTheDocument();
-    expect(screen.getByText('Parcela × 3x')).toBeInTheDocument();
+    expect(await screen.findByTitle('Total ÷ 3x')).toBeInTheDocument();
+    expect(screen.getByTitle('Parcela × 3x')).toBeInTheDocument();
   }, 20000);
 
   it('auto-fills responsável from conta gerencial responsavelPadraoId', async () => {

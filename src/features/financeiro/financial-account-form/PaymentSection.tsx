@@ -43,7 +43,7 @@ export function PaymentSection({ form }: { form: FinancialAccountFormApi }) {
 
   return (
     <FormSection title="Configuração de Pagamento" eyebrow="Passo 2" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>}>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className={`grid grid-cols-1 gap-6 ${formaPagamentoBehavior.ehCartao ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
         <div className="space-y-2">
           <label className={fieldLabelClass}>Forma de Pagamento</label>
           <Controller

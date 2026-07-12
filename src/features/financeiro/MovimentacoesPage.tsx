@@ -238,6 +238,7 @@ export function MovimentacoesPage() {
               onChange={(next) =>
                 setFilters((prev) => ({ ...prev, contaBancariaIds: next.length ? next : undefined, page: 1 }))
               }
+              searchable
             />
           </FilterField>
 
@@ -251,6 +252,7 @@ export function MovimentacoesPage() {
               onChange={(next) =>
                 setFilters((prev) => ({ ...prev, responsavelIds: next.length ? next : undefined, page: 1 }))
               }
+              searchable
             />
           </FilterField>
 

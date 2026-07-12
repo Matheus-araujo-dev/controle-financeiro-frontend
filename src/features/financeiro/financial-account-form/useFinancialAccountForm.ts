@@ -128,10 +128,16 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
 
   useEffect(() => {
     if (!formaPagamentoBehavior.ehCartao) return;
+    const today = new Date().toISOString().split('T')[0];
     if (!watchedValues.dataCompra) {
-      setValue('dataCompra', new Date().toISOString().split('T')[0], { shouldValidate: false, shouldDirty: false });
+      setValue('dataCompra', today, { shouldValidate: false, shouldDirty: false });
     }
-  }, [formaPagamentoBehavior.ehCartao, setValue]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Para cartão, sincroniza dataVencimento = dataCompra (o sistema usará a fatura correspondente)
+    const dataRef = watchedValues.dataCompra || today;
+    if (watchedValues.dataVencimento !== dataRef) {
+      setValue('dataVencimento', dataRef, { shouldValidate: false, shouldDirty: false });
+    }
+  }, [formaPagamentoBehavior.ehCartao, watchedValues.dataCompra, setValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     async function loadOptions() {
