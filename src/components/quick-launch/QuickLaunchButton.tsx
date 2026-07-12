@@ -736,48 +736,49 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   </div>
                 ) : <div />}
 
-                {/* Row 5: Recebedor/Pagador | Conta gerencial */}
-                <div className="space-y-2">
-                  <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
-                  <ComboBox
-                    aria-label={tipo === 'pagar' ? 'Recebedor' : 'Pagador'}
-                    value={pessoaId}
-                    onChange={setPessoaId}
-                    options={pessoas}
-                    placeholder="Selecionar pessoa..."
-                    onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
-                    addNewLabel="Nova pessoa"
-                  />
-                </div>
+                {/* Row 5: Recebedor | Conta gerencial | Responsável */}
+                <div className="md:col-span-2 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
+                    <ComboBox
+                      aria-label={tipo === 'pagar' ? 'Recebedor' : 'Pagador'}
+                      value={pessoaId}
+                      onChange={setPessoaId}
+                      options={pessoas}
+                      placeholder="Selecionar pessoa..."
+                      onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
+                      addNewLabel="Nova pessoa"
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <label className={formLabelClass}>Conta gerencial</label>
-                  <ComboBox
-                    aria-label="Conta gerencial"
-                    value={contaGerencialId}
-                    onChange={setContaGerencialId}
-                    options={contasGerenciais}
-                    placeholder="Selecionar..."
-                    onAddNew={() => setQuickAddContaOpen(true)}
-                    addNewLabel="Nova conta gerencial"
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <label className={formLabelClass}>Conta gerencial</label>
+                    <ComboBox
+                      aria-label="Conta gerencial"
+                      value={contaGerencialId}
+                      onChange={setContaGerencialId}
+                      options={contasGerenciais}
+                      placeholder="Selecionar..."
+                      onAddNew={() => setQuickAddContaOpen(true)}
+                      addNewLabel="Nova conta gerencial"
+                    />
+                  </div>
 
-                {/* Row 6: Responsável */}
-                <div className="space-y-2">
-                  <label className={formLabelClass}>Responsável</label>
-                  <ComboBox
-                    aria-label="Responsável"
-                    value={responsavelId}
-                    onChange={(v) => {
-                      setResponsavelId(v);
-                      lastAutoFilledResponsavelRef.current = v || null;
-                    }}
-                    options={responsaveis}
-                    placeholder="Selecionar responsável..."
-                    onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
-                    addNewLabel="Nova pessoa"
-                  />
+                  <div className="space-y-2">
+                    <label className={formLabelClass}>Responsável</label>
+                    <ComboBox
+                      aria-label="Responsável"
+                      value={responsavelId}
+                      onChange={(v) => {
+                        setResponsavelId(v);
+                        lastAutoFilledResponsavelRef.current = v || null;
+                      }}
+                      options={responsaveis}
+                      placeholder="Selecionar responsável..."
+                      onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
+                      addNewLabel="Nova pessoa"
+                    />
+                  </div>
                 </div>
               </div>
             )}

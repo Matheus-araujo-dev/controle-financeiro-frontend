@@ -91,9 +91,9 @@ export function FormActionPanel({
 }) {
   return (
     <FormSection className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto" title={title} eyebrow={eyebrow} icon={icon} compact>
-      <div className="mb-8 space-y-3">
+      <div className="mb-5 space-y-2">
         {items.map((item) => (
-          <div key={item.label} className="flex items-baseline justify-between gap-4 rounded-2xl border border-white/5 bg-surface-container p-4">
+          <div key={item.label} className="flex items-baseline justify-between gap-4 rounded-2xl border border-white/5 bg-surface-container p-2.5">
             <span className="text-xs font-medium text-on-surface-variant">{item.label}</span>
             <strong
               className={`max-w-[62%] truncate text-right font-headline ${
