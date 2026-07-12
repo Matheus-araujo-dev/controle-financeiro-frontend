@@ -79,6 +79,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState(0);
   const [quantidadeParcelas, setQuantidadeParcelas] = useState(1);
+  const [parcelamentoMode, setParcelamentoMode] = useState<'total' | 'parcela'>('total');
   const initialDate = useRef(hojeISO());
   const [dataVencimento, setDataVencimento] = useState(initialDate.current);
   const [jaLiquidada, setJaLiquidada] = useState(false);
@@ -592,8 +593,43 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
 
                 {/* Row 2: Valor | Parcelas */}
                 <div className="space-y-2">
-                  <label className={formLabelClass}>Valor</label>
-                  <CurrencyInput value={valor} onChange={(nextValue) => setValor(nextValue ?? 0)} className={formFieldClass} />
+                  <div className="flex items-center gap-2">
+                    <label className={formLabelClass}>
+                      {parcelamentoMode === 'parcela' && quantidadeParcelas > 1 ? 'Valor Parcela' : quantidadeParcelas > 1 ? 'Valor Total' : 'Valor'}
+                    </label>
+                    {quantidadeParcelas > 1 ? (
+                      <div className="ml-auto flex rounded-lg border border-white/10 bg-surface-container p-0.5 text-xs font-medium">
+                        <button
+                          type="button"
+                          onClick={() => setParcelamentoMode('total')}
+                          className={['rounded-md px-1.5 py-0.5 transition-colors', parcelamentoMode === 'total' ? 'bg-primary/20 text-primary' : 'text-on-surface-variant hover:text-on-surface'].join(' ')}
+                          title={`Total ÷ ${quantidadeParcelas}x`}
+                        >÷{quantidadeParcelas}</button>
+                        <button
+                          type="button"
+                          onClick={() => setParcelamentoMode('parcela')}
+                          className={['rounded-md px-1.5 py-0.5 transition-colors', parcelamentoMode === 'parcela' ? 'bg-primary/20 text-primary' : 'text-on-surface-variant hover:text-on-surface'].join(' ')}
+                          title={`Parcela × ${quantidadeParcelas}x`}
+                        >×{quantidadeParcelas}</button>
+                      </div>
+                    ) : null}
+                  </div>
+                  {parcelamentoMode === 'total' || quantidadeParcelas <= 1 ? (
+                    <CurrencyInput value={valor} onChange={(v) => setValor(v ?? 0)} className={formFieldClass} />
+                  ) : (
+                    <CurrencyInput
+                      value={quantidadeParcelas > 0 ? valor / quantidadeParcelas : 0}
+                      onChange={(v) => setValor((v ?? 0) * quantidadeParcelas)}
+                      className={formFieldClass}
+                    />
+                  )}
+                  {quantidadeParcelas > 1 ? (
+                    <p className="text-[11px] text-on-surface-variant/70">
+                      {parcelamentoMode === 'total'
+                        ? `Parcela: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor / quantidadeParcelas)}`
+                        : `Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)}`}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -604,7 +640,11 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                     value={String(quantidadeParcelas)}
                     onKeyDown={preventScientificNotation}
                     onPaste={handleIntegerPaste}
-                    onChange={(e) => setQuantidadeParcelas(Math.max(1, parseIntegerInput(e.target.value) ?? 1))}
+                    onChange={(e) => {
+                      const n = Math.max(1, parseIntegerInput(e.target.value) ?? 1);
+                      setQuantidadeParcelas(n);
+                      if (n === 1) setParcelamentoMode('total');
+                    }}
                     className={formFieldClass}
                   />
                 </div>
@@ -641,9 +681,13 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                       addNewLabel="Novo cartão"
                     />
                   </div>
-                ) : (
-                  <div className="flex items-end pb-1">
-                    <div className="flex items-center gap-3">
+                ) : null}
+
+                {/* Row 4: Vencimento (com toggle já liquidada inline no label) */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <label className={[formLabelClass, jaLiquidada ? 'text-primary' : ''].join(' ')}>{vencimentoLabel}</label>
+                    {!exigeCartao ? (
                       <button
                         type="button"
                         role="switch"
@@ -654,30 +698,23 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                           if (next) setDataLiquidacao(dataVencimento);
                         }}
                         className={[
-                          'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
+                          'ml-auto relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
                           jaLiquidada ? 'bg-primary' : 'bg-white/15',
                         ].join(' ')}
+                        title={toggleLabel}
                       >
                         <span
                           className={[
-                            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
-                            jaLiquidada ? 'translate-x-5' : 'translate-x-0',
+                            'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                            jaLiquidada ? 'translate-x-4' : 'translate-x-0',
                           ].join(' ')}
                         />
                       </button>
-                      <span className="text-sm text-on-surface-variant">{toggleLabel}</span>
-                      {jaLiquidada ? (
-                        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
-                          {toggleBadgeLabel}
-                        </span>
-                      ) : null}
-                    </div>
+                    ) : null}
+                    {jaLiquidada && !exigeCartao ? (
+                      <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">{toggleBadgeLabel}</span>
+                    ) : null}
                   </div>
-                )}
-
-                {/* Row 4: Vencimento | Data de liquidação (quando liquidada) */}
-                <div className="space-y-2">
-                  <label className={formLabelClass}>{vencimentoLabel}</label>
                   <DateInput
                     ariaLabel={vencimentoLabel}
                     value={dataVencimento}

@@ -57,7 +57,7 @@ export function FinancialAccountFormPage({
 
             <FormSection title="Detalhes e Observações" eyebrow="Passo 5" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>}>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="space-y-2.5 sm:col-span-2 xl:col-span-4">
+                <div className="space-y-2.5">
                   <label className={fieldLabelClass}>Nº Documento</label>
                   <Controller
                     control={control}
