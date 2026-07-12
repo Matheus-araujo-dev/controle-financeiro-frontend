@@ -41,6 +41,8 @@ export function FaturaDetailPage() {
   });
   const [actionError, setActionError] = useState<string>();
   const hasInitializedPayment = useRef(false);
+  const [itemsPage, setItemsPage] = useState(1);
+  const [itemsPageSize, setItemsPageSize] = useState(20);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['faturas', 'detail', id],
@@ -118,6 +120,14 @@ export function FaturaDetailPage() {
       setActionError(undefined);
     },
     onError: (err) => setActionError(err instanceof Error ? err.message : 'Falha ao estornar o pagamento da fatura.')
+  });
+
+  const { data: itensData, isFetching: loadingItens } = useQuery({
+    queryKey: ['faturas', 'itens', id, itemsPage, itemsPageSize],
+    queryFn: () => financeiroApi.faturas.listarItens(id!, { page: itemsPage, pageSize: itemsPageSize }),
+    enabled: !!id,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev
   });
 
   const detail = data?.detail;
@@ -333,7 +343,14 @@ export function FaturaDetailPage() {
 
         <AppDataTable<FaturaItem>
           rowKey={(record) => record.ehEstorno ? `${record.contaPagarId}_estorno` : record.contaPagarId}
-          dataSource={detail.itens}
+          loading={loadingItens}
+          dataSource={itensData?.items ?? []}
+          pagination={{
+            current: itemsPage,
+            pageSize: itemsPageSize,
+            total: itensData?.totalItems ?? detail.quantidadeItens,
+            onChange: (page, size) => { setItemsPage(page); setItemsPageSize(size); }
+          }}
           columns={[
             {
               title: 'Descrição',
