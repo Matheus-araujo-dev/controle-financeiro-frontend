@@ -3,6 +3,7 @@ import type { SummaryCardItem } from '../../components/data/ListSummaryCards';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
+import { checkContaPagarDuplicate, checkContaReceberDuplicate } from './financial-rules';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR, toMonthInputValue } from '../../shared/date';
 import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
@@ -618,17 +619,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
     };
   },
   buildSummaryItems: (summary) => buildContaFinanceiraSummaryItems(summary as ContaFinanceiraListSummary),
-  checkDuplicate: async (descricao, dataVencimento) => {
-    const result = await financeiroApi.contasPagar.listar({
-      page: 1,
-      pageSize: 5,
-      search: descricao,
-      dataInicial: dataVencimento,
-      dataFinal: dataVencimento,
-      statusCodigo: ['PENDENTE', 'VENCIDA', 'FUTURO', 'PARCIAL']
-    });
-    return result.totalItems > 0;
-  }
+  checkDuplicate: checkContaPagarDuplicate
 };
 
 export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResumo, ContaReceberDetalhe, ContaReceberFilters> = {
@@ -716,17 +707,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
   loadCartaoOptions,
   loadRateioOptions: () => loadRateioOptions('Receita'),
   buildSummaryItems: (summary) => buildContaFinanceiraSummaryItems(summary as ContaFinanceiraListSummary),
-  checkDuplicate: async (descricao, dataVencimento) => {
-    const result = await financeiroApi.contasReceber.listar({
-      page: 1,
-      pageSize: 5,
-      search: descricao,
-      dataInicial: dataVencimento,
-      dataFinal: dataVencimento,
-      statusCodigo: ['PENDENTE', 'VENCIDA', 'FUTURO', 'PARCIAL']
-    });
-    return result.totalItems > 0;
-  }
+  checkDuplicate: checkContaReceberDuplicate
 };
 
 export { statusFilterOptions, statusOptions };
