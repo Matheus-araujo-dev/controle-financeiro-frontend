@@ -14,6 +14,7 @@ export function normalizeContaFilters<
     pagadorIds?: string[];
     formaPagamentoId?: string;
     formaPagamentoIds?: string[];
+    responsavelIds?: string[];
     dataEmissaoInicial?: string;
     dataEmissaoFinal?: string;
     dataInicial?: string;
@@ -33,6 +34,7 @@ export function normalizeContaFilters<
   const nextPagadorIds = Array.isArray(params.pagadorIds) && params.pagadorIds.length ? params.pagadorIds : undefined;
   const nextFormaPagamentoIds =
     Array.isArray(params.formaPagamentoIds) && params.formaPagamentoIds.length ? params.formaPagamentoIds : undefined;
+  const nextResponsavelIds = Array.isArray(params.responsavelIds) && params.responsavelIds.length ? params.responsavelIds : undefined;
 
   const { dataInicial, dataFinal, dataEmissaoInicial, dataEmissaoFinal, numeroDocumento, descricao, ...rest } = params;
 
@@ -45,6 +47,7 @@ export function normalizeContaFilters<
     recebedorIds: nextRecebedorIds,
     pagadorIds: nextPagadorIds,
     formaPagamentoIds: nextFormaPagamentoIds,
+    responsavelIds: nextResponsavelIds,
     dataVencimentoInicial: dataInicial,
     dataVencimentoFinal: dataFinal,
     dataEmissaoInicial: dataEmissaoInicial || undefined,
