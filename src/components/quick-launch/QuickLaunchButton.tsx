@@ -15,6 +15,8 @@ import { QuickAddFormaPagamentoModal } from '../../features/cadastros/quick-add/
 import { QuickAddContaGerencialModal } from '../../features/cadastros/quick-add/QuickAddContaGerencialModal';
 import { QuickAddCartaoModal } from '../../features/cadastros/quick-add/QuickAddCartaoModal';
 import { QuickAddContaBancariaModal } from '../../features/cadastros/quick-add/QuickAddContaBancariaModal';
+import { DuplicateAlertModal } from '../../features/financeiro/financial-account-form/DuplicateAlertModal';
+import { checkContaPagarDuplicate, checkContaReceberDuplicate } from '../../features/financeiro/financial-rules';
 import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
 import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
 import type { ComboBoxOption } from '../forms/ComboBox';
@@ -91,6 +93,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [contaDestinoId, setContaDestinoId] = useState('');
   const [saving, setSaving] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
+  const [pendingLaunch, setPendingLaunch] = useState<(() => Promise<void>) | null>(null);
   const lastAutoFilledContaRef = useRef<string | null>(null);
   const lastAutoFilledResponsavelRef = useRef<string | null>(null);
 
@@ -348,12 +351,23 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       Boolean(contaGerencialId) &&
       (!exigeCartao || Boolean(cartaoId));
 
+  async function performLaunch(launchFn: () => Promise<void>) {
+    setSaving(true);
+    try {
+      await launchFn();
+      onClose();
+    } catch (error) {
+      notify('error', 'Falha ao criar lançamento', getApiErrorMessage(error));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleSubmit() {
     if (!podeSalvar) return;
 
-    setSaving(true);
-    try {
-      if (tipo === 'transferencia') {
+    if (tipo === 'transferencia') {
+      await performLaunch(async () => {
         await financeiroApi.transferencias.criar({
           contaBancariaOrigemId: contaOrigemId,
           contaBancariaDestinoId: contaDestinoId,
@@ -362,27 +376,31 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
           descricao: descricao.trim() || undefined
         });
         notify('success', 'Transferência registrada');
-      } else {
-        const base = {
-          numeroDocumento: null,
-          dataEmissao: exigeCartao ? dataVencimento : hojeISO(),
-          dataVencimento,
-          formaPagamentoId,
-          cartaoId: exigeCartao ? cartaoId : null,
-          contaBancariaId: null,
-          dataLiquidacao: jaLiquidada ? dataLiquidacao : null,
-          valorOriginal: valor,
-          valorDesconto: 0,
-          valorJuros: 0,
-          valorMulta: 0,
-          quantidadeParcelas,
-          descricao: descricao.trim(),
-          observacao: null,
-          rateios: [{ contaGerencialId, valor }],
-          recorrencia: null
-        };
+      });
+      return;
+    }
 
-        if (tipo === 'pagar') {
+    const base = {
+      numeroDocumento: null,
+      dataEmissao: exigeCartao ? dataVencimento : hojeISO(),
+      dataVencimento,
+      formaPagamentoId,
+      cartaoId: exigeCartao ? cartaoId : null,
+      contaBancariaId: null,
+      dataLiquidacao: jaLiquidada ? dataLiquidacao : null,
+      valorOriginal: valor,
+      valorDesconto: 0,
+      valorJuros: 0,
+      valorMulta: 0,
+      quantidadeParcelas,
+      descricao: descricao.trim(),
+      observacao: null,
+      rateios: [{ contaGerencialId, valor }],
+      recorrencia: null
+    };
+
+    const launchFn = tipo === 'pagar'
+      ? async () => {
           await financeiroApi.contasPagar.criar({
             ...base,
             origemCompraPlanejadaId: null,
@@ -390,21 +408,32 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
             recebedorId: pessoaId,
             dataCompra: null
           });
-        } else {
+          notify('success', 'Lançamento criado', base.descricao);
+        }
+      : async () => {
           await financeiroApi.contasReceber.criar({
             ...base,
             responsavelId,
             pagadorId: pessoaId
           });
-        }
-        notify('success', 'Lançamento criado', descricao.trim());
+          notify('success', 'Lançamento criado', base.descricao);
+        };
+
+    setSaving(true);
+    try {
+      const isDuplicate = await (tipo === 'pagar'
+        ? checkContaPagarDuplicate(base.descricao, base.dataVencimento)
+        : checkContaReceberDuplicate(base.descricao, base.dataVencimento));
+
+      if (isDuplicate) {
+        setPendingLaunch(() => launchFn);
+        return;
       }
-      onClose();
-    } catch (error) {
-      notify('error', 'Falha ao criar lançamento', getApiErrorMessage(error));
     } finally {
       setSaving(false);
     }
+
+    await performLaunch(launchFn);
   }
 
   function handleTipoChange(nextTipo: QuickLaunchTipo) {
@@ -773,6 +802,17 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   return createPortal(
     <>
       {modal}
+      <DuplicateAlertModal
+        open={pendingLaunch !== null}
+        loading={saving}
+        onConfirm={async () => {
+          if (!pendingLaunch) return;
+          const fn = pendingLaunch;
+          setPendingLaunch(null);
+          await performLaunch(fn);
+        }}
+        onCancel={() => setPendingLaunch(null)}
+      />
       <QuickAddPessoaModal
         open={quickAddPessoaTarget !== null}
         onClose={() => setQuickAddPessoaTarget(null)}
