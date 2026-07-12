@@ -2,6 +2,7 @@ import { Controller } from 'react-hook-form';
 
 import { PageState } from '../../components/states/PageState';
 import { FormSection } from '../../components/layout';
+import { CurrencyInput } from '../../shared/CurrencyInput';
 import type { FinanceiroModuleConfig } from './module-config';
 import { GeneralInfoSection } from './financial-account-form/GeneralInfoSection';
 import { TermsValueSection } from './financial-account-form/TermsValueSection';
@@ -9,7 +10,7 @@ import { PaymentSection } from './financial-account-form/PaymentSection';
 import { RecurrenceSection } from './financial-account-form/RecurrenceSection';
 import { RateioSection } from './financial-account-form/RateioSection';
 import { SummarySidebar } from './financial-account-form/SummarySidebar';
-import { nativeTextareaClass } from './financial-account-form/field-classes';
+import { fieldLabelClass, nativeCompactFieldClass, nativeFieldWithPaddingClass, nativeTextareaClass } from './financial-account-form/field-classes';
 import { useFinancialAccountForm } from './financial-account-form/useFinancialAccountForm';
 
 export function FinancialAccountFormPage({
@@ -42,29 +43,75 @@ export function FinancialAccountFormPage({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-7">
           <div className="lg:col-span-7 space-y-8">
             <GeneralInfoSection form={form} personLabel={config.personLabel} personRole={config.personRole} />
-            <TermsValueSection form={form} moduloLabel={isReceita ? 'receber' : 'pagar'} />
             <PaymentSection form={form} />
+            <TermsValueSection form={form} moduloLabel={isReceita ? 'receber' : 'pagar'} />
             <RecurrenceSection form={form} />
 
             <FormSection title="Rateio por Centro de Custo" eyebrow="Passo 4" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>pie_chart</span>}>
               <RateioSection form={form} />
             </FormSection>
 
-            <FormSection title="Observações Adicionais" eyebrow="Passo 5" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>notes</span>}>
-              <Controller
-                control={control}
-                name="observacao"
-                render={({ field: { value, ...rest } }) => (
-                  <textarea
-                    {...rest}
-                    value={value ?? ''}
-                    rows={4}
-                    disabled={!canEdit}
-                    placeholder="Notas sobre o lançamento, notas fiscais, motivo do parcelamento..."
-                    className={nativeTextareaClass}
+            <FormSection title="Detalhes e Observações" eyebrow="Passo 5" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>}>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="space-y-2.5 sm:col-span-2 xl:col-span-4">
+                  <label className={fieldLabelClass}>Nº Documento</label>
+                  <Controller
+                    control={control}
+                    name="numeroDocumento"
+                    render={({ field: { value, ...rest } }) => (
+                      <input {...rest} value={value ?? ''} disabled={!canEdit} className={nativeFieldWithPaddingClass} placeholder="000.000" />
+                    )}
                   />
-                )}
-              />
+                </div>
+                <div className="space-y-2.5">
+                  <label className={fieldLabelClass}>Desconto</label>
+                  <Controller
+                    control={control}
+                    name="valorDesconto"
+                    render={({ field }) => (
+                      <CurrencyInput value={field.value} onChange={(val) => field.onChange(val ?? 0)} disabled={!canEdit} className={nativeCompactFieldClass} />
+                    )}
+                  />
+                </div>
+                <div className="space-y-2.5">
+                  <label className={fieldLabelClass}>Juros</label>
+                  <Controller
+                    control={control}
+                    name="valorJuros"
+                    render={({ field }) => (
+                      <CurrencyInput value={field.value} onChange={(val) => field.onChange(val ?? 0)} disabled={!canEdit} className={nativeCompactFieldClass} />
+                    )}
+                  />
+                </div>
+                <div className="space-y-2.5">
+                  <label className={fieldLabelClass}>Multa</label>
+                  <Controller
+                    control={control}
+                    name="valorMulta"
+                    render={({ field }) => (
+                      <CurrencyInput value={field.value} onChange={(val) => field.onChange(val ?? 0)} disabled={!canEdit} className={nativeCompactFieldClass} />
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <label className={fieldLabelClass}>Observações</label>
+                <Controller
+                  control={control}
+                  name="observacao"
+                  render={({ field: { value, ...rest } }) => (
+                    <textarea
+                      {...rest}
+                      value={value ?? ''}
+                      rows={4}
+                      disabled={!canEdit}
+                      placeholder="Notas sobre o lançamento, notas fiscais, motivo do parcelamento..."
+                      className={nativeTextareaClass}
+                    />
+                  )}
+                />
+              </div>
             </FormSection>
           </div>
 
