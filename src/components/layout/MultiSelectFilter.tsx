@@ -38,7 +38,7 @@ export function MultiSelectFilter({
   placeholder = 'Todos',
   icon,
   ariaLabel,
-  searchable = false
+  searchable = true
 }: MultiSelectFilterProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
