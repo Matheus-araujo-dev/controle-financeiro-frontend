@@ -13,6 +13,7 @@ import { SummarySidebar } from './financial-account-form/SummarySidebar';
 import { fieldLabelClass, nativeCompactFieldClass, nativeFieldWithPaddingClass, nativeTextareaClass } from './financial-account-form/field-classes';
 import { useFinancialAccountForm } from './financial-account-form/useFinancialAccountForm';
 import { DuplicateAlertModal } from './financial-account-form/DuplicateAlertModal';
+import { FaturaIndisponivelModal } from './financial-account-form/FaturaIndisponivelModal';
 
 export function FinancialAccountFormPage({
   config
@@ -23,7 +24,8 @@ export function FinancialAccountFormPage({
   const form = useFinancialAccountForm(config);
   const {
     id, control, canEdit, loading, errorMessage, isSubmitting, handleSubmit, onSubmit,
-    pendingDuplicateValues, duplicateItems, createDespiteDuplicate, cancelDuplicateCheck
+    pendingDuplicateValues, duplicateItems, createDespiteDuplicate, cancelDuplicateCheck,
+    faturaIndisponivelMessage, confirmarProximaFatura, cancelarFaturaIndisponivel
   } = form;
   const isReceita = config.key === 'contas-receber';
 
@@ -129,6 +131,14 @@ export function FinancialAccountFormPage({
         duplicates={duplicateItems ?? []}
         onConfirm={createDespiteDuplicate}
         onCancel={cancelDuplicateCheck}
+      />
+
+      <FaturaIndisponivelModal
+        open={!!faturaIndisponivelMessage}
+        loading={isSubmitting}
+        message={faturaIndisponivelMessage}
+        onConfirm={confirmarProximaFatura}
+        onCancel={cancelarFaturaIndisponivel}
       />
     </div>
   );

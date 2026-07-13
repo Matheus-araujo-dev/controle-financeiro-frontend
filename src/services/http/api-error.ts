@@ -18,3 +18,8 @@ export function getApiFieldErrors(error: unknown): Record<string, string[]> {
 
   return error.response?.data?.errors ?? {};
 }
+
+export function isFaturaIndisponivelError(error: unknown): boolean {
+  return axios.isAxiosError<ApiErrorResponse>(error) &&
+    error.response?.data?.code === 'FATURA_INDISPONIVEL';
+}
