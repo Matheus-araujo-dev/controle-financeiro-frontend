@@ -183,10 +183,11 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
 
   const contasDespesa = useMemo<ContaGerencialOption[]>(() => {
     const items = despesaResult.data?.items ?? [];
+    const byId = new Map(items.map((i) => [i.id, i]));
     const fromServer = mapContaGerencialHierarchyData(items).map(({ value, main, chain }) => ({
       value,
       displayText: main,
-      responsavelPadraoId: items.find((i) => i.id === value)?.responsavelPadraoId ?? null,
+      responsavelPadraoId: byId.get(value)?.responsavelPadraoId ?? null,
       label: chain ? (
         <span>
           {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
@@ -198,10 +199,11 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
 
   const contasReceita = useMemo<ContaGerencialOption[]>(() => {
     const items = receitaResult.data?.items ?? [];
+    const byId = new Map(items.map((i) => [i.id, i]));
     const fromServer = mapContaGerencialHierarchyData(items).map(({ value, main, chain }) => ({
       value,
       displayText: main,
-      responsavelPadraoId: items.find((i) => i.id === value)?.responsavelPadraoId ?? null,
+      responsavelPadraoId: byId.get(value)?.responsavelPadraoId ?? null,
       label: chain ? (
         <span>
           {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
@@ -465,7 +467,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const vencimentoLabel = exigeCartao ? 'Data da compra' : jaLiquidada ? dataLiquidacaoLabel : 'Vencimento';
 
   const modal = (
-    <div className="fixed inset-0 z-[1000] bg-black/75 px-4 py-6 backdrop-blur-md">
+    <div className="fixed inset-0 z-[1000] bg-black/80 px-4 py-6">
       <div className="flex h-full items-center justify-center">
         <div
           ref={dialogRef}
@@ -592,6 +594,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                       placeholder="Selecionar..."
                       onAddNew={() => setQuickAddContaOpen(true)}
                       addNewLabel="Nova categoria"
+                      maxVisible={50}
                     />
                   </div>
 

@@ -42,6 +42,8 @@ export type ComboBoxProps = {
   className?: string;
   /** Reduz a altura para h-11 (contexto de filtros) em vez de h-[54px] (formulários). */
   compact?: boolean;
+  /** Limita opções exibidas sem pesquisa ativa; digitando mostra todos os matches. */
+  maxVisible?: number;
 };
 
 function getTextFromNode(node: ReactNode): string {
@@ -111,7 +113,8 @@ export function ComboBox({
   addNewLabel = 'Adicionar novo',
   children,
   className,
-  compact = false
+  compact = false,
+  maxVisible
 }: ComboBoxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -132,12 +135,14 @@ export function ComboBox({
 
   const filteredOptions = useMemo(() => {
     const search = query.trim().toLowerCase();
-    if (!open || search === '') {
-      return normalizedOptions;
-    }
-
+    if (!open) return normalizedOptions;
+    if (search === '') return maxVisible ? normalizedOptions.slice(0, maxVisible) : normalizedOptions;
     return normalizedOptions.filter((option) => getTextFromNode(option.label).toLowerCase().includes(search));
-  }, [normalizedOptions, open, query]);
+  }, [normalizedOptions, open, query, maxVisible]);
+
+  const hiddenCount = open && !query.trim() && maxVisible && normalizedOptions.length > maxVisible
+    ? normalizedOptions.length - maxVisible
+    : 0;
 
   // Reset highlight when dropdown closes or query changes
   useEffect(() => {
@@ -289,6 +294,11 @@ export function ComboBox({
           })}
         </div>
       )}
+      {hiddenCount > 0 ? (
+        <p className="px-4 py-2 text-[11px] text-on-surface-variant/60">
+          + {hiddenCount} itens — digite para filtrar
+        </p>
+      ) : null}
       {onAddNew ? (
         <button
           type="button"
