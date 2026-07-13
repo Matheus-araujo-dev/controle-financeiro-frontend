@@ -707,8 +707,8 @@ describe('MasterDataFormPage', () => {
 
     expect(await screen.findByDisplayValue('Cartao corporativo')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /E cartao/i }));
-    await userEvent.click(screen.getByRole('button', { name: /Baixar automaticamente/i }));
+    await userEvent.click(screen.getByRole('switch', { name: /E cartao/i }));
+    await userEvent.click(screen.getByRole('switch', { name: /Baixar automaticamente/i }));
     await submitUpdate();
 
     await waitFor(() =>

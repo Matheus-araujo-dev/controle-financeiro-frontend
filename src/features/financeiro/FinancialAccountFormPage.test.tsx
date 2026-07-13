@@ -253,8 +253,8 @@ describe('FinancialAccountFormPage', () => {
     renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
 
     await waitFor(() => expect(config.loadFormaPagamentoOptions).toHaveBeenCalled());
-    // f1 is a card (ehCartao: true) — toggle must not appear
-    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+    // f1 is a card (ehCartao: true) — o toggle "Já liquidada?" não deve aparecer
+    expect(screen.queryByRole('switch', { name: /liquidada/i })).not.toBeInTheDocument();
   }, 20000);
 
   it('shows parcelamento mode toggle when parcelas > 1', async () => {
