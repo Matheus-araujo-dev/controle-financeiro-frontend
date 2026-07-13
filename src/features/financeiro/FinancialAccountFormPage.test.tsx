@@ -317,6 +317,53 @@ describe('FinancialAccountFormPage', () => {
     expect(await screen.findByText('Descrição obrigatória.')).toBeInTheDocument();
     expect(navigateMock).not.toHaveBeenCalled();
   }, 20000);
+
+  it('blocks editing actions and shows warning when fatura is fechada', async () => {
+    const config = createConfig();
+    config.detail.mockResolvedValue({
+      statusCodigo: 'PENDENTE',
+      dataLiquidacao: null,
+      dataVencimento: '2026-04-20',
+      contaBancariaId: 'cb1',
+      cartaoId: 'c1',
+      statusFaturaCartao: 'FECHADA'
+    });
+
+    renderWithRoute('/contas-pagar/123', '/contas-pagar/:id', config);
+
+    expect(await screen.findByText(/Edição e estorno bloqueados/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Cancelar Título/i })).not.toBeInTheDocument();
+  }, 20000);
+
+  it('shows fatura-indisponivel dialog when create throws FATURA_INDISPONIVEL error', async () => {
+    const config = createConfig();
+    config.create.mockRejectedValue(
+      new AxiosError('Unprocessable', '422', undefined, undefined, {
+        data: {
+          code: 'FATURA_INDISPONIVEL',
+          message: 'A fatura de 07/2026 já está fechada. Deseja incluí-la na próxima fatura?'
+        },
+        status: 422,
+        statusText: 'Unprocessable Entity',
+        headers: {},
+        config: {} as never
+      })
+    );
+
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
+
+    expect(await screen.findByText('Rateio por Centro de Custo')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Lançamento' }));
+
+    await waitFor(() => expect(config.create).toHaveBeenCalled());
+    expect(await screen.findByText('Fatura fechada ou liquidada')).toBeInTheDocument();
+    expect(screen.getByText(/07\/2026/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Descartar' }));
+
+    await waitFor(() => expect(screen.queryByText('Fatura fechada ou liquidada')).not.toBeInTheDocument());
+  }, 20000);
 });
 
 
