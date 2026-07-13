@@ -248,7 +248,7 @@ export function FaturaDetailPage() {
             </h2>
             <p className="mt-0.5 text-sm text-on-surface-variant">
               {detail.statusCodigo === 'FECHADA'
-                ? 'Fatura fechada para novos lançamentos. Registre o pagamento para quitá-la.'
+                ? 'Fatura fechada. Novos lançamentos desta competência são redirecionados para a fatura do próximo mês. Registre o pagamento para quitá-la.'
                 : paymentPending
                   ? 'Informe a data, a conta bancária e uma observação opcional para registrar a saída do caixa.'
                   : 'A fatura já foi liquidada. Dados do pagamento registrado abaixo.'}
