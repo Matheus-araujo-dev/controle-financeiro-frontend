@@ -175,6 +175,8 @@ describe('FinancialAccountFormPage', () => {
 
     expect(await screen.findByDisplayValue('Despesa de teste')).toBeInTheDocument();
 
+    await waitFor(() => expect(config.loadFormaPagamentoOptions).toHaveBeenCalled());
+
     fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lançamento' }));
 
     expect(await screen.findByText(/Atualizar lançamento recorrente/i)).toBeInTheDocument();
