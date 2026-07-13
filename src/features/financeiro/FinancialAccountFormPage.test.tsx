@@ -145,6 +145,10 @@ describe('FinancialAccountFormPage', () => {
     expect(await screen.findByDisplayValue('Despesa de teste')).toBeInTheDocument();
     expect(screen.getByDisplayValue('08/2026')).toBeInTheDocument();
 
+    // Ensure forma de pagamento options are loaded so the card-sync effect
+    // (dataVencimento = dataCompra) fires before we submit.
+    await waitFor(() => expect(config.loadFormaPagamentoOptions).toHaveBeenCalled());
+
     fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lançamento' }));
 
     // Recurring entry: scope dialog appears — choose "only this occurrence"
