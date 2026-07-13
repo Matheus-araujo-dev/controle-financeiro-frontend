@@ -133,7 +133,7 @@ export function FaturaDetailPage() {
   const { data: itensData, isFetching: loadingItens } = useQuery({
     queryKey: ['faturas', 'itens', id, itemsPage, itemsPageSize, itemsSortBy, itemsSortDirection],
     queryFn: () => financeiroApi.faturas.listarItens(id!, { page: itemsPage, pageSize: itemsPageSize, sortBy: itemsSortBy, sortDirection: itemsSortDirection }),
-    enabled: !!id,
+    enabled: !!data?.detail,
     staleTime: 30_000,
     placeholderData: (prev) => prev
   });
