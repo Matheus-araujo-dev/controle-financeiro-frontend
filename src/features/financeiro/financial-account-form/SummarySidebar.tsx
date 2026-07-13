@@ -232,6 +232,8 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     valorLiquido,
     watchedValues,
     detailStatus,
+    detailFaturaStatus,
+    faturaLocked,
     errorMessage,
     onCancel,
     cancelar,
@@ -310,7 +312,16 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
         ]}
       >
         <div className="space-y-3">
-          {id && (detailStatus === 'PENDENTE' || detailStatus === 'FUTURO' || detailStatus === 'EM_FATURA') ? (
+          {faturaLocked ? (
+            <div className="flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/8 px-3 py-2.5 text-warning">
+              <span className="material-symbols-outlined text-sm shrink-0 mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
+              <p className="text-xs font-bold leading-snug">
+                Fatura {detailFaturaStatus === 'PAGA' ? 'liquidada' : 'fechada'}. Edição e estorno bloqueados.
+              </p>
+            </div>
+          ) : null}
+
+          {id && !faturaLocked && (detailStatus === 'PENDENTE' || detailStatus === 'FUTURO' || detailStatus === 'EM_FATURA') ? (
             <Button
               type="button"
               variant="danger"
@@ -342,7 +353,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
             </Button>
           ) : null}
 
-          {id && detailStatus === 'LIQUIDADA' ? (
+          {id && detailStatus === 'LIQUIDADA' && !faturaLocked ? (
             <Button
               type="button"
               variant="secondary"
