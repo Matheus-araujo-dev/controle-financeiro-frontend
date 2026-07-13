@@ -270,7 +270,7 @@ describe('QuickLaunchButton', () => {
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
     await user.selectOptions(within(dialog).getByLabelText(/respons.vel/i), 'r1');
     await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-card');
-    await user.selectOptions(within(dialog).getByLabelText('Conta gerencial'), 'cd1');
+    await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cd1');
 
     expect(within(dialog).getByLabelText(/cart.o de cr.dito/i)).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: /^Lan./i })).toBeDisabled();
@@ -307,7 +307,7 @@ describe('QuickLaunchButton', () => {
     await user.selectOptions(within(dialog).getByLabelText(/respons.vel/i), 'r1');
     await user.click(within(dialog).getByRole('button', { name: 'Nova forma de pagamento' }));
     await user.click(screen.getByRole('button', { name: 'Salvar forma' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Nova conta gerencial' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Nova categoria' }));
     expect(screen.getByRole('dialog', { name: 'Nova conta gerencial Receita' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Salvar conta' }));
 
@@ -348,7 +348,7 @@ describe('QuickLaunchButton', () => {
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
     await user.selectOptions(within(dialog).getByLabelText(/respons.vel/i), 'r1');
     await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-pix');
-    await user.selectOptions(within(dialog).getByLabelText('Conta gerencial'), 'cd1');
+    await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cd1');
 
     await user.click(within(dialog).getByRole('button', { name: /^Lan./i }));
 
@@ -370,7 +370,7 @@ describe('QuickLaunchButton', () => {
 
     const { user, dialog } = await openQuickLaunch();
 
-    await user.selectOptions(await within(dialog).findByLabelText('Conta gerencial'), 'cd1');
+    await user.selectOptions(await within(dialog).findByLabelText('Categoria'), 'cd1');
 
     await waitFor(() => {
       const select = within(dialog).getByLabelText(/respons.vel/i) as HTMLSelectElement;
