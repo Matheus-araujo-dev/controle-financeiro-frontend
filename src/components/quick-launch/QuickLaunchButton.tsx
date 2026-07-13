@@ -271,37 +271,13 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     firstFocusable?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (!dialogRef.current) return;
-
-      if (event.key === 'Escape') {
-        if (confirmCloseRef.current) {
-          setConfirmClose(false);
-        } else if (isDirtyRef.current) {
-          setConfirmClose(true);
-        } else {
-          onClose();
-        }
-        return;
-      }
-
-      if (event.key !== 'Tab') return;
-
-      const focusable = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        )
-      );
-      if (focusable.length === 0) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
+      if (event.key !== 'Escape') return;
+      if (confirmCloseRef.current) {
+        setConfirmClose(false);
+      } else if (isDirtyRef.current) {
+        setConfirmClose(true);
+      } else {
+        onClose();
       }
     }
 
@@ -591,7 +567,86 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   />
                 </div>
 
-                {/* Row 2: Valor | Parcelas */}
+                {/* Row 2: Recebedor | Conta gerencial | Responsável */}
+                <div className="md:col-span-2 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
+                    <ComboBox
+                      aria-label={tipo === 'pagar' ? 'Recebedor' : 'Pagador'}
+                      value={pessoaId}
+                      onChange={setPessoaId}
+                      options={pessoas}
+                      placeholder="Selecionar pessoa..."
+                      onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
+                      addNewLabel="Nova pessoa"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={formLabelClass}>Categoria</label>
+                    <ComboBox
+                      aria-label="Categoria"
+                      value={contaGerencialId}
+                      onChange={setContaGerencialId}
+                      options={contasGerenciais}
+                      placeholder="Selecionar..."
+                      onAddNew={() => setQuickAddContaOpen(true)}
+                      addNewLabel="Nova categoria"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={formLabelClass}>Responsável</label>
+                    <ComboBox
+                      aria-label="Responsável"
+                      value={responsavelId}
+                      onChange={(v) => {
+                        setResponsavelId(v);
+                        lastAutoFilledResponsavelRef.current = v || null;
+                      }}
+                      options={responsaveis}
+                      placeholder="Selecionar responsável..."
+                      onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
+                      addNewLabel="Nova pessoa"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 3: Forma de pagamento | Cartão (se cartão) */}
+                <div className="space-y-2">
+                  <label className={formLabelClass}>Forma de pagamento</label>
+                  <ComboBox
+                    aria-label="Forma de pagamento"
+                    value={formaPagamentoId}
+                    onChange={(value) => {
+                      setFormaPagamentoId(value);
+                      if (!formas.find((forma) => forma.value === value)?.ehCartao) {
+                        setCartaoId('');
+                      }
+                    }}
+                    options={formas}
+                    placeholder="Selecionar..."
+                    onAddNew={() => setQuickAddFormaOpen(true)}
+                    addNewLabel="Nova forma de pagamento"
+                  />
+                </div>
+
+                {exigeCartao ? (
+                  <div className="space-y-2">
+                    <label className={formLabelClass}>Cartão de crédito</label>
+                    <ComboBox
+                      aria-label="Cartão de crédito"
+                      value={cartaoId}
+                      onChange={setCartaoId}
+                      options={cartoes}
+                      placeholder="Selecionar cartão..."
+                      onAddNew={() => setQuickAddCartaoOpen(true)}
+                      addNewLabel="Novo cartão"
+                    />
+                  </div>
+                ) : null}
+
+                {/* Row 4: Valor | Parcelas */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <label className={formLabelClass}>
@@ -649,41 +704,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   />
                 </div>
 
-                {/* Row 3: Forma de pagamento | Cartão (se cartão) */}
-                <div className="space-y-2">
-                  <label className={formLabelClass}>Forma de pagamento</label>
-                  <ComboBox
-                    aria-label="Forma de pagamento"
-                    value={formaPagamentoId}
-                    onChange={(value) => {
-                      setFormaPagamentoId(value);
-                      if (!formas.find((forma) => forma.value === value)?.ehCartao) {
-                        setCartaoId('');
-                      }
-                    }}
-                    options={formas}
-                    placeholder="Selecionar..."
-                    onAddNew={() => setQuickAddFormaOpen(true)}
-                    addNewLabel="Nova forma de pagamento"
-                  />
-                </div>
-
-                {exigeCartao ? (
-                  <div className="space-y-2">
-                    <label className={formLabelClass}>Cartão de crédito</label>
-                    <ComboBox
-                      aria-label="Cartão de crédito"
-                      value={cartaoId}
-                      onChange={setCartaoId}
-                      options={cartoes}
-                      placeholder="Selecionar cartão..."
-                      onAddNew={() => setQuickAddCartaoOpen(true)}
-                      addNewLabel="Novo cartão"
-                    />
-                  </div>
-                ) : null}
-
-                {/* Row 4: Vencimento (com toggle já liquidada inline no label) */}
+                {/* Row 5: Vencimento (com toggle já liquidada inline no label) | Data liquidação */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <label className={[formLabelClass, jaLiquidada ? 'text-primary' : ''].join(' ')}>{vencimentoLabel}</label>
@@ -735,51 +756,6 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                     />
                   </div>
                 ) : <div />}
-
-                {/* Row 5: Recebedor | Conta gerencial | Responsável */}
-                <div className="md:col-span-2 grid grid-cols-1 gap-4 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
-                    <ComboBox
-                      aria-label={tipo === 'pagar' ? 'Recebedor' : 'Pagador'}
-                      value={pessoaId}
-                      onChange={setPessoaId}
-                      options={pessoas}
-                      placeholder="Selecionar pessoa..."
-                      onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
-                      addNewLabel="Nova pessoa"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className={formLabelClass}>Conta gerencial</label>
-                    <ComboBox
-                      aria-label="Conta gerencial"
-                      value={contaGerencialId}
-                      onChange={setContaGerencialId}
-                      options={contasGerenciais}
-                      placeholder="Selecionar..."
-                      onAddNew={() => setQuickAddContaOpen(true)}
-                      addNewLabel="Nova conta gerencial"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className={formLabelClass}>Responsável</label>
-                    <ComboBox
-                      aria-label="Responsável"
-                      value={responsavelId}
-                      onChange={(v) => {
-                        setResponsavelId(v);
-                        lastAutoFilledResponsavelRef.current = v || null;
-                      }}
-                      options={responsaveis}
-                      placeholder="Selecionar responsável..."
-                      onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
-                      addNewLabel="Nova pessoa"
-                    />
-                  </div>
-                </div>
               </div>
             )}
 
