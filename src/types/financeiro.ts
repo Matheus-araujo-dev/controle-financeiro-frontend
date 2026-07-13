@@ -158,6 +158,7 @@ export type ContaPagarDetalhe = {
   competenciaFaturaCartao: string | null;
   dataFechamentoFaturaCartao: string | null;
   dataVencimentoFaturaCartao: string | null;
+  statusFaturaCartao: StatusFaturaCodigo | null;
   rateios: RateioDetalhe[];
   createdAtUtc: string;
   updatedAtUtc: string;
