@@ -5,6 +5,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AxiosError } from 'axios';
 
 import { applyServerValidationErrors } from '../../../services/forms/applyServerValidationErrors';
+import { isFaturaIndisponivelError, getApiErrorMessage } from '../../../services/http/api-error';
 import type { ApiErrorResponse } from '../../../types/api';
 import type {
   FinanceiroModuleConfig,
@@ -52,6 +53,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [pendingValues, setPendingValues] = useState<FinanceiroFormValues | null>(null);
   const [pendingDuplicateValues, setPendingDuplicateValues] = useState<FinanceiroFormValues | null>(null);
   const [duplicateItems, setDuplicateItems] = useState<DuplicateItemSummary[] | null>(null);
+  const [pendingFaturaIndisponivelValues, setPendingFaturaIndisponivelValues] = useState<FinanceiroFormValues | null>(null);
+  const [faturaIndisponivelMessage, setFaturaIndisponivelMessage] = useState<string | null>(null);
 
   const {
     control,
@@ -216,9 +219,9 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const onCancel = useCallback(() => navigate(config.routeBase), [navigate, config.routeBase]);
 
   const doCreate = useCallback(
-    async (values: FinanceiroFormValues) => {
+    async (values: FinanceiroFormValues, opts?: { forcarProximaFatura?: boolean }) => {
       try {
-        const created = await config.create(values);
+        const created = await config.create(values, opts);
         const preview = extractCardInvoicePreview(created);
         if (created?.id && preview) {
           navigate(`${config.routeBase}/${created.id}`);
@@ -226,6 +229,11 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         }
         navigate(config.routeBase);
       } catch (error) {
+        if (isFaturaIndisponivelError(error)) {
+          setPendingFaturaIndisponivelValues(values);
+          setFaturaIndisponivelMessage(getApiErrorMessage(error));
+          return;
+        }
         const apiError = error as AxiosError<ApiErrorResponse>;
         const validationErrors = apiError.response?.data?.errors;
         if (validationErrors) {
@@ -263,6 +271,11 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
           await doCreate(values);
         }
       } catch (error) {
+        if (isFaturaIndisponivelError(error)) {
+          setPendingFaturaIndisponivelValues(values);
+          setFaturaIndisponivelMessage(getApiErrorMessage(error));
+          return;
+        }
         const apiError = error as AxiosError<ApiErrorResponse>;
         const validationErrors = apiError.response?.data?.errors;
         if (validationErrors) {
@@ -305,6 +318,28 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     },
     [setError]
   );
+
+  const confirmarProximaFatura = useCallback(async () => {
+    if (!pendingFaturaIndisponivelValues) return;
+    const values = pendingFaturaIndisponivelValues;
+    setPendingFaturaIndisponivelValues(null);
+    setFaturaIndisponivelMessage(null);
+    if (id) {
+      try {
+        await config.update(id, values, { forcarProximaFatura: true });
+        navigate(config.routeBase);
+      } catch (error) {
+        handleSaveError(error);
+      }
+    } else {
+      await doCreate(values, { forcarProximaFatura: true });
+    }
+  }, [pendingFaturaIndisponivelValues, id, config, navigate, doCreate, handleSaveError]);
+
+  const cancelarFaturaIndisponivel = useCallback(() => {
+    setPendingFaturaIndisponivelValues(null);
+    setFaturaIndisponivelMessage(null);
+  }, []);
 
   const onConfirmApenas = useCallback(async () => {
     if (!id || !pendingValues) return;
@@ -434,6 +469,10 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     duplicateItems,
     createDespiteDuplicate,
     cancelDuplicateCheck,
+    pendingFaturaIndisponivelValues,
+    faturaIndisponivelMessage,
+    confirmarProximaFatura,
+    cancelarFaturaIndisponivel,
     reloadPessoaOptions,
     reloadResponsavelOptions,
     reloadFormaPagamentoOptions,

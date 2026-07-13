@@ -7,7 +7,7 @@ import { Button } from '../ui/Button';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { notify } from '../../store/notification-store';
-import { getApiErrorMessage } from '../../services/http/api-error';
+import { getApiErrorMessage, isFaturaIndisponivelError } from '../../services/http/api-error';
 import { CurrencyInput } from '../../shared/CurrencyInput';
 import { formFieldClass, formLabelClass } from '../forms/FormPrimitives';
 import { QuickAddPessoaModal } from '../../features/cadastros/quick-add/QuickAddPessoaModal';
@@ -16,6 +16,7 @@ import { QuickAddContaGerencialModal } from '../../features/cadastros/quick-add/
 import { QuickAddCartaoModal } from '../../features/cadastros/quick-add/QuickAddCartaoModal';
 import { QuickAddContaBancariaModal } from '../../features/cadastros/quick-add/QuickAddContaBancariaModal';
 import { DuplicateAlertModal } from '../../features/financeiro/financial-account-form/DuplicateAlertModal';
+import { FaturaIndisponivelModal } from '../../features/financeiro/financial-account-form/FaturaIndisponivelModal';
 import { checkContaPagarDuplicate, checkContaReceberDuplicate, type DuplicateItemSummary } from '../../features/financeiro/financial-rules';
 import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
 import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
@@ -94,7 +95,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [contaDestinoId, setContaDestinoId] = useState('');
   const [saving, setSaving] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
-  const [pendingLaunch, setPendingLaunch] = useState<{ fn: () => Promise<void>; items: DuplicateItemSummary[] } | null>(null);
+  const [pendingLaunch, setPendingLaunch] = useState<{ fn: () => Promise<void>; retryFn: () => Promise<void>; items: DuplicateItemSummary[] } | null>(null);
+  const [pendingFaturaIndisponivel, setPendingFaturaIndisponivel] = useState<{ retryFn: () => Promise<void>; message: string } | null>(null);
   const lastAutoFilledContaRef = useRef<string | null>(null);
   const lastAutoFilledResponsavelRef = useRef<string | null>(null);
 
@@ -330,12 +332,16 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       Boolean(contaGerencialId) &&
       (!exigeCartao || Boolean(cartaoId));
 
-  async function performLaunch(launchFn: () => Promise<void>) {
+  async function performLaunch(launchFn: () => Promise<void>, retryFn?: () => Promise<void>) {
     setSaving(true);
     try {
       await launchFn();
       onClose();
     } catch (error) {
+      if (isFaturaIndisponivelError(error) && retryFn) {
+        setPendingFaturaIndisponivel({ retryFn, message: getApiErrorMessage(error) });
+        return;
+      }
       notify('error', 'Falha ao criar lançamento', getApiErrorMessage(error));
     } finally {
       setSaving(false);
@@ -378,25 +384,32 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       recorrencia: null
     };
 
-    const launchFn = tipo === 'pagar'
-      ? async () => {
+    function buildLaunchFn(forcarProximaFatura: boolean) {
+      if (tipo === 'pagar') {
+        return async () => {
           await financeiroApi.contasPagar.criar({
             ...base,
             origemCompraPlanejadaId: null,
             responsavelCompraId: responsavelId,
             recebedorId: pessoaId,
-            dataCompra: exigeCartao ? dataVencimento : null
-          });
-          notify('success', 'Lançamento criado', base.descricao);
-        }
-      : async () => {
-          await financeiroApi.contasReceber.criar({
-            ...base,
-            responsavelId,
-            pagadorId: pessoaId
+            dataCompra: exigeCartao ? dataVencimento : null,
+            forcarProximaFatura
           });
           notify('success', 'Lançamento criado', base.descricao);
         };
+      }
+      return async () => {
+        await financeiroApi.contasReceber.criar({
+          ...base,
+          responsavelId,
+          pagadorId: pessoaId
+        });
+        notify('success', 'Lançamento criado', base.descricao);
+      };
+    }
+
+    const launchFn = buildLaunchFn(false);
+    const launchFnForcado = buildLaunchFn(true);
 
     setSaving(true);
     try {
@@ -405,14 +418,14 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
         : checkContaReceberDuplicate(base.descricao, base.dataVencimento, pessoaId, valor));
 
       if (duplicates) {
-        setPendingLaunch({ fn: launchFn, items: duplicates });
+        setPendingLaunch({ fn: launchFn, retryFn: launchFnForcado, items: duplicates });
         return;
       }
     } finally {
       setSaving(false);
     }
 
-    await performLaunch(launchFn);
+    await performLaunch(launchFn, launchFnForcado);
   }
 
   function handleTipoChange(nextTipo: QuickLaunchTipo) {
@@ -825,11 +838,23 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
         duplicates={pendingLaunch?.items ?? []}
         onConfirm={async () => {
           if (!pendingLaunch) return;
-          const fn = pendingLaunch.fn;
+          const { fn, retryFn } = pendingLaunch;
           setPendingLaunch(null);
-          await performLaunch(fn);
+          await performLaunch(fn, retryFn);
         }}
         onCancel={() => setPendingLaunch(null)}
+      />
+      <FaturaIndisponivelModal
+        open={pendingFaturaIndisponivel !== null}
+        loading={saving}
+        message={pendingFaturaIndisponivel?.message ?? null}
+        onConfirm={async () => {
+          if (!pendingFaturaIndisponivel) return;
+          const { retryFn } = pendingFaturaIndisponivel;
+          setPendingFaturaIndisponivel(null);
+          await performLaunch(retryFn);
+        }}
+        onCancel={() => setPendingFaturaIndisponivel(null)}
       />
       <QuickAddPessoaModal
         open={quickAddPessoaTarget !== null}

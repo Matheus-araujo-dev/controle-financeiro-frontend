@@ -123,9 +123,9 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
     summary?: unknown;
   }>;
   detail: (id: string) => Promise<TDetail>;
-  create: (values: FinanceiroFormValues) => Promise<TDetail>;
-  update: (id: string, values: FinanceiroFormValues) => Promise<TDetail>;
-  alterarFuturas?: (id: string, values: FinanceiroFormValues) => Promise<TDetail>;
+  create: (values: FinanceiroFormValues, opts?: { forcarProximaFatura?: boolean }) => Promise<TDetail>;
+  update: (id: string, values: FinanceiroFormValues, opts?: { forcarProximaFatura?: boolean }) => Promise<TDetail>;
+  alterarFuturas?: (id: string, values: FinanceiroFormValues, opts?: { forcarProximaFatura?: boolean }) => Promise<TDetail>;
   gerarOcorrencias?: (id: string, values: { ateData: string }) => Promise<TDetail>;
   pausarRecorrencia?: (id: string) => Promise<TDetail>;
   encerrarRecorrencia?: (id: string, values: { dataFim: string }) => Promise<TDetail>;
@@ -388,7 +388,7 @@ async function loadRateioOptions(tipo: ContaGerencialTipo): Promise<RateioOption
   }));
 }
 
-function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload {
+function buildContaPagarPayload(values: FinanceiroFormValues, opts?: { forcarProximaFatura?: boolean }): ContaPagarPayload {
   return {
     origemCompraPlanejadaId: normalizeNullableId(values.origemCompraPlanejadaId),
     numeroDocumento: normalizeNullableText(values.numeroDocumento),
@@ -412,7 +412,8 @@ function buildContaPagarPayload(values: FinanceiroFormValues): ContaPagarPayload
       contaGerencialId: item.contaGerencialId,
       valor: item.valor
     })),
-    recorrencia: buildRecorrenciaPayload(values)
+    recorrencia: buildRecorrenciaPayload(values),
+    forcarProximaFatura: opts?.forcarProximaFatura
   };
 }
 
@@ -542,9 +543,9 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
   defaultValues,
   list: financeiroApi.contasPagar.listar,
   detail: financeiroApi.contasPagar.obterPorId,
-  create: (values) => financeiroApi.contasPagar.criar(buildContaPagarPayload(values)),
-  update: (id, values) => financeiroApi.contasPagar.atualizar(id, buildContaPagarPayload(values)),
-  alterarFuturas: (id, values) => financeiroApi.contasPagar.alterarFuturas(id, buildContaPagarPayload(values)),
+  create: (values, opts) => financeiroApi.contasPagar.criar(buildContaPagarPayload(values, opts)),
+  update: (id, values, opts) => financeiroApi.contasPagar.atualizar(id, buildContaPagarPayload(values, opts)),
+  alterarFuturas: (id, values, opts) => financeiroApi.contasPagar.alterarFuturas(id, buildContaPagarPayload(values, opts)),
   gerarOcorrencias: (id, values) => financeiroApi.contasPagar.gerarOcorrencias(id, values),
   pausarRecorrencia: financeiroApi.contasPagar.pausarRecorrencia,
   encerrarRecorrencia: (id, values) => financeiroApi.contasPagar.encerrarRecorrencia(id, values),
