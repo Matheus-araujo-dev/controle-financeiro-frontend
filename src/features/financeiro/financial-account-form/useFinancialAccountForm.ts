@@ -46,6 +46,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [cartaoOptions, setCartaoOptions] = useState<SelectOption[]>([]);
   const [rateioOptions, setRateioOptions] = useState<RateioOption[]>([]);
   const [detailStatus, setDetailStatus] = useState<string>();
+  const [detailFaturaStatus, setDetailFaturaStatus] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [cardInvoicePreview, setCardInvoicePreview] = useState<CardInvoicePreview>();
   const [grupoParcelamentoId, setGrupoParcelamentoId] = useState<string | null | undefined>(undefined);
@@ -92,7 +93,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     [watchedValues.origemCompraPlanejadaId]
   );
   const exibeRecorrencia = watchedValues.ehRecorrente;
-  const canEdit = detailStatus !== 'LIQUIDADA' && detailStatus !== 'CANCELADA';
+  const faturaLocked = detailFaturaStatus === 'FECHADA' || detailFaturaStatus === 'PAGA';
+  const canEdit = detailStatus !== 'LIQUIDADA' && detailStatus !== 'CANCELADA' && !faturaLocked;
   const canAlterarFuturas = Boolean(id) && exibeRecorrencia && canEdit && Boolean(config.alterarFuturas);
 
   const recurringStartDatePreview = useMemo(
@@ -169,6 +171,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     if (!entityId) {
       if (!config.resolveCreateDefaults) reset(normalizeRecurringFormValues(config.defaultValues));
       setDetailStatus(undefined);
+      setDetailFaturaStatus(null);
       setCardInvoicePreview(undefined);
       return;
     }
@@ -180,6 +183,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         const detail = await config.detail(currentId);
         reset(normalizeRecurringFormValues(config.toFormValues(detail)));
         setDetailStatus(detail.statusCodigo);
+        setDetailFaturaStatus('statusFaturaCartao' in detail ? (detail as Record<string, unknown>).statusFaturaCartao as string | null : null);
         setCardInvoicePreview(extractCardInvoicePreview(detail));
         if ('grupoParcelamentoId' in detail) {
           setGrupoParcelamentoId((detail as Record<string, unknown>).grupoParcelamentoId as string | null);
@@ -386,6 +390,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
       const detail = await config.detail(id);
       reset(config.toFormValues(detail));
       setDetailStatus(detail.statusCodigo);
+      setDetailFaturaStatus('statusFaturaCartao' in detail ? (detail as Record<string, unknown>).statusFaturaCartao as string | null : null);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Falha ao estornar o lançamento.');
     } finally {
@@ -446,6 +451,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     loading,
     errorMessage,
     detailStatus,
+    detailFaturaStatus,
+    faturaLocked,
     actionLoading,
     cardInvoicePreview,
     pessoaOptions,
