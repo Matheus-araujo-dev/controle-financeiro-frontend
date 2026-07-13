@@ -167,7 +167,8 @@ vi.mock('../../store/notification-store', () => ({
 }));
 
 vi.mock('../../services/http/api-error', () => ({
-  getApiErrorMessage: () => 'Erro de API'
+  getApiErrorMessage: () => 'Erro de API',
+  isFaturaIndisponivelError: () => false
 }));
 
 const pessoasResponse = {
