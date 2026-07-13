@@ -184,6 +184,7 @@ export type ContaPagarPayload = {
   observacao: string | null;
   rateios: RateioPayload[];
   recorrencia: RecorrenciaPayload | null;
+  forcarProximaFatura?: boolean;
 };
 
 export type ContaPagarFilters = ListQueryBase & {
