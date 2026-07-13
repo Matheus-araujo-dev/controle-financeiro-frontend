@@ -23,7 +23,7 @@ export function FinancialAccountFormPage({
   const form = useFinancialAccountForm(config);
   const {
     id, control, canEdit, loading, errorMessage, isSubmitting, handleSubmit, onSubmit,
-    pendingDuplicateValues, createDespiteDuplicate, cancelDuplicateCheck
+    pendingDuplicateValues, duplicateItems, createDespiteDuplicate, cancelDuplicateCheck
   } = form;
   const isReceita = config.key === 'contas-receber';
 
@@ -126,6 +126,7 @@ export function FinancialAccountFormPage({
       <DuplicateAlertModal
         open={!!pendingDuplicateValues}
         loading={isSubmitting}
+        duplicates={duplicateItems ?? []}
         onConfirm={createDespiteDuplicate}
         onCancel={cancelDuplicateCheck}
       />
