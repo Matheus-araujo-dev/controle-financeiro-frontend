@@ -199,8 +199,8 @@ describe('quick add modals', () => {
     fireEvent.change(screen.getByPlaceholderText(/Pix Pessoal/i), { target: { value: '  Debito Teste  ' } });
     fireEvent.focus(screen.getByRole('combobox', { name: 'Tipo' }));
     fireEvent.click(screen.getByRole('button', { name: /D.bito/i }));
-    fireEvent.click(screen.getByRole('button', { name: /cart.o de cr.dito/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Baixa autom.tica/i }));
+    fireEvent.click(screen.getByRole('switch', { name: /cart.o de cr.dito/i }));
+    fireEvent.click(screen.getByRole('switch', { name: /Baixa autom.tica/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar Cadastro' }));
 
     await waitFor(() =>

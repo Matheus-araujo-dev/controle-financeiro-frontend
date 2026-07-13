@@ -33,6 +33,9 @@ export function ToggleField({
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`flex min-h-[54px] w-full items-center justify-between gap-4 rounded-xl bg-surface-container px-4 py-3 text-left ring-1 ring-white/5 transition-all hover:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-60 ${
@@ -43,7 +46,7 @@ export function ToggleField({
         {label ? <span className="block text-sm font-bold">{label}</span> : null}
         {description ? <span className="block text-xs text-on-surface-variant">{description}</span> : null}
       </span>
-      <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-primary' : 'bg-surface-container-high'}`}>
+      <span aria-hidden="true" className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-primary' : 'bg-surface-container-high'}`}>
         <span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all ${checked ? 'right-1' : 'left-1'}`} />
       </span>
     </button>
