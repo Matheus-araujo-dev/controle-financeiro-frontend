@@ -85,6 +85,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const [dataVencimento, setDataVencimento] = useState(initialDate.current);
   const [jaLiquidada, setJaLiquidada] = useState(false);
   const [dataLiquidacao, setDataLiquidacao] = useState(hojeISO());
+  const [contaBancariaLiquidacaoId, setContaBancariaLiquidacaoId] = useState('');
   const [pessoaId, setPessoaId] = useState('');
   const [responsavelId, setResponsavelId] = useState('');
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
@@ -319,6 +320,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     setJaLiquidada(deveToggle);
     if (deveToggle) {
       setDataLiquidacao(dataVencimento);
+    } else {
+      setContaBancariaLiquidacaoId('');
     }
   }, [formaPagamentoId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -330,7 +333,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       Boolean(responsavelId) &&
       Boolean(formaPagamentoId) &&
       Boolean(contaGerencialId) &&
-      (!exigeCartao || Boolean(cartaoId));
+      (!exigeCartao || Boolean(cartaoId)) &&
+      (!jaLiquidada || Boolean(contaBancariaLiquidacaoId));
 
   async function performLaunch(launchFn: () => Promise<void>, retryFn?: () => Promise<void>) {
     setSaving(true);
@@ -371,7 +375,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       dataVencimento,
       formaPagamentoId,
       cartaoId: exigeCartao ? cartaoId : null,
-      contaBancariaId: null,
+      contaBancariaId: jaLiquidada ? contaBancariaLiquidacaoId || null : null,
       dataLiquidacao: jaLiquidada ? dataLiquidacao : null,
       valorOriginal: valor,
       valorDesconto: 0,
@@ -435,6 +439,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
     setContaOrigemId('');
     setContaDestinoId('');
     setJaLiquidada(false);
+    setContaBancariaLiquidacaoId('');
   }
 
   function handlePessoaSuccess(target: QuickAddTarget, newId: string, label: string) {
@@ -733,6 +738,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                           const next = !jaLiquidada;
                           setJaLiquidada(next);
                           if (next) setDataLiquidacao(dataVencimento);
+                          else setContaBancariaLiquidacaoId('');
                         }}
                         className={[
                           'ml-auto relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
@@ -772,6 +778,19 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                     />
                   </div>
                 ) : <div />}
+
+                {jaLiquidada && !exigeCartao ? (
+                  <div className="md:col-span-2 space-y-2">
+                    <label className={formLabelClass}>Conta para liquidação</label>
+                    <ComboBox
+                      aria-label="Conta para liquidação"
+                      value={contaBancariaLiquidacaoId}
+                      onChange={(v) => setContaBancariaLiquidacaoId(v as string)}
+                      options={contasBancarias}
+                      placeholder="Selecionar conta..."
+                    />
+                  </div>
+                ) : null}
               </div>
             )}
 
