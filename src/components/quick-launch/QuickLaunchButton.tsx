@@ -709,7 +709,9 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className={formLabelClass}>Parcelas</label>
+                  <div className="flex min-h-5 items-center">
+                    <label className={formLabelClass}>Parcelas</label>
+                  </div>
                   <input
                     aria-label="Número de parcelas"
                     inputMode="numeric"
