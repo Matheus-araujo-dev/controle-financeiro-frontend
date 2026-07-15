@@ -730,32 +730,32 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                   <div className="flex items-center gap-2">
                     <label className={[formLabelClass, jaLiquidada ? 'text-primary' : ''].join(' ')}>{vencimentoLabel}</label>
                     {!exigeCartao ? (
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={jaLiquidada}
-                        onClick={() => {
-                          const next = !jaLiquidada;
-                          setJaLiquidada(next);
-                          if (next) setDataLiquidacao(dataVencimento);
-                          else setContaBancariaLiquidacaoId('');
-                        }}
-                        className={[
-                          'ml-auto relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-                          jaLiquidada ? 'bg-primary' : 'bg-white/15',
-                        ].join(' ')}
-                        title={toggleLabel}
-                      >
-                        <span
+                      <>
+                        <span className={['ml-auto text-xs', jaLiquidada ? 'text-primary' : 'text-on-surface-variant'].join(' ')}>{toggleLabel}</span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={jaLiquidada}
+                          aria-label={toggleLabel}
+                          onClick={() => {
+                            const next = !jaLiquidada;
+                            setJaLiquidada(next);
+                            if (next) setDataLiquidacao(dataVencimento);
+                            else setContaBancariaLiquidacaoId('');
+                          }}
                           className={[
-                            'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
-                            jaLiquidada ? 'translate-x-4' : 'translate-x-0',
+                            'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
+                            jaLiquidada ? 'bg-primary' : 'bg-white/15',
                           ].join(' ')}
-                        />
-                      </button>
-                    ) : null}
-                    {jaLiquidada && !exigeCartao ? (
-                      <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">{toggleBadgeLabel}</span>
+                        >
+                          <span
+                            className={[
+                              'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                              jaLiquidada ? 'translate-x-4' : 'translate-x-0',
+                            ].join(' ')}
+                          />
+                        </button>
+                      </>
                     ) : null}
                   </div>
                   <DateInput
