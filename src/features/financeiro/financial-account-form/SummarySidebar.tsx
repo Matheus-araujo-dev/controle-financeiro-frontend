@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FormActionPanel } from '../../../components/forms/FormPrimitives';
 import { Button } from '../../../components/ui/Button';
 import { formatCurrencyBRL } from '../../../shared/currency';
+import { formatDateBR } from '../../../shared/date';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
+import type { CancelarContaPagarPayload } from '../../../types/financeiro';
 
 type SummarySidebarProps = {
   form: FinancialAccountFormApi;
@@ -224,10 +227,98 @@ function PlannedPurchaseCancelDialog({
   );
 }
 
+function ContaVinculadaCancelDialog({
+  open,
+  onClose,
+  onCancelarSoEsta,
+  onCancelarAmbas
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCancelarSoEsta: () => void;
+  onCancelarAmbas: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
+        <div className="mb-6 flex items-start gap-3">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-error/12 text-error">
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>link_off</span>
+          </div>
+          <div>
+            <h3 className="font-headline text-lg font-bold text-on-surface">Conta vinculada (reembolso)</h3>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Este lançamento possui uma conta vinculada. Deseja cancelar também a conta vinculada?
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>Voltar</Button>
+          <Button type="button" variant="secondary" onClick={onCancelarSoEsta}>Não, só esta</Button>
+          <Button type="button" variant="danger" onClick={onCancelarAmbas}>Sim, cancelar ambas</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContaVinculadaPropagateDialog({
+  open,
+  diff,
+  loading,
+  onClose,
+  onPropagar,
+  onDismiss
+}: {
+  open: boolean;
+  diff: Array<{ key: string; label: string; from: string; to: string }>;
+  loading: boolean;
+  onClose: () => void;
+  onPropagar: () => void;
+  onDismiss: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
+        <div className="mb-6 flex items-start gap-3">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/12 text-primary">
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>sync_alt</span>
+          </div>
+          <div>
+            <h3 className="font-headline text-lg font-bold text-on-surface">Propagar alterações à conta vinculada?</h3>
+            <p className="mt-1 text-sm text-on-surface-variant">Os seguintes campos foram alterados. Deseja aplicar as mesmas alterações na conta vinculada (reembolso)?</p>
+          </div>
+        </div>
+        <div className="mb-6 space-y-2">
+          {diff.map((item) => (
+            <div key={item.key} className="rounded-xl border border-white/8 bg-surface-container px-4 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{item.label}</p>
+              <div className="mt-1 flex items-center gap-2 text-sm">
+                <span className="text-on-surface-variant line-through">{item.from}</span>
+                <span className="material-symbols-outlined text-sm text-primary">arrow_forward</span>
+                <span className="font-semibold text-on-surface">{item.to}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>Voltar</Button>
+          <Button type="button" variant="secondary" onClick={onDismiss} disabled={loading}>Não propagar</Button>
+          <Button type="button" variant="primary" onClick={onPropagar} loading={loading} disabled={loading}>Sim, propagar</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SummarySidebar({ form }: SummarySidebarProps) {
+  const navigate = useNavigate();
   const {
     id,
     isSubmitting,
+    actionLoading,
     isValid,
     valorLiquido,
     watchedValues,
@@ -246,7 +337,11 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     pendingValues,
     onConfirmApenas,
     onConfirmAlterarFuturas,
-    clearPendingScope
+    clearPendingScope,
+    contaVinculada,
+    pendingPropagation,
+    propagarParaVinculada,
+    dismissPropagation
   } = form;
   const showSubmitError = Boolean(errorMessage) && !isSubmitting;
 
@@ -255,6 +350,17 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
   const [recorrenciaConfirmOpen, setRecorrenciaConfirmOpen] = useState(false);
   const [parcelasConfirmOpen, setParcelasConfirmOpen] = useState(false);
   const [scopeSubmitting, setScopeSubmitting] = useState(false);
+  const [pendingCancelOptions, setPendingCancelOptions] = useState<CancelarContaPagarPayload | null>(null);
+  const [contaVinculadaCancelOpen, setContaVinculadaCancelOpen] = useState(false);
+
+  function iniciarCancelamento(options?: CancelarContaPagarPayload) {
+    if (contaVinculada) {
+      setPendingCancelOptions(options ?? null);
+      setContaVinculadaCancelOpen(true);
+    } else {
+      void cancelar(options);
+    }
+  }
 
   const valorOriginal = Number(watchedValues.valorOriginal) || 0;
   const valorDesconto = Number(watchedValues.valorDesconto) || 0;
@@ -312,6 +418,28 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
         ]}
       >
         <div className="space-y-3">
+          {contaVinculada ? (
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-base text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>link</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Conta Vinculada</span>
+              </div>
+              <p className="text-sm font-bold text-on-surface leading-snug">{contaVinculada.descricao}</p>
+              <p className="text-xs text-on-surface-variant">
+                {contaVinculada.tipo === 'Pagar' ? 'A pagar' : 'A receber'} · {formatCurrencyBRL(contaVinculada.valorLiquido)} · venc. {formatDateBR(contaVinculada.dataVencimento)}
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="w-full rounded-xl text-xs"
+                onClick={() => navigate(`${contaVinculada.tipo === 'Pagar' ? '/contas-pagar' : '/contas-receber'}/${contaVinculada.id}`)}
+              >
+                Ver conta vinculada
+              </Button>
+            </div>
+          ) : null}
+
           {faturaLocked ? (
             <div className="flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/8 px-3 py-2.5 text-warning">
               <span className="material-symbols-outlined text-sm shrink-0 mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
@@ -345,7 +473,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
                   message: 'Tem certeza que deseja cancelar este lançamento? Esta ação não pode ser desfeita.',
                   confirmLabel: 'Sim, cancelar',
                   tone: 'danger',
-                  onConfirm: () => void cancelar()
+                  onConfirm: () => iniciarCancelamento()
                 });
               }}
             >
@@ -380,37 +508,57 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
         open={recorrenciaConfirmOpen}
         onClose={() => setRecorrenciaConfirmOpen(false)}
         onCancelarApenas={() => {
-          void cancelar({ pausarRecorrenciaRelacionada: false });
           setRecorrenciaConfirmOpen(false);
+          iniciarCancelamento({ pausarRecorrenciaRelacionada: false });
         }}
         onCancelarEPausar={() => {
-          void cancelar({ pausarRecorrenciaRelacionada: true });
           setRecorrenciaConfirmOpen(false);
+          iniciarCancelamento({ pausarRecorrenciaRelacionada: true });
         }}
       />
       <PlannedPurchaseCancelDialog
         open={plannedPurchaseConfirmOpen}
         onClose={() => setPlannedPurchaseConfirmOpen(false)}
         onKeepPlanning={() => {
-          void cancelar({ cancelarPlanejamentoRelacionado: false });
           setPlannedPurchaseConfirmOpen(false);
+          iniciarCancelamento({ cancelarPlanejamentoRelacionado: false });
         }}
         onCancelPlanning={() => {
-          void cancelar({ cancelarPlanejamentoRelacionado: true });
           setPlannedPurchaseConfirmOpen(false);
+          iniciarCancelamento({ cancelarPlanejamentoRelacionado: true });
         }}
       />
       <ParcelasCancelDialog
         open={parcelasConfirmOpen}
         onClose={() => setParcelasConfirmOpen(false)}
         onCancelarApenas={() => {
-          void cancelar({ cancelarParcelasFuturas: false });
           setParcelasConfirmOpen(false);
+          iniciarCancelamento({ cancelarParcelasFuturas: false });
         }}
         onCancelarFuturas={() => {
-          void cancelar({ cancelarParcelasFuturas: true });
           setParcelasConfirmOpen(false);
+          iniciarCancelamento({ cancelarParcelasFuturas: true });
         }}
+      />
+      <ContaVinculadaCancelDialog
+        open={contaVinculadaCancelOpen}
+        onClose={() => setContaVinculadaCancelOpen(false)}
+        onCancelarSoEsta={() => {
+          setContaVinculadaCancelOpen(false);
+          void cancelar(pendingCancelOptions ?? undefined);
+        }}
+        onCancelarAmbas={() => {
+          setContaVinculadaCancelOpen(false);
+          void cancelar({ ...(pendingCancelOptions ?? {}), cancelarContaVinculada: true });
+        }}
+      />
+      <ContaVinculadaPropagateDialog
+        open={pendingPropagation !== null}
+        diff={pendingPropagation?.diff ?? []}
+        loading={actionLoading}
+        onClose={() => { /* mantém aberto, só fecha com dismiss ou propagar */ }}
+        onPropagar={() => void propagarParaVinculada()}
+        onDismiss={dismissPropagation}
       />
       <RecorrenciaEscopoDialog
         open={pendingValues !== null && !scopeSubmitting}

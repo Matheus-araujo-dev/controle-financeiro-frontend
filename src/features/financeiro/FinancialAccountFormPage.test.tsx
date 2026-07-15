@@ -364,6 +364,109 @@ describe('FinancialAccountFormPage', () => {
 
     await waitFor(() => expect(screen.queryByText('Fatura fechada ou liquidada')).not.toBeInTheDocument());
   }, 20000);
+
+  it('shows conta vinculada card when detail includes contaVinculada', async () => {
+    const config = createConfig();
+    config.detail.mockResolvedValue({
+      statusCodigo: 'PENDENTE',
+      dataLiquidacao: null,
+      dataVencimento: '2026-04-20',
+      contaBancariaId: 'cb1',
+      contaVinculada: {
+        id: 'vinc-1',
+        tipo: 'Receber',
+        descricao: 'Reembolso serviço',
+        valorLiquido: 95,
+        statusCodigo: 'PENDENTE',
+        statusNome: 'Pendente',
+        dataVencimento: '2026-04-20'
+      }
+    });
+
+    renderWithRoute('/contas-pagar/123', '/contas-pagar/:id', config);
+
+    expect(await screen.findByText('Conta Vinculada')).toBeInTheDocument();
+    expect(screen.getByText('Reembolso serviço')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ver conta vinculada' })).toBeInTheDocument();
+  }, 20000);
+
+  it('shows propagation dialog when vinculada exists and fields changed, Não propagar navigates away', async () => {
+    const config = createConfig();
+    config.toFormValues.mockReturnValue({
+      ...validValues,
+      ehRecorrente: false,
+      descricao: 'Descrição original'
+    });
+    config.detail.mockResolvedValue({
+      statusCodigo: 'PENDENTE',
+      dataLiquidacao: null,
+      dataVencimento: '2026-04-20',
+      contaBancariaId: 'cb1',
+      contaVinculada: {
+        id: 'vinc-1',
+        tipo: 'Receber',
+        descricao: 'Reembolso serviço',
+        valorLiquido: 95,
+        statusCodigo: 'PENDENTE',
+        statusNome: 'Pendente',
+        dataVencimento: '2026-04-20'
+      }
+    });
+
+    renderWithRoute('/contas-pagar/123', '/contas-pagar/:id', config);
+
+    const descricaoInput = await screen.findByDisplayValue('Descrição original');
+    fireEvent.change(descricaoInput, { target: { value: 'Descrição alterada' } });
+
+    await waitFor(() => expect(config.loadFormaPagamentoOptions).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar Lançamento' }));
+
+    await waitFor(() => expect(config.update).toHaveBeenCalled());
+
+    // Propagation dialog should appear
+    expect(await screen.findByText('Propagar alterações à conta vinculada?')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Não propagar' }));
+
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/contas-pagar'));
+  }, 30000);
+
+  it('shows conta vinculada cancel dialog and Não só esta cancels only this entry', async () => {
+    const config = createConfig();
+    config.toFormValues.mockReturnValue({ ...validValues, ehRecorrente: false });
+    config.detail.mockResolvedValue({
+      statusCodigo: 'PENDENTE',
+      dataLiquidacao: null,
+      dataVencimento: '2026-04-20',
+      contaBancariaId: 'cb1',
+      contaVinculada: {
+        id: 'vinc-1',
+        tipo: 'Receber',
+        descricao: 'Reembolso',
+        valorLiquido: 95,
+        statusCodigo: 'PENDENTE',
+        statusNome: 'Pendente',
+        dataVencimento: '2026-04-20'
+      }
+    });
+
+    renderWithRoute('/contas-pagar/123', '/contas-pagar/:id', config);
+
+    expect(await screen.findByDisplayValue('Despesa de teste')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar Título' }));
+
+    // Generic confirm dialog appears first
+    expect(await screen.findByText('Confirmar Cancelamento')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sim, cancelar' }));
+
+    // Conta vinculada cancel dialog appears
+    expect(await screen.findByText('Conta vinculada (reembolso)')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Não, só esta' }));
+
+    await waitFor(() => expect(config.cancelar).toHaveBeenCalledWith('123', {}));
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/contas-pagar'));
+  }, 30000);
 });
 
 

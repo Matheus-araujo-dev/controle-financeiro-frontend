@@ -231,6 +231,7 @@ describe('cadastros module config', () => {
       tipo: 'Despesa' as const,
       contaPaiId: '',
       responsavelPadraoId: '',
+      contaGerencialContrariaId: '',
       ehPadraoRecebimentoFaturaCartao: false,
       ativo: true
     };

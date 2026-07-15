@@ -61,6 +61,8 @@ export type FormFieldConfig<TPayload> = {
   nullable?: boolean;
   options?: SelectOption[];
   loadOptions?: () => Promise<SelectOption[]>;
+  /** Carrega opções dinamicamente com base nos valores atuais do formulário. */
+  loadOptionsWith?: (values: Record<string, unknown>) => Promise<SelectOption[]>;
   placeholder?: string;
   min?: number;
   max?: number;
@@ -206,6 +208,12 @@ async function loadContaGerencialLancavelOptions(tipo: 'Despesa' | 'Receita') {
       chain: ancestors.length > 0 ? `(${ancestors.join(', ')})` : undefined
     };
   });
+}
+
+async function loadContaGerencialContrariaOptions(values: Record<string, unknown>) {
+  const tipo = values['tipo'] as 'Despesa' | 'Receita' | undefined;
+  const tipoContrario: 'Despesa' | 'Receita' | undefined = tipo === 'Despesa' ? 'Receita' : tipo === 'Receita' ? 'Despesa' : undefined;
+  return loadContaGerencialOptions(tipoContrario ? { tipo: tipoContrario } : undefined);
 }
 
 async function loadPessoaOptions() {
@@ -752,6 +760,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     { name: 'descricao', label: 'Descrição', kind: 'text' },
     { name: 'tipo', label: 'Tipo', kind: 'select', options: contaGerencialTipoOptions },
     { name: 'responsavelPadraoId', label: 'Responsável padrão', kind: 'select', loadOptions: loadPessoaOptions },
+    { name: 'contaGerencialContrariaId', label: 'Conta de reembolso', kind: 'select', loadOptionsWith: loadContaGerencialContrariaOptions },
     { name: 'ehPadraoRecebimentoFaturaCartao', label: 'Padrão para recebimento de fatura', kind: 'switch' },
     { name: 'ativo', label: 'Ativo', kind: 'switch' }
   ],
@@ -763,6 +772,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     tipo: 'Despesa',
     contaPaiId: '',
     responsavelPadraoId: '',
+    contaGerencialContrariaId: '',
     ehPadraoRecebimentoFaturaCartao: false,
     ativo: true
   },
@@ -772,13 +782,15 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     cadastrosApi.contasGerenciais.criar({
       ...payload,
       contaPaiId: payload.contaPaiId || null,
-      responsavelPadraoId: payload.responsavelPadraoId || null
+      responsavelPadraoId: payload.responsavelPadraoId || null,
+      contaGerencialContrariaId: payload.contaGerencialContrariaId || null
     }),
   update: (id, payload) =>
     cadastrosApi.contasGerenciais.atualizar(id, {
       ...payload,
       contaPaiId: payload.contaPaiId || null,
-      responsavelPadraoId: payload.responsavelPadraoId || null
+      responsavelPadraoId: payload.responsavelPadraoId || null,
+      contaGerencialContrariaId: payload.contaGerencialContrariaId || null
     }),
   toFormValues: (detail) => ({
     codigo: detail.codigo ?? '',
@@ -786,6 +798,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     tipo: detail.tipo,
     contaPaiId: detail.contaPaiId ?? '',
     responsavelPadraoId: detail.responsavelPadraoId ?? '',
+    contaGerencialContrariaId: detail.contaGerencialContrariaId ?? '',
     ehPadraoRecebimentoFaturaCartao: detail.ehPadraoRecebimentoFaturaCartao,
     ativo: detail.ativo
   }),

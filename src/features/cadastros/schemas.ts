@@ -108,6 +108,7 @@ export const contaGerencialSchema = z.object({
   tipo: z.enum(['Receita', 'Despesa']),
   contaPaiId: z.string().trim(),
   responsavelPadraoId: z.string().trim(),
+  contaGerencialContrariaId: z.string().trim(),
   ativo: z.boolean(),
   ehPadraoRecebimentoFaturaCartao: z.boolean()
 });

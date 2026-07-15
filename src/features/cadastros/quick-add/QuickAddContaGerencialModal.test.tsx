@@ -26,6 +26,8 @@ describe('QuickAddContaGerencialModal', () => {
       contaPaiDescricao: null,
       responsavelPadraoId: null,
       responsavelPadraoNome: null,
+      contaGerencialContrariaId: null,
+      contaGerencialContrariaNome: null,
       ativo: true,
       aceitaLancamentos: true,
       ehPadraoRecebimentoFaturaCartao: false,
