@@ -1,6 +1,17 @@
 import type { PagedResult } from './api';
 
 export type LancamentoOrigem = 'Manual' | 'Recorrencia' | 'Importacao';
+export type TipoContaVinculada = 'Pagar' | 'Receber';
+
+export type ContaVinculadaResumo = {
+  id: string;
+  tipo: TipoContaVinculada;
+  descricao: string;
+  valorLiquido: number;
+  statusCodigo: string;
+  statusNome: string;
+  dataVencimento: string;
+};
 export type StatusContaCodigo = 'PENDENTE' | 'LIQUIDADA' | 'VENCIDA' | 'CANCELADA' | 'PARCIAL' | 'EM_FATURA' | 'FUTURO';
 export type StatusFaturaCodigo = 'ABERTA' | 'PAGA' | 'FECHADA';
 export type TipoMovimentacao = 'Entrada' | 'Saida';
@@ -162,6 +173,7 @@ export type ContaPagarDetalhe = {
   rateios: RateioDetalhe[];
   createdAtUtc: string;
   updatedAtUtc: string;
+  contaVinculada: ContaVinculadaResumo | null;
 };
 
 export type ContaPagarPayload = {
@@ -186,6 +198,7 @@ export type ContaPagarPayload = {
   rateios: RateioPayload[];
   recorrencia: RecorrenciaPayload | null;
   forcarProximaFatura?: boolean;
+  contaVinculadaOrigemId?: string | null;
 };
 
 export type ContaPagarFilters = ListQueryBase & {
@@ -266,6 +279,7 @@ export type ContaReceberDetalhe = {
   rateios: RateioDetalhe[];
   createdAtUtc: string;
   updatedAtUtc: string;
+  contaVinculada: ContaVinculadaResumo | null;
 };
 
 export type ContaReceberPayload = {
@@ -287,6 +301,7 @@ export type ContaReceberPayload = {
   observacao: string | null;
   rateios: RateioPayload[];
   recorrencia: RecorrenciaPayload | null;
+  contaVinculadaOrigemId?: string | null;
 };
 
 export type ContaReceberFilters = ListQueryBase & {

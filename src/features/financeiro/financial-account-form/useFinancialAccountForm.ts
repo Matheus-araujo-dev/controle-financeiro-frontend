@@ -20,6 +20,7 @@ import { formatMonthYearBR } from '../../../shared/date';
 import { extractCardInvoicePreview, type CardInvoicePreview } from './card-invoice';
 import type { CancelarContaPagarPayload } from '../../../types/financeiro';
 import type { DuplicateItemSummary } from '../financial-rules';
+import type { QuickLaunchInitialValues } from '../../../components/quick-launch/QuickLaunchButton';
 
 export function normalizeRecurringFormValues(values: FinanceiroFormValues): FinanceiroFormValues {
   if (!values.ehRecorrente || values.quantidadeParcelas === 1) {
@@ -56,6 +57,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [duplicateItems, setDuplicateItems] = useState<DuplicateItemSummary[] | null>(null);
   const [pendingFaturaIndisponivelValues, setPendingFaturaIndisponivelValues] = useState<FinanceiroFormValues | null>(null);
   const [faturaIndisponivelMessage, setFaturaIndisponivelMessage] = useState<string | null>(null);
+  const [gerarReembolso, setGerarReembolso] = useState(false);
+  const [reembolsoData, setReembolsoData] = useState<QuickLaunchInitialValues | null>(null);
 
   const {
     control,
@@ -226,6 +229,20 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     async (values: FinanceiroFormValues, opts?: { forcarProximaFatura?: boolean }) => {
       try {
         const created = await config.create(values, opts);
+        if (gerarReembolso) {
+          const isPagar = config.key === 'contas-pagar';
+          const detail = created as Record<string, unknown>;
+          setReembolsoData({
+            tipo: isPagar ? 'receber' : 'pagar',
+            pessoaId: (isPagar ? detail.recebedorId : detail.pagadorId) as string | undefined,
+            responsavelId: (isPagar ? detail.responsavelCompraId : detail.responsavelId) as string | undefined,
+            valor: (detail.valorLiquido as number) ?? 0,
+            dataVencimento: (detail.dataVencimento as string) ?? undefined,
+            descricao: `Reembolso: ${(detail.descricao as string) ?? ''}`,
+            contaVinculadaOrigemId: (detail.id as string) ?? undefined
+          });
+          return;
+        }
         const preview = extractCardInvoicePreview(created);
         if (created?.id && preview) {
           navigate(`${config.routeBase}/${created.id}`);
@@ -249,8 +266,13 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         setErrorMessage(error instanceof Error ? error.message : 'Falha ao salvar o lançamento.');
       }
     },
-    [config, navigate, setError]
+    [config, gerarReembolso, navigate, setError]
   );
+
+  const clearReembolso = useCallback(() => {
+    setReembolsoData(null);
+    navigate(config.routeBase);
+  }, [navigate, config.routeBase]);
 
   const onSubmit = useCallback(
     async (values: FinanceiroFormValues) => {
@@ -485,7 +507,11 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     reloadFormaPagamentoOptions,
     reloadContaBancariaOptions,
     reloadCartaoOptions,
-    reloadRateioOptions
+    reloadRateioOptions,
+    gerarReembolso,
+    setGerarReembolso,
+    reembolsoData,
+    clearReembolso
   };
 }
 

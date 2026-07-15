@@ -216,6 +216,8 @@ export type ContaGerencialResumo = {
   ativo: boolean;
   aceitaLancamentos: boolean;
   ehPadraoRecebimentoFaturaCartao: boolean;
+  contaGerencialContrariaId: string | null;
+  contaGerencialContrariaNome: string | null;
 };
 
 export type ContaGerencialDetalhe = ContaGerencialResumo & {
@@ -225,7 +227,7 @@ export type ContaGerencialDetalhe = ContaGerencialResumo & {
 
 export type ContaGerencialPayload = Omit<
   ContaGerencialResumo,
-  'id' | 'contaPaiDescricao' | 'responsavelPadraoNome' | 'aceitaLancamentos'
+  'id' | 'contaPaiDescricao' | 'responsavelPadraoNome' | 'aceitaLancamentos' | 'contaGerencialContrariaNome'
 >;
 
 export type ContaGerencialFilters = ListQueryBase & {

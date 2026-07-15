@@ -14,6 +14,7 @@ import { fieldLabelClass, nativeCompactFieldClass, nativeFieldWithPaddingClass, 
 import { useFinancialAccountForm } from './financial-account-form/useFinancialAccountForm';
 import { DuplicateAlertModal } from './financial-account-form/DuplicateAlertModal';
 import { FaturaIndisponivelModal } from './financial-account-form/FaturaIndisponivelModal';
+import { QuickLaunchModal } from '../../components/quick-launch/QuickLaunchButton';
 
 export function FinancialAccountFormPage({
   config
@@ -25,7 +26,8 @@ export function FinancialAccountFormPage({
   const {
     id, control, canEdit, loading, errorMessage, isSubmitting, handleSubmit, onSubmit,
     pendingDuplicateValues, duplicateItems, createDespiteDuplicate, cancelDuplicateCheck,
-    faturaIndisponivelMessage, confirmarProximaFatura, cancelarFaturaIndisponivel
+    faturaIndisponivelMessage, confirmarProximaFatura, cancelarFaturaIndisponivel,
+    gerarReembolso, setGerarReembolso, reembolsoData, clearReembolso
   } = form;
   const isReceita = config.key === 'contas-receber';
 
@@ -119,11 +121,50 @@ export function FinancialAccountFormPage({
                 />
               </div>
             </FormSection>
+
+            {!id ? (
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/8 bg-surface-container px-5 py-4">
+                <div>
+                  <p className="text-sm font-bold text-on-surface">
+                    {isReceita ? 'Gerar conta a pagar (reembolso)' : 'Gerar conta a receber (reembolso)'}
+                  </p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">
+                    Após salvar, abre o lançamento rápido pré-preenchido com os dados invertidos.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={gerarReembolso}
+                  aria-label={isReceita ? 'Gerar conta a pagar como reembolso' : 'Gerar conta a receber como reembolso'}
+                  onClick={() => setGerarReembolso((prev) => !prev)}
+                  className={[
+                    'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 transition-colors',
+                    gerarReembolso ? 'bg-primary border-transparent' : 'bg-white/10 border-white/25'
+                  ].join(' ')}
+                >
+                  <span
+                    className={[
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
+                      gerarReembolso ? 'translate-x-5' : 'translate-x-0'
+                    ].join(' ')}
+                  />
+                </button>
+              </div>
+            ) : null}
           </div>
 
           <SummarySidebar form={form} />
         </div>
       </form>
+
+      {reembolsoData ? (
+        <QuickLaunchModal
+          initialValues={reembolsoData}
+          isReembolso
+          onClose={clearReembolso}
+        />
+      ) : null}
 
       <DuplicateAlertModal
         open={!!pendingDuplicateValues}

@@ -28,6 +28,16 @@ type QuickLaunchTipo = 'pagar' | 'receber' | 'transferencia';
 type QuickAddTarget = 'pessoaId' | 'responsavelId' | null;
 type QuickAddContaBancariaTarget = 'origem' | 'destino' | null;
 
+export type QuickLaunchInitialValues = {
+  tipo: 'pagar' | 'receber';
+  pessoaId?: string;
+  responsavelId?: string;
+  valor?: number;
+  dataVencimento?: string;
+  descricao?: string;
+  contaVinculadaOrigemId?: string;
+};
+
 function hojeISO() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -48,6 +58,7 @@ export function QuickLaunchButton({
   children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [reembolsoData, setReembolsoData] = useState<QuickLaunchInitialValues | null>(null);
 
   return (
     <>
@@ -64,7 +75,19 @@ export function QuickLaunchButton({
       >
         {children}
       </Button>
-      {open ? <QuickLaunchModal onClose={() => setOpen(false)} /> : null}
+      {open ? (
+        <QuickLaunchModal
+          onClose={() => setOpen(false)}
+          onGerarReembolso={(data) => { setOpen(false); setReembolsoData(data); }}
+        />
+      ) : null}
+      {reembolsoData ? (
+        <QuickLaunchModal
+          initialValues={reembolsoData}
+          isReembolso
+          onClose={() => setReembolsoData(null)}
+        />
+      ) : null}
     </>
   );
 }
@@ -72,32 +95,44 @@ export function QuickLaunchButton({
 const BASE_QUERY = { page: 1, pageSize: 100, search: '' } as const;
 const STALE_5MIN = 5 * 60_000;
 
-function QuickLaunchModal({ onClose }: { onClose: () => void }) {
+export function QuickLaunchModal({
+  onClose,
+  initialValues,
+  isReembolso,
+  onGerarReembolso
+}: {
+  onClose: () => void;
+  initialValues?: QuickLaunchInitialValues;
+  isReembolso?: boolean;
+  onGerarReembolso?: (data: QuickLaunchInitialValues) => void;
+}) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const [tipo, setTipo] = useState<QuickLaunchTipo>('pagar');
-  const [descricao, setDescricao] = useState('');
-  const [valor, setValor] = useState(0);
+  const initialDate = useRef(hojeISO());
+  const [tipo, setTipo] = useState<QuickLaunchTipo>(() => initialValues?.tipo ?? 'pagar');
+  const [descricao, setDescricao] = useState(() => initialValues?.descricao ?? '');
+  const [valor, setValor] = useState(() => initialValues?.valor ?? 0);
   const [quantidadeParcelas, setQuantidadeParcelas] = useState(1);
   const [parcelamentoMode, setParcelamentoMode] = useState<'total' | 'parcela'>('total');
-  const initialDate = useRef(hojeISO());
-  const [dataVencimento, setDataVencimento] = useState(initialDate.current);
+  const [dataVencimento, setDataVencimento] = useState(() => initialValues?.dataVencimento ?? initialDate.current);
   const [jaLiquidada, setJaLiquidada] = useState(false);
   const [dataLiquidacao, setDataLiquidacao] = useState(hojeISO());
   const [contaBancariaLiquidacaoId, setContaBancariaLiquidacaoId] = useState('');
-  const [pessoaId, setPessoaId] = useState('');
-  const [responsavelId, setResponsavelId] = useState('');
+  const [pessoaId, setPessoaId] = useState(() => initialValues?.pessoaId ?? '');
+  const [responsavelId, setResponsavelId] = useState(() => initialValues?.responsavelId ?? '');
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
   const [cartaoId, setCartaoId] = useState('');
   const [contaGerencialId, setContaGerencialId] = useState('');
+  const [gerarReembolso, setGerarReembolso] = useState(false);
   // transferência
   const [contaOrigemId, setContaOrigemId] = useState('');
   const [contaDestinoId, setContaDestinoId] = useState('');
   const [saving, setSaving] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
-  const [pendingLaunch, setPendingLaunch] = useState<{ fn: () => Promise<void>; retryFn: () => Promise<void>; items: DuplicateItemSummary[] } | null>(null);
-  const [pendingFaturaIndisponivel, setPendingFaturaIndisponivel] = useState<{ retryFn: () => Promise<void>; message: string } | null>(null);
+  type LaunchFn = () => Promise<string | void>;
+  const [pendingLaunch, setPendingLaunch] = useState<{ fn: LaunchFn; retryFn: LaunchFn; items: DuplicateItemSummary[]; onSuccess: (id?: string) => void } | null>(null);
+  const [pendingFaturaIndisponivel, setPendingFaturaIndisponivel] = useState<{ retryFn: LaunchFn; message: string; onSuccess: (id?: string) => void } | null>(null);
   const lastAutoFilledContaRef = useRef<string | null>(null);
   const lastAutoFilledResponsavelRef = useRef<string | null>(null);
 
@@ -336,14 +371,35 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       (!exigeCartao || Boolean(cartaoId)) &&
       (!jaLiquidada || Boolean(contaBancariaLiquidacaoId));
 
-  async function performLaunch(launchFn: () => Promise<void>, retryFn?: () => Promise<void>) {
+  function buildOnSuccess(createdId?: string) {
+    if (!isReembolso && gerarReembolso && onGerarReembolso && createdId) {
+      onGerarReembolso({
+        tipo: tipo === 'pagar' ? 'receber' : 'pagar',
+        pessoaId,
+        responsavelId: responsavelId || undefined,
+        valor,
+        dataVencimento,
+        descricao: `Reembolso: ${descricao.trim()}`,
+        contaVinculadaOrigemId: createdId
+      });
+    } else {
+      onClose();
+    }
+  }
+
+  async function performLaunch(
+    launchFn: () => Promise<string | void>,
+    retryFn?: () => Promise<string | void>,
+    onSuccess?: (id?: string) => void
+  ) {
     setSaving(true);
     try {
-      await launchFn();
-      onClose();
+      const createdId = await launchFn();
+      if (onSuccess) onSuccess(typeof createdId === 'string' ? createdId : undefined);
+      else onClose();
     } catch (error) {
       if (isFaturaIndisponivelError(error) && retryFn) {
-        setPendingFaturaIndisponivel({ retryFn, message: getApiErrorMessage(error) });
+        setPendingFaturaIndisponivel({ retryFn, message: getApiErrorMessage(error), onSuccess: onSuccess ?? (() => onClose()) });
         return;
       }
       notify('error', 'Falha ao criar lançamento', getApiErrorMessage(error));
@@ -388,27 +444,31 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
       recorrencia: null
     };
 
-    function buildLaunchFn(forcarProximaFatura: boolean) {
+    function buildLaunchFn(forcarProximaFatura: boolean): () => Promise<string> {
       if (tipo === 'pagar') {
         return async () => {
-          await financeiroApi.contasPagar.criar({
+          const result = await financeiroApi.contasPagar.criar({
             ...base,
             origemCompraPlanejadaId: null,
             responsavelCompraId: responsavelId,
             recebedorId: pessoaId,
             dataCompra: exigeCartao ? dataVencimento : null,
-            forcarProximaFatura
+            forcarProximaFatura,
+            contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null
           });
           notify('success', 'Lançamento criado', base.descricao);
+          return result.id;
         };
       }
       return async () => {
-        await financeiroApi.contasReceber.criar({
+        const result = await financeiroApi.contasReceber.criar({
           ...base,
           responsavelId,
-          pagadorId: pessoaId
+          pagadorId: pessoaId,
+          contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null
         });
         notify('success', 'Lançamento criado', base.descricao);
+        return result.id;
       };
     }
 
@@ -422,14 +482,14 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
         : checkContaReceberDuplicate(base.descricao, base.dataVencimento, pessoaId, valor));
 
       if (duplicates) {
-        setPendingLaunch({ fn: launchFn, retryFn: launchFnForcado, items: duplicates });
+        setPendingLaunch({ fn: launchFn, retryFn: launchFnForcado, items: duplicates, onSuccess: buildOnSuccess });
         return;
       }
     } finally {
       setSaving(false);
     }
 
-    await performLaunch(launchFn, launchFnForcado);
+    await performLaunch(launchFn, launchFnForcado, buildOnSuccess);
   }
 
   function handleTipoChange(nextTipo: QuickLaunchTipo) {
@@ -804,12 +864,45 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
               </p>
             </div>
 
+            {tipo !== 'transferencia' && !isReembolso ? (
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <span className={['text-xs', gerarReembolso ? 'text-primary' : 'text-on-surface-variant'].join(' ')}>
+                  {tipo === 'pagar' ? 'Gerar conta a receber (reembolso)' : 'Gerar conta a pagar (reembolso)'}
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={gerarReembolso}
+                  aria-label="Gerar reembolso"
+                  onClick={() => setGerarReembolso((prev) => !prev)}
+                  className={[
+                    'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 transition-colors',
+                    gerarReembolso ? 'bg-primary border-transparent' : 'bg-white/10 border-white/25'
+                  ].join(' ')}
+                >
+                  <span
+                    className={[
+                      'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                      gerarReembolso ? 'translate-x-4' : 'translate-x-0'
+                    ].join(' ')}
+                  />
+                </button>
+              </div>
+            ) : null}
+
+            {isReembolso ? (
+              <div className="mt-4 flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2">
+                <span className="material-symbols-outlined text-base text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>link</span>
+                <span className="text-xs text-primary">Esta conta será vinculada à conta de origem como reembolso.</span>
+              </div>
+            ) : null}
+
             <div className="mt-7 flex justify-end gap-3">
               <Button type="button" variant="secondary" size="lg" onClick={requestClose}>
                 Cancelar
               </Button>
               <Button type="button" size="lg" disabled={!podeSalvar || saving} loading={saving} onClick={() => void handleSubmit()}>
-                {tipo === 'transferencia' ? 'Transferir' : 'Lançar'}
+                {isReembolso ? 'Lançar reembolso' : tipo === 'transferencia' ? 'Transferir' : 'Lançar'}
               </Button>
             </div>
           </div>
@@ -859,9 +952,9 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
         duplicates={pendingLaunch?.items ?? []}
         onConfirm={async () => {
           if (!pendingLaunch) return;
-          const { fn, retryFn } = pendingLaunch;
+          const { fn, retryFn, onSuccess } = pendingLaunch;
           setPendingLaunch(null);
-          await performLaunch(fn, retryFn);
+          await performLaunch(fn, retryFn, onSuccess);
         }}
         onCancel={() => setPendingLaunch(null)}
       />
@@ -871,9 +964,9 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
         message={pendingFaturaIndisponivel?.message ?? null}
         onConfirm={async () => {
           if (!pendingFaturaIndisponivel) return;
-          const { retryFn } = pendingFaturaIndisponivel;
+          const { retryFn, onSuccess } = pendingFaturaIndisponivel;
           setPendingFaturaIndisponivel(null);
-          await performLaunch(retryFn);
+          await performLaunch(retryFn, undefined, onSuccess);
         }}
         onCancel={() => setPendingFaturaIndisponivel(null)}
       />
