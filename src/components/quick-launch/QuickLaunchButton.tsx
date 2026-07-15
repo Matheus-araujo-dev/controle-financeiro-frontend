@@ -744,8 +744,8 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
                             else setContaBancariaLiquidacaoId('');
                           }}
                           className={[
-                            'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-                            jaLiquidada ? 'bg-primary' : 'bg-white/15',
+                            'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 transition-colors',
+                            jaLiquidada ? 'bg-primary border-transparent' : 'bg-white/10 border-white/25',
                           ].join(' ')}
                         >
                           <span
