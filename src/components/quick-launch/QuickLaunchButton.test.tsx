@@ -382,7 +382,7 @@ describe('QuickLaunchButton', () => {
   it('renders "Já liquidada?" toggle inline alongside the payment form (not full-row)', async () => {
     const { dialog } = await openQuickLaunch();
 
-    const toggle = await within(dialog).findByRole('switch');
+    const toggle = await within(dialog).findByRole('switch', { name: /j. liquidada/i });
     // The toggle must NOT be in a md:col-span-2 container (it's now inline, sharing a row)
     expect(toggle.closest('[class*="col-span-2"]')).toBeNull();
   });
