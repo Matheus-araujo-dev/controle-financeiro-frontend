@@ -89,8 +89,8 @@ export function TermsValueSection({ form, moduloLabel = 'pagar' }: TermsValueSec
             aria-checked={jaLiquidada}
             onClick={() => handleToggleLiquidada(!jaLiquidada)}
             className={[
-              'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-              jaLiquidada ? 'bg-primary' : 'bg-white/15',
+              'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 transition-colors',
+              jaLiquidada ? 'bg-primary border-transparent' : 'bg-white/10 border-white/25',
             ].join(' ')}
           >
             <span
