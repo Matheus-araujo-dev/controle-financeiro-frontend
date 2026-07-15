@@ -19,7 +19,7 @@ import { DuplicateAlertModal } from '../../features/financeiro/financial-account
 import { FaturaIndisponivelModal } from '../../features/financeiro/financial-account-form/FaturaIndisponivelModal';
 import { checkContaPagarDuplicate, checkContaReceberDuplicate, type DuplicateItemSummary } from '../../features/financeiro/financial-rules';
 import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
-import { handleIntegerPaste, parseIntegerInput, preventScientificNotation } from '../../shared/number-input';
+import { handleIntegerPaste, keepOnlyDigits, preventScientificNotation } from '../../shared/number-input';
 import type { ComboBoxOption } from '../forms/ComboBox';
 
 type Option = { label: string; value: string };
@@ -114,6 +114,7 @@ export function QuickLaunchModal({
   const [descricao, setDescricao] = useState(() => initialValues?.descricao ?? '');
   const [valor, setValor] = useState(() => initialValues?.valor ?? 0);
   const [quantidadeParcelas, setQuantidadeParcelas] = useState(1);
+  const [parcelasRaw, setParcelasRaw] = useState('1');
   const [parcelamentoMode, setParcelamentoMode] = useState<'total' | 'parcela'>('total');
   const [dataVencimento, setDataVencimento] = useState(() => initialValues?.dataVencimento ?? initialDate.current);
   const [jaLiquidada, setJaLiquidada] = useState(false);
@@ -775,12 +776,22 @@ export function QuickLaunchModal({
                   <input
                     aria-label="Número de parcelas"
                     inputMode="numeric"
-                    value={String(quantidadeParcelas)}
+                    value={parcelasRaw}
                     onKeyDown={preventScientificNotation}
                     onPaste={handleIntegerPaste}
                     onChange={(e) => {
-                      const n = Math.max(1, parseIntegerInput(e.target.value) ?? 1);
+                      const raw = keepOnlyDigits(e.target.value);
+                      setParcelasRaw(raw);
+                      if (raw !== '') {
+                        const n = Math.max(1, parseInt(raw, 10));
+                        setQuantidadeParcelas(n);
+                        if (n === 1) setParcelamentoMode('total');
+                      }
+                    }}
+                    onBlur={() => {
+                      const n = Math.max(1, parseInt(parcelasRaw, 10) || 1);
                       setQuantidadeParcelas(n);
+                      setParcelasRaw(String(n));
                       if (n === 1) setParcelamentoMode('total');
                     }}
                     className={formFieldClass}
