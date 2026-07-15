@@ -166,7 +166,7 @@ function sectionPlanFor(key: string) {
         title: 'Responsabilidade e Regras',
         eyebrow: 'Governança',
         icon: 'admin_panel_settings',
-        fields: ['responsavelPadraoId', 'ehPadraoRecebimentoFaturaCartao', 'ativo']
+        fields: ['responsavelPadraoId', 'contaGerencialContrariaId', 'ehPadraoRecebimentoFaturaCartao', 'ativo']
       }
     ]
   };
@@ -301,6 +301,16 @@ export function MasterDataFormPage({
   const contaGerencialPaiSelecionada = contaGerencialOptions.find((option) => option.value === contaPaiIdValue);
   const tipoContaGerencialHerdado = getContaGerencialOptionData(contaGerencialPaiSelecionada)?.tipo;
 
+  const dynamicOptionFields = useMemo(
+    () => config.fields.filter((f) => f.loadOptionsWith),
+    [config.fields]
+  );
+
+  const dynamicOptionsDepsJson = useMemo(() => {
+    if (dynamicOptionFields.length === 0) return null;
+    return JSON.stringify(watchedValues);
+  }, [dynamicOptionFields.length, watchedValues]);
+
   useEffect(() => {
     async function loadOptions() {
       const optionEntries = await Promise.all(
@@ -314,6 +324,20 @@ export function MasterDataFormPage({
 
     void loadOptions();
   }, [config.fields]);
+
+  useEffect(() => {
+    if (!dynamicOptionsDepsJson) return;
+    const currentValues = JSON.parse(dynamicOptionsDepsJson) as Record<string, unknown>;
+    async function loadDynamicOptions() {
+      const entries = await Promise.all(
+        dynamicOptionFields.map(async (f) => [f.name, await f.loadOptionsWith!(currentValues)] as const)
+      );
+      setLoadedOptions((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+    }
+    void loadDynamicOptions();
+  // dynamicOptionsDepsJson is a stable serialized snapshot of the form values
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dynamicOptionFields, dynamicOptionsDepsJson]);
 
   useEffect(() => {
     if (!id) {
@@ -367,11 +391,13 @@ export function MasterDataFormPage({
 
   async function reloadFieldOptions(fieldName: string) {
     const field = config.fields.find((item) => item.name === fieldName);
-    if (!field?.loadOptions) {
+    if (!field?.loadOptions && !field?.loadOptionsWith) {
       return;
     }
 
-    const options = await field.loadOptions();
+    const options = field.loadOptions
+      ? await field.loadOptions()
+      : await field.loadOptionsWith!(watchedValues);
     setLoadedOptions((prev) => ({ ...prev, [fieldName]: options }));
   }
 

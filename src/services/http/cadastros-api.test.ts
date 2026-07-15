@@ -110,6 +110,7 @@ describe('cadastrosApi', () => {
       tipo: 'Despesa',
       contaPaiId: null,
       responsavelPadraoId: null,
+      contaGerencialContrariaId: null,
       ehPadraoRecebimentoFaturaCartao: false,
       ativo: true
     });
@@ -147,6 +148,7 @@ describe('cadastrosApi', () => {
       tipo: 'Despesa',
       contaPaiId: null,
       responsavelPadraoId: null,
+      contaGerencialContrariaId: null,
       ehPadraoRecebimentoFaturaCartao: false,
       ativo: true
     });

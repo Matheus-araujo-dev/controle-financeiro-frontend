@@ -46,6 +46,7 @@ type FinancialRecord = {
   numeroParcela?: number;
   quantidadeParcelas?: number;
   ehRecorrente?: boolean;
+  contaVinculadaId?: string | null;
 };
 
 type ListFilters = {
@@ -307,7 +308,19 @@ export function FinancialAccountListPage({
       mobileRole: 'title',
       render: (_value, record) => (
         <div>
-          <div className="text-sm font-bold text-on-surface">{record.descricao ?? '-'}</div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-on-surface">{record.descricao ?? '-'}</span>
+            {record.contaVinculadaId ? (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); navigate(`${isPagar ? '/contas-receber' : '/contas-pagar'}/${record.contaVinculadaId}`); }}
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary hover:bg-primary/20 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>link</span>
+                Reembolso
+              </button>
+            ) : null}
+          </div>
           {record.numeroDocumento ? (
             <div className="text-xs text-on-surface-variant">Doc. {record.numeroDocumento}</div>
           ) : null}
