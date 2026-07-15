@@ -128,6 +128,7 @@ export type ContaPagarResumo = {
   numeroParcela: number;
   grupoParcelamentoId: string | null;
   ehRecorrente: boolean;
+  contaVinculadaId?: string | null;
 };
 
 export type ContaPagarDetalhe = {
@@ -240,6 +241,7 @@ export type ContaReceberResumo = {
   numeroParcela: number;
   grupoParcelamentoId: string | null;
   ehRecorrente: boolean;
+  contaVinculadaId?: string | null;
 };
 
 export type ContaReceberDetalhe = {

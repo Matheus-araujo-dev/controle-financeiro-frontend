@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -18,9 +18,41 @@ import { calculateValorLiquido, resolveFormaPagamentoBehavior } from '../module-
 import { financialAccountFormSchema } from '../schemas';
 import { formatMonthYearBR } from '../../../shared/date';
 import { extractCardInvoicePreview, type CardInvoicePreview } from './card-invoice';
-import type { CancelarContaPagarPayload } from '../../../types/financeiro';
+import type { CancelarContaPagarPayload, ContaVinculadaResumo } from '../../../types/financeiro';
 import type { DuplicateItemSummary } from '../financial-rules';
+import { financeiroApi } from '../../../services/http/financeiro-api';
+import { contasPagarModuleConfig, contasReceberModuleConfig } from '../module-config';
+import { formatCurrencyBRL } from '../../../shared/currency';
+import { formatDateBR } from '../../../shared/date';
+
+export type PropagationDiff = {
+  key: 'descricao' | 'dataVencimento' | 'valor';
+  label: string;
+  from: string;
+  to: string;
+};
+
+export type PendingPropagation = {
+  diff: PropagationDiff[];
+  applyValues: Pick<FinanceiroFormValues, 'descricao' | 'dataVencimento' | 'valorOriginal' | 'valorDesconto' | 'valorJuros' | 'valorMulta'>;
+};
 import type { QuickLaunchInitialValues } from '../../../components/quick-launch/QuickLaunchButton';
+
+function buildPropagationDiff(orig: FinanceiroFormValues, next: FinanceiroFormValues): PropagationDiff[] {
+  const diff: PropagationDiff[] = [];
+  if (orig.descricao !== next.descricao) {
+    diff.push({ key: 'descricao', label: 'Descrição', from: orig.descricao, to: next.descricao });
+  }
+  if (orig.dataVencimento !== next.dataVencimento) {
+    diff.push({ key: 'dataVencimento', label: 'Vencimento', from: formatDateBR(orig.dataVencimento), to: formatDateBR(next.dataVencimento) });
+  }
+  const origLiquido = calculateValorLiquido(orig);
+  const nextLiquido = calculateValorLiquido(next);
+  if (Math.abs(origLiquido - nextLiquido) >= 0.005) {
+    diff.push({ key: 'valor', label: 'Valor líquido', from: formatCurrencyBRL(origLiquido), to: formatCurrencyBRL(nextLiquido) });
+  }
+  return diff;
+}
 
 export function normalizeRecurringFormValues(values: FinanceiroFormValues): FinanceiroFormValues {
   if (!values.ehRecorrente || values.quantidadeParcelas === 1) {
@@ -59,6 +91,9 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [faturaIndisponivelMessage, setFaturaIndisponivelMessage] = useState<string | null>(null);
   const [gerarReembolso, setGerarReembolso] = useState(false);
   const [reembolsoData, setReembolsoData] = useState<QuickLaunchInitialValues | null>(null);
+  const [contaVinculada, setContaVinculada] = useState<ContaVinculadaResumo | null>(null);
+  const [pendingPropagation, setPendingPropagation] = useState<PendingPropagation | null>(null);
+  const originalValuesRef = useRef<FinanceiroFormValues | null>(null);
 
   const {
     control,
@@ -184,10 +219,13 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
       setErrorMessage(undefined);
       try {
         const detail = await config.detail(currentId);
-        reset(normalizeRecurringFormValues(config.toFormValues(detail)));
+        const formValues = normalizeRecurringFormValues(config.toFormValues(detail));
+        reset(formValues);
+        originalValuesRef.current = formValues;
         setDetailStatus(detail.statusCodigo);
         setDetailFaturaStatus('statusFaturaCartao' in detail ? (detail as Record<string, unknown>).statusFaturaCartao as string | null : null);
         setCardInvoicePreview(extractCardInvoicePreview(detail));
+        setContaVinculada((detail as Record<string, unknown>).contaVinculada as ContaVinculadaResumo | null ?? null);
         if ('grupoParcelamentoId' in detail) {
           setGrupoParcelamentoId((detail as Record<string, unknown>).grupoParcelamentoId as string | null);
           setNumeroParcela((detail as Record<string, unknown>).numeroParcela as number | undefined);
@@ -283,6 +321,24 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
       try {
         if (id) {
           await config.update(id, values);
+          const orig = originalValuesRef.current;
+          if (contaVinculada && orig) {
+            const diff = buildPropagationDiff(orig, values);
+            if (diff.length > 0) {
+              setPendingPropagation({
+                diff,
+                applyValues: {
+                  descricao: values.descricao,
+                  dataVencimento: values.dataVencimento,
+                  valorOriginal: values.valorOriginal,
+                  valorDesconto: values.valorDesconto,
+                  valorJuros: values.valorJuros,
+                  valorMulta: values.valorMulta
+                }
+              });
+              return;
+            }
+          }
           navigate(config.routeBase);
           return;
         } else {
@@ -389,19 +445,27 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
 
   const clearPendingScope = useCallback(() => setPendingValues(null), []);
 
-  const cancelar = useCallback(async (options?: CancelarContaPagarPayload) => {
+  const cancelar = useCallback(async (options?: CancelarContaPagarPayload & { cancelarContaVinculada?: boolean }) => {
     if (!id || !config.cancelar) return;
     setActionLoading(true);
     setErrorMessage(undefined);
     try {
-      await config.cancelar(id, options);
+      const { cancelarContaVinculada: cancelVinculada, ...cancelOptions } = options ?? {};
+      await config.cancelar(id, cancelOptions);
+      if (cancelVinculada && contaVinculada) {
+        if (contaVinculada.tipo === 'Pagar') {
+          await financeiroApi.contasPagar.cancelar(contaVinculada.id);
+        } else {
+          await financeiroApi.contasReceber.cancelar(contaVinculada.id);
+        }
+      }
       navigate(config.routeBase);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao cancelar o lancamento.');
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao cancelar o lançamento.');
     } finally {
       setActionLoading(false);
     }
-  }, [id, config, navigate]);
+  }, [id, config, contaVinculada, navigate]);
 
   const estornar = useCallback(async () => {
     if (!id || !config.estornar) return;
@@ -449,6 +513,30 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     const options = await config.loadRateioOptions();
     setRateioOptions(options);
   }, [config]);
+
+  const propagarParaVinculada = useCallback(async () => {
+    if (!contaVinculada || !pendingPropagation) return;
+    setActionLoading(true);
+    try {
+      const isPagarVinculada = contaVinculada.tipo === 'Pagar';
+      const vinculadaConfig = isPagarVinculada ? contasPagarModuleConfig : contasReceberModuleConfig;
+      const vinculadaDet = await (isPagarVinculada
+        ? financeiroApi.contasPagar.obterPorId(contaVinculada.id)
+        : financeiroApi.contasReceber.obterPorId(contaVinculada.id));
+      const vinculadaValues = vinculadaConfig.toFormValues(vinculadaDet as never);
+      const mergedValues: FinanceiroFormValues = { ...vinculadaValues, ...pendingPropagation.applyValues };
+      await vinculadaConfig.update(contaVinculada.id, mergedValues);
+    } finally {
+      setActionLoading(false);
+    }
+    setPendingPropagation(null);
+    navigate(config.routeBase);
+  }, [contaVinculada, pendingPropagation, navigate, config.routeBase]);
+
+  const dismissPropagation = useCallback(() => {
+    setPendingPropagation(null);
+    navigate(config.routeBase);
+  }, [navigate, config.routeBase]);
 
   return {
     id,
@@ -511,7 +599,11 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     gerarReembolso,
     setGerarReembolso,
     reembolsoData,
-    clearReembolso
+    clearReembolso,
+    contaVinculada,
+    pendingPropagation,
+    propagarParaVinculada,
+    dismissPropagation
   };
 }
 
