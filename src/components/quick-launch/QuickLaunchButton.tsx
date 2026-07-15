@@ -482,7 +482,7 @@ function QuickLaunchModal({ onClose }: { onClose: () => void }) {
   const toggleLabel = tipo === 'receber' ? 'Já recebida?' : 'Já liquidada?';
   const toggleBadgeLabel = tipo === 'receber' ? 'Recebida' : 'Liquidada';
   const dataLiquidacaoLabel = tipo === 'receber' ? 'Data de Recebimento' : 'Data de Liquidação';
-  const vencimentoLabel = exigeCartao ? 'Data da compra' : jaLiquidada ? dataLiquidacaoLabel : 'Vencimento';
+  const vencimentoLabel = exigeCartao ? 'Data da compra' : 'Vencimento';
 
   const modal = (
     <div className="fixed inset-0 z-[1000] bg-black/80 px-4 py-6">
