@@ -25,6 +25,9 @@ import {
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
 import { notify } from '../../store/notification-store';
+import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
+import { openPrintReport, type PrintColumn } from '../../shared/export/printReport';
+import { STYLE } from '../../shared/export/workbook';
 import type { ContaFinanceiraListSummary, StatusContaCodigo } from '../../types/financeiro';
 import type { FinanceiroModuleConfig, FinanceiroLiquidacaoFormValues, FinanceiroResumo } from './module-config';
 import { resolveStatusTone } from './module-config';
@@ -465,14 +468,118 @@ export function FinancialAccountListPage({
     { header: 'Valor', value: (r: FinancialRecord) => r.valorLiquido ?? 0 },
   ];
 
+  const richExportColumns: RichColumn<FinancialRecord>[] = [
+    { header: 'Descrição', value: (r) => r.descricao ?? '', cellStyle: STYLE.DATA_TEXT, width: 42 },
+    { header: 'Nº Documento', value: (r) => r.numeroDocumento ?? '', cellStyle: STYLE.DATA_TEXT, width: 16 },
+    { header: config.personLabel, value: (r) => r.recebedorNome ?? r.pagadorNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 22 },
+    { header: 'Responsável', value: (r) => r.responsavelNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
+    { header: 'Vencimento', value: (r) => r.dataVencimento ? formatDateBR(r.dataVencimento) : '', cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Parcela', value: (r) => r.numeroParcela && r.quantidadeParcelas ? `${r.numeroParcela}/${r.quantidadeParcelas}` : '', cellStyle: STYLE.DATA_TEXT, width: 10 },
+    { header: 'Forma de Pagamento', value: (r) => r.formaPagamentoNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
+    {
+      header: 'Valor (R$)',
+      value: (r) => r.valorLiquido ?? 0,
+      cellStyle: STYLE.DATA_CURRENCY,
+      totalValue: (rows) => rows.reduce((acc, r) => acc + (r.valorLiquido ?? 0), 0),
+      width: 16,
+    },
+    { header: 'Status', value: (r) => r.statusNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 14 },
+  ];
+
+  const printColumns: PrintColumn<FinancialRecord>[] = [
+    { header: 'Descrição', value: (r) => r.descricao ?? '' },
+    { header: 'Nº Documento', value: (r) => r.numeroDocumento ?? '' },
+    { header: config.personLabel, value: (r) => r.recebedorNome ?? r.pagadorNome ?? '' },
+    { header: 'Responsável', value: (r) => r.responsavelNome ?? '' },
+    { header: 'Vencimento', value: (r) => r.dataVencimento ? formatDateBR(r.dataVencimento) : '' },
+    { header: 'Parcela', value: (r) => r.numeroParcela && r.quantidadeParcelas ? `${r.numeroParcela}/${r.quantidadeParcelas}` : '' },
+    { header: 'Forma de Pgto', value: (r) => r.formaPagamentoNome ?? '' },
+    {
+      header: 'Valor (R$)',
+      value: (r) => formatCurrencyBRL(r.valorLiquido ?? 0),
+      align: 'right',
+      totalValue: (rows) => formatCurrencyBRL(rows.reduce((acc, r) => acc + (r.valorLiquido ?? 0), 0)),
+    },
+    { header: 'Status', value: (r) => r.statusNome ?? '' },
+  ];
+
+  function buildExportFilters(): Array<[string, string]> {
+    const result: Array<[string, string]> = [];
+    if (filters.dataInicial || filters.dataFinal) {
+      const from = filters.dataInicial ? formatDateBR(filters.dataInicial) : '—';
+      const to = filters.dataFinal ? formatDateBR(filters.dataFinal) : '—';
+      result.push(['Período:', `${from} a ${to}`]);
+    }
+    if (filters.statusCodigo.length) {
+      result.push(['Status:', filters.statusCodigo.map(readStatusLabel).join(', ')]);
+    }
+    if (filters.search) {
+      result.push(['Busca:', filters.search]);
+    }
+    return result;
+  }
+
+  function handleXlsxExport(rows: FinancialRecord[]) {
+    const filename = config.routeBase.replace('/', '');
+    downloadRichExport({
+      title: config.title,
+      filename,
+      sheetName: config.singularTitle,
+      filters: buildExportFilters(),
+      columns: richExportColumns,
+      rows,
+      showTotals: true,
+    });
+  }
+
+  function handlePdfExport(rows: FinancialRecord[]) {
+    const totalPendente = rows
+      .filter((r) => r.statusCodigo === 'PENDENTE' || r.statusCodigo === 'VENCIDA' || r.statusCodigo === 'PARCIAL')
+      .reduce((acc, r) => acc + (r.valorLiquido ?? 0), 0);
+    const totalLiquidado = rows
+      .filter((r) => r.statusCodigo === 'LIQUIDADA')
+      .reduce((acc, r) => acc + (r.valorLiquido ?? 0), 0);
+    const totalGeral = rows.reduce((acc, r) => acc + (r.valorLiquido ?? 0), 0);
+
+    const pendentLabel = isPagar ? 'A Pagar' : 'A Receber';
+    const liquidadoLabel = isPagar ? 'Pago' : 'Recebido';
+
+    openPrintReport({
+      title: config.title,
+      filters: buildExportFilters(),
+      summary: [
+        { label: pendentLabel, value: formatCurrencyBRL(totalPendente), type: isPagar ? 'neg' : 'pos' },
+        { label: liquidadoLabel, value: formatCurrencyBRL(totalLiquidado), type: isPagar ? 'pos' : 'neutral' },
+        { label: 'Total', value: formatCurrencyBRL(totalGeral), type: 'neutral' },
+      ],
+      columns: printColumns,
+      rows,
+      showTotals: true,
+    });
+  }
+
+  const fetchPageTyped = config.list as (f: typeof filters) => Promise<{ items: FinancialRecord[]; totalItems: number; totalPages: number }>;
+
   const actionButtons = (
     <div className="flex items-center gap-3">
-      <ExportButton
-        fetchPage={config.list as (f: typeof filters) => Promise<{ items: FinancialRecord[]; totalItems: number; totalPages: number }>}
-        filters={filters}
-        columns={exportColumns}
-        filename={config.routeBase.replace('/', '')}
-      />
+      <div className="flex gap-2">
+        <ExportButton
+          fetchPage={fetchPageTyped}
+          filters={filters}
+          columns={exportColumns}
+          filename={config.routeBase.replace('/', '')}
+          label="XLSX"
+          onExport={handleXlsxExport}
+        />
+        <ExportButton
+          fetchPage={fetchPageTyped}
+          filters={filters}
+          columns={exportColumns}
+          filename={config.routeBase.replace('/', '')}
+          label="PDF"
+          onExport={handlePdfExport}
+        />
+      </div>
       <Button onClick={onCreate} icon={<PlusOutlined aria-hidden />}>
         Nova {config.singularTitle.toLowerCase()}
       </Button>
