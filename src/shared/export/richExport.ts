@@ -43,11 +43,8 @@ export function buildRichWorkbook<T>(def: RichExportDefinition<T>) {
   const numCols = columns.length;
   const sheetRows: AnyCell[][] = [];
 
-  // Title row (merged across all columns)
-  sheetRows.push([
-    sc(title, STYLE.TITLE),
-    ...Array<StyledCell>(numCols - 1).fill(sc('', STYLE.TITLE)),
-  ]);
+  // Title row (merged): only first cell carries the style; continuation cells are blank
+  sheetRows.push([sc(title, STYLE.TITLE), ...Array<string>(numCols - 1).fill('')]);
 
   // "Generated at" metadata
   const generatedAt = new Date().toLocaleString('pt-BR', {
