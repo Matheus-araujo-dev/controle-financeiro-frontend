@@ -189,7 +189,7 @@ function renderStyles() {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <numFmts count="1">
-    <numFmt numFmtId="164" formatCode='"R$"\ #,##0.00;[Red]"R$"\ \-#,##0.00'/>
+    <numFmt numFmtId="164" formatCode='"R$" #,##0.00;[Red]"R$" -#,##0.00'/>
   </numFmts>
   <fonts count="7">
     <font><sz val="11"/><name val="Calibri"/></font>
