@@ -32,6 +32,7 @@ import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
 import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
+import { openPrintReport, type PrintColumn } from '../../shared/export/printReport';
 import { STYLE } from '../../shared/export/workbook';
 
 const tipoOptions: Array<{ label: string; value: TipoMovimentacao | '' }> = [
@@ -255,6 +256,43 @@ export function MovimentacoesPage() {
     return result;
   }
 
+  const printColumns: PrintColumn<MovimentacaoResumo>[] = [
+    { header: 'Data', value: (r) => formatDateBR(r.dataMovimentacao) },
+    { header: 'Descrição', value: (r) => r.observacao ?? '' },
+    { header: 'Tipo', value: (r) => (r.tipo === 'Entrada' ? 'Entrada' : 'Saída') },
+    { header: 'Conta Bancária', value: (r) => r.contaBancariaNome ?? '' },
+    { header: 'Responsável', value: (r) => r.responsavelNome ?? '' },
+    {
+      header: 'Valor (R$)',
+      value: (r) => formatCurrencyBRL(r.valor),
+      cellClass: (r) => (r.tipo === 'Entrada' ? 'pos' : 'neg'),
+      align: 'right',
+      totalValue: (rows) =>
+        formatCurrencyBRL(
+          rows.reduce((sum, r) => sum + (r.tipo === 'Entrada' ? r.valor : -r.valor), 0),
+        ),
+    },
+    { header: 'Status', value: (r) => r.statusNome ?? '' },
+  ];
+
+  function handlePdfExport(rows: MovimentacaoResumo[]) {
+    const totalEntradas = rows.filter((r) => r.tipo === 'Entrada').reduce((s, r) => s + r.valor, 0);
+    const totalSaidas = rows.filter((r) => r.tipo === 'Saida').reduce((s, r) => s + r.valor, 0);
+    const saldo = totalEntradas - totalSaidas;
+    openPrintReport({
+      title: 'Extrato de Movimentações',
+      filters: buildExportFilters(),
+      summary: [
+        { label: 'Entradas', value: formatCurrencyBRL(totalEntradas), type: 'pos' },
+        { label: 'Saídas', value: formatCurrencyBRL(totalSaidas), type: 'neg' },
+        { label: 'Saldo Líquido', value: formatCurrencyBRL(saldo), type: saldo >= 0 ? 'neutral' : 'neg' },
+      ],
+      columns: printColumns,
+      rows,
+      showTotals: true,
+    });
+  }
+
   // Kept for CSV fallback used by ExportButton when onExport is not active
   const exportColumns = [
     { header: 'Data', value: (r: MovimentacaoResumo) => r.dataMovimentacao },
@@ -269,23 +307,34 @@ export function MovimentacoesPage() {
   return (
     <ListPageShell
       actions={
-        <ExportButton
-          fetchPage={financeiroApi.movimentacoes.listar}
-          filters={filters}
-          columns={exportColumns}
-          filename="extrato"
-          onExport={(rows) =>
-            downloadRichExport({
-              title: 'Extrato de Movimentações',
-              filename: 'extrato',
-              sheetName: 'Extrato',
-              filters: buildExportFilters(),
-              columns: richExportColumns,
-              rows,
-              showTotals: true,
-            })
-          }
-        />
+        <div className="flex gap-2">
+          <ExportButton
+            fetchPage={financeiroApi.movimentacoes.listar}
+            filters={filters}
+            columns={exportColumns}
+            filename="extrato"
+            label="XLSX"
+            onExport={(rows) =>
+              downloadRichExport({
+                title: 'Extrato de Movimentações',
+                filename: 'extrato',
+                sheetName: 'Extrato',
+                filters: buildExportFilters(),
+                columns: richExportColumns,
+                rows,
+                showTotals: true,
+              })
+            }
+          />
+          <ExportButton
+            fetchPage={financeiroApi.movimentacoes.listar}
+            filters={filters}
+            columns={exportColumns}
+            filename="extrato"
+            label="PDF"
+            onExport={handlePdfExport}
+          />
+        </div>
       }
       summary={
         <>
