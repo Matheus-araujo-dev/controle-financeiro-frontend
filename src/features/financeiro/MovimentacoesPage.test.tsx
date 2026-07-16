@@ -340,8 +340,8 @@ describe('MovimentacoesPage', () => {
     expect(call.showTotals).toBe(true);
     expect(call.rows).toHaveLength(1);
     expect(call.summary).toBeDefined();
-    expect(call.summary.some((s: { label: string }) => s.label === 'Entradas')).toBe(true);
-    expect(call.summary.some((s: { label: string }) => s.label === 'Saídas')).toBe(true);
-    expect(call.summary.some((s: { label: string }) => s.label === 'Saldo Líquido')).toBe(true);
+    expect(call.summary!.some((s: { label: string }) => s.label === 'Entradas')).toBe(true);
+    expect(call.summary!.some((s: { label: string }) => s.label === 'Saídas')).toBe(true);
+    expect(call.summary!.some((s: { label: string }) => s.label === 'Saldo Líquido')).toBe(true);
   }, 15000);
 });
