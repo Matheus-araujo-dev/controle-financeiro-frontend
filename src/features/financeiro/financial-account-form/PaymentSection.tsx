@@ -18,6 +18,7 @@ export function PaymentSection({ form }: { form: FinancialAccountFormApi }) {
     errors,
     canEdit,
     formaPagamentoBehavior,
+    watchedValues,
     formaPagamentoOptions,
     cartaoOptions,
     contaBancariaOptions,
@@ -95,9 +96,11 @@ export function PaymentSection({ form }: { form: FinancialAccountFormApi }) {
           </div>
         ) : null}
 
-        {formaPagamentoBehavior.baixarAutomaticamente && !formaPagamentoBehavior.ehCartao ? (
+        {!formaPagamentoBehavior.ehCartao && (formaPagamentoBehavior.baixarAutomaticamente || watchedValues.dataLiquidacao) ? (
           <div className="space-y-2">
-            <label className={fieldLabelClass}>Conta para Baixa</label>
+            <label className={fieldLabelClass}>
+              {formaPagamentoBehavior.baixarAutomaticamente ? 'Conta para Baixa' : 'Conta de Liquidação'}
+            </label>
             <Controller
               control={control}
               name="contaBancariaId"
