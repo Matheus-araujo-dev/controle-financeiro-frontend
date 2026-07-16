@@ -31,6 +31,8 @@ import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
+import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
+import { STYLE } from '../../shared/export/workbook';
 
 const tipoOptions: Array<{ label: string; value: TipoMovimentacao | '' }> = [
   { label: 'Todos os tipos', value: '' },
@@ -168,6 +170,92 @@ export function MovimentacoesPage() {
     };
   }, [data]);
 
+  const richExportColumns: RichColumn<MovimentacaoResumo>[] = [
+    {
+      header: 'Data',
+      value: (r) => formatDateBR(r.dataMovimentacao),
+      cellStyle: STYLE.DATA_TEXT,
+      width: 12,
+    },
+    {
+      header: 'Descrição',
+      value: (r) => r.observacao ?? '',
+      cellStyle: STYLE.DATA_TEXT,
+      width: 42,
+    },
+    {
+      header: 'Tipo',
+      value: (r) => (r.tipo === 'Entrada' ? 'Entrada' : 'Saída'),
+      cellStyle: STYLE.DATA_TEXT,
+      width: 10,
+    },
+    {
+      header: 'Conta bancária',
+      value: (r) => r.contaBancariaNome ?? '',
+      cellStyle: STYLE.DATA_TEXT,
+      width: 24,
+    },
+    {
+      header: 'Responsável',
+      value: (r) => r.responsavelNome ?? '',
+      cellStyle: STYLE.DATA_TEXT,
+      width: 20,
+    },
+    {
+      header: 'Valor (R$)',
+      value: (r) => (r.tipo === 'Saida' ? -r.valor : r.valor),
+      cellStyle: (r) => (r.tipo === 'Entrada' ? STYLE.DATA_CURRENCY_POS : STYLE.DATA_CURRENCY_NEG),
+      totalValue: (rows) =>
+        rows.reduce((sum, r) => sum + (r.tipo === 'Entrada' ? r.valor : -r.valor), 0),
+      totalStyle: STYLE.TOTAL_CURRENCY,
+      width: 16,
+    },
+    {
+      header: 'Status',
+      value: (r) => r.statusNome ?? '',
+      cellStyle: STYLE.DATA_TEXT,
+      width: 14,
+    },
+  ];
+
+  function buildExportFilters(): Array<[string, string]> {
+    const result: Array<[string, string]> = [];
+    if (filters.dataInicial || filters.dataFinal) {
+      const de = filters.dataInicial ? formatDateBR(filters.dataInicial) : 'início';
+      const ate = filters.dataFinal ? formatDateBR(filters.dataFinal) : 'hoje';
+      result.push(['Período:', `${de} – ${ate}`]);
+    }
+    if (filters.tipo) {
+      result.push(['Tipo:', filters.tipo === 'Entrada' ? 'Entrada' : 'Saída']);
+    }
+    if (filters.contaBancariaIds?.length) {
+      const nomes = contaBancariaOptions
+        .filter((o) => filters.contaBancariaIds!.includes(o.value))
+        .map((o) => o.label)
+        .join(', ');
+      result.push(['Conta:', nomes || filters.contaBancariaIds.join(', ')]);
+    }
+    if (filters.responsavelIds?.length) {
+      const nomes = responsavelOptions
+        .filter((o) => filters.responsavelIds!.includes(o.value))
+        .map((o) => o.label)
+        .join(', ');
+      result.push(['Responsável:', nomes || filters.responsavelIds.join(', ')]);
+    }
+    if (filters.pessoaIds?.length) {
+      const nomes = pessoaOptions
+        .filter((o) => filters.pessoaIds!.includes(o.value))
+        .map((o) => o.label)
+        .join(', ');
+      result.push(['Pessoa:', nomes || filters.pessoaIds.join(', ')]);
+    }
+    if (filters.search) {
+      result.push(['Busca:', filters.search]);
+    }
+    return result;
+  }
+
+  // Kept for CSV fallback used by ExportButton when onExport is not active
   const exportColumns = [
     { header: 'Data', value: (r: MovimentacaoResumo) => r.dataMovimentacao },
     { header: 'Descrição', value: (r: MovimentacaoResumo) => r.observacao ?? '' },
@@ -175,7 +263,7 @@ export function MovimentacoesPage() {
     { header: 'Conta bancária', value: (r: MovimentacaoResumo) => r.contaBancariaNome ?? '' },
     { header: 'Responsável', value: (r: MovimentacaoResumo) => r.responsavelNome ?? '' },
     { header: 'Valor', value: (r: MovimentacaoResumo) => r.valor },
-    { header: 'Status', value: (r: MovimentacaoResumo) => r.statusNome ?? '' }
+    { header: 'Status', value: (r: MovimentacaoResumo) => r.statusNome ?? '' },
   ];
 
   return (
@@ -186,6 +274,17 @@ export function MovimentacoesPage() {
           filters={filters}
           columns={exportColumns}
           filename="extrato"
+          onExport={(rows) =>
+            downloadRichExport({
+              title: 'Extrato de Movimentações',
+              filename: 'extrato',
+              sheetName: 'Extrato',
+              filters: buildExportFilters(),
+              columns: richExportColumns,
+              rows,
+              showTotals: true,
+            })
+          }
         />
       }
       summary={

@@ -1,8 +1,27 @@
 export type WorkbookCell = string | number | boolean | Date | null | undefined;
 
+export type StyledCell = { v: WorkbookCell; s: number };
+
+export type AnyCell = WorkbookCell | StyledCell;
+
+/** Named style indices — must match the cellXfs order in renderStyles(). */
+export const STYLE = {
+  DEFAULT: 0,
+  TITLE: 1,
+  META_LABEL: 2,
+  META_VALUE: 3,
+  COL_HEADER: 4,
+  DATA_TEXT: 5,
+  DATA_CURRENCY: 6,
+  DATA_CURRENCY_POS: 7,
+  DATA_CURRENCY_NEG: 8,
+  TOTAL_LABEL: 9,
+  TOTAL_CURRENCY: 10,
+} as const;
+
 export type WorkbookSheet = {
   name: string;
-  rows: WorkbookCell[][];
+  rows: AnyCell[][];
   columnWidths?: number[];
   merges?: Array<{
     startRow: number;
@@ -53,29 +72,37 @@ function cellRef(rowIndex: number, columnIndex: number) {
   return `${columnName(columnIndex)}${rowIndex + 1}`;
 }
 
-function renderCell(value: WorkbookCell, rowIndex: number, columnIndex: number) {
-  if (value == null || value === '') {
-    return '';
-  }
+function isStyledCell(value: AnyCell): value is StyledCell {
+  return value !== null && typeof value === 'object' && !(value instanceof Date) && 'v' in value;
+}
 
+function renderCell(rawValue: AnyCell, rowIndex: number, columnIndex: number) {
+  const styled = isStyledCell(rawValue);
+  const value = styled ? rawValue.v : (rawValue as WorkbookCell);
+  const style = styled ? rawValue.s : 0;
+  const sAttr = style > 0 ? ` s="${style}"` : '';
   const ref = cellRef(rowIndex, columnIndex);
 
+  if (value == null || value === '') {
+    return style > 0 ? `<c r="${ref}"${sAttr}/>` : '';
+  }
+
   if (typeof value === 'number' && Number.isFinite(value)) {
-    return `<c r="${ref}"><v>${value}</v></c>`;
+    return `<c r="${ref}"${sAttr}><v>${value}</v></c>`;
   }
 
   if (typeof value === 'boolean') {
-    return `<c r="${ref}" t="b"><v>${value ? 1 : 0}</v></c>`;
+    return `<c r="${ref}"${sAttr} t="b"><v>${value ? 1 : 0}</v></c>`;
   }
 
   const text = value instanceof Date ? value.toISOString() : String(value);
-  return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xml(text)}</t></is></c>`;
+  return `<c r="${ref}"${sAttr} t="inlineStr"><is><t xml:space="preserve">${xml(text)}</t></is></c>`;
 }
 
 function renderSheet(sheet: WorkbookSheet) {
   const rows = sheet.rows
     .map((row, rowIndex) => {
-      const cells = row.map((cell, columnIndex) => renderCell(cell, rowIndex, columnIndex)).join('');
+      const cells = (row as AnyCell[]).map((cell, columnIndex) => renderCell(cell, rowIndex, columnIndex)).join('');
       return `<row r="${rowIndex + 1}">${cells}</row>`;
     })
     .join('');
@@ -160,11 +187,43 @@ function renderWorkbookRelationships(sheetCount: number) {
 function renderStyles() {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>
-  <fills count="1"><fill><patternFill patternType="none"/></fill></fills>
-  <borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+  <numFmts count="1">
+    <numFmt numFmtId="164" formatCode='"R$"\ #,##0.00;[Red]"R$"\ \-#,##0.00'/>
+  </numFmts>
+  <fonts count="7">
+    <font><sz val="11"/><name val="Calibri"/></font>
+    <font><b/><sz val="11"/><name val="Calibri"/></font>
+    <font><b/><sz val="13"/><name val="Calibri"/><color rgb="FF2BF58E"/></font>
+    <font><sz val="10"/><name val="Calibri"/><color rgb="FF6B7280"/></font>
+    <font><b/><sz val="11"/><name val="Calibri"/><color rgb="FF0F2318"/></font>
+    <font><sz val="11"/><name val="Calibri"/><color rgb="FF059669"/></font>
+    <font><sz val="11"/><name val="Calibri"/><color rgb="FFB91C1C"/></font>
+  </fonts>
+  <fills count="5">
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FF2BF58E"/><bgColor indexed="64"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FF1F2329"/><bgColor indexed="64"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFECFDF5"/><bgColor indexed="64"/></patternFill></fill>
+  </fills>
+  <borders count="2">
+    <border><left/><right/><top/><bottom/><diagonal/></border>
+    <border><left/><right/><top style="medium"><color rgb="FF2BF58E"/></top><bottom/><diagonal/></border>
+  </borders>
   <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-  <cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>
+  <cellXfs count="11">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0" fontId="2" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment horizontal="left" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+    <xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+    <xf numFmtId="0" fontId="4" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"><alignment horizontal="right"/></xf>
+    <xf numFmtId="164" fontId="5" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"><alignment horizontal="right"/></xf>
+    <xf numFmtId="164" fontId="6" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"><alignment horizontal="right"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+    <xf numFmtId="164" fontId="1" fillId="4" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="right"/></xf>
+  </cellXfs>
   <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>`;
 }
