@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '../ui/Button';
-import { exportListing, type ExportColumn, type PageQuery, type PagedLike } from '../../shared/export/exportListing';
+import { exportListing, fetchAllRows, type ExportColumn, type PageQuery, type PagedLike } from '../../shared/export/exportListing';
 
 interface ExportButtonProps<T, F extends PageQuery> {
   fetchPage: (filters: F) => Promise<PagedLike<T>>;
@@ -10,6 +10,8 @@ interface ExportButtonProps<T, F extends PageQuery> {
   format?: 'xlsx' | 'csv';
   label?: string;
   disabled?: boolean;
+  /** Override the default XLSX export — receives all fetched rows and handles the download. */
+  onExport?: (rows: T[]) => void;
 }
 
 function DownloadIcon({ className = '' }: { className?: string }) {
@@ -28,7 +30,8 @@ export function ExportButton<T, F extends PageQuery>({
   filename,
   format = 'xlsx',
   label = 'Exportar',
-  disabled = false
+  disabled = false,
+  onExport,
 }: ExportButtonProps<T, F>) {
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +42,12 @@ export function ExportButton<T, F extends PageQuery>({
 
     setLoading(true);
     try {
-      await exportListing({ fetchPage, filters, columns, filename, format });
+      if (onExport) {
+        const rows = await fetchAllRows(fetchPage, filters);
+        onExport(rows);
+      } else {
+        await exportListing({ fetchPage, filters, columns, filename, format });
+      }
     } finally {
       setLoading(false);
     }
