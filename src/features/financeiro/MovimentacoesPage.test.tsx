@@ -6,6 +6,18 @@ import { MovimentacoesPage } from './MovimentacoesPage';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { selectDateInDateInput } from '../../test/date-input';
+import { downloadRichExport } from '../../shared/export/richExport';
+import { openPrintReport } from '../../shared/export/printReport';
+
+vi.mock('../../shared/export/richExport', async () => {
+  const actual = await vi.importActual<typeof import('../../shared/export/richExport')>('../../shared/export/richExport');
+  return { ...actual, downloadRichExport: vi.fn() };
+});
+
+vi.mock('../../shared/export/printReport', async () => {
+  const actual = await vi.importActual<typeof import('../../shared/export/printReport')>('../../shared/export/printReport');
+  return { ...actual, openPrintReport: vi.fn() };
+});
 
 vi.mock('../../services/http/cadastros-api', () => ({
   cadastrosApi: {
@@ -257,4 +269,79 @@ describe('MovimentacoesPage', () => {
     await waitFor(() => expect(financeiroApi.movimentacoes.listar).toHaveBeenCalledTimes(2));
     expect(await screen.findByTestId('data-table-empty')).toBeInTheDocument();
   });
+
+  it('exports XLSX with all rows when XLSX button is clicked', async () => {
+    const mockItem = {
+      id: 'mov-1',
+      dataMovimentacao: '2026-07-01',
+      observacao: 'Salário',
+      tipo: 'Entrada',
+      valor: 5000,
+      contaBancariaNome: 'Conta Principal',
+      responsavelNome: 'Ana',
+      statusNome: 'Efetivada',
+      statusCodigo: 'EFETIVADA',
+    };
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue({
+      items: [mockItem],
+      page: 1,
+      pageSize: 20,
+      totalItems: 1,
+      totalPages: 1,
+      summary: { totalRegistros: 1, totalEntradas: 5000, totalSaidas: 0, saldoLiquido: 5000 },
+    } as never);
+
+    renderPage();
+
+    expect(await screen.findByText('Salário')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /XLSX/i }));
+
+    await waitFor(() => expect(downloadRichExport).toHaveBeenCalledOnce());
+
+    const call = vi.mocked(downloadRichExport).mock.calls[0][0];
+    expect(call.title).toBe('Extrato de Movimentações');
+    expect(call.showTotals).toBe(true);
+    expect(call.rows).toHaveLength(1);
+    expect(call.rows[0]).toMatchObject({ observacao: 'Salário', valor: 5000 });
+  }, 15000);
+
+  it('exports PDF with summary cards when PDF button is clicked', async () => {
+    const mockItem = {
+      id: 'mov-1',
+      dataMovimentacao: '2026-07-01',
+      observacao: 'Salário',
+      tipo: 'Entrada',
+      valor: 5000,
+      contaBancariaNome: 'Conta Principal',
+      responsavelNome: 'Ana',
+      statusNome: 'Efetivada',
+      statusCodigo: 'EFETIVADA',
+    };
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue({
+      items: [mockItem],
+      page: 1,
+      pageSize: 20,
+      totalItems: 1,
+      totalPages: 1,
+      summary: { totalRegistros: 1, totalEntradas: 5000, totalSaidas: 0, saldoLiquido: 5000 },
+    } as never);
+
+    renderPage();
+
+    expect(await screen.findByText('Salário')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+
+    await waitFor(() => expect(openPrintReport).toHaveBeenCalledOnce());
+
+    const call = vi.mocked(openPrintReport).mock.calls[0][0];
+    expect(call.title).toBe('Extrato de Movimentações');
+    expect(call.showTotals).toBe(true);
+    expect(call.rows).toHaveLength(1);
+    expect(call.summary).toBeDefined();
+    expect(call.summary.some((s: { label: string }) => s.label === 'Entradas')).toBe(true);
+    expect(call.summary.some((s: { label: string }) => s.label === 'Saídas')).toBe(true);
+    expect(call.summary.some((s: { label: string }) => s.label === 'Saldo Líquido')).toBe(true);
+  }, 15000);
 });

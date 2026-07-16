@@ -4,6 +4,18 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { FinancialAccountListPage } from './FinancialAccountListPage';
+import { downloadRichExport } from '../../shared/export/richExport';
+import { openPrintReport } from '../../shared/export/printReport';
+
+vi.mock('../../shared/export/richExport', async () => {
+  const actual = await vi.importActual<typeof import('../../shared/export/richExport')>('../../shared/export/richExport');
+  return { ...actual, downloadRichExport: vi.fn() };
+});
+
+vi.mock('../../shared/export/printReport', async () => {
+  const actual = await vi.importActual<typeof import('../../shared/export/printReport')>('../../shared/export/printReport');
+  return { ...actual, openPrintReport: vi.fn() };
+});
 
 function createTestQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } });
@@ -309,6 +321,54 @@ describe('FinancialAccountListPage', () => {
     await waitFor(() => expect(config.estornar).toHaveBeenCalledWith('liq-1'));
     await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
   });
+
+  it('exports XLSX with all rows when XLSX button is clicked', async () => {
+    const { config } = createConfig();
+
+    render(
+      <MemoryRouter>
+        <FinancialAccountListPage config={config} />
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
+    );
+
+    expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
+
+    await userEvent.click(screen.getByRole('button', { name: /XLSX/i }));
+
+    await waitFor(() => expect(downloadRichExport).toHaveBeenCalledOnce());
+
+    const call = (downloadRichExport as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(call.title).toBe('Contas a pagar');
+    expect(call.showTotals).toBe(true);
+    expect(call.rows).toHaveLength(1);
+    expect(call.rows[0]).toMatchObject({ descricao: 'Aluguel', valorLiquido: 120 });
+    expect(call.columns.map((c: { header: string }) => c.header)).toContain('Recebedor');
+  }, 15000);
+
+  it('exports PDF with summary cards when PDF button is clicked', async () => {
+    const { config } = createConfig();
+
+    render(
+      <MemoryRouter>
+        <FinancialAccountListPage config={config} />
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
+    );
+
+    expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
+
+    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+
+    await waitFor(() => expect(openPrintReport).toHaveBeenCalledOnce());
+
+    const call = (openPrintReport as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(call.title).toBe('Contas a pagar');
+    expect(call.showTotals).toBe(true);
+    expect(call.rows).toHaveLength(1);
+    expect(call.summary).toBeDefined();
+    expect(call.summary.some((s: { label: string }) => s.label === 'A Pagar')).toBe(true);
+  }, 15000);
 
   it('does not expose recurrence actions in the grid', async () => {
     const { config } = createConfig();
