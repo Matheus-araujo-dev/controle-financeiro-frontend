@@ -1,5 +1,5 @@
 import { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { getApiErrorMessage, getApiFieldErrors } from './api-error';
+import { getApiErrorMessage, getApiFieldErrors, isFaturaIndisponivelError } from './api-error';
 
 function createAxiosError() {
   return new AxiosError(
@@ -47,5 +47,37 @@ describe('getApiFieldErrors', () => {
 
   it('returns an empty dictionary when the axios error has no contract payload', () => {
     expect(getApiFieldErrors(new AxiosError('Network Error'))).toEqual({});
+  });
+
+  it('returns an empty dictionary for non-axios errors', () => {
+    expect(getApiFieldErrors(new Error('generic'))).toEqual({});
+    expect(getApiFieldErrors('string error')).toEqual({});
+  });
+});
+
+describe('isFaturaIndisponivelError', () => {
+  it('returns true when error code is FATURA_INDISPONIVEL', () => {
+    const error = new AxiosError(
+      'Conflict',
+      'ERR_BAD_REQUEST',
+      { headers: {} } as InternalAxiosRequestConfig,
+      undefined,
+      {
+        data: { code: 'FATURA_INDISPONIVEL', message: 'Fatura indisponível.', errors: {}, traceId: '' },
+        status: 409,
+        statusText: 'Conflict',
+        headers: {},
+        config: { headers: {} } as InternalAxiosRequestConfig
+      }
+    );
+    expect(isFaturaIndisponivelError(error)).toBe(true);
+  });
+
+  it('returns false for errors with a different code', () => {
+    expect(isFaturaIndisponivelError(createAxiosError())).toBe(false);
+  });
+
+  it('returns false for non-axios errors', () => {
+    expect(isFaturaIndisponivelError(new Error('boom'))).toBe(false);
   });
 });
