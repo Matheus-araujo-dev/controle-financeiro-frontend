@@ -134,10 +134,10 @@ export function LiquidarModal({
     'w-full rounded-xl border border-white/10 bg-surface-container px-4 py-3 text-sm text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/60';
 
   return (
-    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
+    <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4 backdrop-blur-sm">
+      <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border border-white/10 bg-surface-container-low p-5 sm:p-7 shadow-2xl max-h-[92dvh] overflow-y-auto">
         {/* Header */}
-        <div className="mb-6 flex items-start gap-3">
+        <div className="mb-5 flex items-start gap-3">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/12 text-primary">
             <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
               payments
@@ -272,14 +272,15 @@ export function LiquidarModal({
 
             {error ? <p className="text-sm font-medium text-error">{error}</p> : null}
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button>
+            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
+              <Button type="button" variant="secondary" onClick={onClose} className="w-full sm:w-auto">Cancelar</Button>
               <Button
                 type="button"
                 variant="primary"
                 disabled={!primaryRow.contaBancariaId || valorLiq <= 0 || loading}
                 loading={loading && isIgual}
                 onClick={avancarOuConfirmar}
+                className="w-full sm:w-auto"
               >
                 {isIgual ? 'Confirmar' : 'Próximo'}
               </Button>
@@ -357,14 +358,15 @@ export function LiquidarModal({
 
             {error ? <p className="text-sm font-medium text-error">{error}</p> : null}
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="secondary" onClick={() => setStep('form')}>Voltar</Button>
+            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
+              <Button type="button" variant="secondary" onClick={() => setStep('form')} className="w-full sm:w-auto">Voltar</Button>
               <Button
                 type="button"
                 variant="primary"
                 loading={loading}
                 disabled={loading}
                 onClick={submitLiquidacao}
+                className="w-full sm:w-auto"
               >
                 Confirmar liquidação
               </Button>
