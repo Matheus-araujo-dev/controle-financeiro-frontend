@@ -148,7 +148,7 @@ ${filtersHtml}
   <span>${rows.length} registro${rows.length !== 1 ? 's' : ''}</span>
 </div>
 
-<script>window.onload=function(){setTimeout(function(){window.print()},400)}<\/script>
+<script>window.onload=function(){setTimeout(function(){window.print()},400)}</script>
 </body>
 </html>`;
 }
