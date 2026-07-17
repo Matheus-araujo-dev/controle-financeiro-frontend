@@ -90,7 +90,7 @@ function buildConfig(listFn: ReturnType<typeof vi.fn>) {
       page: 1, pageSize: 10, search: '', statusCodigo: ['PENDENTE', 'VENCIDA']
     },
     defaultValues: {} as never,
-    list: listFn,
+    list: listFn as never,
     detail: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),

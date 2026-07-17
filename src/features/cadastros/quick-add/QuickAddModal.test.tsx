@@ -11,7 +11,7 @@ const defaultProps = {
   children: <input aria-label="campo" />
 };
 
-function renderModal(props?: Partial<typeof defaultProps>) {
+function renderModal(props?: Partial<Parameters<typeof QuickAddModal>[0]>) {
   return render(<QuickAddModal {...defaultProps} {...props} />);
 }
 

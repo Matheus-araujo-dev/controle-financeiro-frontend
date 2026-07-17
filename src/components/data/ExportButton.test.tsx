@@ -54,9 +54,9 @@ describe('ExportButton', () => {
   });
 
   it('shows loading state during export', async () => {
-    let resolveExport: () => void;
+    let resolveExport: (value: number) => void;
     vi.mocked(exportListing.exportListing).mockReturnValue(
-      new Promise<void>((resolve) => { resolveExport = resolve; })
+      new Promise<number>((resolve) => { resolveExport = resolve; })
     );
 
     render(<ExportButton fetchPage={fetchPage} filters={{} as never} columns={columns} filename="test" />);
@@ -64,7 +64,7 @@ describe('ExportButton', () => {
 
     expect(screen.getByRole('button', { name: /Exportando/i })).toBeDisabled();
 
-    resolveExport!();
+    resolveExport!(0);
     await waitFor(() => expect(screen.getByRole('button', { name: /Exportar/i })).not.toBeDisabled());
   });
 });

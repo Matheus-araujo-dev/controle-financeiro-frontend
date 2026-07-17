@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -37,7 +38,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('renders default message when error has no message', () => {
-    function ThrowNoMessage() {
+    function ThrowNoMessage(): React.ReactElement {
       throw {} as Error;
     }
     render(

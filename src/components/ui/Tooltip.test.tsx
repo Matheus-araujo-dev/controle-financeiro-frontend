@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Tooltip } from './Tooltip';
 
 describe('Tooltip', () => {
-  function setup(props: Parameters<typeof Tooltip>[0]) {
+  function setup(props: Omit<Parameters<typeof Tooltip>[0], 'children'>) {
     return render(
       <Tooltip {...props}>
         <button type="button">Hover me</button>
