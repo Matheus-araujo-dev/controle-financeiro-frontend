@@ -8,6 +8,12 @@ import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { selectDateInDateInput } from '../../test/date-input';
 
+vi.mock('../../shared/export/workbook', () => ({
+  downloadBlob: vi.fn(),
+  createXlsxBlob: vi.fn().mockReturnValue(new Blob(['xlsx'])),
+  createCsvBlob: vi.fn().mockReturnValue(new Blob(['csv'])),
+}));
+
 vi.mock('../../services/http/compras-planejadas-api', () => ({
   comprasPlanejadasApi: {
     listar: vi.fn()
@@ -137,6 +143,139 @@ describe('ComprasPlanejadasListPage', () => {
     );
   }, 40000);
 
+  it('shows loading state when query is in flight', () => {
+    vi.mocked(comprasPlanejadasApi.listar).mockReturnValue(new Promise(() => {}));
+    renderPage();
+    // The ListPageShell renders filter/export controls while data is loading
+    expect(screen.getByRole('button', { name: /Exportar/i })).toBeInTheDocument();
+  });
+
+  it('shows error state when query fails', async () => {
+    vi.mocked(comprasPlanejadasApi.listar).mockRejectedValue(new Error('Falha de rede'));
+    renderPage();
+    expect(await screen.findByText('Falha ao carregar dados')).toBeInTheDocument();
+  });
+
+  it('retries query when Tentar novamente is clicked', async () => {
+    vi.mocked(comprasPlanejadasApi.listar)
+      .mockRejectedValueOnce(new Error('Timeout'))
+      .mockResolvedValue({
+        items: [],
+        page: 1, pageSize: 20, totalItems: 0, totalPages: 0,
+        summary: { totalRegistros: 0, valorTotalEstimado: 0 }
+      });
+    renderPage();
+    expect(await screen.findByText('Falha ao carregar dados')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    expect(await screen.findByTestId('data-table-empty')).toBeInTheDocument();
+  }, 15000);
+
+  it('shows empty state when no items returned', async () => {
+    vi.mocked(comprasPlanejadasApi.listar).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 20,
+      totalItems: 0,
+      totalPages: 0,
+      summary: { totalRegistros: 0, valorTotalEstimado: 0 }
+    });
+    renderPage();
+    expect(await screen.findByTestId('data-table-empty')).toBeInTheDocument();
+  });
+
+  it('renders item with Baixa prioridade (neutral tone)', async () => {
+    vi.mocked(comprasPlanejadasApi.listar).mockResolvedValue({
+      items: [{
+        id: 'cp-2',
+        titulo: 'Geladeira',
+        valorEstimado: 2000,
+        dataDesejada: '2026-12-01',
+        prioridade: 'Baixa',
+        status: 'Planejada',
+        parcelavel: false,
+        quantidadeParcelasDesejada: null,
+        contaGerencialId: '',
+        contaGerencialDescricao: '',
+        responsavelId: '',
+        responsavelNome: '',
+        link: null,
+        contaPagarGeradaId: null,
+        convertidaEmContaPagarEmUtc: null
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1,
+      summary: { totalRegistros: 1, valorTotalEstimado: 2000 }
+    });
+    renderPage();
+    expect(await screen.findByText('Geladeira')).toBeInTheDocument();
+    expect(screen.getByText('Baixa')).toBeInTheDocument();
+    // parcelavel=false → Pagamento único
+    expect(screen.getByText('Pagamento único')).toBeInTheDocument();
+  });
+
+  it('renders item with Media prioridade (uses label Média)', async () => {
+    vi.mocked(comprasPlanejadasApi.listar).mockResolvedValue({
+      items: [{
+        id: 'cp-3',
+        titulo: 'TV Nova',
+        valorEstimado: 3500,
+        dataDesejada: null,
+        prioridade: 'Media',
+        status: 'Cancelada',
+        parcelavel: true,
+        quantidadeParcelasDesejada: 6,
+        contaGerencialId: '',
+        contaGerencialDescricao: '',
+        responsavelId: '',
+        responsavelNome: '',
+        link: null,
+        contaPagarGeradaId: null,
+        convertidaEmContaPagarEmUtc: null
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1,
+      summary: { totalRegistros: 1, valorTotalEstimado: 3500 }
+    });
+    renderPage();
+    expect(await screen.findByText('TV Nova')).toBeInTheDocument();
+    expect(screen.getByText('Média')).toBeInTheDocument();
+    expect(screen.getByText('Cancelada')).toBeInTheDocument();
+    // dataDesejada=null → Sem data
+    expect(screen.getByText('Sem data')).toBeInTheDocument();
+    // parcelavel=true, parcelas=6 → '6x'
+    expect(screen.getByText('6x')).toBeInTheDocument();
+  });
+
+  it('renders Ver conta a pagar link when contaPagarGeradaId is set', async () => {
+    vi.mocked(comprasPlanejadasApi.listar).mockResolvedValue({
+      items: [{
+        id: 'cp-4',
+        titulo: 'Notebook comprado',
+        valorEstimado: 5000,
+        dataDesejada: '2026-10-01',
+        prioridade: 'Alta',
+        status: 'Comprada',
+        parcelavel: false,
+        quantidadeParcelasDesejada: null,
+        contaGerencialId: '',
+        contaGerencialDescricao: '',
+        responsavelId: '',
+        responsavelNome: '',
+        link: null,
+        contaPagarGeradaId: 'conta-pagar-123',
+        convertidaEmContaPagarEmUtc: '2026-10-02T12:00:00Z'
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1,
+      summary: { totalRegistros: 1, valorTotalEstimado: 5000 }
+    });
+    renderPage();
+    expect(await screen.findByText('Notebook comprado')).toBeInTheDocument();
+    // contaPagarGeradaId set → shows Ver conta a pagar, not Adquirir or Editar
+    expect(screen.getByRole('link', { name: /Ver conta a pagar/i })).toHaveAttribute('href', '/contas-pagar/conta-pagar-123');
+    expect(screen.queryByRole('link', { name: /adquirir/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /editar/i })).not.toBeInTheDocument();
+    // Comprada status
+    expect(screen.getByText('Comprada')).toBeInTheDocument();
+  });
+
   it('applies filters and table sorting to the query', async () => {
     vi.mocked(cadastrosApi.contasGerenciais.listar).mockResolvedValue({
       items: [
@@ -207,4 +346,39 @@ describe('ComprasPlanejadasListPage', () => {
       )
     );
   }, 40000);
+
+  it('applies dataDesejadaFinal date filter', async () => {
+    renderPage();
+    expect(await screen.findByText('Notebook novo')).toBeInTheDocument();
+    await selectDateInDateInput('Data desejada até', '2026-12-01');
+    await waitFor(() =>
+      expect(comprasPlanejadasApi.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ dataDesejadaFinal: '2026-12-01' })
+      )
+    );
+  }, 20000);
+
+  it('applies link filter', async () => {
+    renderPage();
+    expect(await screen.findByText('Notebook novo')).toBeInTheDocument();
+    // textboxes order: [0]=search, [1]=valorMin, [2]=valorMax, [3]=dateDesejadaDe, [4]=dateDesejadaAte, [5]=link
+    const linkInput = screen.getAllByRole('textbox')[5];
+    await userEvent.type(linkInput, 'amazon');
+    await waitFor(() =>
+      expect(comprasPlanejadasApi.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ link: 'amazon' })
+      )
+    );
+  }, 15000);
+
+  it('triggers export covering all exportColumns lambdas', async () => {
+    const { downloadBlob } = await import('../../shared/export/workbook');
+    renderPage();
+    expect(await screen.findByText('Notebook novo')).toBeInTheDocument();
+    const prevCallCount = vi.mocked(downloadBlob).mock.calls.length;
+    await userEvent.click(screen.getByRole('button', { name: /Exportar/i }));
+    await waitFor(() =>
+      expect(vi.mocked(downloadBlob).mock.calls.length).toBeGreaterThan(prevCallCount)
+    );
+  }, 15000);
 });

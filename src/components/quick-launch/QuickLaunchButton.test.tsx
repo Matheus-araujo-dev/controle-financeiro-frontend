@@ -150,8 +150,31 @@ vi.mock('../../services/http/cadastros-api', () => ({
     pessoas: { listar: vi.fn() },
     formasPagamento: { listar: vi.fn() },
     cartoes: { listar: vi.fn() },
-    contasGerenciais: { listar: vi.fn() }
+    contasGerenciais: { listar: vi.fn() },
+    contasBancarias: { listar: vi.fn() }
   }
+}));
+
+vi.mock('../../features/cadastros/quick-add/QuickAddContaBancariaModal', () => ({
+  QuickAddContaBancariaModal: ({
+    open,
+    onClose,
+    onSuccess
+  }: {
+    open: boolean;
+    onClose: () => void;
+    onSuccess: (newId: string, label: string) => void;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Nova conta bancaria">
+        <button type="button" onClick={() => onSuccess('cb-new', 'Conta nova')}>
+          Salvar conta bancaria
+        </button>
+        <button type="button" onClick={onClose}>
+          Fechar conta bancaria
+        </button>
+      </div>
+    ) : null
 }));
 
 vi.mock('../../services/http/financeiro-api', () => ({
@@ -170,6 +193,13 @@ vi.mock('../../services/http/api-error', () => ({
   getApiErrorMessage: () => 'Erro de API',
   isFaturaIndisponivelError: () => false
 }));
+
+const contasBancariasResponse = {
+  items: [
+    { id: 'cb1', nome: 'Conta Corrente' },
+    { id: 'cb2', nome: 'Conta Poupança' }
+  ]
+};
 
 const pessoasResponse = {
   items: [
@@ -207,6 +237,7 @@ function mockSuccessfulOptions() {
   vi.mocked(cadastrosApi.contasGerenciais.listar).mockImplementation((filters: { tipo?: string }) =>
     Promise.resolve((filters.tipo === 'Receita' ? receitasResponse : despesasResponse) as never)
   );
+  vi.mocked(cadastrosApi.contasBancarias.listar).mockResolvedValue(contasBancariasResponse as never);
 }
 
 function createTestQueryClient() {
@@ -385,5 +416,51 @@ describe('QuickLaunchButton', () => {
     const toggle = await within(dialog).findByRole('switch', { name: /j. liquidada/i });
     // The toggle must NOT be in a md:col-span-2 container (it's now inline, sharing a row)
     expect(toggle.closest('[class*="col-span-2"]')).toBeNull();
+  });
+
+  it('switches to transferencia tipo and submits a transfer', async () => {
+    vi.mocked(financeiroApi.transferencias.criar).mockResolvedValue(undefined as never);
+    const { user, dialog } = await openQuickLaunch();
+
+    await user.click(within(dialog).getByRole('button', { name: /transfer.ncia/i }));
+
+    // Should now show conta origem/destino selects
+    await waitFor(() =>
+      expect(within(dialog).getByLabelText(/Conta origem/i)).toBeInTheDocument()
+    );
+
+    await user.type(within(dialog).getByLabelText('Valor'), '500');
+    await user.selectOptions(within(dialog).getByLabelText(/Conta origem/i), 'cb1');
+    await user.selectOptions(within(dialog).getByLabelText(/Conta destino/i), 'cb2');
+
+    await user.click(within(dialog).getByRole('button', { name: /^Transferir$/i }));
+
+    await waitFor(() => expect(financeiroApi.transferencias.criar).toHaveBeenCalledTimes(1));
+    expect(financeiroApi.transferencias.criar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contaBancariaOrigemId: 'cb1',
+        contaBancariaDestinoId: 'cb2',
+        valor: 500
+      })
+    );
+    expect(notify).toHaveBeenCalledWith('success', 'Transferência registrada');
+  });
+
+  it('shows confirm-close dialog when dirty form receives close request', async () => {
+    const { user, dialog } = await openQuickLaunch();
+
+    await user.type(within(dialog).getByPlaceholderText(/mercado/i), 'Teste');
+
+    // Press escape to trigger requestClose on dirty form
+    await user.keyboard('{Escape}');
+
+    // Confirm close dialog should appear ("Descartar dados?")
+    expect(await screen.findByText(/Descartar dados/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Continuar editando/i })).toBeInTheDocument();
+    // Dismiss it
+    await user.click(screen.getByRole('button', { name: /Continuar editando/i }));
+    await waitFor(() => {
+      expect(screen.queryByText(/Descartar dados/i)).not.toBeInTheDocument();
+    });
   });
 });

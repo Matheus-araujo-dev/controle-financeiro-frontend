@@ -104,9 +104,76 @@ describe('resolveApiBaseUrl', () => {
     );
   });
 
+  it('falls back to port 5000 for localhost:5172', () => {
+    expect(resolveApiBaseUrl(undefined, { hostname: 'localhost', protocol: 'http:', port: '5172' })).toBe(
+      'http://localhost:5000/api/v1'
+    );
+  });
+
   it('keeps the current origin when not running on a local Vite port', () => {
     expect(resolveApiBaseUrl(undefined, { hostname: 'app.example.com', protocol: 'https:', port: '443' })).toBe(
       'https://app.example.com/api/v1'
     );
+  });
+
+  it('ignores blank environment URL and falls back to location', () => {
+    expect(resolveApiBaseUrl('   ', { hostname: 'app.example.com', protocol: 'https:', port: '443' })).toBe(
+      'https://app.example.com/api/v1'
+    );
+  });
+
+  it('includes non-standard port in URL', () => {
+    expect(resolveApiBaseUrl(undefined, { hostname: 'app.example.com', protocol: 'https:', port: '8443' })).toBe(
+      'https://app.example.com:8443/api/v1'
+    );
+  });
+
+  it('uses http default port 80 without port segment', () => {
+    expect(resolveApiBaseUrl(undefined, { hostname: 'app.example.com', protocol: 'http:', port: '80' })).toBe(
+      'http://app.example.com/api/v1'
+    );
+  });
+
+  it('falls back to 127.0.0.1 when hostname is empty', () => {
+    const result = resolveApiBaseUrl(undefined, { hostname: '', protocol: 'http:', port: '5173' });
+    expect(result).toBe('http://127.0.0.1:5000/api/v1');
+  });
+});
+
+describe('registerApiClientInterceptors — JWT token path', () => {
+  beforeEach(() => {
+    useNotificationStore.getState().clear();
+  });
+
+  it('sends Authorization Bearer header when token is set', async () => {
+    useAuthStore.setState({ mode: 'jwt', token: 'test-jwt-token', currentUser: { userId: 'u1', displayName: 'User' } });
+
+    let capturedAuth: string | undefined;
+    const client = axios.create({
+      adapter: async (config) => {
+        capturedAuth =
+          typeof config.headers?.get === 'function'
+            ? (config.headers.get('Authorization') as string)
+            : (config.headers?.['Authorization'] as string);
+        return { data: {}, status: 200, statusText: 'OK', headers: {}, config: config as InternalAxiosRequestConfig };
+      }
+    });
+    registerApiClientInterceptors(client);
+
+    await client.get('/seguro');
+    expect(capturedAuth).toBe('Bearer test-jwt-token');
+    useAuthStore.setState({ token: null });
+  });
+
+  it('does not push error notification for 401 responses', async () => {
+    useAuthStore.setState({ mode: 'jwt', token: 'expired', currentUser: { userId: 'u1', displayName: 'User' } });
+    const client = createAxiosClient(401);
+    registerApiClientInterceptors(client);
+
+    await expect(client.get('/seguro')).rejects.toBeInstanceOf(AxiosError);
+
+    const notifications = useNotificationStore.getState().queue;
+    expect(notifications.every((n) => n.level !== 'error')).toBe(true);
+    useAuthStore.setState({ token: null });
   });
 });

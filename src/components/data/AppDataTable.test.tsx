@@ -257,4 +257,105 @@ describe('AppDataTable', () => {
       value: originalMatchMedia
     });
   });
+
+  it('renders compact hybrid layout with mobileRole columns (parsedDate=truthy)', () => {
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockReturnValue({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      })
+    });
+
+    type FinRow = { id: string; data: string; titulo: string; sub: string; valor: string; status: string; detalhe: string };
+    const finColumns = [
+      { key: 'data', dataIndex: 'data', title: 'Data', mobileRole: 'date' as const },
+      { key: 'titulo', dataIndex: 'titulo', title: 'Título', mobileRole: 'title' as const },
+      { key: 'sub', dataIndex: 'sub', title: 'Sub', mobileRole: 'subtitle' as const },
+      { key: 'valor', dataIndex: 'valor', title: 'Valor', mobileRole: 'value' as const },
+      { key: 'status', dataIndex: 'status', title: 'Status', mobileRole: 'status' as const },
+      { key: 'detalhe', dataIndex: 'detalhe', title: 'Detalhe' },
+      { key: 'actions', title: 'Ações', sorter: false as const, render: () => <button type="button">Ver</button> }
+    ];
+
+    render(
+      <AppDataTable<FinRow>
+        columns={finColumns}
+        dataSource={[{ id: '1', data: '2026-07-15', titulo: 'Aluguel', sub: 'Desc', valor: 'R$100', status: 'Pendente', detalhe: 'Ref 123' }]}
+        rowKey="id"
+      />
+    );
+
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.getByText('Aluguel')).toBeInTheDocument();
+    expect(screen.getByText('15')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ver' })).toBeInTheDocument();
+
+    Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: originalMatchMedia });
+  });
+
+  it('renders compact hybrid layout with unparseable date (parsedDate=null)', () => {
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockReturnValue({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      })
+    });
+
+    type FinRow = { id: string; data: string; titulo: string };
+    const finColumns = [
+      { key: 'data', dataIndex: 'data', title: 'Data', mobileRole: 'date' as const },
+      { key: 'titulo', dataIndex: 'titulo', title: 'Título', mobileRole: 'title' as const }
+    ];
+
+    render(
+      <AppDataTable<FinRow>
+        columns={finColumns}
+        dataSource={[{ id: '1', data: 'texto-invalido', titulo: 'Conta XYZ' }]}
+        rowKey="id"
+      />
+    );
+
+    expect(screen.getByText('Conta XYZ')).toBeInTheDocument();
+    expect(screen.getByText('texto-invalido')).toBeInTheDocument();
+
+    Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: originalMatchMedia });
+  });
+
+  it('renders compact hybrid layout without dateCol and without valueCol/statusCol', () => {
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockReturnValue({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      })
+    });
+
+    type TitleRow = { id: string; titulo: string };
+    const finColumns = [
+      { key: 'titulo', dataIndex: 'titulo', title: 'Título', mobileRole: 'title' as const }
+    ];
+
+    render(
+      <AppDataTable<TitleRow>
+        columns={finColumns}
+        dataSource={[{ id: '1', titulo: 'Só título' }]}
+        rowKey="id"
+      />
+    );
+
+    expect(screen.getByText('Só título')).toBeInTheDocument();
+
+    Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: originalMatchMedia });
+  });
 });

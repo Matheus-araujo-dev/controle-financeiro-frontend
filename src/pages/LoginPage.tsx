@@ -8,9 +8,7 @@ type LoginFormValues = {
   displayName: string;
 };
 
-const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ?? '';
-
-function buildGoogleOAuthUrl(): string {
+function buildGoogleOAuthUrl(googleClientId: string): string {
   const nonce = Array.from(crypto.getRandomValues(new Uint8Array(16)), b =>
     b.toString(16).padStart(2, '0')
   ).join('');
@@ -33,6 +31,7 @@ export function LoginPage() {
   const mode = useAuthMode();
   const signIn = useAuthStore((state) => state.signIn);
   const currentUser = useCurrentUser();
+  const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ?? '';
 
   const from = useMemo(() => {
     const state = location.state as { from?: string } | null;
@@ -42,7 +41,7 @@ export function LoginPage() {
   const handleGoogleLogin = () => {
     if (!googleClientId) return;
     sessionStorage.setItem('google_redirect_from', from);
-    window.location.href = buildGoogleOAuthUrl();
+    window.location.href = buildGoogleOAuthUrl(googleClientId);
   };
 
   const handleFinish = (values: LoginFormValues) => {

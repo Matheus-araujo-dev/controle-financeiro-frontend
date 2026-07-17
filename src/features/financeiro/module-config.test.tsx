@@ -344,4 +344,44 @@ describe('financeiro module config', () => {
     expect(financeiroApi.contasPagar.estornar).toHaveBeenCalledWith('cp-1');
     expect(financeiroApi.contasPagar.cancelar).toHaveBeenCalledWith('cp-1');
   });
+
+  it('keeps recurring action delegates wired for receivable config', async () => {
+    vi.mocked(financeiroApi.contasReceber.alterarFuturas).mockResolvedValue({ id: 'cr-1' } as never);
+    vi.mocked(financeiroApi.contasReceber.gerarOcorrencias).mockResolvedValue({ id: 'cr-1' } as never);
+    vi.mocked(financeiroApi.contasReceber.liquidar).mockResolvedValue({ id: 'cr-1' } as never);
+
+    const values = formValues();
+    await contasReceberModuleConfig.alterarFuturas?.('cr-1', values);
+    await contasReceberModuleConfig.gerarOcorrencias?.('cr-1', { ateData: '2026-12-31' });
+    await contasReceberModuleConfig.pausarRecorrencia?.('cr-1');
+    await contasReceberModuleConfig.encerrarRecorrencia?.('cr-1', { dataFim: '2026-12-31' });
+    await contasReceberModuleConfig.estornar?.('cr-1');
+    await contasReceberModuleConfig.cancelar?.('cr-1');
+    await contasReceberModuleConfig.liquidar?.('cr-1', {
+      valorLiquidacao: 90,
+      dataLiquidacao: '2026-07-15',
+      contaBancariaId: 'banco-1',
+      formaPagamentoId: 'forma-1',
+      atualizarValorConta: true,
+      atualizarRecorrencia: false,
+      cancelarValorRestante: false
+    });
+
+    expect(financeiroApi.contasReceber.alterarFuturas).toHaveBeenCalledWith('cr-1', expect.any(Object));
+    expect(financeiroApi.contasReceber.gerarOcorrencias).toHaveBeenCalledWith('cr-1', { ateData: '2026-12-31' });
+    expect(financeiroApi.contasReceber.pausarRecorrencia).toHaveBeenCalledWith('cr-1');
+    expect(financeiroApi.contasReceber.encerrarRecorrencia).toHaveBeenCalledWith('cr-1', { dataFim: '2026-12-31' });
+    expect(financeiroApi.contasReceber.estornar).toHaveBeenCalledWith('cr-1');
+    expect(financeiroApi.contasReceber.cancelar).toHaveBeenCalledWith('cr-1');
+    expect(financeiroApi.contasReceber.liquidar).toHaveBeenCalledWith('cr-1', expect.objectContaining({ valorLiquidacao: 90 }));
+  });
+
+  it('loads rateio options typed as Receita from receivable config', async () => {
+    await expect(contasReceberModuleConfig.loadRateioOptions()).resolves.toEqual([
+      expect.objectContaining({ value: 'g2', displayText: '2.1 - Receita', label: '2.1 - Receita' })
+    ]);
+    expect(cadastrosApi.contasGerenciais.listar).toHaveBeenCalledWith(
+      expect.objectContaining({ tipo: 'Receita', ativo: true })
+    );
+  });
 });

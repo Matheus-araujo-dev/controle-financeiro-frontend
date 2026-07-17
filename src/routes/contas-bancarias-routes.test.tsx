@@ -5,6 +5,7 @@ import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { useAuthStore } from '../store/auth-store';
 import { appRoutes } from './router';
 import '../features/cadastros/MasterDataListPage';
+import '../features/cadastros/MasterDataFormPage';
 import '../layouts/NeonLedgerLayout';
 
 const apiClientMock = vi.hoisted(() => ({
