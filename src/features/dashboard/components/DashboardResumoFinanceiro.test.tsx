@@ -5,7 +5,7 @@ describe('DashboardResumoFinanceiro', () => {
   it('renders with real data (total > 0, positive saldo)', () => {
     render(
       <DashboardResumoFinanceiro
-        data={{ totalReceitas: 3000, totalDespesas: 1000, saldo: 2000 }}
+        data={{ totalReceitas: 3000, totalDespesas: 1000, saldo: 2000, dataInicial: '2026-07-01', dias: 30, itens: [] }}
         referenceMonth="2026-07"
       />
     );
@@ -28,7 +28,7 @@ describe('DashboardResumoFinanceiro', () => {
   it('renders with negative saldo (saldoPositivo=false uses error color)', () => {
     render(
       <DashboardResumoFinanceiro
-        data={{ totalReceitas: 500, totalDespesas: 800, saldo: -300 }}
+        data={{ totalReceitas: 500, totalDespesas: 800, saldo: -300, dataInicial: '2026-07-01', dias: 30, itens: [] }}
         referenceMonth="2026-07"
       />
     );

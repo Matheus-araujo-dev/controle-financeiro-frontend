@@ -361,7 +361,7 @@ describe('InvestimentosPage', () => {
 
   it('submits create investment form and calls criar API', async () => {
     investimentosApiMock.listar.mockResolvedValue(emptyResponse);
-    investimentosApiMock.criar.mockResolvedValue({ id: 'new-1', ...baseInvestimento });
+    investimentosApiMock.criar.mockResolvedValue({ ...baseInvestimento, id: 'new-1' });
     cadastrosApiMock.contasBancarias.listar.mockResolvedValue({
       items: [{ id: 'cb-1', nome: 'Nubank' }],
       page: 1, pageSize: 200, totalItems: 1, totalPages: 1

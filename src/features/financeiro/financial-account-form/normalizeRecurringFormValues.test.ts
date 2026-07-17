@@ -4,8 +4,10 @@ import type { FinanceiroFormValues } from '../module-config';
 function makeValues(overrides: Partial<FinanceiroFormValues> = {}): FinanceiroFormValues {
   return {
     descricao: 'Teste',
+    numeroDocumento: '',
     dataEmissao: '2026-06-01',
     dataVencimento: '2026-06-15',
+    dataLiquidacao: '',
     dataCompra: '',
     pessoaId: '',
     responsavelId: '',
@@ -20,9 +22,14 @@ function makeValues(overrides: Partial<FinanceiroFormValues> = {}): FinanceiroFo
     observacao: '',
     rateios: [],
     ehRecorrente: false,
+    recorrenciaTipoPeriodicidade: 'Mensal' as const,
     recorrenciaDataInicio: '',
-    recorrenciaTipoDia: 'DiaFixo',
+    recorrenciaDataFim: '',
+    recorrenciaTipoDia: 'DiaFixo' as const,
     recorrenciaDiaOrdemMensal: 1,
+    recorrenciaPermiteEdicaoOcorrenciaIndividual: false,
+    recorrenciaObservacao: '',
+    recorrenciaGerarAteData: '',
     origemCompraPlanejadaId: '',
     ...overrides
   };

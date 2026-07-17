@@ -288,7 +288,7 @@ describe('RecurrenceListPage', () => {
   it('triggers export and covers exportColumns lambdas including null responsavelNome and null dataFim', async () => {
     const { downloadBlob } = await import('../../shared/export/workbook');
     const itemNullFields = { ...recorrenciaPagar, responsavelNome: null, dataFim: null };
-    mockListar([recorrenciaReceber, itemNullFields]);
+    mockListar([recorrenciaReceber, itemNullFields as unknown as typeof recorrenciaPagar]);
     renderPage();
     await screen.findByText('Contrato de consultoria');
     const prevCallCount = vi.mocked(downloadBlob).mock.calls.length;
