@@ -12,6 +12,7 @@ describe('LoginPage', () => {
     });
     window.localStorage.clear();
     sessionStorage.clear();
+    vi.unstubAllEnvs();
   });
 
   it('renders dev mode form by default', () => {
@@ -40,6 +41,7 @@ describe('LoginPage', () => {
   });
 
   it('shows Google login button when mode is google', () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'test-client-id');
     useAuthStore.setState({ mode: 'google', currentUser: null });
     render(
       <MemoryRouter initialEntries={['/login']}>
