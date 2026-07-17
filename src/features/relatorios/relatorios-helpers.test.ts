@@ -1,5 +1,6 @@
 import {
   agingBucket,
+  buildAlertas,
   buildExportDefinition,
   buildInadimplenciaRows,
   daysOverdue,
@@ -249,5 +250,136 @@ describe('relatorios helpers', () => {
     exportarPdf();
 
     expect(print).toHaveBeenCalledTimes(1);
+  });
+
+  it.each<ReportKey>(['comparativo', 'dre', 'alertas'])(
+    'builds export definition for %s',
+    (reportKey) => {
+      const definition = buildExportDefinition(reportKey, referenceMonth, {
+        ...reportData(),
+        comparativo: {
+          itens: [
+            { competenciaLabel: 'Mai/2026', receitas: 4000, despesas: 3000, saldo: 1000, variacaoReceitas: null, variacaoDespesas: null },
+            { competenciaLabel: 'Jun/2026', receitas: 5000, despesas: 3200, saldo: 1800, variacaoReceitas: 25, variacaoDespesas: 6.7 }
+          ]
+        } as never
+      });
+      expect(definition.filename).toContain(referenceMonth);
+      expect(definition.sheets.length).toBeGreaterThan(0);
+    }
+  );
+});
+
+describe('buildAlertas', () => {
+  it('pushes danger alert when overdue accounts exist', () => {
+    const state: ReportState = {
+      resumo: {
+        contasVencidas: [{ descricao: 'Aluguel', pessoaNome: 'João', dataVencimento: '2026-06-01', statusNome: 'Vencida', valor: 1000 }],
+        saldoAtual: 500,
+        movimentacoesRecentes: []
+      } as never
+    };
+    const alertas = buildAlertas(state);
+    expect(alertas.some((a) => a.id === 'contas-vencidas' && a.severity === 'danger')).toBe(true);
+  });
+
+  it('pushes info alert when no overdue accounts', () => {
+    const alertas = buildAlertas({
+      resumo: { contasVencidas: [], saldoAtual: 0, movimentacoesRecentes: [] } as never
+    });
+    expect(alertas.some((a) => a.id === 'sem-contas-vencidas' && a.severity === 'info')).toBe(true);
+  });
+
+  it('pushes danger alert for negative saldo', () => {
+    const alertas = buildAlertas({
+      resumo: { contasVencidas: [], saldoAtual: -100, movimentacoesRecentes: [] } as never
+    });
+    expect(alertas.some((a) => a.id === 'saldo-negativo')).toBe(true);
+  });
+
+  it('pushes warning alert for fluxo risco', () => {
+    const alertas = buildAlertas({
+      fluxoCaixa: {
+        itens: [{ data: '2026-07-01', saldoInicial: 0, entradasPrevistas: 0, saidasPrevistas: 100, saldoFinalPrevisto: -100, riscoSaldoNegativo: true }]
+      } as never
+    });
+    expect(alertas.some((a) => a.id === 'fluxo-risco')).toBe(true);
+  });
+
+  it('pushes warning when despesas rise more than 20%', () => {
+    const alertas = buildAlertas({
+      comparativo: {
+        itens: [
+          { competenciaLabel: 'Mai/2026', receitas: 5000, despesas: 3000, saldo: 2000, variacaoReceitas: 0, variacaoDespesas: 0 },
+          { competenciaLabel: 'Jun/2026', receitas: 5000, despesas: 3700, saldo: 1300, variacaoReceitas: 0, variacaoDespesas: 25 }
+        ]
+      } as never
+    });
+    expect(alertas.some((a) => a.id === 'despesa-alta')).toBe(true);
+  });
+
+  it('does not push despesa alert when variation is exactly 20%', () => {
+    const alertas = buildAlertas({
+      comparativo: {
+        itens: [
+          { competenciaLabel: 'Mai', receitas: 5000, despesas: 3000, saldo: 2000, variacaoReceitas: 0, variacaoDespesas: 0 },
+          { competenciaLabel: 'Jun', receitas: 5000, despesas: 3600, saldo: 1400, variacaoReceitas: 0, variacaoDespesas: 20 }
+        ]
+      } as never
+    });
+    expect(alertas.some((a) => a.id === 'despesa-alta')).toBe(false);
+  });
+
+  it('pushes warning when receitas fall more than 20%', () => {
+    const alertas = buildAlertas({
+      comparativo: {
+        itens: [
+          { competenciaLabel: 'Mai', receitas: 5000, despesas: 3000, saldo: 2000, variacaoReceitas: 0, variacaoDespesas: 0 },
+          { competenciaLabel: 'Jun', receitas: 3500, despesas: 3000, saldo: 500, variacaoReceitas: -30, variacaoDespesas: 0 }
+        ]
+      } as never
+    });
+    expect(alertas.some((a) => a.id === 'receita-queda')).toBe(true);
+  });
+
+  it('pushes info for active recorrencias', () => {
+    const alertas = buildAlertas({
+      recorrencias: {
+        items: [{ ativa: true, valorLiquido: 200, descricao: 'Netflix', pessoaNome: '', responsavelNome: null, contaOrigemTipo: 'ContaPagar', dataInicio: '', dataFim: null, diaOrdemMensal: 1, id: 'r1' }],
+        page: 1, pageSize: 250, totalItems: 1, totalPages: 1
+      } as never
+    });
+    expect(alertas.some((a) => a.id === 'recorrencias-ativas')).toBe(true);
+  });
+
+  it('does not push recorrencia alert when total is 0', () => {
+    const alertas = buildAlertas({
+      recorrencias: {
+        items: [{ ativa: false, valorLiquido: 200, descricao: 'Pausada', pessoaNome: '', responsavelNome: null, contaOrigemTipo: 'ContaPagar', dataInicio: '', dataFim: null, diaOrdemMensal: 1, id: 'r2' }],
+        page: 1, pageSize: 250, totalItems: 1, totalPages: 1
+      } as never
+    });
+    expect(alertas.some((a) => a.id === 'recorrencias-ativas')).toBe(false);
+  });
+
+  it('sorts by severity: danger before warning before info', () => {
+    const alertas = buildAlertas({
+      resumo: { contasVencidas: [], saldoAtual: -100, movimentacoesRecentes: [] } as never,
+      fluxoCaixa: {
+        itens: [{ data: '2026-07-01', saldoInicial: 0, entradasPrevistas: 0, saidasPrevistas: 100, saldoFinalPrevisto: -100, riscoSaldoNegativo: true }]
+      } as never
+    });
+    const severities = alertas.map((a) => a.severity);
+    const dangerIdx = severities.indexOf('danger');
+    const warningIdx = severities.indexOf('warning');
+    const infoIdx = severities.indexOf('info');
+    if (dangerIdx >= 0 && warningIdx >= 0) expect(dangerIdx).toBeLessThan(warningIdx);
+    if (warningIdx >= 0 && infoIdx >= 0) expect(warningIdx).toBeLessThan(infoIdx);
+  });
+
+  it('returns only the sem-contas-vencidas info when state is empty', () => {
+    const alertas = buildAlertas({});
+    expect(alertas).toHaveLength(1);
+    expect(alertas[0].id).toBe('sem-contas-vencidas');
   });
 });

@@ -3,6 +3,13 @@ import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '../store/auth-store';
 import { appRoutes } from './router';
+// Pre-load lazy components to avoid timing failures in tests
+import '../layouts/NeonLedgerLayout';
+import '../features/dashboard/pages/DashboardPage';
+import '../features/financeiro/FaturasPage';
+import '../features/importacoes-whatsapp/ImportacoesWhatsappPage';
+import '../features/cadastros/MasterDataFormPage';
+import './NotFoundPage';
 
 function renderWithQuery(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
