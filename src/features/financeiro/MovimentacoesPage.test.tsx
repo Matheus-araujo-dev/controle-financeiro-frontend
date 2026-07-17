@@ -54,6 +54,7 @@ function renderPage() {
 describe('MovimentacoesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
     vi.mocked(cadastrosApi.contasBancarias.listar).mockResolvedValue({
       items: [
         {
@@ -344,4 +345,403 @@ describe('MovimentacoesPage', () => {
     expect(call.summary!.some((s: { label: string }) => s.label === 'Saídas')).toBe(true);
     expect(call.summary!.some((s: { label: string }) => s.label === 'Saldo Líquido')).toBe(true);
   }, 15000);
+
+  function makeMovimentacao(overrides: Record<string, unknown> = {}) {
+    return {
+      id: 'm-base',
+      dataMovimentacao: '2026-07-01',
+      tipo: 'Saida',
+      natureza: 'Realizada',
+      statusCodigo: 'EFETIVADA',
+      statusNome: 'Efetivada',
+      valor: 200,
+      contaBancariaId: 'cb1',
+      contaBancariaNome: 'Conta principal',
+      contaPagarId: null,
+      contaReceberId: null,
+      faturaCartaoId: null,
+      observacao: 'Teste',
+      responsavelNome: 'Michelle',
+      ...overrides
+    };
+  }
+
+  function pagedSingle(item: Record<string, unknown>) {
+    return {
+      items: [item],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1,
+      summary: { totalRegistros: 1, totalEntradas: 0, totalSaidas: 200, saldoLiquido: -200 }
+    };
+  }
+
+  it('renders fatura cartao movimentacao with correct icon label', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ faturaCartaoId: 'fat-1', tipo: 'Saida' })) as never
+    );
+    renderPage();
+    expect(await screen.findByText('Fatura do cartão')).toBeInTheDocument();
+  });
+
+  it('renders conta a pagar movimentacao', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ contaPagarId: 'cp-1' })) as never
+    );
+    renderPage();
+    expect(await screen.findByText('Conta a pagar')).toBeInTheDocument();
+  });
+
+  it('renders avulsa entrada movimentacao', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ tipo: 'Entrada' })) as never
+    );
+    renderPage();
+    expect(await screen.findByText('Entrada avulsa')).toBeInTheDocument();
+  });
+
+  it('renders avulsa saida movimentacao when no foreign keys', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ tipo: 'Saida' })) as never
+    );
+    renderPage();
+    expect(await screen.findByText('Saída avulsa')).toBeInTheDocument();
+  });
+
+  it('renders efetivada status badge', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ statusCodigo: 'EFETIVADA', statusNome: 'Efetivada' })) as never
+    );
+    renderPage();
+    expect(await screen.findByText('Efetivada')).toBeInTheDocument();
+  });
+
+  it('renders non-efetivada status badge', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ statusCodigo: 'PENDENTE', statusNome: 'Pendente' })) as never
+    );
+    renderPage();
+    expect(await screen.findByText('Pendente')).toBeInTheDocument();
+  });
+
+  it('applies tipo filter when multiselect changes', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao()) as never
+    );
+    renderPage();
+    await screen.findByText('Teste');
+
+    await userEvent.click(screen.getByLabelText('Tipo'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Entrada' }));
+
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ tipo: 'Entrada' })
+      )
+    );
+  }, 20000);
+
+  it('applies pessoa filter when multiselect changes', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao()) as never
+    );
+    renderPage();
+    await screen.findByText('Teste');
+
+    await userEvent.click(screen.getByLabelText('Filtro de pessoa (recebedor/pagador)'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Michelle' }));
+
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ pessoaIds: ['rp1'] })
+      )
+    );
+  }, 20000);
+
+  it('XLSX export with search filter includes Busca in buildExportFilters', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ observacao: 'Pagamento mensal' })) as never
+    );
+    renderPage();
+    await screen.findByText('Pagamento mensal');
+
+    await userEvent.type(screen.getByPlaceholderText(/Filtrar por observa/i), 'mensal');
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: 'mensal' })
+      )
+    );
+
+    const prevCallCount = vi.mocked(downloadRichExport).mock.calls.length;
+    await userEvent.click(screen.getByRole('button', { name: /XLSX/i }));
+    await waitFor(() =>
+      expect(vi.mocked(downloadRichExport).mock.calls.length).toBeGreaterThan(prevCallCount)
+    );
+
+    const call = vi.mocked(downloadRichExport).mock.calls.at(-1)![0];
+    const exportFilters = call.filters as Array<[string, string]>;
+    expect(exportFilters.some(([label]: [string, string]) => label === 'Busca:')).toBe(true);
+  }, 25000);
+
+  it('PDF export with negative saldo uses neg style', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ tipo: 'Saida', valor: 500 })) as never
+    );
+    renderPage();
+    await screen.findByText('Teste');
+
+    const prevCallCount = vi.mocked(openPrintReport).mock.calls.length;
+    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await waitFor(() =>
+      expect(vi.mocked(openPrintReport).mock.calls.length).toBeGreaterThan(prevCallCount)
+    );
+
+    const call = vi.mocked(openPrintReport).mock.calls.at(-1)![0];
+    const saldoSummary = (call.summary as Array<{ label: string; type: string }>).find(
+      (s) => s.label === 'Saldo Líquido'
+    );
+    expect(saldoSummary?.type).toBe('neg');
+  }, 20000);
+
+  it('conta a receber movimentacao shows correct descriptor label', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ contaReceberId: 'cr-99', tipo: 'Entrada', faturaCartaoId: null, contaPagarId: null })) as never
+    );
+    renderPage();
+    expect(await screen.findByText('Conta a receber')).toBeInTheDocument();
+  }, 15000);
+
+  it('renders movimentacao without responsavelNome (hides responsavel row)', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ responsavelNome: null })) as never
+    );
+    renderPage();
+    expect(await screen.findByText('Teste')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /responsavel/i })).not.toBeInTheDocument();
+  }, 10000);
+
+  it('renders movimentacao without statusNome (no status badge in valor column)', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ statusNome: null, statusCodigo: undefined })) as never
+    );
+    renderPage();
+    expect(await screen.findByText('Teste')).toBeInTheDocument();
+  }, 10000);
+
+  it('renders movimentacao without observacao (shows descriptor.label as title)', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ observacao: null, tipo: 'Saida', contaPagarId: null, faturaCartaoId: null, contaReceberId: null })) as never
+    );
+    renderPage();
+    const saidaAvulsaEls = await screen.findAllByText('Saída avulsa');
+    expect(saidaAvulsaEls.length).toBeGreaterThanOrEqual(2);
+  }, 10000);
+
+  it('triggers onTableChange when column header is clicked (sort)', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao()) as never
+    );
+    renderPage();
+    await screen.findByText('Teste');
+    await userEvent.click(screen.getByRole('button', { name: /^Data$/i }));
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sortBy: 'dataMovimentacao', sortDirection: 'Asc' })
+      )
+    );
+  }, 10000);
+
+  it('triggers pagination.onChange when Próxima page button is clicked', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue({
+      ...pagedSingle(makeMovimentacao()),
+      totalItems: 25,
+      totalPages: 2,
+    } as never);
+    renderPage();
+    await screen.findByText('Teste');
+    await userEvent.click(screen.getByRole('button', { name: /Próxima/i }));
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 2 })
+      )
+    );
+  }, 10000);
+
+  it('covers Limpar busca button onClick: type search then clear', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao()) as never
+    );
+    renderPage();
+    await screen.findByText('Teste');
+
+    await userEvent.type(screen.getByPlaceholderText(/Filtrar por observa/i), 'mensal');
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: 'mensal' })
+      )
+    );
+
+    expect(screen.getByRole('button', { name: 'Limpar busca' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Limpar busca' }));
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: '' })
+      )
+    );
+  }, 20000);
+
+  it('covers onTableChange descend branch: click Data column header twice', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao()) as never
+    );
+    renderPage();
+    await screen.findByText('Teste');
+
+    await userEvent.click(screen.getByRole('button', { name: /^Data$/i }));
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sortDirection: 'Asc' })
+      )
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /^Data$/i }));
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sortDirection: 'Desc' })
+      )
+    );
+  }, 20000);
+
+  it('buildExportFilters: tipo Entrada branch — apply tipo then export', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao({ tipo: 'Entrada', valor: 1000 })) as never
+    );
+    renderPage();
+    await screen.findByText('Teste');
+
+    await userEvent.click(screen.getByLabelText('Tipo'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Entrada' }));
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ tipo: 'Entrada' })
+      )
+    );
+
+    const prevCallCount = vi.mocked(downloadRichExport).mock.calls.length;
+    await userEvent.click(screen.getByRole('button', { name: /XLSX/i }));
+    await waitFor(() =>
+      expect(vi.mocked(downloadRichExport).mock.calls.length).toBeGreaterThan(prevCallCount)
+    );
+
+    const call = vi.mocked(downloadRichExport).mock.calls.at(-1)![0];
+    const exportFilters = call.filters as Array<[string, string]>;
+    expect(exportFilters.some(([label]: [string, string]) => label === 'Tipo:')).toBe(true);
+    expect(exportFilters.find(([l]: [string, string]) => l === 'Tipo:')![1]).toBe('Entrada');
+  }, 25000);
+
+  it('buildExportFilters: tipo Saida branch — apply Saída filter then export', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao()) as never
+    );
+    renderPage();
+    await screen.findByText('Teste');
+
+    await userEvent.click(screen.getByLabelText('Tipo'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Saída' }));
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ tipo: 'Saida' })
+      )
+    );
+
+    const prevCallCount = vi.mocked(downloadRichExport).mock.calls.length;
+    await userEvent.click(screen.getByRole('button', { name: /XLSX/i }));
+    await waitFor(() =>
+      expect(vi.mocked(downloadRichExport).mock.calls.length).toBeGreaterThan(prevCallCount)
+    );
+
+    const call = vi.mocked(downloadRichExport).mock.calls.at(-1)![0];
+    const exportFilters = call.filters as Array<[string, string]>;
+    expect(exportFilters.find(([l]: [string, string]) => l === 'Tipo:')![1]).toBe('Saída');
+  }, 25000);
+
+  it('buildExportFilters: conta bancaria, responsavel and pessoa branches', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao()) as never
+    );
+    renderPage();
+    await screen.findByText('Teste');
+
+    await userEvent.click(screen.getByLabelText('Filtro de conta bancária'));
+    await userEvent.click(await screen.findByRole('button', { name: /Conta principal/i }));
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ contaBancariaIds: ['cb1'] })
+      )
+    );
+
+    await userEvent.click(screen.getByLabelText('Filtro de pessoa (recebedor/pagador)'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Michelle' }));
+
+    const prevCallCount = vi.mocked(downloadRichExport).mock.calls.length;
+    await userEvent.click(screen.getByRole('button', { name: /XLSX/i }));
+    await waitFor(() =>
+      expect(vi.mocked(downloadRichExport).mock.calls.length).toBeGreaterThan(prevCallCount)
+    );
+
+    const call = vi.mocked(downloadRichExport).mock.calls.at(-1)![0];
+    const exportFilters = call.filters as Array<[string, string]>;
+    expect(exportFilters.some(([label]: [string, string]) => label === 'Conta:')).toBe(true);
+    expect(exportFilters.some(([label]: [string, string]) => label === 'Pessoa:')).toBe(true);
+  }, 30000);
+
+  it('buildExportFilters: responsavel branch — apply responsavel filter then export', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao()) as never
+    );
+    renderPage();
+    await screen.findByText('Teste');
+
+    await userEvent.click(screen.getByLabelText('Filtro de responsável'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Michelle' }));
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ responsavelIds: ['rp1'] })
+      )
+    );
+
+    const prevCallCount = vi.mocked(downloadRichExport).mock.calls.length;
+    await userEvent.click(screen.getByRole('button', { name: /XLSX/i }));
+    await waitFor(() =>
+      expect(vi.mocked(downloadRichExport).mock.calls.length).toBeGreaterThan(prevCallCount)
+    );
+
+    const call = vi.mocked(downloadRichExport).mock.calls.at(-1)![0];
+    const exportFilters = call.filters as Array<[string, string]>;
+    expect(exportFilters.some(([label]: [string, string]) => label === 'Responsável:')).toBe(true);
+  }, 25000);
+
+  it('buildExportFilters: date range both set', async () => {
+    vi.mocked(financeiroApi.movimentacoes.listar).mockResolvedValue(
+      pagedSingle(makeMovimentacao()) as never
+    );
+    renderPage();
+    await screen.findByText('Teste');
+
+    await selectDateInDateInput('Data inicial', '2026-07-01');
+    await selectDateInDateInput('Data final', '2026-07-31');
+    await waitFor(() =>
+      expect(financeiroApi.movimentacoes.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ dataInicial: '2026-07-01', dataFinal: '2026-07-31' })
+      )
+    );
+
+    const prevCallCount = vi.mocked(downloadRichExport).mock.calls.length;
+    await userEvent.click(screen.getByRole('button', { name: /XLSX/i }));
+    await waitFor(() =>
+      expect(vi.mocked(downloadRichExport).mock.calls.length).toBeGreaterThan(prevCallCount)
+    );
+
+    const call = vi.mocked(downloadRichExport).mock.calls.at(-1)![0];
+    const exportFilters = call.filters as Array<[string, string]>;
+    expect(exportFilters.some(([label]: [string, string]) => label === 'Período:')).toBe(true);
+  }, 30000);
 });

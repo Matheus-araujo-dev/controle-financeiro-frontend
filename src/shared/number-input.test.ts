@@ -1,4 +1,11 @@
-import { keepOnlyDecimalCharacters, keepOnlyDigits, parseIntegerInput } from './number-input';
+import {
+  keepOnlyDecimalCharacters,
+  keepOnlyDigits,
+  parseIntegerInput,
+  preventScientificNotation,
+  handleIntegerPaste,
+  handleDecimalPaste
+} from './number-input';
 
 describe('keepOnlyDigits', () => {
   it('removes non-digit characters', () => {
@@ -56,5 +63,96 @@ describe('keepOnlyDecimalCharacters', () => {
 
   it('returns empty for empty input', () => {
     expect(keepOnlyDecimalCharacters('')).toBe('');
+  });
+});
+
+describe('preventScientificNotation', () => {
+  function makeKeyEvent(key: string) {
+    const preventDefault = vi.fn();
+    return { key, preventDefault } as unknown as import('react').KeyboardEvent<HTMLInputElement>;
+  }
+
+  it('prevents default for blocked keys (e, E, +, -)', () => {
+    for (const key of ['e', 'E', '+', '-']) {
+      const event = makeKeyEvent(key);
+      preventScientificNotation(event);
+      expect(event.preventDefault).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('does not prevent default for allowed keys', () => {
+    for (const key of ['1', '0', '.', 'Backspace', 'ArrowLeft']) {
+      const event = makeKeyEvent(key);
+      preventScientificNotation(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    }
+  });
+});
+
+describe('handleIntegerPaste', () => {
+  function makePasteEvent(text: string) {
+    const preventDefault = vi.fn();
+    return {
+      clipboardData: { getData: () => text },
+      preventDefault
+    } as unknown as import('react').ClipboardEvent<HTMLInputElement>;
+  }
+
+  it('prevents paste when text contains non-digit characters', () => {
+    const event = makePasteEvent('12.34');
+    handleIntegerPaste(event);
+    expect(event.preventDefault).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows paste when text contains only digits', () => {
+    const event = makePasteEvent('12345');
+    handleIntegerPaste(event);
+    expect(event.preventDefault).not.toHaveBeenCalled();
+  });
+
+  it('allows paste when text is empty string', () => {
+    const event = makePasteEvent('');
+    handleIntegerPaste(event);
+    expect(event.preventDefault).not.toHaveBeenCalled();
+  });
+});
+
+describe('handleDecimalPaste', () => {
+  function makePasteEvent(text: string) {
+    const preventDefault = vi.fn();
+    return {
+      clipboardData: { getData: () => text },
+      preventDefault
+    } as unknown as import('react').ClipboardEvent<HTMLInputElement>;
+  }
+
+  it('prevents paste when text contains characters other than digits, comma, or dot', () => {
+    const event = makePasteEvent('R$ 1.234');
+    handleDecimalPaste(event);
+    expect(event.preventDefault).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows paste for digits, comma, and dot only', () => {
+    const event = makePasteEvent('1234,56');
+    handleDecimalPaste(event);
+    expect(event.preventDefault).not.toHaveBeenCalled();
+  });
+
+  it('allows paste for digits with dot decimal', () => {
+    const event = makePasteEvent('1234.56');
+    handleDecimalPaste(event);
+    expect(event.preventDefault).not.toHaveBeenCalled();
+  });
+
+  it('allows paste when text is empty', () => {
+    const event = makePasteEvent('');
+    handleDecimalPaste(event);
+    expect(event.preventDefault).not.toHaveBeenCalled();
+  });
+
+  it('prevents paste for text with minus sign', () => {
+    const event = makePasteEvent('-100,00');
+    handleDecimalPaste(event);
+    expect(event.preventDefault).toHaveBeenCalledTimes(1);
   });
 });

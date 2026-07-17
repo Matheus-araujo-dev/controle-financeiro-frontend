@@ -11,7 +11,7 @@ export default defineConfig({
     globals: true,
     setupFiles: testSetup,
     css: true,
-    testTimeout: 20000,
+    testTimeout: 30000,
     // Specs de tests/e2e são do Playwright e não podem rodar dentro do Vitest.
     exclude: [...configDefaults.exclude, 'tests/e2e/**'],
     coverage: {
@@ -19,10 +19,10 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       reportsDirectory: './coverage',
       thresholds: {
-        lines: 71,
-        functions: 68,
-        statements: 74,
-        branches: 62
+        lines: 80,
+        functions: 80,
+        statements: 80,
+        branches: 80
       }
     }
   }

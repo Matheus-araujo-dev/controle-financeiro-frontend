@@ -1,7 +1,16 @@
 import { AxiosError } from 'axios';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { FinancialAccountFormPage } from './FinancialAccountFormPage';
+
+vi.mock('../../services/http/agente-api', () => ({
+  agenteApi: {
+    categorizar: vi.fn().mockResolvedValue({ itens: [] })
+  }
+}));
+
+import { agenteApi } from '../../services/http/agente-api';
 
 const navigateMock = vi.fn();
 
@@ -431,6 +440,85 @@ describe('FinancialAccountFormPage', () => {
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/contas-pagar'));
   }, 30000);
 
+  it('shows Sem recorrência and hides recurrence fields when ehRecorrente is false', async () => {
+    const config = createConfig();
+    config.defaultValues = { ...validValues, ehRecorrente: false };
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
+
+    await waitFor(() => expect(config.loadPessoaOptions).toHaveBeenCalled());
+    expect(screen.getByText('Sem recorrência')).toBeInTheDocument();
+    expect(screen.queryByText('Início da Série')).not.toBeInTheDocument();
+    expect(screen.queryByText('Observação da Recorrência')).not.toBeInTheDocument();
+  }, 20000);
+
+  it('switches to parcela mode and shows Valor Parcela label', async () => {
+    const config = createConfig();
+    config.defaultValues = { ...validValues, ehRecorrente: false, quantidadeParcelas: 3, valorOriginal: 300 };
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
+
+    await screen.findByTitle('Parcela × 3x');
+    fireEvent.click(screen.getByTitle('Parcela × 3x'));
+
+    expect(screen.getByText('Valor Parcela')).toBeInTheDocument();
+    expect(screen.getByText(/Total:/)).toBeInTheDocument();
+  }, 30000);
+
+  it('shows Já recebida? toggle when config key is contas-receber', async () => {
+    const config = createConfig();
+    (config as never as Record<string, unknown>).key = 'contas-receber';
+    config.loadFormaPagamentoOptions = vi.fn().mockResolvedValue([
+      { label: 'Pix', value: 'f1', ehCartao: false, baixarAutomaticamente: false }
+    ]);
+    renderWithRoute('/contas-receber/novo', '/contas-receber/novo', config);
+
+    await waitFor(() => expect(config.loadPessoaOptions).toHaveBeenCalled());
+    expect(screen.getByText('Já recebida?')).toBeInTheDocument();
+  }, 20000);
+
+  it('shows Data de Liquidação and Liquidada badge when Já liquidada? toggle is clicked', async () => {
+    const config = createConfig();
+    config.defaultValues = { ...validValues, ehRecorrente: false, quantidadeParcelas: 1 };
+    config.loadFormaPagamentoOptions = vi.fn().mockResolvedValue([
+      { label: 'Boleto', value: 'f1', ehCartao: false, baixarAutomaticamente: false }
+    ]);
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
+
+    await waitFor(() => expect(config.loadFormaPagamentoOptions).toHaveBeenCalled());
+    expect(await screen.findByText('Já liquidada?')).toBeInTheDocument();
+
+    // Click the first toggle switch (TermsValueSection's "Já liquidada?" toggle)
+    const toggle = screen.getAllByRole('switch')[0];
+    fireEvent.click(toggle);
+
+    expect(screen.getByText('Data de Liquidação')).toBeInTheDocument();
+    expect(screen.getByText('Liquidada')).toBeInTheDocument();
+  }, 20000);
+
+  it('shows AI category suggestion when description is long enough', async () => {
+    vi.mocked(agenteApi.categorizar).mockResolvedValue({
+      itens: [{ contaGerencialId: 'cg-ai', contaGerencialDescricao: 'Serviços de TI', confianca: 0.9 }]
+    } as never);
+
+    const config = createConfig();
+    // Start without any category so AI suggestion shows
+    config.defaultValues = { ...validValues, ehRecorrente: false, rateios: [{ contaGerencialId: '', valor: 0 }] };
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
+
+    await waitFor(() => expect(config.loadPessoaOptions).toHaveBeenCalled());
+
+    const descricaoInput = screen.getByPlaceholderText(/Aluguel mensal/i);
+    await userEvent.clear(descricaoInput);
+    await userEvent.type(descricaoInput, 'Manutenção do servidor');
+
+    await waitFor(() => expect(agenteApi.categorizar).toHaveBeenCalled(), { timeout: 2000 });
+    expect(await screen.findByText(/IA sugere:/i, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(screen.getByText('Serviços de TI')).toBeInTheDocument();
+
+    // Click "Usar" to apply the suggestion
+    fireEvent.click(screen.getByRole('button', { name: 'Usar' }));
+    await waitFor(() => expect(screen.queryByText(/IA sugere:/i)).not.toBeInTheDocument());
+  }, 20000);
+
   it('shows conta vinculada cancel dialog and Não só esta cancels only this entry', async () => {
     const config = createConfig();
     config.toFormValues.mockReturnValue({ ...validValues, ehRecorrente: false });
@@ -467,6 +555,23 @@ describe('FinancialAccountFormPage', () => {
     await waitFor(() => expect(config.cancelar).toHaveBeenCalledWith('123', {}));
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/contas-pagar'));
   }, 30000);
+
+  it('clicks gerarReembolso toggle to cover onClick handler (line 140)', async () => {
+    const config = createConfig();
+    config.defaultValues = { ...validValues, ehRecorrente: false, quantidadeParcelas: 1 };
+    config.loadFormaPagamentoOptions = vi.fn().mockResolvedValue([
+      { label: 'Boleto', value: 'f1', ehCartao: false, baixarAutomaticamente: false }
+    ]);
+    renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
+
+    await waitFor(() => expect(config.loadFormaPagamentoOptions).toHaveBeenCalled());
+
+    const reembolsoToggle = screen.getByRole('switch', { name: /reembolso/i });
+    expect(reembolsoToggle).toBeInTheDocument();
+    expect(reembolsoToggle).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(reembolsoToggle);
+    expect(reembolsoToggle).toHaveAttribute('aria-checked', 'true');
+  }, 20000);
 });
 
 
