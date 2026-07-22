@@ -19,7 +19,10 @@ vi.mock('../../services/http/planos-api', () => ({
 
 vi.mock('../../services/http/cadastros-api', () => ({
   cadastrosApi: {
-    contasBancarias: { listar: vi.fn() }
+    contasBancarias: { listar: vi.fn() },
+    formasPagamento: { listar: vi.fn() },
+    pessoas: { listar: vi.fn() },
+    contasGerenciais: { listar: vi.fn() }
   }
 }));
 
@@ -45,6 +48,9 @@ const basePlano = {
   numParcelas: 12,
   contaBancariaCaixaId: 'cb1',
   contaBancariaNome: 'Nubank',
+  formaPagamentoId: null,
+  recebedorId: null,
+  contaGerencialId: null,
   parcelasPagas: 6,
   totalRetirado: 0,
   valorTotal: 6000,
@@ -62,6 +68,8 @@ const pagedResponse = (items: typeof basePlano[]) => ({
   totalPages: 1
 });
 
+const emptyPagedResponse = { items: [], page: 1, pageSize: 200, totalItems: 0, totalPages: 0 };
+
 const contasResponse = {
   items: [{ id: 'cb1', nome: 'Nubank', ativo: true }],
   page: 1, pageSize: 200, totalItems: 1, totalPages: 1
@@ -76,6 +84,9 @@ describe('PlanosPage', () => {
     vi.mocked(planosApi.atualizar).mockResolvedValue(basePlano);
     vi.mocked(planosApi.retirarDinheiro).mockResolvedValue(basePlano);
     vi.mocked(cadastrosApi.contasBancarias.listar).mockResolvedValue(contasResponse as never);
+    vi.mocked(cadastrosApi.formasPagamento.listar).mockResolvedValue(emptyPagedResponse as never);
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue(emptyPagedResponse as never);
+    vi.mocked(cadastrosApi.contasGerenciais.listar).mockResolvedValue(emptyPagedResponse as never);
   });
 
   it('renders loading state', () => {

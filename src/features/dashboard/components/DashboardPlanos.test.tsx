@@ -27,6 +27,9 @@ function makePlano(overrides: Partial<PlanoResumo> = {}): PlanoResumo {
     totalAcumulado: 1500,
     concluido: false,
     cancelado: false,
+    formaPagamentoId: null,
+    recebedorId: null,
+    contaGerencialId: null,
     createdAtUtc: '2026-01-01T00:00:00Z',
     ...overrides
   };
