@@ -6,6 +6,9 @@ export type PlanoResumo = {
   numParcelas: number;
   contaBancariaCaixaId: string;
   contaBancariaNome: string;
+  formaPagamentoId: string | null;
+  recebedorId: string | null;
+  contaGerencialId: string | null;
   parcelasPagas: number;
   totalRetirado: number;
   valorTotal: number;
@@ -21,6 +24,9 @@ export type PlanoPayload = {
   valorMensal: number;
   numParcelas: number;
   contaBancariaCaixaId: string;
+  formaPagamentoId?: string;
+  recebedorId?: string;
+  contaGerencialId?: string;
 };
 
 export type PlanoUpdatePayload = {
@@ -28,6 +34,9 @@ export type PlanoUpdatePayload = {
   descricao?: string;
   valorMensal: number;
   numParcelas: number;
+  formaPagamentoId?: string;
+  recebedorId?: string;
+  contaGerencialId?: string;
 };
 
 export type PlanoListQuery = {
