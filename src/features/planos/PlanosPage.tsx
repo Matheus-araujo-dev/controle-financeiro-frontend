@@ -19,6 +19,9 @@ type PlanoFormData = {
   valorMensal: number | null;
   numParcelas: string;
   contaBancariaCaixaId: string;
+  formaPagamentoId: string;
+  recebedorId: string;
+  contaGerencialId: string;
 };
 
 const emptyForm = (): PlanoFormData => ({
@@ -26,7 +29,10 @@ const emptyForm = (): PlanoFormData => ({
   descricao: '',
   valorMensal: null,
   numParcelas: '',
-  contaBancariaCaixaId: ''
+  contaBancariaCaixaId: '',
+  formaPagamentoId: '',
+  recebedorId: '',
+  contaGerencialId: ''
 });
 
 function planoToForm(p: PlanoResumo): PlanoFormData {
@@ -35,7 +41,10 @@ function planoToForm(p: PlanoResumo): PlanoFormData {
     descricao: p.descricao ?? '',
     valorMensal: p.valorMensal,
     numParcelas: String(p.numParcelas),
-    contaBancariaCaixaId: p.contaBancariaCaixaId
+    contaBancariaCaixaId: p.contaBancariaCaixaId,
+    formaPagamentoId: p.formaPagamentoId ?? '',
+    recebedorId: p.recebedorId ?? '',
+    contaGerencialId: p.contaGerencialId ?? ''
   };
 }
 
@@ -56,7 +65,28 @@ function PlanoModal({ plano, onClose, onSaved }: PlanoModalProps) {
     staleTime: 10 * 60_000
   });
 
+  const { data: formasData } = useQuery({
+    queryKey: ['formas-pagamento', 'options'],
+    queryFn: () => cadastrosApi.formasPagamento.listar({ page: 1, pageSize: 200, search: '', ativo: true }),
+    staleTime: 10 * 60_000
+  });
+
+  const { data: pessoasData } = useQuery({
+    queryKey: ['pessoas', 'options'],
+    queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 200, search: '', ativo: true }),
+    staleTime: 10 * 60_000
+  });
+
+  const { data: contasGerenciaisData } = useQuery({
+    queryKey: ['contas-gerenciais', 'options'],
+    queryFn: () => cadastrosApi.contasGerenciais.listar({ page: 1, pageSize: 200, search: '', ativo: true }),
+    staleTime: 10 * 60_000
+  });
+
   const contasOptions = (contasData?.items ?? []).map((c) => ({ label: c.nome, value: c.id }));
+  const formasOptions = (formasData?.items ?? []).map((f) => ({ label: f.nome, value: f.id }));
+  const pessoasOptions = (pessoasData?.items ?? []).map((p) => ({ label: p.nome, value: p.id }));
+  const contasGerenciaisOptions = (contasGerenciaisData?.items ?? []).map((c) => ({ label: `${c.codigo} — ${c.descricao}`, value: c.id }));
 
   const criarMutation = useMutation({
     mutationFn: () =>
@@ -65,7 +95,10 @@ function PlanoModal({ plano, onClose, onSaved }: PlanoModalProps) {
         descricao: form.descricao || undefined,
         valorMensal: form.valorMensal!,
         numParcelas: Number(form.numParcelas),
-        contaBancariaCaixaId: form.contaBancariaCaixaId
+        contaBancariaCaixaId: form.contaBancariaCaixaId,
+        formaPagamentoId: form.formaPagamentoId || undefined,
+        recebedorId: form.recebedorId || undefined,
+        contaGerencialId: form.contaGerencialId || undefined
       }),
     onSuccess: () => { onSaved(); onClose(); },
     onError: (e: Error) => setError(e.message)
@@ -77,7 +110,10 @@ function PlanoModal({ plano, onClose, onSaved }: PlanoModalProps) {
         nome: form.nome,
         descricao: form.descricao || undefined,
         valorMensal: form.valorMensal!,
-        numParcelas: Number(form.numParcelas)
+        numParcelas: Number(form.numParcelas),
+        formaPagamentoId: form.formaPagamentoId || undefined,
+        recebedorId: form.recebedorId || undefined,
+        contaGerencialId: form.contaGerencialId || undefined
       }),
     onSuccess: () => { onSaved(); onClose(); },
     onError: (e: Error) => setError(e.message)
@@ -175,6 +211,43 @@ function PlanoModal({ plano, onClose, onSaved }: PlanoModalProps) {
               />
             </div>
           )}
+
+          <div className="rounded-2xl border border-white/5 bg-surface-container p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm text-on-surface-variant">receipt_long</span>
+              <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Gerar conta a pagar ao adiantar</p>
+            </div>
+            <p className="text-[11px] text-on-surface-variant leading-relaxed">
+              Quando os três campos abaixo estiverem preenchidos, cada parcela adiantada criará automaticamente uma conta a pagar.
+            </p>
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-on-surface-variant">Forma de pagamento</label>
+              <ComboBox
+                options={formasOptions}
+                value={form.formaPagamentoId}
+                onChange={(v) => setForm((f) => ({ ...f, formaPagamentoId: v ?? '' }))}
+                placeholder="Selecione (opcional)"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-on-surface-variant">Recebedor</label>
+              <ComboBox
+                options={pessoasOptions}
+                value={form.recebedorId}
+                onChange={(v) => setForm((f) => ({ ...f, recebedorId: v ?? '' }))}
+                placeholder="Selecione (opcional)"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-on-surface-variant">Conta gerencial</label>
+              <ComboBox
+                options={contasGerenciaisOptions}
+                value={form.contaGerencialId}
+                onChange={(v) => setForm((f) => ({ ...f, contaGerencialId: v ?? '' }))}
+                placeholder="Selecione (opcional)"
+              />
+            </div>
+          </div>
 
           {totalPrevisto > 0 && (
             <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
@@ -277,6 +350,12 @@ function PlanoCard({ plano, onEditar, onAdiantar, onRetirar, onCancelar, loading
           </div>
           {plano.descricao && <p className="mt-0.5 text-xs text-on-surface-variant truncate">{plano.descricao}</p>}
           <p className="mt-1 text-xs text-on-surface-variant">{plano.contaBancariaNome}</p>
+          {plano.formaPagamentoId && plano.recebedorId && plano.contaGerencialId && (
+            <div className="mt-1 inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/8 px-2 py-0.5">
+              <span className="material-symbols-outlined text-[11px] text-primary">receipt_long</span>
+              <span className="text-[10px] font-bold text-primary">Gera conta a pagar</span>
+            </div>
+          )}
         </div>
         <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider ${status.cls}`}>{status.label}</span>
       </div>
