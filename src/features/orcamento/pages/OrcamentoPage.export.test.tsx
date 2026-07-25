@@ -75,9 +75,9 @@ describe('OrcamentoPage — export', () => {
     expect(await screen.findByText(/Alimentação/, { exact: false })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
-      .flatMap((r: { value: { document: { write: ReturnType<typeof vi.fn> } } | null }) =>
-        r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
+      .flatMap((r: any) => r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
     expect(html).not.toContain('A4 portrait');
   }, 25000);
 
@@ -87,9 +87,9 @@ describe('OrcamentoPage — export', () => {
     expect(await screen.findByText(/Alimentação/, { exact: false })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
-      .flatMap((r: { value: { document: { write: ReturnType<typeof vi.fn> } } | null }) =>
-        r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
+      .flatMap((r: any) => r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
     expect(html).toContain('A4 portrait');
   }, 25000);
 });

@@ -310,7 +310,7 @@ export function ComprasPlanejadasListPage() {
           <ExportButton
             fetchPage={fetchPageTyped}
             filters={filters}
-            columns={exportColumns}
+            columns={[]}
             filename="compras-planejadas"
             label="XLSX"
             onExport={handleXlsxExport}
@@ -318,7 +318,7 @@ export function ComprasPlanejadasListPage() {
           <ExportButton
             fetchPage={fetchPageTyped}
             filters={filters}
-            columns={exportColumns}
+            columns={[]}
             filename="compras-planejadas"
             label="PDF"
             onExport={(rows) => isPwa() ? handleMobileExport(rows) : handlePdfExport(rows)}
