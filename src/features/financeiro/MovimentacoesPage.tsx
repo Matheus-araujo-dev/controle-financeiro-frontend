@@ -44,6 +44,13 @@ const tipoOptions: Array<{ label: string; value: TipoMovimentacao | '' }> = [
 
 type FilterOption = { label: string; value: string };
 
+function isPwa(): boolean {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as { standalone?: boolean }).standalone === true
+  );
+}
+
 function tipoTone(value: TipoMovimentacao): StatusTone {
   return value === 'Entrada' ? 'success' : 'neutral';
 }
@@ -353,15 +360,7 @@ export function MovimentacoesPage() {
             columns={exportColumns}
             filename="extrato"
             label="PDF"
-            onExport={handlePdfExport}
-          />
-          <ExportButton
-            fetchPage={financeiroApi.movimentacoes.listar}
-            filters={filters}
-            columns={exportColumns}
-            filename="extrato"
-            label="Mobile"
-            onExport={handleMobileExport}
+            onExport={(rows) => (isPwa() ? handleMobileExport(rows) : handlePdfExport(rows))}
           />
         </div>
       }
