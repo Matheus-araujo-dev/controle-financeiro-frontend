@@ -298,6 +298,29 @@ export function MovimentacoesPage() {
       columns: printColumns,
       rows,
       showTotals: true,
+      groupByDate: true,
+      dateValue: (r) => r.dataMovimentacao,
+      signedValue: (r) => r.tipo === 'Entrada' ? r.valor : -r.valor,
+    });
+  }
+
+  function handleMobileExport(rows: MovimentacaoResumo[]) {
+    const totalEntradas = rows.filter((r) => r.tipo === 'Entrada').reduce((s, r) => s + r.valor, 0);
+    const totalSaidas = rows.filter((r) => r.tipo === 'Saida').reduce((s, r) => s + r.valor, 0);
+    const saldo = totalEntradas - totalSaidas;
+    openMobilePrintReport({
+      title: 'Extrato de Movimentações',
+      filters: buildExportFilters(),
+      summary: [
+        { label: 'Entradas', value: formatCurrencyBRL(totalEntradas), type: 'pos' },
+        { label: 'Saídas', value: formatCurrencyBRL(totalSaidas), type: 'neg' },
+        { label: 'Saldo Líquido', value: formatCurrencyBRL(saldo), type: saldo >= 0 ? 'neutral' : 'neg' },
+      ],
+      rows,
+      dateValue: (r) => r.dataMovimentacao,
+      descriptionValue: (r) => r.observacao ?? '',
+      subtitleValue: (r) => r.contaBancariaNome ?? '',
+      signedValue: (r) => (r.tipo === 'Entrada' ? r.valor : -r.valor),
     });
   }
 

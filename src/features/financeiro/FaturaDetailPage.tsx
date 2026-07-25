@@ -223,6 +223,9 @@ export function FaturaDetailPage() {
           { label: 'Total da fatura', value: formatCurrencyBRL(detail.valorTotal), type: 'neg' },
         ],
         columns: printColumns, rows, showTotals: true,
+        groupByDate: true,
+        dateValue: (r) => r.dataCompra,
+        signedValue: (r) => r.ehEstorno ? r.valorLiquido : -r.valorLiquido,
       });
     }
   }

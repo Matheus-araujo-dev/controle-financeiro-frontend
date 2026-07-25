@@ -144,6 +144,36 @@ describe('openPrintReport', () => {
     expect(html).toContain('&quot;xss&quot;');
   });
 
+  it('agrupa linhas por data com cabecalho de grupo e saldo do dia', () => {
+    const { write } = captureHtml();
+    type DateRow = { descricao: string; valor: number; tipo: 'entrada' | 'saida'; data: string };
+    const dateRows: DateRow[] = [
+      { descricao: 'Salario', valor: 5000, tipo: 'entrada', data: '2026-07-24' },
+      { descricao: 'Aluguel', valor: 1500, tipo: 'saida', data: '2026-07-24' },
+      { descricao: 'Netflix', valor: 55.9, tipo: 'saida', data: '2026-07-23' },
+    ];
+    const cols: PrintColumn<DateRow>[] = [
+      { header: 'Data', value: (r) => r.data },
+      { header: 'Descricao', value: (r) => r.descricao },
+      { header: 'Valor (R$)', value: (r) => r.valor.toFixed(2), align: 'right' },
+    ];
+    openPrintReport({
+      title: 'Extrato',
+      columns: cols,
+      rows: dateRows,
+      groupByDate: true,
+      dateValue: (r) => r.data,
+      signedValue: (r) => r.tipo === 'entrada' ? r.valor : -r.valor,
+    });
+    const html: string = write.mock.calls[0][0];
+    expect(html).toContain('date-group-header');
+    expect(html).toContain('dg-date');
+    expect(html).toContain('24 jul');
+    expect(html).toContain('23 jul');
+    const saldo24 = 5000 - 1500;
+    expect(html).toContain(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saldo24));
+  });
+
   it('funciona com lista de linhas vazia', () => {
     const { write } = captureHtml();
 
