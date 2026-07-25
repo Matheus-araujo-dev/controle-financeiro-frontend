@@ -110,6 +110,50 @@ describe('buildMobilePrintHtml', () => {
     const html = buildMobilePrintHtml(baseDef);
     expect(html).toContain('3 registros');
   });
+
+  it('usa borda esmeralda #2bf58e no separador de grupo', () => {
+    const html = buildMobilePrintHtml(baseDef);
+    expect(html).toContain('border-bottom:1.5px solid #2bf58e');
+  });
+
+  it('renderiza linha de total com label e valor correto', () => {
+    const html = buildMobilePrintHtml(baseDef);
+    expect(html).toContain('<div class="total-row">');
+    expect(html).toContain('Total do período');
+    const grandTotal = -130 + 3500 + -287.5; // 3082.5
+    const fmtGrand = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(grandTotal);
+    expect(html).toContain(fmtGrand);
+  });
+
+  it('usa classe pos no total quando grandTotal positivo', () => {
+    const html = buildMobilePrintHtml(baseDef);
+    expect(html).toContain('total-value pos');
+  });
+
+  it('usa classe neg no total quando grandTotal negativo', () => {
+    const defNeg: MobilePrintDefinition<Row> = {
+      ...baseDef,
+      rows: [{ date: '2026-07-25', desc: 'Despesa', account: 'Nubank', value: -500 }],
+    };
+    const html = buildMobilePrintHtml(defNeg);
+    expect(html).toContain('total-value neg');
+  });
+
+  it('respeita totalLabel personalizado', () => {
+    const def: MobilePrintDefinition<Row> = { ...baseDef, totalLabel: 'Resultado do mês' };
+    const html = buildMobilePrintHtml(def);
+    expect(html).toContain('Resultado do mês');
+  });
+
+  it('nao renderiza linha de total quando rows estiver vazio', () => {
+    const html = buildMobilePrintHtml({ ...baseDef, rows: [] });
+    expect(html).not.toContain('<div class="total-row">');
+  });
+
+  it('usa borda esmeralda #2bf58e na linha de total', () => {
+    const html = buildMobilePrintHtml(baseDef);
+    expect(html).toContain('border-top:2px solid #2bf58e');
+  });
 });
 
 describe('openMobilePrintReport', () => {
