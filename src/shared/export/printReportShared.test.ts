@@ -1,5 +1,6 @@
 import {
   esc, buildHeader, buildSummary, buildFiltersBar, buildFooter, buildPeriodStr,
+  parseDateGroupHeader, fmtCurrency,
 } from './printReportShared';
 
 describe('esc', () => {
@@ -75,6 +76,29 @@ describe('buildFooter', () => {
   it('exibe contagem no plural', () => {
     const html = buildFooter(5);
     expect(html).toContain('5 registros');
+  });
+});
+
+describe('parseDateGroupHeader', () => {
+  it('formata data ISO como "d mmm · Dia"', () => {
+    const result = parseDateGroupHeader('2026-07-24');
+    expect(result).toContain('24 jul');
+    expect(result).toContain('Sex');
+  });
+
+  it('usa nome correto do mês', () => {
+    expect(parseDateGroupHeader('2026-01-01')).toContain('jan');
+    expect(parseDateGroupHeader('2026-12-31')).toContain('dez');
+  });
+});
+
+describe('fmtCurrency', () => {
+  it('formata valores positivos em pt-BR', () => {
+    expect(fmtCurrency(1500)).toBe('R$ 1.500,00');
+  });
+
+  it('formata valores negativos em pt-BR', () => {
+    expect(fmtCurrency(-287.5)).toMatch(/-R\$|R\$\s*-/);
   });
 });
 

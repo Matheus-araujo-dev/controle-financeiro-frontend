@@ -298,6 +298,9 @@ export function MovimentacoesPage() {
       columns: printColumns,
       rows,
       showTotals: true,
+      groupByDate: true,
+      dateValue: (r) => r.dataMovimentacao,
+      signedValue: (r) => r.tipo === 'Entrada' ? r.valor : -r.valor,
     });
   }
 

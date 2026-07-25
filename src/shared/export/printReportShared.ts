@@ -83,6 +83,19 @@ export function buildPeriodStr(filters: Array<[string, string]>): string {
   return periodFilter ? ` &nbsp;·&nbsp; ${esc(periodFilter[1])}` : '';
 }
 
+const DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+export function parseDateGroupHeader(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return `${d} ${MONTHS_PT[m - 1]} · ${DAYS_PT[date.getDay()]}`;
+}
+
+export function fmtCurrency(n: number): string {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
+}
+
 export function openInWindow(html: string): void {
   const win = window.open('', '_blank', 'noopener,noreferrer');
   if (win) {

@@ -222,6 +222,9 @@ export function AgendaPage() {
           { label: 'Saldo', value: formatCurrencyBRL(totais.saldo), type: totais.saldo >= 0 ? 'pos' : 'neg' },
         ],
         columns: printColumns, rows: items, showTotals: false,
+        groupByDate: true,
+        dateValue: (r) => r.dataVencimento,
+        signedValue: (r) => r.tipo === 'ContaReceber' ? r.valor : -r.valor,
       });
     }
   }
