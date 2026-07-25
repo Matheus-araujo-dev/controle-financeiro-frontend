@@ -10,6 +10,13 @@ import { cadastrosApi } from '../../services/http/cadastros-api';
 import { investimentosApi } from '../../services/http/investimentos-api';
 import { CurrencyInput } from '../../shared/CurrencyInput';
 import { formatCurrencyBRL } from '../../shared/currency';
+import { formatDateBR } from '../../shared/date';
+import { ExportButton } from '../../components/data/ExportButton';
+import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
+import { openPrintReport, type PrintColumn } from '../../shared/export/printReport';
+import { openMobilePrintReport } from '../../shared/export/printReportMobile';
+import { isPwa } from '../../shared/export/isPwa';
+import { STYLE } from '../../shared/export/workbook';
 import {
   TipoInvestimentoLabels,
   LiquidezInvestimentoLabels,
@@ -489,6 +496,89 @@ export function InvestimentosPage() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ['investimentos'] });
   const investimentos = data?.items ?? [];
 
+  const richExportColumns: RichColumn<InvestimentoResumo>[] = [
+    { header: 'Nome', value: (r) => r.nome, cellStyle: STYLE.DATA_TEXT, width: 36 },
+    { header: 'Emissor', value: (r) => r.emissor ?? '', cellStyle: STYLE.DATA_TEXT, width: 22 },
+    { header: 'Tipo', value: (r) => r.tipoLabel, cellStyle: STYLE.DATA_TEXT, width: 16 },
+    { header: 'Liquidez', value: (r) => r.liquidezLabel, cellStyle: STYLE.DATA_TEXT, width: 14 },
+    { header: 'Aplicado (R$)', value: (r) => r.valorInvestido, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + r.valorInvestido, 0), width: 16 },
+    { header: 'Atual (R$)', value: (r) => r.valorAtual, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + r.valorAtual, 0), width: 16 },
+    { header: 'Rendimento (R$)', value: (r) => r.rendimento, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + r.rendimento, 0), width: 16 },
+    { header: 'Rendimento (%)', value: (r) => `${r.rendimentoPercent.toFixed(2)}%`, cellStyle: STYLE.DATA_TEXT, width: 14 },
+    { header: 'Taxa a.a.', value: (r) => r.taxaAnual ? `${r.taxaAnual.toFixed(2)}%` : '', cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Aplicação', value: (r) => formatDateBR(r.dataAplicacao), cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Vencimento', value: (r) => r.dataVencimento ? formatDateBR(r.dataVencimento) : '', cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Conta vinculada', value: (r) => r.contaBancariaNome, cellStyle: STYLE.DATA_TEXT, width: 22 },
+    { header: 'Situação', value: (r) => r.encerrado ? 'Encerrado' : 'Ativo', cellStyle: STYLE.DATA_TEXT, width: 12 },
+  ];
+
+  const printColumns: PrintColumn<InvestimentoResumo>[] = [
+    { header: 'Nome', value: (r) => r.nome },
+    { header: 'Tipo', value: (r) => r.tipoLabel },
+    { header: 'Aplicado (R$)', value: (r) => formatCurrencyBRL(r.valorInvestido), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorInvestido, 0)) },
+    { header: 'Atual (R$)', value: (r) => formatCurrencyBRL(r.valorAtual), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorAtual, 0)) },
+    { header: 'Rendimento', value: (r) => `${r.rendimentoPercent >= 0 ? '+' : ''}${r.rendimentoPercent.toFixed(2)}%`, align: 'right' },
+    { header: 'Aplicação', value: (r) => formatDateBR(r.dataAplicacao) },
+    { header: 'Conta', value: (r) => r.contaBancariaNome },
+    { header: 'Situação', value: (r) => r.encerrado ? 'Encerrado' : 'Ativo' },
+  ];
+
+  function buildExportFilters(): Array<[string, string]> {
+    const result: Array<[string, string]> = [];
+    if (search) result.push(['Busca:', search]);
+    if (tipoFiltro) result.push(['Tipo:', TipoInvestimentoLabels[Number(tipoFiltro) as TipoInvestimento]]);
+    if (!showEncerrados) result.push(['Situação:', 'Apenas ativos']);
+    return result;
+  }
+
+  function handleXlsxExport(rows: InvestimentoResumo[]) {
+    const totalAplicado = rows.filter((r) => !r.encerrado).reduce((s, r) => s + r.valorInvestido, 0);
+    const totalAtual = rows.filter((r) => !r.encerrado).reduce((s, r) => s + r.valorAtual, 0);
+    downloadRichExport({
+      title: 'Investimentos',
+      filename: 'investimentos',
+      sheetName: 'Investimentos',
+      filters: buildExportFilters(),
+      columns: richExportColumns,
+      rows,
+      showTotals: true,
+    });
+    void totalAplicado; void totalAtual;
+  }
+
+  function handlePdfExport(rows: InvestimentoResumo[]) {
+    const ativos = rows.filter((r) => !r.encerrado);
+    const totalApl = ativos.reduce((s, r) => s + r.valorInvestido, 0);
+    const totalAt = ativos.reduce((s, r) => s + r.valorAtual, 0);
+    const rend = totalAt - totalApl;
+    openPrintReport({
+      title: 'Investimentos',
+      filters: buildExportFilters(),
+      summary: [
+        { label: 'Total aplicado', value: formatCurrencyBRL(totalApl), type: 'neutral' },
+        { label: 'Valor atual', value: formatCurrencyBRL(totalAt), type: 'pos' },
+        { label: 'Rendimento total', value: formatCurrencyBRL(rend), type: rend >= 0 ? 'pos' : 'neg' },
+      ],
+      columns: printColumns,
+      rows,
+      showTotals: true,
+    });
+  }
+
+  function handleMobileExport(rows: InvestimentoResumo[]) {
+    openMobilePrintReport({
+      title: 'Investimentos',
+      filters: buildExportFilters(),
+      rows,
+      dateValue: (r) => r.dataAplicacao.slice(0, 10),
+      descriptionValue: (r) => r.nome,
+      subtitleValue: (r) => `${r.tipoLabel} · ${r.contaBancariaNome}`,
+      signedValue: (r) => r.rendimento,
+    });
+  }
+
+  const fetchPageTyped = investimentosApi.listar as (f: typeof listQuery) => Promise<{ items: InvestimentoResumo[]; totalItems: number; totalPages: number }>;
+
   const totalAplicado = investimentos.filter((i) => !i.encerrado).reduce((s, i) => s + i.valorInvestido, 0);
   const totalAtual = investimentos.filter((i) => !i.encerrado).reduce((s, i) => s + i.valorAtual, 0);
   const rendimentoTotal = totalAtual - totalAplicado;
@@ -522,14 +612,32 @@ export function InvestimentosPage() {
 
       <ListPageShell
         actions={
-          <Button
-            type="button"
-            variant="primary"
-            icon={<span className="material-symbols-outlined text-sm">add</span>}
-            onClick={() => setModalOpen(true)}
-          >
-            Novo investimento
-          </Button>
+          <div className="flex items-center gap-2">
+            <ExportButton
+              fetchPage={fetchPageTyped}
+              filters={listQuery}
+              columns={[]}
+              filename="investimentos"
+              label="XLSX"
+              onExport={handleXlsxExport}
+            />
+            <ExportButton
+              fetchPage={fetchPageTyped}
+              filters={listQuery}
+              columns={[]}
+              filename="investimentos"
+              label="PDF"
+              onExport={(rows) => isPwa() ? handleMobileExport(rows) : handlePdfExport(rows)}
+            />
+            <Button
+              type="button"
+              variant="primary"
+              icon={<span className="material-symbols-outlined text-sm">add</span>}
+              onClick={() => setModalOpen(true)}
+            >
+              Novo investimento
+            </Button>
+          </div>
         }
         summary={
           <>

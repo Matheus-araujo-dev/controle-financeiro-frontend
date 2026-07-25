@@ -2,6 +2,11 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { ExportButton } from '../../components/data/ExportButton';
+import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
+import { openPrintReport, type PrintColumn } from '../../shared/export/printReport';
+import { openMobilePrintReport } from '../../shared/export/printReportMobile';
+import { isPwa } from '../../shared/export/isPwa';
+import { STYLE } from '../../shared/export/workbook';
 import { IconActionButton } from '../../components/data/IconActionButton';
 import { StatusBadge } from '../../components/data/StatusBadge';
 import { EyeOutlined, EditOutlined, ShoppingOutlined } from '@ant-design/icons';
@@ -229,27 +234,94 @@ export function ComprasPlanejadasListPage() {
     }
   ];
 
-  const exportColumns = [
-    { header: 'Título', value: (r: CompraPlanejadaResumo) => r.titulo },
-    { header: 'Valor estimado', value: (r: CompraPlanejadaResumo) => r.valorEstimado },
-    { header: 'Data desejada', value: (r: CompraPlanejadaResumo) => r.dataDesejada ?? '' },
-    { header: 'Prioridade', value: (r: CompraPlanejadaResumo) => prioridadeLabel(r.prioridade) },
-    { header: 'Status', value: (r: CompraPlanejadaResumo) => r.status },
-    { header: 'Conta gerencial', value: (r: CompraPlanejadaResumo) => r.contaGerencialDescricao ?? '' },
-    { header: 'Responsável', value: (r: CompraPlanejadaResumo) => r.responsavelNome ?? '' },
-    { header: 'Parcelas', value: (r: CompraPlanejadaResumo) => r.parcelavel ? (r.quantidadeParcelasDesejada ?? 1) : 1 },
-    { header: 'Link', value: (r: CompraPlanejadaResumo) => r.link ?? '' },
+  const richExportColumns: RichColumn<CompraPlanejadaResumo>[] = [
+    { header: 'Título', value: (r) => r.titulo, cellStyle: STYLE.DATA_TEXT, width: 36 },
+    { header: 'Valor estimado (R$)', value: (r) => r.valorEstimado, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + r.valorEstimado, 0), width: 18 },
+    { header: 'Data desejada', value: (r) => r.dataDesejada ? formatDateBR(r.dataDesejada) : '', cellStyle: STYLE.DATA_TEXT, width: 14 },
+    { header: 'Prioridade', value: (r) => prioridadeLabel(r.prioridade), cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Status', value: (r) => r.status, cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Conta gerencial', value: (r) => r.contaGerencialDescricao ?? '', cellStyle: STYLE.DATA_TEXT, width: 28 },
+    { header: 'Responsável', value: (r) => r.responsavelNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
+    { header: 'Parcelas', value: (r) => r.parcelavel ? (r.quantidadeParcelasDesejada ?? 1) : 1, cellStyle: STYLE.DATA_TEXT, width: 10 },
+    { header: 'Link', value: (r) => r.link ?? '', cellStyle: STYLE.DATA_TEXT, width: 30 },
   ];
+
+  const printColumns: PrintColumn<CompraPlanejadaResumo>[] = [
+    { header: 'Título', value: (r) => r.titulo },
+    { header: 'Prioridade', value: (r) => prioridadeLabel(r.prioridade) },
+    { header: 'Status', value: (r) => r.status },
+    { header: 'Data desejada', value: (r) => r.dataDesejada ? formatDateBR(r.dataDesejada) : '—' },
+    { header: 'Responsável', value: (r) => r.responsavelNome ?? '' },
+    { header: 'Valor estimado (R$)', value: (r) => formatCurrencyBRL(r.valorEstimado), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorEstimado, 0)) },
+  ];
+
+  function buildExportFilters(): Array<[string, string]> {
+    const result: Array<[string, string]> = [];
+    if (filters.search) result.push(['Busca:', filters.search]);
+    if ((filters.statuses ?? []).length) result.push(['Status:', (filters.statuses ?? []).join(', ')]);
+    if ((filters.prioridades ?? []).length) result.push(['Prioridade:', (filters.prioridades ?? []).map(prioridadeLabel).join(', ')]);
+    return result;
+  }
+
+  function handleXlsxExport(rows: CompraPlanejadaResumo[]) {
+    downloadRichExport({
+      title: 'Compras Planejadas',
+      filename: 'compras-planejadas',
+      sheetName: 'Compras',
+      filters: buildExportFilters(),
+      columns: richExportColumns,
+      rows,
+      showTotals: true,
+    });
+  }
+
+  function handlePdfExport(rows: CompraPlanejadaResumo[]) {
+    const totalEstimadoExport = rows.reduce((s, r) => s + r.valorEstimado, 0);
+    openPrintReport({
+      title: 'Compras Planejadas',
+      filters: buildExportFilters(),
+      summary: [{ label: 'Total estimado', value: formatCurrencyBRL(totalEstimadoExport), type: 'neg' }],
+      columns: printColumns,
+      rows,
+      showTotals: true,
+    });
+  }
+
+  function handleMobileExport(rows: CompraPlanejadaResumo[]) {
+    openMobilePrintReport({
+      title: 'Compras Planejadas',
+      filters: buildExportFilters(),
+      rows,
+      dateValue: (r) => r.dataDesejada ?? new Date().toISOString().slice(0, 10),
+      descriptionValue: (r) => r.titulo,
+      subtitleValue: (r) => r.responsavelNome ?? '',
+      signedValue: (r) => -r.valorEstimado,
+    });
+  }
+
+  const fetchPageTyped = comprasPlanejadasApi.listar as (f: CompraPlanejadaFilters) => Promise<{ items: CompraPlanejadaResumo[]; totalItems: number; totalPages: number }>;
+
+  const exportColumns = richExportColumns;
 
   return (
     <ListPageShell
       actions={
         <>
           <ExportButton
-            fetchPage={comprasPlanejadasApi.listar}
+            fetchPage={fetchPageTyped}
             filters={filters}
             columns={exportColumns}
             filename="compras-planejadas"
+            label="XLSX"
+            onExport={handleXlsxExport}
+          />
+          <ExportButton
+            fetchPage={fetchPageTyped}
+            filters={filters}
+            columns={exportColumns}
+            filename="compras-planejadas"
+            label="PDF"
+            onExport={(rows) => isPwa() ? handleMobileExport(rows) : handlePdfExport(rows)}
           />
           <Button to="/compras-planejadas/novo" icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>add_circle</span>}>
             Nova compra planejada

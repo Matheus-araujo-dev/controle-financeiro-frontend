@@ -6,6 +6,11 @@ import { PageState } from '../../../components/states/PageState';
 import { orcamentosApi } from '../../../services/http/orcamentos-api';
 import { CurrencyInput } from '../../../shared/CurrencyInput';
 import { formatCurrencyBRL } from '../../../shared/currency';
+import { downloadRichExport, type RichColumn } from '../../../shared/export/richExport';
+import { openPrintReport, type PrintColumn } from '../../../shared/export/printReport';
+import { openMobilePrintReport } from '../../../shared/export/printReportMobile';
+import { isPwa } from '../../../shared/export/isPwa';
+import { STYLE } from '../../../shared/export/workbook';
 import type { OrcamentoCompetencia, OrcamentoItem } from '../../../types/orcamento';
 
 function getCurrentCompetencia() {
@@ -264,6 +269,63 @@ export function OrcamentoPage() {
     }
   }
 
+  const richExportColumns: RichColumn<OrcamentoItem>[] = [
+    { header: 'Código', value: (r) => r.contaGerencialCodigo ?? '', cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Categoria', value: (r) => r.contaGerencialDescricao, cellStyle: STYLE.DATA_TEXT, width: 42 },
+    { header: 'Meta (R$)', value: (r) => r.valorMeta ?? 0, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + (r.valorMeta ?? 0), 0), width: 16 },
+    { header: 'Realizado (R$)', value: (r) => r.valorRealizado, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + r.valorRealizado, 0), width: 16 },
+    { header: 'Consumo (%)', value: (r) => r.percentualConsumido != null ? `${r.percentualConsumido.toFixed(1)}%` : '—', cellStyle: STYLE.DATA_TEXT, width: 14 },
+    { header: 'Estourou', value: (r) => r.estourado ? 'Sim' : 'Não', cellStyle: STYLE.DATA_TEXT, width: 10 },
+  ];
+
+  const printColumns: PrintColumn<OrcamentoItem>[] = [
+    { header: 'Categoria', value: (r) => (r.contaGerencialCodigo ? `${r.contaGerencialCodigo} · ` : '') + r.contaGerencialDescricao },
+    { header: 'Meta (R$)', value: (r) => r.valorMeta != null ? formatCurrencyBRL(r.valorMeta) : '—', align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + (r.valorMeta ?? 0), 0)) },
+    { header: 'Realizado (R$)', value: (r) => formatCurrencyBRL(r.valorRealizado), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorRealizado, 0)) },
+    { header: 'Consumo (%)', value: (r) => r.percentualConsumido != null ? `${r.percentualConsumido.toFixed(1)}%` : '—', align: 'right' },
+  ];
+
+  function handleXlsxExport() {
+    const itens = orcamento?.itens ?? [];
+    downloadRichExport({
+      title: `Orçamento — ${competencia}`,
+      filename: `orcamento-${competencia}`,
+      sheetName: 'Orçamento',
+      filters: [['Competência:', competencia]],
+      columns: richExportColumns,
+      rows: itens,
+      showTotals: true,
+    });
+  }
+
+  function handlePdfExport() {
+    const itens = orcamento?.itens ?? [];
+    openPrintReport({
+      title: `Orçamento — ${competencia}`,
+      filters: [['Competência:', competencia]],
+      summary: [
+        { label: 'Total orçado', value: formatCurrencyBRL(orcamento?.totalMeta ?? 0), type: 'neutral' },
+        { label: 'Total realizado', value: formatCurrencyBRL(orcamento?.totalRealizado ?? 0), type: (orcamento?.totalRealizado ?? 0) > (orcamento?.totalMeta ?? 0) ? 'neg' : 'neutral' },
+      ],
+      columns: printColumns,
+      rows: itens,
+      showTotals: true,
+    });
+  }
+
+  function handleMobileExport() {
+    const itens = orcamento?.itens ?? [];
+    openMobilePrintReport({
+      title: `Orçamento — ${competencia}`,
+      filters: [['Competência:', competencia]],
+      rows: itens,
+      dateValue: () => competencia + '-01',
+      descriptionValue: (r) => r.contaGerencialDescricao,
+      subtitleValue: (r) => r.contaGerencialCodigo ?? '',
+      signedValue: (r) => -(r.valorRealizado),
+    });
+  }
+
   if (isLoading && !orcamento) {
     return <PageState state="loading" title="Carregando orçamento" />;
   }
@@ -282,6 +344,26 @@ export function OrcamentoPage() {
             : `Metas por categoria de despesa em ${formatCompetencia(competencia)}.`}
         </p>
         <div className="flex items-center gap-3">
+          {orcamento && (
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={handleXlsxExport}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-surface-container px-3 py-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant hover:border-primary/20 hover:text-primary transition-colors"
+                aria-label="Exportar XLSX"
+              >
+                XLSX
+              </button>
+              <button
+                type="button"
+                onClick={() => isPwa() ? handleMobileExport() : handlePdfExport()}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-surface-container px-3 py-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant hover:border-primary/20 hover:text-primary transition-colors"
+                aria-label="Exportar PDF"
+              >
+                PDF
+              </button>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => setMultiPeriodo((v) => !v)}

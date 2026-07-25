@@ -156,6 +156,31 @@ describe('FinancialAccountListPage — export column lambdas (real richExport/pr
     );
   }, 25000);
 
+  it('PDF mobile export (isPwa=true) calls openMobilePrintReport instead of openPrintReport', async () => {
+    vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: true } as MediaQueryList);
+    const list = vi.fn().mockResolvedValue({
+      items: testRows,
+      page: 1, pageSize: 20, totalItems: 3, totalPages: 1,
+      summary: { totalRegistros: 3, valorTotal: 1400 },
+    });
+    const config = buildConfig(list);
+
+    render(
+      <MemoryRouter>
+        <FinancialAccountListPage config={config} />
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
+    );
+
+    expect(await screen.findByText('Aluguel')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await waitFor(() => expect(window.open).toHaveBeenCalled());
+    const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
+      .flatMap((r: { value: { document: { write: ReturnType<typeof vi.fn> } } | null }) => r.value?.document.write.mock?.calls ?? [])
+      .flat()[0] ?? '';
+    expect(html).toContain('A4 portrait');
+  }, 25000);
+
   it('PDF export invokes all printColumn lambdas with LIQUIDADA+PENDENTE rows and null fields', async () => {
     const list = vi.fn().mockResolvedValue({
       items: testRows,

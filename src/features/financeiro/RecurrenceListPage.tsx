@@ -18,6 +18,9 @@ import {
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
+import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
+import { openPrintReport, type PrintColumn } from '../../shared/export/printReport';
+import { STYLE } from '../../shared/export/workbook';
 import { notify } from '../../store/notification-store';
 import type { RecorrenciaFilters, RecorrenciaListItem, RecorrenciaListSummary } from '../../types/financeiro';
 
@@ -95,27 +98,55 @@ export function RecurrenceListPage() {
     };
   }, [data, recorrencias]);
 
-  const exportColumns = [
-    { header: 'Descrição', value: (r: RecorrenciaListItem) => r.descricao },
-    { header: 'Tipo', value: (r: RecorrenciaListItem) => r.contaOrigemTipo === 'ContaReceber' ? 'Receita' : 'Despesa' },
-    { header: 'Pessoa', value: (r: RecorrenciaListItem) => r.pessoaNome },
-    { header: 'Responsável', value: (r: RecorrenciaListItem) => r.responsavelNome ?? '' },
-    { header: 'Valor', value: (r: RecorrenciaListItem) => r.valorLiquido },
-    { header: 'Situação', value: (r: RecorrenciaListItem) => r.ativa ? 'Ativa' : 'Pausada' },
-    { header: 'Dia do mês', value: (r: RecorrenciaListItem) => r.diaOrdemMensal },
-    { header: 'Início', value: (r: RecorrenciaListItem) => r.dataInicio },
-    { header: 'Fim', value: (r: RecorrenciaListItem) => r.dataFim ?? '' },
+  const richExportColumns: RichColumn<RecorrenciaListItem>[] = [
+    { header: 'Descrição', value: (r) => r.descricao, cellStyle: STYLE.DATA_TEXT, width: 36 },
+    { header: 'Tipo', value: (r) => r.contaOrigemTipo === 'ContaReceber' ? 'Receita' : 'Despesa', cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Pessoa', value: (r) => r.pessoaNome, cellStyle: STYLE.DATA_TEXT, width: 22 },
+    { header: 'Responsável', value: (r) => r.responsavelNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
+    { header: 'Valor (R$)', value: (r) => r.valorLiquido, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + r.valorLiquido, 0), width: 14 },
+    { header: 'Situação', value: (r) => r.ativa ? 'Ativa' : 'Pausada', cellStyle: STYLE.DATA_TEXT, width: 10 },
+    { header: 'Dia do mês', value: (r) => r.diaOrdemMensal, cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Início', value: (r) => formatDateBR(r.dataInicio), cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Fim', value: (r) => r.dataFim ? formatDateBR(r.dataFim) : '', cellStyle: STYLE.DATA_TEXT, width: 12 },
   ];
+
+  const printColumns: PrintColumn<RecorrenciaListItem>[] = [
+    { header: 'Descrição', value: (r) => r.descricao },
+    { header: 'Tipo', value: (r) => r.contaOrigemTipo === 'ContaReceber' ? 'Receita' : 'Despesa' },
+    { header: 'Pessoa', value: (r) => r.pessoaNome },
+    { header: 'Valor (R$)', value: (r) => formatCurrencyBRL(r.valorLiquido), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorLiquido, 0)) },
+    { header: 'Situação', value: (r) => r.ativa ? 'Ativa' : 'Pausada' },
+    { header: 'Início', value: (r) => formatDateBR(r.dataInicio) },
+  ];
+
+  function handleXlsxExport(rows: RecorrenciaListItem[]) {
+    downloadRichExport({ title: 'Recorrências', filename: 'recorrencias', sheetName: 'Recorrências', columns: richExportColumns, rows, showTotals: true });
+  }
+
+  function handlePdfExport(rows: RecorrenciaListItem[]) {
+    const totalReceitas = rows.filter((r) => r.contaOrigemTipo === 'ContaReceber').reduce((s, r) => s + r.valorLiquido, 0);
+    const totalDespesas = rows.filter((r) => r.contaOrigemTipo === 'ContaPagar').reduce((s, r) => s + r.valorLiquido, 0);
+    openPrintReport({
+      title: 'Recorrências',
+      summary: [
+        { label: 'Receitas mensais', value: formatCurrencyBRL(totalReceitas), type: 'pos' },
+        { label: 'Despesas mensais', value: formatCurrencyBRL(totalDespesas), type: 'neg' },
+      ],
+      columns: printColumns, rows, showTotals: true,
+    });
+  }
+
+  const fetchPageTyped = financeiroApi.recorrencias.listar as (f: RecorrenciaFilters) => Promise<{ items: RecorrenciaListItem[]; totalItems: number; totalPages: number }>;
+
+  const exportColumns = richExportColumns;
 
   return (
     <ListPageShell
       actions={
-        <ExportButton
-          fetchPage={financeiroApi.recorrencias.listar as (f: RecorrenciaFilters) => Promise<{ items: RecorrenciaListItem[]; totalItems: number; totalPages: number }>}
-          filters={filters}
-          columns={exportColumns}
-          filename="recorrencias"
-        />
+        <div className="flex gap-2">
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={exportColumns} filename="recorrencias" label="XLSX" onExport={handleXlsxExport} />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={exportColumns} filename="recorrencias" label="PDF" onExport={handlePdfExport} />
+        </div>
       }
       summary={
         <>
