@@ -1,0 +1,140 @@
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/contas-bancarias-routes.test.tsx > contas bancarias routes > renders the master data contas bancarias list route
+TestingLibraryElementError: Unable to find an element with the placeholder text of: Nome, banco ou número da conta
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [0mCarregando...[0m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [0mCarregando...[0m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/routes/contas-bancarias-routes.test.tsx:72:25
+     70|     renderRoute('/contas-bancarias');
+     71|
+     72|     expect(await screen.findByPlaceholderText('Nome, banco ou número d…
+       |                         ^
+     73|     expect(screen.getByRole('button', { name: /Nova conta bancária/i }…
+     74|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/routes/contas-gerenciais-routes.test.tsx > contas gerenciais routes > renders the master data contas gerenciais form route
+TestingLibraryElementError: Unable to find role="button" and name "Confirmar Cadastro"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [0mCarregando...[0m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [0mCarregando...[0m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/routes/contas-gerenciais-routes.test.tsx:79:25
+     77|     renderRoute('/contas-gerenciais/novo');
+     78|
+     79|     expect(await screen.findByRole('button', { name: 'Confirmar Cadast…
+       |                         ^
+     80|     expect(screen.getByText('Código')).toBeInTheDocument();
+     81|     expect(screen.getByText('Descrição')).toBeInTheDocument();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/routes/router.test.tsx > appRoutes > renders the importacoes whatsapp route with the real phase 7 page
+TestingLibraryElementError: Unable to find an element with the text: /Importa(?:ções|coes) WhatsApp/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/routes/router.test.tsx:161:26
+    159|     renderWithQuery(<RouterProvider router={router} />);
+    160|
+    161|     expect((await screen.findAllByText(/Importa(?:ções|coes) WhatsApp/…
+       |                          ^
+    162|   });
+    163|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/routes/router.test.tsx > appRoutes > renders the nova pessoa route without falling back to detail mode
+TestingLibraryElementError: Unable to find role="heading" and name "Dados da Pessoa"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/routes/router.test.tsx:181:25
+    179|     renderWithQuery(<RouterProvider router={router} />);
+    180|
+    181|     expect(await screen.findByRole('heading', { name: 'Dados da Pessoa…
+       |                         ^
+    182|     expect(screen.getByRole('button', { name: 'Confirmar Cadastro' }))…
+    183|     expect(screen.queryByText('Falha ao carregar cadastro')).not.toBeI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/routes/router.test.tsx > appRoutes > renders the faturas route with the real phase 4 page
+TestingLibraryElementError: Unable to find role="heading" and name "Faturas"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/routes/router.test.tsx:193:26
+    191|     renderWithQuery(<RouterProvider router={router} />);
+    192|
+    193|     expect((await screen.findAllByRole('heading', { name: 'Faturas' })…
+       |                          ^
+    194|     expect(await screen.findByText('Total consolidado')).toBeInTheDocu…
+    195|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+

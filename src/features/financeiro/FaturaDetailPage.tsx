@@ -11,6 +11,11 @@ import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR, formatMonthYearBR } from '../../shared/date';
+import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
+import { openPrintReport, type PrintColumn } from '../../shared/export/printReport';
+import { openMobilePrintReport } from '../../shared/export/printReportMobile';
+import { isPwa } from '../../shared/export/isPwa';
+import { STYLE } from '../../shared/export/workbook';
 import type { FaturaDetalhe, FaturaItem } from '../../types/financeiro';
 
 type PaymentValues = {
@@ -169,6 +174,58 @@ export function FaturaDetailPage() {
       }
     ];
   }, [detail]);
+
+  const richExportColumns: RichColumn<FaturaItem>[] = [
+    { header: 'Descrição', value: (r) => r.descricao, cellStyle: STYLE.DATA_TEXT, width: 36 },
+    { header: 'Recebedor', value: (r) => r.recebedorNome, cellStyle: STYLE.DATA_TEXT, width: 24 },
+    { header: 'Data da compra', value: (r) => formatDateBR(r.dataCompra), cellStyle: STYLE.DATA_TEXT, width: 16 },
+    { header: 'Valor (R$)', value: (r) => r.ehEstorno ? r.valorLiquido : -r.valorLiquido, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + (r.ehEstorno ? r.valorLiquido : -r.valorLiquido), 0), width: 14 },
+    { header: 'Status', value: (r) => r.ehEstorno ? 'Estorno' : r.statusCodigo, cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Parcela', value: (r) => `${r.numeroParcela}/${r.quantidadeParcelas}`, cellStyle: STYLE.DATA_TEXT, width: 10 },
+  ];
+
+  const printColumns: PrintColumn<FaturaItem>[] = [
+    { header: 'Descrição', value: (r) => r.descricao },
+    { header: 'Recebedor', value: (r) => r.recebedorNome },
+    { header: 'Data', value: (r) => formatDateBR(r.dataCompra) },
+    { header: 'Valor (R$)', value: (r) => formatCurrencyBRL(r.valorLiquido), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorLiquido, 0)) },
+    { header: 'Status', value: (r) => r.ehEstorno ? 'Estorno' : r.statusCodigo },
+  ];
+
+  async function fetchAllItems(): Promise<FaturaItem[]> {
+    if (!id) return [];
+    const result = await financeiroApi.faturas.listarItens(id, { page: 1, pageSize: 1000 });
+    return result.items;
+  }
+
+  async function handleXlsxExport() {
+    if (!detail) return;
+    const rows = await fetchAllItems();
+    downloadRichExport({ title: `Fatura ${detail.cartaoNome} — ${formatMonthYearBR(detail.competencia)}`, filename: 'fatura-itens', sheetName: 'Itens', columns: richExportColumns, rows, showTotals: true });
+  }
+
+  async function handlePdfExport() {
+    if (!detail) return;
+    const rows = await fetchAllItems();
+    if (isPwa()) {
+      openMobilePrintReport({
+        title: `Fatura ${detail.cartaoNome} — ${formatMonthYearBR(detail.competencia)}`,
+        rows,
+        dateValue: (r) => r.dataCompra,
+        descriptionValue: (r) => r.descricao,
+        subtitleValue: (r) => r.recebedorNome,
+        signedValue: (r) => r.ehEstorno ? r.valorLiquido : -r.valorLiquido,
+      });
+    } else {
+      openPrintReport({
+        title: `Fatura ${detail.cartaoNome} — ${formatMonthYearBR(detail.competencia)}`,
+        summary: [
+          { label: 'Total da fatura', value: formatCurrencyBRL(detail.valorTotal), type: 'neg' },
+        ],
+        columns: printColumns, rows, showTotals: true,
+      });
+    }
+  }
 
   if (isLoading) return <PageState state="loading" title="Carregando fatura..." />;
   if (!detail) return <PageState state="error" title="Falha ao carregar fatura" subtitle={errorMessage ?? 'Fatura não encontrada.'} />;
@@ -346,7 +403,11 @@ export function FaturaDetailPage() {
               Itens vinculados a esta fatura
             </h2>
           </div>
-          <NeonBadge variant="neutral">{detail.quantidadeItens} item(ns)</NeonBadge>
+          <div className="flex items-center gap-2">
+            <button onClick={() => void handleXlsxExport()} className="px-3 h-8 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-bold text-on-surface-variant hover:text-white transition-all uppercase tracking-wider">XLSX</button>
+            <button onClick={() => void handlePdfExport()} className="px-3 h-8 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-bold text-on-surface-variant hover:text-white transition-all uppercase tracking-wider">PDF</button>
+            <NeonBadge variant="neutral">{detail.quantidadeItens} item(ns)</NeonBadge>
+          </div>
         </div>
 
         <AppDataTable<FaturaItem>

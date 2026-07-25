@@ -15,7 +15,7 @@
     "quality:check": "npm run lint && npm run build && npm run coverage",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "security:audit": "npm audit --audit-level=moderate",
+    "security:audit": "audit-ci",
     "security:audit:fix": "npm audit fix --audit-level=moderate",
     "generate:types": "swagger-typescript-api generate -p http://localhost:5000/swagger/v1/swagger.json -o src/types/generated -n api.ts --extract-enums --modular --add-headers --clean-output"
   },
@@ -32,7 +32,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.72.1",
-    "react-router-dom": "^7.14.0",
+    "react-router-dom": "7.18.1",
     "recharts": "^3.8.1",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
@@ -51,6 +51,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.2",
+    "audit-ci": "^7.1.0",
     "autoprefixer": "^10.5.0",
     "axe-core": "^4.12.1",
     "eslint": "^10.5.0",

@@ -27,6 +27,8 @@ import { formatDateBR } from '../../shared/date';
 import { notify } from '../../store/notification-store';
 import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
 import { openPrintReport, type PrintColumn } from '../../shared/export/printReport';
+import { openMobilePrintReport } from '../../shared/export/printReportMobile';
+import { isPwa } from '../../shared/export/isPwa';
 import { STYLE } from '../../shared/export/workbook';
 import type { ContaFinanceiraListSummary, StatusContaCodigo } from '../../types/financeiro';
 import type { FinanceiroModuleConfig, FinanceiroLiquidacaoFormValues, FinanceiroResumo } from './module-config';
@@ -558,6 +560,18 @@ export function FinancialAccountListPage({
     });
   }
 
+  function handleMobileExport(rows: FinancialRecord[]) {
+    openMobilePrintReport({
+      title: config.title,
+      filters: buildExportFilters(),
+      rows,
+      dateValue: (r) => r.dataVencimento ?? '',
+      descriptionValue: (r) => r.descricao ?? '',
+      subtitleValue: (r) => r.recebedorNome ?? r.pagadorNome ?? '',
+      signedValue: (r) => isPagar ? -(r.valorLiquido ?? 0) : (r.valorLiquido ?? 0),
+    });
+  }
+
   const fetchPageTyped = config.list as (f: typeof filters) => Promise<{ items: FinancialRecord[]; totalItems: number; totalPages: number }>;
 
   const actionButtons = (
@@ -577,7 +591,7 @@ export function FinancialAccountListPage({
           columns={exportColumns}
           filename={config.routeBase.replace('/', '')}
           label="PDF"
-          onExport={handlePdfExport}
+          onExport={(rows) => isPwa() ? handleMobileExport(rows) : handlePdfExport(rows)}
         />
       </div>
       <Button onClick={onCreate} icon={<PlusOutlined aria-hidden />}>

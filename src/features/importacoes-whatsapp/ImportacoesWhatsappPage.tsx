@@ -13,6 +13,9 @@ import {
   MultiSelectFilter
 } from '../../components/layout';
 import { importacoesWhatsappApi } from '../../services/http/importacoes-whatsapp-api';
+import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
+import { openPrintReport, type PrintColumn } from '../../shared/export/printReport';
+import { ExportButton } from '../../components/data/ExportButton';
 import type {
   ImportacaoWhatsappResumo,
   ImportacoesWhatsappFilters,
@@ -57,6 +60,34 @@ export function ImportacoesWhatsappPage() {
 
   const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar importações.' : undefined;
 
+  const richExportColumns: RichColumn<ImportacaoWhatsappResumo>[] = [
+    { header: 'Remetente', value: (r) => r.remetente, width: 24 },
+    { header: 'Origem', value: (r) => r.tipoOrigemNome, width: 12 },
+    { header: 'Conteúdo', value: (r) => r.textoBruto ?? r.nomeArquivo ?? '', width: 40 },
+    { header: 'Status', value: (r) => r.statusNome, width: 18 },
+    { header: 'Confiança', value: (r) => r.confiancaExtracao === null ? '' : `${Math.round(r.confiancaExtracao * 100)}%`, width: 12 },
+    { header: 'Itens', value: (r) => r.quantidadeItens, width: 8 },
+    { header: 'Pendentes', value: (r) => r.quantidadePendentes, width: 10 },
+  ];
+
+  const printColumns: PrintColumn<ImportacaoWhatsappResumo>[] = [
+    { header: 'Remetente', value: (r) => r.remetente },
+    { header: 'Origem', value: (r) => r.tipoOrigemNome },
+    { header: 'Status', value: (r) => r.statusNome },
+    { header: 'Confiança', value: (r) => r.confiancaExtracao === null ? '-' : `${Math.round(r.confiancaExtracao * 100)}%` },
+    { header: 'Itens/Pend.', value: (r) => `${r.quantidadeItens}/${r.quantidadePendentes}` },
+  ];
+
+  function handleXlsxExport(rows: ImportacaoWhatsappResumo[]) {
+    downloadRichExport({ title: 'Importações WhatsApp', filename: 'importacoes-whatsapp', sheetName: 'Importações', columns: richExportColumns, rows });
+  }
+
+  function handlePdfExport(rows: ImportacaoWhatsappResumo[]) {
+    openPrintReport({ title: 'Importações WhatsApp', columns: printColumns, rows });
+  }
+
+  const fetchPageTyped = importacoesWhatsappApi.listar as (f: ImportacoesWhatsappFilters) => Promise<{ items: ImportacaoWhatsappResumo[]; totalItems: number; totalPages: number }>;
+
   const columns: TableColumnsType<ImportacaoWhatsappResumo> = [
     { title: 'Remetente', dataIndex: 'remetente', key: 'remetente' },
     { title: 'Origem', dataIndex: 'tipoOrigemNome', key: 'tipoOrigemNome' },
@@ -88,6 +119,12 @@ export function ImportacoesWhatsappPage() {
 
   return (
     <ListPageShell
+      actions={
+        <div className="flex gap-2">
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="importacoes-whatsapp" label="XLSX" onExport={handleXlsxExport} />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="importacoes-whatsapp" label="PDF" onExport={handlePdfExport} />
+        </div>
+      }
       filters={
         <FilterCard>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
