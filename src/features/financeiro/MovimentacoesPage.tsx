@@ -33,6 +33,7 @@ import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
 import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
 import { openPrintReport, type PrintColumn } from '../../shared/export/printReport';
+import { openMobilePrintReport } from '../../shared/export/printReportMobile';
 import { STYLE } from '../../shared/export/workbook';
 
 const tipoOptions: Array<{ label: string; value: TipoMovimentacao | '' }> = [
@@ -42,6 +43,13 @@ const tipoOptions: Array<{ label: string; value: TipoMovimentacao | '' }> = [
 ];
 
 type FilterOption = { label: string; value: string };
+
+function isPwa(): boolean {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as { standalone?: boolean }).standalone === true
+  );
+}
 
 function tipoTone(value: TipoMovimentacao): StatusTone {
   return value === 'Entrada' ? 'success' : 'neutral';
@@ -293,6 +301,26 @@ export function MovimentacoesPage() {
     });
   }
 
+  function handleMobileExport(rows: MovimentacaoResumo[]) {
+    const totalEntradas = rows.filter((r) => r.tipo === 'Entrada').reduce((s, r) => s + r.valor, 0);
+    const totalSaidas = rows.filter((r) => r.tipo === 'Saida').reduce((s, r) => s + r.valor, 0);
+    const saldo = totalEntradas - totalSaidas;
+    openMobilePrintReport({
+      title: 'Extrato de Movimentações',
+      filters: buildExportFilters(),
+      summary: [
+        { label: 'Entradas', value: formatCurrencyBRL(totalEntradas), type: 'pos' },
+        { label: 'Saídas', value: formatCurrencyBRL(totalSaidas), type: 'neg' },
+        { label: 'Saldo Líquido', value: formatCurrencyBRL(saldo), type: saldo >= 0 ? 'neutral' : 'neg' },
+      ],
+      rows,
+      dateValue: (r) => r.dataMovimentacao,
+      descriptionValue: (r) => r.observacao ?? '',
+      subtitleValue: (r) => r.contaBancariaNome ?? '',
+      signedValue: (r) => (r.tipo === 'Entrada' ? r.valor : -r.valor),
+    });
+  }
+
   // Kept for CSV fallback used by ExportButton when onExport is not active
   const exportColumns = [
     { header: 'Data', value: (r: MovimentacaoResumo) => r.dataMovimentacao },
@@ -332,7 +360,7 @@ export function MovimentacoesPage() {
             columns={exportColumns}
             filename="extrato"
             label="PDF"
-            onExport={handlePdfExport}
+            onExport={(rows) => (isPwa() ? handleMobileExport(rows) : handlePdfExport(rows))}
           />
         </div>
       }

@@ -22,6 +22,11 @@ import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR, formatMonthYearBR } from '../../shared/date';
+import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
+import { openPrintReport, type PrintColumn } from '../../shared/export/printReport';
+import { openMobilePrintReport } from '../../shared/export/printReportMobile';
+import { isPwa } from '../../shared/export/isPwa';
+import { STYLE } from '../../shared/export/workbook';
 import type { CartaoResumo } from '../../types/cadastros';
 import type { FaturaFilters, FaturaResumo, StatusFaturaCodigo } from '../../types/financeiro';
 
@@ -183,6 +188,62 @@ export function FaturasPage() {
     return ids.length === 1 ? ids[0] : undefined;
   }, [filters.cartaoId, filters.cartaoIds]);
 
+  const richExportColumns: RichColumn<FaturaResumo>[] = [
+    { header: 'Competência', value: (r) => formatMonthYearBR(r.competencia), cellStyle: STYLE.DATA_TEXT, width: 14 },
+    { header: 'Vencimento', value: (r) => formatDateBR(r.dataVencimento), cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Fechamento', value: (r) => formatDateBR(r.dataFechamento), cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Cartão', value: (r) => r.cartaoNome, cellStyle: STYLE.DATA_TEXT, width: 26 },
+    { header: 'Itens', value: (r) => r.quantidadeItens, cellStyle: STYLE.DATA_TEXT, width: 8 },
+    { header: 'Valor total (R$)', value: (r) => r.valorTotal, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + r.valorTotal, 0), width: 16 },
+    { header: 'Status', value: (r) => r.statusNome, cellStyle: STYLE.DATA_TEXT, width: 12 },
+  ];
+
+  const printColumns: PrintColumn<FaturaResumo>[] = [
+    { header: 'Competência', value: (r) => formatMonthYearBR(r.competencia) },
+    { header: 'Vencimento', value: (r) => formatDateBR(r.dataVencimento) },
+    { header: 'Cartão', value: (r) => r.cartaoNome },
+    { header: 'Itens', value: (r) => String(r.quantidadeItens) },
+    { header: 'Valor total (R$)', value: (r) => formatCurrencyBRL(r.valorTotal), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorTotal, 0)) },
+    { header: 'Status', value: (r) => r.statusNome },
+  ];
+
+  function buildExportFilters(): Array<[string, string]> {
+    const result: Array<[string, string]> = [];
+    if (filters.dataVencimentoInicial || filters.dataVencimentoFinal) {
+      result.push(['Vencimento:', `${filters.dataVencimentoInicial ?? '—'} a ${filters.dataVencimentoFinal ?? '—'}`]);
+    }
+    if ((filters.competencias ?? []).length) result.push(['Competência:', (filters.competencias ?? []).join(', ')]);
+    return result;
+  }
+
+  function handleXlsxExport(rows: FaturaResumo[]) {
+    downloadRichExport({ title: 'Faturas', filename: 'faturas', sheetName: 'Faturas', filters: buildExportFilters(), columns: richExportColumns, rows, showTotals: true });
+  }
+
+  function handlePdfExport(rows: FaturaResumo[]) {
+    const total = rows.reduce((s, r) => s + r.valorTotal, 0);
+    openPrintReport({
+      title: 'Faturas',
+      filters: buildExportFilters(),
+      summary: [{ label: 'Total consolidado', value: formatCurrencyBRL(total), type: 'neg' }],
+      columns: printColumns, rows, showTotals: true,
+    });
+  }
+
+  function handleMobileExport(rows: FaturaResumo[]) {
+    openMobilePrintReport({
+      title: 'Faturas',
+      filters: buildExportFilters(),
+      rows,
+      dateValue: (r) => r.dataVencimento,
+      descriptionValue: (r) => r.cartaoNome,
+      subtitleValue: (r) => formatMonthYearBR(r.competencia),
+      signedValue: (r) => -r.valorTotal,
+    });
+  }
+
+  const fetchPageTyped = financeiroApi.faturas.listar as (f: typeof filters) => Promise<{ items: FaturaResumo[]; totalItems: number; totalPages: number }>;
+
   return (
     <>
     <ImportarFaturaModal
@@ -203,20 +264,8 @@ export function FaturasPage() {
           >
             Importar PDF
           </Button>
-          <ExportButton
-            fetchPage={financeiroApi.faturas.listar}
-            filters={filters}
-            filename="faturas"
-            columns={[
-              { header: 'Competência', value: (f: FaturaResumo) => formatMonthYearBR(f.competencia) },
-              { header: 'Vencimento', value: (f: FaturaResumo) => formatDateBR(f.dataVencimento) },
-              { header: 'Fechamento', value: (f: FaturaResumo) => formatDateBR(f.dataFechamento) },
-              { header: 'Cartão', value: (f: FaturaResumo) => f.cartaoNome },
-              { header: 'Itens', value: (f: FaturaResumo) => f.quantidadeItens },
-              { header: 'Valor total', value: (f: FaturaResumo) => f.valorTotal },
-              { header: 'Status', value: (f: FaturaResumo) => f.statusNome }
-            ]}
-          />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={richExportColumns} filename="faturas" label="XLSX" onExport={handleXlsxExport} />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={richExportColumns} filename="faturas" label="PDF" onExport={(rows) => isPwa() ? handleMobileExport(rows) : handlePdfExport(rows)} />
         </div>
       }
       summaryColumns={4}

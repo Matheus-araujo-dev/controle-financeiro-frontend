@@ -6,6 +6,12 @@ import { PageState } from '../../components/states/PageState';
 import { SummaryCard } from '../../components/layout';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
+import { formatDateBR } from '../../shared/date';
+import { downloadRichExport, type RichColumn } from '../../shared/export/richExport';
+import { openPrintReport, type PrintColumn } from '../../shared/export/printReport';
+import { openMobilePrintReport } from '../../shared/export/printReportMobile';
+import { isPwa } from '../../shared/export/isPwa';
+import { STYLE } from '../../shared/export/workbook';
 import type { ContaPagarResumo, ContaReceberResumo } from '../../types/financeiro';
 
 function getCurrentMonth() {
@@ -175,6 +181,51 @@ export function AgendaPage() {
     setSearchParams({ mes: newMes });
   }, [setSearchParams]);
 
+  const richExportColumns: RichColumn<AgendaItem>[] = [
+    { header: 'Tipo', value: (r) => r.tipo === 'ContaReceber' ? 'Receita' : 'Despesa', cellStyle: STYLE.DATA_TEXT, width: 12 },
+    { header: 'Descrição', value: (r) => r.descricao, cellStyle: STYLE.DATA_TEXT, width: 36 },
+    { header: 'Pessoa', value: (r) => r.pessoaNome, cellStyle: STYLE.DATA_TEXT, width: 24 },
+    { header: 'Vencimento', value: (r) => formatDateBR(r.dataVencimento), cellStyle: STYLE.DATA_TEXT, width: 14 },
+    { header: 'Valor (R$)', value: (r) => r.tipo === 'ContaReceber' ? r.valor : -r.valor, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + (r.tipo === 'ContaReceber' ? r.valor : -r.valor), 0), width: 14 },
+    { header: 'Status', value: (r) => r.statusNome, cellStyle: STYLE.DATA_TEXT, width: 12 },
+  ];
+
+  const printColumns: PrintColumn<AgendaItem>[] = [
+    { header: 'Tipo', value: (r) => r.tipo === 'ContaReceber' ? 'Receita' : 'Despesa' },
+    { header: 'Descrição', value: (r) => r.descricao },
+    { header: 'Pessoa', value: (r) => r.pessoaNome },
+    { header: 'Vencimento', value: (r) => formatDateBR(r.dataVencimento) },
+    { header: 'Valor (R$)', value: (r) => (r.tipo === 'ContaReceber' ? '+' : '-') + formatCurrencyBRL(r.valor), align: 'right' },
+    { header: 'Status', value: (r) => r.statusNome },
+  ];
+
+  function handleXlsxExport() {
+    downloadRichExport({ title: `Agenda — ${formatMonthLabel(mes)}`, filename: 'agenda', sheetName: 'Agenda', columns: richExportColumns, rows: items, showTotals: true });
+  }
+
+  function handlePdfExport() {
+    if (isPwa()) {
+      openMobilePrintReport({
+        title: `Agenda — ${formatMonthLabel(mes)}`,
+        rows: items,
+        dateValue: (r) => r.dataVencimento,
+        descriptionValue: (r) => r.descricao,
+        subtitleValue: (r) => r.pessoaNome,
+        signedValue: (r) => r.tipo === 'ContaReceber' ? r.valor : -r.valor,
+      });
+    } else {
+      openPrintReport({
+        title: `Agenda — ${formatMonthLabel(mes)}`,
+        summary: [
+          { label: 'A pagar', value: formatCurrencyBRL(totais.aPagar), type: 'neg' },
+          { label: 'A receber', value: formatCurrencyBRL(totais.aReceber), type: 'pos' },
+          { label: 'Saldo', value: formatCurrencyBRL(totais.saldo), type: totais.saldo >= 0 ? 'pos' : 'neg' },
+        ],
+        columns: printColumns, rows: items, showTotals: false,
+      });
+    }
+  }
+
   const today = new Date().toISOString().split('T')[0];
 
   return (
@@ -220,6 +271,23 @@ export function AgendaPage() {
           >
             Hoje
           </button>
+
+          {items.length > 0 && (
+            <>
+              <button
+                onClick={handleXlsxExport}
+                className="px-3 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-bold text-on-surface-variant hover:text-white transition-all uppercase tracking-wider"
+              >
+                XLSX
+              </button>
+              <button
+                onClick={handlePdfExport}
+                className="px-3 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-bold text-on-surface-variant hover:text-white transition-all uppercase tracking-wider"
+              >
+                PDF
+              </button>
+            </>
+          )}
         </div>
       </div>
 
