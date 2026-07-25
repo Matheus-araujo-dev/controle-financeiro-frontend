@@ -8,11 +8,10 @@ import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { selectDateInDateInput } from '../../test/date-input';
 
-vi.mock('../../shared/export/workbook', () => ({
-  downloadBlob: vi.fn(),
-  createXlsxBlob: vi.fn().mockReturnValue(new Blob(['xlsx'])),
-  createCsvBlob: vi.fn().mockReturnValue(new Blob(['csv'])),
-}));
+vi.mock('../../shared/export/workbook', async () => {
+  const actual = await vi.importActual<typeof import('../../shared/export/workbook')>('../../shared/export/workbook');
+  return { ...actual, createXlsxBlob: vi.fn().mockReturnValue(new Blob(['xlsx'])), createCsvBlob: vi.fn().mockReturnValue(new Blob(['csv'])), downloadBlob: vi.fn() };
+});
 
 vi.mock('../../services/http/compras-planejadas-api', () => ({
   comprasPlanejadasApi: {
@@ -147,7 +146,7 @@ describe('ComprasPlanejadasListPage', () => {
     vi.mocked(comprasPlanejadasApi.listar).mockReturnValue(new Promise(() => {}));
     renderPage();
     // The ListPageShell renders filter/export controls while data is loading
-    expect(screen.getByRole('button', { name: /Exportar/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /XLSX/i })).toBeInTheDocument();
   });
 
   it('shows error state when query fails', async () => {
@@ -376,7 +375,7 @@ describe('ComprasPlanejadasListPage', () => {
     renderPage();
     expect(await screen.findByText('Notebook novo')).toBeInTheDocument();
     const prevCallCount = vi.mocked(downloadBlob).mock.calls.length;
-    await userEvent.click(screen.getByRole('button', { name: /Exportar/i }));
+    await userEvent.click(screen.getByRole('button', { name: /XLSX/i }));
     await waitFor(() =>
       expect(vi.mocked(downloadBlob).mock.calls.length).toBeGreaterThan(prevCallCount)
     );
