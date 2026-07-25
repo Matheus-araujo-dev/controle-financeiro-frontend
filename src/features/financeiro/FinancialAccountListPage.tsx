@@ -575,18 +575,6 @@ export function FinancialAccountListPage({
     });
   }
 
-  function handleMobileExport(rows: FinancialRecord[]) {
-    openMobilePrintReport({
-      title: config.title,
-      filters: buildExportFilters(),
-      rows,
-      dateValue: (r) => r.dataVencimento ?? '',
-      descriptionValue: (r) => r.descricao ?? '',
-      subtitleValue: (r) => r.recebedorNome ?? r.pagadorNome ?? '',
-      signedValue: (r) => isPagar ? -(r.valorLiquido ?? 0) : (r.valorLiquido ?? 0),
-    });
-  }
-
   const fetchPageTyped = config.list as (f: typeof filters) => Promise<{ items: FinancialRecord[]; totalItems: number; totalPages: number }>;
 
   const actionButtons = (
