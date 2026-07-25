@@ -144,8 +144,8 @@ export function RecurrenceListPage() {
     <ListPageShell
       actions={
         <div className="flex gap-2">
-          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={exportColumns} filename="recorrencias" label="XLSX" onExport={handleXlsxExport} />
-          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={exportColumns} filename="recorrencias" label="PDF" onExport={handlePdfExport} />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="recorrencias" label="XLSX" onExport={handleXlsxExport} />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="recorrencias" label="PDF" onExport={handlePdfExport} />
         </div>
       }
       summary={

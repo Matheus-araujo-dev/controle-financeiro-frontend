@@ -42,10 +42,10 @@ async function renderPage() {
   const { financeiroApi } = await import('../../services/http/financeiro-api');
   vi.mocked(financeiroApi.contasPagar.listar).mockResolvedValue({
     items: pagarRows, page: 1, pageSize: 300, totalItems: 1, totalPages: 1,
-  } as Awaited<ReturnType<typeof financeiroApi.contasPagar.listar>>);
+  } as unknown as Awaited<ReturnType<typeof financeiroApi.contasPagar.listar>>);
   vi.mocked(financeiroApi.contasReceber.listar).mockResolvedValue({
     items: receberRows, page: 1, pageSize: 300, totalItems: 1, totalPages: 1,
-  } as Awaited<ReturnType<typeof financeiroApi.contasReceber.listar>>);
+  } as unknown as Awaited<ReturnType<typeof financeiroApi.contasReceber.listar>>);
 
   const { AgendaPage } = await import('./AgendaPage');
   const qc = createQC();
@@ -81,9 +81,9 @@ describe('AgendaPage — export', () => {
     expect(await screen.findByText('Aluguel')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
-      .flatMap((r: { value: { document: { write: ReturnType<typeof vi.fn> } } | null }) =>
-        r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
+      .flatMap((r: any) => r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
     expect(html).not.toContain('A4 portrait');
   }, 25000);
 
@@ -93,9 +93,9 @@ describe('AgendaPage — export', () => {
     expect(await screen.findByText('Aluguel')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
-      .flatMap((r: { value: { document: { write: ReturnType<typeof vi.fn> } } | null }) =>
-        r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
+      .flatMap((r: any) => r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
     expect(html).toContain('A4 portrait');
   }, 25000);
 });
