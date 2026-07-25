@@ -3,6 +3,7 @@ import {
   SHARED_CSS,
   buildHeader, buildSummary, buildFiltersBar, buildFooter,
   buildNowString, buildPeriodStr, openInWindow, esc,
+  parseDateGroupHeader, fmtCurrency,
 } from './printReportShared';
 
 export type { PrintSummaryCard };
@@ -19,19 +20,6 @@ export type MobilePrintDefinition<T> = {
   /** Label da linha de total no rodapé do conteúdo. Default: 'Total do período' */
   totalLabel?: string;
 };
-
-const DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-
-function fmtCurrency(n: number): string {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
-}
-
-function parseDateGroupHeader(iso: string): string {
-  const [y, m, d] = iso.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
-  return `${d} ${MONTHS_PT[m - 1]} · ${DAYS_PT[date.getDay()]}`;
-}
 
 export function buildMobilePrintHtml<T>(def: MobilePrintDefinition<T>): string {
   const {
