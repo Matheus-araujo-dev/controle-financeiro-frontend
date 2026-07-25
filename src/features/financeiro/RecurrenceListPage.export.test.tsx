@@ -43,7 +43,7 @@ async function renderPage() {
   const { financeiroApi } = await import('../../services/http/financeiro-api');
   vi.mocked(financeiroApi.recorrencias.listar).mockResolvedValue({
     items: testRows, page: 1, pageSize: 20, totalItems: 2, totalPages: 1,
-  } as Awaited<ReturnType<typeof financeiroApi.recorrencias.listar>>);
+  } as unknown as Awaited<ReturnType<typeof financeiroApi.recorrencias.listar>>);
 
   const { RecurrenceListPage } = await import('./RecurrenceListPage');
   const qc = createQC();
@@ -79,9 +79,9 @@ describe('RecurrenceListPage — export (XLSX + PDF desktop only, no mobile)', (
     expect(await screen.findByText('Aluguel Recebido')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
-      .flatMap((r: { value: { document: { write: ReturnType<typeof vi.fn> } } | null }) =>
-        r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
+      .flatMap((r: any) => r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
     expect(html).not.toContain('A4 portrait');
   }, 25000);
 });

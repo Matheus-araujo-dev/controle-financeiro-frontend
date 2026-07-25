@@ -176,7 +176,8 @@ describe('FinancialAccountListPage — export column lambdas (real richExport/pr
     await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
     const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
-      .flatMap((r: { value: { document: { write: ReturnType<typeof vi.fn> } } | null }) => r.value?.document.write.mock?.calls ?? [])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .flatMap((r: any) => r.value?.document.write.mock?.calls ?? [])
       .flat()[0] ?? '';
     expect(html).toContain('A4 portrait');
   }, 25000);

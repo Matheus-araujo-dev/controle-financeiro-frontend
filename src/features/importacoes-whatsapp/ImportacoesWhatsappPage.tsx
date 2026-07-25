@@ -121,8 +121,8 @@ export function ImportacoesWhatsappPage() {
     <ListPageShell
       actions={
         <div className="flex gap-2">
-          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={richExportColumns} filename="importacoes-whatsapp" label="XLSX" onExport={handleXlsxExport} />
-          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={richExportColumns} filename="importacoes-whatsapp" label="PDF" onExport={handlePdfExport} />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="importacoes-whatsapp" label="XLSX" onExport={handleXlsxExport} />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="importacoes-whatsapp" label="PDF" onExport={handlePdfExport} />
         </div>
       }
       filters={
