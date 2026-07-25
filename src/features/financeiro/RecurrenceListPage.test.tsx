@@ -10,11 +10,10 @@ import { selectDateInDateInput } from '../../test/date-input';
 
 vi.mock('../../store/notification-store', () => ({ notify: vi.fn() }));
 
-vi.mock('../../shared/export/workbook', () => ({
-  downloadBlob: vi.fn(),
-  createXlsxBlob: vi.fn().mockReturnValue(new Blob(['xlsx'])),
-  createCsvBlob: vi.fn().mockReturnValue(new Blob(['csv'])),
-}));
+vi.mock('../../shared/export/workbook', async () => {
+  const actual = await vi.importActual<typeof import('../../shared/export/workbook')>('../../shared/export/workbook');
+  return { ...actual, createXlsxBlob: vi.fn().mockReturnValue(new Blob(['xlsx'])), createCsvBlob: vi.fn().mockReturnValue(new Blob(['csv'])), downloadBlob: vi.fn() };
+});
 
 vi.mock('../../services/http/financeiro-api', () => ({
   financeiroApi: {
@@ -292,7 +291,7 @@ describe('RecurrenceListPage', () => {
     renderPage();
     await screen.findByText('Contrato de consultoria');
     const prevCallCount = vi.mocked(downloadBlob).mock.calls.length;
-    await userEvent.click(screen.getByRole('button', { name: /Exportar/i }));
+    await userEvent.click(screen.getByRole('button', { name: /XLSX/i }));
     await waitFor(() =>
       expect(vi.mocked(downloadBlob).mock.calls.length).toBeGreaterThan(prevCallCount)
     );
