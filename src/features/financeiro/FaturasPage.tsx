@@ -227,6 +227,9 @@ export function FaturasPage() {
       filters: buildExportFilters(),
       summary: [{ label: 'Total consolidado', value: formatCurrencyBRL(total), type: 'neg' }],
       columns: printColumns, rows, showTotals: true,
+      groupByDate: true,
+      dateValue: (r) => r.dataVencimento,
+      signedValue: (r) => -r.valorTotal,
     });
   }
 

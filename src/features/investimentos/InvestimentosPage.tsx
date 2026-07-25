@@ -562,6 +562,9 @@ export function InvestimentosPage() {
       columns: printColumns,
       rows,
       showTotals: true,
+      groupByDate: true,
+      dateValue: (r) => r.dataAplicacao.slice(0, 10),
+      signedValue: (r) => r.rendimento,
     });
   }
 

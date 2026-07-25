@@ -284,6 +284,9 @@ export function ComprasPlanejadasListPage() {
       columns: printColumns,
       rows,
       showTotals: true,
+      groupByDate: true,
+      dateValue: (r) => r.dataDesejada ?? new Date().toISOString().slice(0, 10),
+      signedValue: (r) => -r.valorEstimado,
     });
   }
 
