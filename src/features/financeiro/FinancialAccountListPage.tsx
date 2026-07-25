@@ -557,6 +557,9 @@ export function FinancialAccountListPage({
       columns: printColumns,
       rows,
       showTotals: true,
+      groupByDate: true,
+      dateValue: (r) => r.dataVencimento ?? '',
+      signedValue: (r) => isPagar ? -(r.valorLiquido ?? 0) : (r.valorLiquido ?? 0),
     });
   }
 
