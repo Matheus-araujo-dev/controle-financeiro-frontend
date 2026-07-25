@@ -96,6 +96,7 @@ export function fmtCurrency(n: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
 }
 
+
 export function openInWindow(html: string): void {
   const win = window.open('', '_blank', 'noopener,noreferrer');
   if (win) {

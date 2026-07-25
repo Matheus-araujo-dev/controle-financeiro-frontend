@@ -21,7 +21,6 @@ export type MobilePrintDefinition<T> = {
   totalLabel?: string;
 };
 
-
 export function buildMobilePrintHtml<T>(def: MobilePrintDefinition<T>): string {
   const {
     title, filters = [], summary = [], rows,
