@@ -75,7 +75,6 @@ export function DashboardPage() {
   const errorMessage = summaryError instanceof Error ? summaryError.message : summaryError ? 'Falha ao carregar dashboard.' : undefined;
 
   function handleExportPdf() {
-    const win = window.open('', '_blank', 'noopener,noreferrer');
     const metaMap = new Map(
       (orcamentoData?.itens ?? [])
         .filter((i) => i.valorMeta !== null)
@@ -102,7 +101,7 @@ export function DashboardPage() {
       despesasCategorias: (contasGerenciaisData?.itens ?? [])
         .filter((i) => i.tipo === 'Despesa')
         .map((i) => ({ descricao: i.descricao, valorTotal: i.valorTotal, meta: metaMap.get(i.contaGerencialId) ?? null })),
-    }, win);
+    });
   }
 
   if (loadingSummary && !summary && !cashFlow) {

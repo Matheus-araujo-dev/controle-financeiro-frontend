@@ -630,6 +630,7 @@ export function InvestimentosPage() {
               columns={[]}
               filename="investimentos"
               label="PDF"
+              opensWindow
               onExport={(rows, win) => isPwa() ? handleMobileExport(rows, win) : handlePdfExport(rows, win)}
             />
             <Button

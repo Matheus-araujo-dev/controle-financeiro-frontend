@@ -268,7 +268,7 @@ export function FaturasPage() {
             Importar PDF
           </Button>
           <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="faturas" label="XLSX" onExport={handleXlsxExport} />
-          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="faturas" label="PDF" onExport={(rows, win) => isPwa() ? handleMobileExport(rows, win) : handlePdfExport(rows, win)} />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="faturas" label="PDF" opensWindow onExport={(rows, win) => isPwa() ? handleMobileExport(rows, win) : handlePdfExport(rows, win)} />
         </div>
       }
       summaryColumns={4}
