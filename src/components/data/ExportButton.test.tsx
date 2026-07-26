@@ -39,7 +39,7 @@ describe('ExportButton', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Exportar/i }));
 
-    await waitFor(() => expect(onExport).toHaveBeenCalledWith([{ id: '1' }]));
+    await waitFor(() => expect(onExport).toHaveBeenCalledWith([{ id: '1' }], expect.anything()));
     expect(exportListing.exportListing).not.toHaveBeenCalled();
   });
 
