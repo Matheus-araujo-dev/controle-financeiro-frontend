@@ -682,10 +682,7 @@ export function QuickLaunchModal({
                     <ComboBox
                       aria-label="Responsável"
                       value={responsavelId}
-                      onChange={(v) => {
-                        setResponsavelId(v);
-                        lastAutoFilledResponsavelRef.current = v || null;
-                      }}
+                      onChange={setResponsavelId}
                       options={responsaveis}
                       placeholder="Selecionar responsável..."
                       onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
