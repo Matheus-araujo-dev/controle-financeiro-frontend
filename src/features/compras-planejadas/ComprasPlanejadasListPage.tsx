@@ -324,6 +324,7 @@ export function ComprasPlanejadasListPage() {
             columns={[]}
             filename="compras-planejadas"
             label="PDF"
+            opensWindow
             onExport={(rows, win) => isPwa() ? handleMobileExport(rows, win) : handlePdfExport(rows, win)}
           />
           <Button to="/compras-planejadas/novo" icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>add_circle</span>}>

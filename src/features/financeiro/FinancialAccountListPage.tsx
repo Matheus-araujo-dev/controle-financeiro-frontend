@@ -594,6 +594,7 @@ export function FinancialAccountListPage({
           columns={exportColumns}
           filename={config.routeBase.replace('/', '')}
           label="PDF"
+          opensWindow
           onExport={(rows, win) => isPwa() ? handleMobileExport(rows, win) : handlePdfExport(rows, win)}
         />
       </div>

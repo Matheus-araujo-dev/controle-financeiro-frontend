@@ -363,6 +363,7 @@ export function MovimentacoesPage() {
             columns={exportColumns}
             filename="extrato"
             label="PDF"
+            opensWindow
             onExport={(rows, win) => (isPwa() ? handleMobileExport(rows, win) : handlePdfExport(rows, win))}
           />
         </div>
