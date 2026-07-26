@@ -141,6 +141,6 @@ ${buildFooter(rows.length)}
 </html>`;
 }
 
-export function openMobilePrintReport<T>(def: MobilePrintDefinition<T>): void {
-  openInWindow(buildMobilePrintHtml(def));
+export function openMobilePrintReport<T>(def: MobilePrintDefinition<T>, win?: Window | null): void {
+  openInWindow(buildMobilePrintHtml(def), win);
 }

@@ -97,8 +97,8 @@ export function fmtCurrency(n: number): string {
 }
 
 
-export function openInWindow(html: string): void {
-  const win = window.open('', '_blank', 'noopener,noreferrer');
+export function openInWindow(html: string, preOpenedWin?: Window | null): void {
+  const win = preOpenedWin ?? window.open('', '_blank', 'noopener,noreferrer');
   if (win) {
     win.document.write(html);
     win.document.close();

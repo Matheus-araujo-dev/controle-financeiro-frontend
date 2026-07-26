@@ -283,7 +283,7 @@ export function MovimentacoesPage() {
     { header: 'Status', value: (r) => r.statusNome ?? '' },
   ];
 
-  function handlePdfExport(rows: MovimentacaoResumo[]) {
+  function handlePdfExport(rows: MovimentacaoResumo[], win?: Window | null) {
     const totalEntradas = rows.filter((r) => r.tipo === 'Entrada').reduce((s, r) => s + r.valor, 0);
     const totalSaidas = rows.filter((r) => r.tipo === 'Saida').reduce((s, r) => s + r.valor, 0);
     const saldo = totalEntradas - totalSaidas;
@@ -301,10 +301,10 @@ export function MovimentacoesPage() {
       groupByDate: true,
       dateValue: (r) => r.dataMovimentacao,
       signedValue: (r) => r.tipo === 'Entrada' ? r.valor : -r.valor,
-    });
+    }, win);
   }
 
-  function handleMobileExport(rows: MovimentacaoResumo[]) {
+  function handleMobileExport(rows: MovimentacaoResumo[], win?: Window | null) {
     const totalEntradas = rows.filter((r) => r.tipo === 'Entrada').reduce((s, r) => s + r.valor, 0);
     const totalSaidas = rows.filter((r) => r.tipo === 'Saida').reduce((s, r) => s + r.valor, 0);
     const saldo = totalEntradas - totalSaidas;
@@ -321,7 +321,7 @@ export function MovimentacoesPage() {
       descriptionValue: (r) => r.observacao ?? '',
       subtitleValue: (r) => r.contaBancariaNome ?? '',
       signedValue: (r) => (r.tipo === 'Entrada' ? r.valor : -r.valor),
-    });
+    }, win);
   }
 
   // Kept for CSV fallback used by ExportButton when onExport is not active
@@ -363,7 +363,7 @@ export function MovimentacoesPage() {
             columns={exportColumns}
             filename="extrato"
             label="PDF"
-            onExport={(rows) => (isPwa() ? handleMobileExport(rows) : handlePdfExport(rows))}
+            onExport={(rows, win) => (isPwa() ? handleMobileExport(rows, win) : handlePdfExport(rows, win))}
           />
         </div>
       }

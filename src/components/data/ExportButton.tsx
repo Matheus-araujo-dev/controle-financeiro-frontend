@@ -10,8 +10,10 @@ interface ExportButtonProps<T, F extends PageQuery> {
   format?: 'xlsx' | 'csv';
   label?: string;
   disabled?: boolean;
-  /** Override the default XLSX export — receives all fetched rows and handles the download. */
-  onExport?: (rows: T[]) => void;
+  /** Override the default XLSX export — receives all fetched rows and handles the download.
+   *  The second argument is a pre-opened window (opened synchronously before the async fetch
+   *  so popup blockers don't interfere). Pass it to openPrintReport / openMobilePrintReport. */
+  onExport?: (rows: T[], win: Window | null) => void;
 }
 
 function DownloadIcon({ className = '' }: { className?: string }) {
@@ -36,18 +38,22 @@ export function ExportButton<T, F extends PageQuery>({
   const [loading, setLoading] = useState(false);
 
   async function handleExport() {
-    if (loading || disabled) {
-      return;
-    }
+    if (loading || disabled) return;
+
+    // Open window synchronously (trusted user-gesture context) before any await,
+    // so popup blockers allow it and only one tab is ever opened.
+    const win = onExport ? window.open('', '_blank', 'noopener,noreferrer') : null;
 
     setLoading(true);
     try {
       if (onExport) {
         const rows = await fetchAllRows(fetchPage, filters);
-        onExport(rows);
+        onExport(rows, win);
       } else {
         await exportListing({ fetchPage, filters, columns, filename, format });
       }
+    } catch {
+      win?.close();
     } finally {
       setLoading(false);
     }

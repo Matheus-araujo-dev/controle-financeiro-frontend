@@ -546,7 +546,7 @@ export function InvestimentosPage() {
     void totalAplicado; void totalAtual;
   }
 
-  function handlePdfExport(rows: InvestimentoResumo[]) {
+  function handlePdfExport(rows: InvestimentoResumo[], win?: Window | null) {
     const ativos = rows.filter((r) => !r.encerrado);
     const totalApl = ativos.reduce((s, r) => s + r.valorInvestido, 0);
     const totalAt = ativos.reduce((s, r) => s + r.valorAtual, 0);
@@ -565,10 +565,10 @@ export function InvestimentosPage() {
       groupByDate: true,
       dateValue: (r) => r.dataAplicacao.slice(0, 10),
       signedValue: (r) => r.rendimento,
-    });
+    }, win);
   }
 
-  function handleMobileExport(rows: InvestimentoResumo[]) {
+  function handleMobileExport(rows: InvestimentoResumo[], win?: Window | null) {
     openMobilePrintReport({
       title: 'Investimentos',
       filters: buildExportFilters(),
@@ -577,7 +577,7 @@ export function InvestimentosPage() {
       descriptionValue: (r) => r.nome,
       subtitleValue: (r) => `${r.tipoLabel} · ${r.contaBancariaNome}`,
       signedValue: (r) => r.rendimento,
-    });
+    }, win);
   }
 
   const fetchPageTyped = investimentosApi.listar as (f: typeof listQuery) => Promise<{ items: InvestimentoResumo[]; totalItems: number; totalPages: number }>;
@@ -630,7 +630,7 @@ export function InvestimentosPage() {
               columns={[]}
               filename="investimentos"
               label="PDF"
-              onExport={(rows) => isPwa() ? handleMobileExport(rows) : handlePdfExport(rows)}
+              onExport={(rows, win) => isPwa() ? handleMobileExport(rows, win) : handlePdfExport(rows, win)}
             />
             <Button
               type="button"
