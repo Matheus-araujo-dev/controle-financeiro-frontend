@@ -98,20 +98,23 @@ export function fmtCurrency(n: number): string {
 
 
 export function openInWindow(html: string, preOpenedWin?: Window | null): void {
-  const win = preOpenedWin ?? window.open('', '_blank', 'noopener,noreferrer');
-  if (win) {
-    win.document.write(html);
-    win.document.close();
+  if (preOpenedWin) {
+    preOpenedWin.document.write(html);
+    preOpenedWin.document.close();
     return;
   }
+  // Blob URL opens the tab already with content — avoids the about:blank intermediate state.
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  const win = window.open(url, '_blank', 'noopener,noreferrer');
+  if (!win) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
