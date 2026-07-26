@@ -1,6 +1,6 @@
 import {
   esc, buildHeader, buildSummary, buildFiltersBar, buildFooter, buildPeriodStr,
-  parseDateGroupHeader, fmtCurrency,
+  parseDateGroupHeader, fmtCurrency, openInWindow,
 } from './printReportShared';
 
 describe('esc', () => {
@@ -99,6 +99,61 @@ describe('fmtCurrency', () => {
 
   it('formata valores negativos em pt-BR', () => {
     expect(fmtCurrency(-287.5)).toMatch(/-R\$|R\$\s*-/);
+  });
+});
+
+describe('openInWindow', () => {
+  const HTML = '<html><body>test</body></html>';
+  const BLOB_URL = 'blob:http://localhost/fake-uuid';
+
+  beforeEach(() => {
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue(BLOB_URL);
+    vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('escreve no preOpenedWin quando fornecido', () => {
+    const win = { document: { write: vi.fn(), close: vi.fn() } } as unknown as Window;
+    openInWindow(HTML, win);
+    expect(win.document.write).toHaveBeenCalledWith(HTML);
+    expect(win.document.close).toHaveBeenCalled();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('não chama window.open quando preOpenedWin é fornecido', () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue({} as Window);
+    const win = { document: { write: vi.fn(), close: vi.fn() } } as unknown as Window;
+    openInWindow(HTML, win);
+    expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  it('abre com blob URL quando não há preOpenedWin', () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue({} as Window);
+    openInWindow(HTML);
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(openSpy).toHaveBeenCalledWith(BLOB_URL, '_blank', 'noopener,noreferrer');
+  });
+
+  it('usa anchor como fallback quando window.open retorna null', () => {
+    vi.spyOn(window, 'open').mockReturnValue(null);
+    const clickSpy = vi.fn();
+    vi.spyOn(document, 'createElement').mockReturnValue({ href: '', target: '', rel: '', click: clickSpy, remove: vi.fn() } as unknown as HTMLElement);
+    vi.spyOn(document.body, 'appendChild').mockReturnValue({} as Node);
+    openInWindow(HTML);
+    expect(clickSpy).toHaveBeenCalled();
+  });
+
+  it('revoga a blob URL após 60 segundos', () => {
+    vi.spyOn(window, 'open').mockReturnValue({} as Window);
+    openInWindow(HTML);
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(60_000);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(BLOB_URL);
   });
 });
 
