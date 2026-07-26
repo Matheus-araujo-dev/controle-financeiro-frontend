@@ -17,12 +17,6 @@ const baseDef: MobilePrintDefinition<Row> = {
   signedValue: (r) => r.value,
 };
 
-function captureHtml(): { write: ReturnType<typeof vi.fn> } {
-  const write = vi.fn();
-  const fakeWin = { document: { write, close: vi.fn() } } as unknown as Window;
-  vi.spyOn(window, 'open').mockReturnValue(fakeWin);
-  return { write };
-}
 
 describe('buildMobilePrintHtml', () => {
   it('contém o título no HTML gerado', () => {
@@ -161,13 +155,18 @@ describe('openMobilePrintReport', () => {
     vi.restoreAllMocks();
   });
 
-  it('abre nova janela e escreve HTML', () => {
-    const { write } = captureHtml();
+  it('abre nova janela com blob URL', () => {
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:fake-url');
+    vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
+    vi.useFakeTimers();
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue({} as Window);
+
     openMobilePrintReport(baseDef);
-    expect(window.open).toHaveBeenCalledWith('', '_blank', 'noopener,noreferrer');
-    expect(write).toHaveBeenCalledOnce();
-    const html: string = write.mock.calls[0][0];
-    expect(html).toContain('<!DOCTYPE html>');
+
+    expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    expect(openSpy).toHaveBeenCalledWith('blob:fake-url', '_blank', 'noopener,noreferrer');
+
+    vi.useRealTimers();
   });
 
   it('usa URL de blob como fallback quando window.open retorna null', () => {
