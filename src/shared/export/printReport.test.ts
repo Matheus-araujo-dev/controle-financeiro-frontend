@@ -1,4 +1,10 @@
 import { openPrintReport, type PrintColumn, type PrintReportDefinition } from './printReport';
+import * as shared from './printReportShared';
+
+vi.mock('./printReportShared', async () => {
+  const actual = await vi.importActual<typeof import('./printReportShared')>('./printReportShared');
+  return { ...actual, openInWindow: vi.fn() };
+});
 
 type Row = { descricao: string; valor: number; tipo: 'entrada' | 'saida' };
 
@@ -24,36 +30,26 @@ const baseDef: PrintReportDefinition<Row> = {
   rows,
 };
 
-function captureHtml(): { write: ReturnType<typeof vi.fn> } {
-  const write = vi.fn();
-  const fakeWin = { document: { write, close: vi.fn() } } as unknown as Window;
-  vi.spyOn(window, 'open').mockReturnValue(fakeWin);
-  return { write };
+function captureHtml(): string {
+  openPrintReport(baseDef);
+  return vi.mocked(shared.openInWindow).mock.calls[0][0];
 }
 
 describe('openPrintReport', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.mocked(shared.openInWindow).mockClear();
   });
 
-  it('abre nova janela e escreve HTML quando window.open retorna um objeto', () => {
-    const { write } = captureHtml();
-
-    openPrintReport(baseDef);
-
-    expect(window.open).toHaveBeenCalledWith('', '_blank', 'noopener,noreferrer');
-    expect(write).toHaveBeenCalledOnce();
-    const html: string = write.mock.calls[0][0];
+  it('chama openInWindow com HTML gerado contendo DOCTYPE e titulo', () => {
+    const html = captureHtml();
+    expect(vi.mocked(shared.openInWindow)).toHaveBeenCalledOnce();
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('Extrato Mensal');
   });
 
   it('inclui dados das linhas no HTML gerado', () => {
-    const { write } = captureHtml();
-
-    openPrintReport(baseDef);
-
-    const html: string = write.mock.calls[0][0];
+    const html = captureHtml();
     expect(html).toContain('Salario');
     expect(html).toContain('5000.00');
     expect(html).toContain('Aluguel');
@@ -61,29 +57,19 @@ describe('openPrintReport', () => {
   });
 
   it('inclui linha de totais quando showTotals = true', () => {
-    const { write } = captureHtml();
-
     openPrintReport({ ...baseDef, showTotals: true });
-
-    const html: string = write.mock.calls[0][0];
+    const html: string = vi.mocked(shared.openInWindow).mock.calls[0][0];
     expect(html).toContain('total-row');
     expect(html).toContain('TOTAL');
     expect(html).toContain('3500.00');
   });
 
   it('nao inclui linha de totais quando showTotals = false (padrao)', () => {
-    const { write } = captureHtml();
-
-    openPrintReport(baseDef);
-
-    const html: string = write.mock.calls[0][0];
-    // CSS always references .total-row; check that no <tr> element with that class was rendered
+    const html = captureHtml();
     expect(html).not.toContain('<tr class="total-row">');
   });
 
   it('inclui cards de summary quando fornecidos', () => {
-    const { write } = captureHtml();
-
     openPrintReport({
       ...baseDef,
       summary: [
@@ -91,8 +77,7 @@ describe('openPrintReport', () => {
         { label: 'Saidas', value: 'R$ 1.500,00', type: 'neg' },
       ],
     });
-
-    const html: string = write.mock.calls[0][0];
+    const html: string = vi.mocked(shared.openInWindow).mock.calls[0][0];
     expect(html).toContain('Entradas');
     expect(html).toContain('R$ 5.000,00');
     expect(html).toContain('sum-value pos');
@@ -100,52 +85,38 @@ describe('openPrintReport', () => {
   });
 
   it('inclui barra de filtros quando filtros sao fornecidos', () => {
-    const { write } = captureHtml();
-
     openPrintReport({
       ...baseDef,
       filters: [['Periodo:', 'Jan/2026'], ['Status:', 'Ativo']],
     });
-
-    const html: string = write.mock.calls[0][0];
+    const html: string = vi.mocked(shared.openInWindow).mock.calls[0][0];
     expect(html).toContain('filters-bar');
     expect(html).toContain('Periodo:');
     expect(html).toContain('Jan/2026');
   });
 
   it('inclui periodo no subtitulo do cabecalho quando filtro "Periodo:" esta presente', () => {
-    const { write } = captureHtml();
-
     openPrintReport({ ...baseDef, filters: [['Periodo:', 'Fev/2026']] });
-
-    const html: string = write.mock.calls[0][0];
+    const html: string = vi.mocked(shared.openInWindow).mock.calls[0][0];
     expect(html).toContain('Fev/2026');
   });
 
   it('aplica classe pos/neg e alinhamento right nas celulas de dados', () => {
-    const { write } = captureHtml();
-
-    openPrintReport(baseDef);
-
-    const html: string = write.mock.calls[0][0];
+    const html = captureHtml();
     expect(html).toContain('class="right pos"');
     expect(html).toContain('class="right neg"');
   });
 
   it('escapa caracteres HTML especiais no conteudo das celulas', () => {
-    const { write } = captureHtml();
-
     const specialRows: Row[] = [{ descricao: '<script>alert("xss")</script>', valor: 0, tipo: 'entrada' }];
     openPrintReport({ ...baseDef, rows: specialRows });
-
-    const html: string = write.mock.calls[0][0];
+    const html: string = vi.mocked(shared.openInWindow).mock.calls[0][0];
     expect(html).not.toContain('<script>alert');
     expect(html).toContain('&lt;script&gt;');
     expect(html).toContain('&quot;xss&quot;');
   });
 
   it('agrupa linhas por data com cabecalho de grupo e saldo do dia', () => {
-    const { write } = captureHtml();
     type DateRow = { descricao: string; valor: number; tipo: 'entrada' | 'saida'; data: string };
     const dateRows: DateRow[] = [
       { descricao: 'Salario', valor: 5000, tipo: 'entrada', data: '2026-07-24' },
@@ -165,7 +136,7 @@ describe('openPrintReport', () => {
       dateValue: (r) => r.data,
       signedValue: (r) => r.tipo === 'entrada' ? r.valor : -r.valor,
     });
-    const html: string = write.mock.calls[0][0];
+    const html: string = vi.mocked(shared.openInWindow).mock.calls[0][0];
     expect(html).toContain('date-group-header');
     expect(html).toContain('dg-date');
     expect(html).toContain('24 jul');
@@ -175,35 +146,15 @@ describe('openPrintReport', () => {
   });
 
   it('funciona com lista de linhas vazia', () => {
-    const { write } = captureHtml();
-
     openPrintReport({ ...baseDef, rows: [] });
-
-    const html: string = write.mock.calls[0][0];
+    const html: string = vi.mocked(shared.openInWindow).mock.calls[0][0];
     expect(html).toContain('Extrato Mensal');
     expect(html).toContain('0 registro');
   });
 
-  it('usa fallback de blob URL quando window.open retorna null', () => {
-    vi.useFakeTimers();
-    vi.spyOn(window, 'open').mockReturnValue(null);
-    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:print');
-    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-    const click = vi.fn();
-    const originalCreate = document.createElement.bind(document);
-    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
-      const el = originalCreate(tag);
-      if (tag === 'a') vi.spyOn(el, 'click').mockImplementation(click);
-      return el;
-    });
-
-    openPrintReport(baseDef);
-
-    expect(createObjectURL).toHaveBeenCalledOnce();
-    expect(click).toHaveBeenCalledOnce();
-
-    vi.runAllTimers();
-    expect(revokeObjectURL).toHaveBeenCalledWith('blob:print');
-    vi.useRealTimers();
+  it('passa win como segundo argumento para openInWindow quando fornecido', () => {
+    const fakeWin = { document: { write: vi.fn(), close: vi.fn() } } as unknown as Window;
+    openPrintReport(baseDef, fakeWin);
+    expect(vi.mocked(shared.openInWindow)).toHaveBeenCalledWith(expect.any(String), fakeWin);
   });
 });

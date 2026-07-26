@@ -3,6 +3,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import * as printReportShared from '../../shared/export/printReportShared';
+
+vi.mock('../../shared/export/printReportShared', async () => {
+  const actual = await vi.importActual<typeof import('../../shared/export/printReportShared')>('../../shared/export/printReportShared');
+  return { ...actual, openInWindow: vi.fn() };
+});
 
 vi.mock('../../services/http/financeiro-api', () => ({
   financeiroApi: {
@@ -59,12 +65,10 @@ async function renderPage() {
 }
 
 describe('AgendaPage — export', () => {
-  beforeEach(() => {
-    vi.spyOn(window, 'open').mockReturnValue({
-      document: { write: vi.fn(), close: vi.fn() },
-    } as unknown as Window);
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.mocked(printReportShared.openInWindow).mockClear();
   });
-  afterEach(() => vi.restoreAllMocks());
 
   it('XLSX export calls createXlsxBlob covering both ContaPagar and ContaReceber rows (signedValue ternary both branches)', async () => {
     await renderPage();
@@ -80,10 +84,8 @@ describe('AgendaPage — export', () => {
     await renderPage();
     expect(await screen.findByText('Aluguel')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
-    await waitFor(() => expect(window.open).toHaveBeenCalled());
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
-      .flatMap((r: any) => r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
+    await waitFor(() => expect(vi.mocked(printReportShared.openInWindow)).toHaveBeenCalled());
+    const html: string = vi.mocked(printReportShared.openInWindow).mock.calls[0][0];
     expect(html).not.toContain('A4 portrait');
   }, 25000);
 
@@ -92,10 +94,8 @@ describe('AgendaPage — export', () => {
     await renderPage();
     expect(await screen.findByText('Aluguel')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
-    await waitFor(() => expect(window.open).toHaveBeenCalled());
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
-      .flatMap((r: any) => r.value?.document.write.mock?.calls ?? []).flat()[0] ?? '';
+    await waitFor(() => expect(vi.mocked(printReportShared.openInWindow)).toHaveBeenCalled());
+    const html: string = vi.mocked(printReportShared.openInWindow).mock.calls[0][0];
     expect(html).toContain('A4 portrait');
   }, 25000);
 });
