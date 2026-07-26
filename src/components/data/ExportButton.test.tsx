@@ -32,6 +32,8 @@ describe('ExportButton', () => {
   });
 
   it('calls onExport override instead of default when provided', async () => {
+    const mockWin = {} as Window;
+    vi.spyOn(window, 'open').mockReturnValue(mockWin);
     const onExport = vi.fn();
     render(
       <ExportButton fetchPage={fetchPage} filters={{} as never} columns={columns} filename="test" onExport={onExport} />
@@ -39,7 +41,7 @@ describe('ExportButton', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Exportar/i }));
 
-    await waitFor(() => expect(onExport).toHaveBeenCalledWith([{ id: '1' }], null));
+    await waitFor(() => expect(onExport).toHaveBeenCalledWith([{ id: '1' }], mockWin));
     expect(exportListing.exportListing).not.toHaveBeenCalled();
   });
 
