@@ -220,7 +220,7 @@ export function FaturasPage() {
     downloadRichExport({ title: 'Faturas', filename: 'faturas', sheetName: 'Faturas', filters: buildExportFilters(), columns: richExportColumns, rows, showTotals: true });
   }
 
-  function handlePdfExport(rows: FaturaResumo[]) {
+  function handlePdfExport(rows: FaturaResumo[], win?: Window | null) {
     const total = rows.reduce((s, r) => s + r.valorTotal, 0);
     openPrintReport({
       title: 'Faturas',
@@ -230,10 +230,10 @@ export function FaturasPage() {
       groupByDate: true,
       dateValue: (r) => r.dataVencimento,
       signedValue: (r) => -r.valorTotal,
-    });
+    }, win);
   }
 
-  function handleMobileExport(rows: FaturaResumo[]) {
+  function handleMobileExport(rows: FaturaResumo[], win?: Window | null) {
     openMobilePrintReport({
       title: 'Faturas',
       filters: buildExportFilters(),
@@ -242,7 +242,7 @@ export function FaturasPage() {
       descriptionValue: (r) => r.cartaoNome,
       subtitleValue: (r) => formatMonthYearBR(r.competencia),
       signedValue: (r) => -r.valorTotal,
-    });
+    }, win);
   }
 
   const fetchPageTyped = financeiroApi.faturas.listar as (f: typeof filters) => Promise<{ items: FaturaResumo[]; totalItems: number; totalPages: number }>;
@@ -268,7 +268,7 @@ export function FaturasPage() {
             Importar PDF
           </Button>
           <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="faturas" label="XLSX" onExport={handleXlsxExport} />
-          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="faturas" label="PDF" onExport={(rows) => isPwa() ? handleMobileExport(rows) : handlePdfExport(rows)} />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="faturas" label="PDF" onExport={(rows, win) => isPwa() ? handleMobileExport(rows, win) : handlePdfExport(rows, win)} />
         </div>
       }
       summaryColumns={4}

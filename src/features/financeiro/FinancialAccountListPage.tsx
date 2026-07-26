@@ -534,7 +534,7 @@ export function FinancialAccountListPage({
     });
   }
 
-  function handlePdfExport(rows: FinancialRecord[]) {
+  function handlePdfExport(rows: FinancialRecord[], win?: Window | null) {
     const totalPendente = rows
       .filter((r) => r.statusCodigo === 'PENDENTE' || r.statusCodigo === 'VENCIDA' || r.statusCodigo === 'PARCIAL')
       .reduce((acc, r) => acc + (r.valorLiquido ?? 0), 0);
@@ -560,10 +560,10 @@ export function FinancialAccountListPage({
       groupByDate: true,
       dateValue: (r) => r.dataVencimento ?? '',
       signedValue: (r) => isPagar ? -(r.valorLiquido ?? 0) : (r.valorLiquido ?? 0),
-    });
+    }, win);
   }
 
-  function handleMobileExport(rows: FinancialRecord[]) {
+  function handleMobileExport(rows: FinancialRecord[], win?: Window | null) {
     openMobilePrintReport({
       title: config.title,
       filters: buildExportFilters(),
@@ -572,7 +572,7 @@ export function FinancialAccountListPage({
       descriptionValue: (r) => r.descricao ?? '',
       subtitleValue: (r) => r.recebedorNome ?? r.pagadorNome ?? '',
       signedValue: (r) => isPagar ? -(r.valorLiquido ?? 0) : (r.valorLiquido ?? 0),
-    });
+    }, win);
   }
 
   const fetchPageTyped = config.list as (f: typeof filters) => Promise<{ items: FinancialRecord[]; totalItems: number; totalPages: number }>;
@@ -594,7 +594,7 @@ export function FinancialAccountListPage({
           columns={exportColumns}
           filename={config.routeBase.replace('/', '')}
           label="PDF"
-          onExport={(rows) => isPwa() ? handleMobileExport(rows) : handlePdfExport(rows)}
+          onExport={(rows, win) => isPwa() ? handleMobileExport(rows, win) : handlePdfExport(rows, win)}
         />
       </div>
       <Button onClick={onCreate} icon={<PlusOutlined aria-hidden />}>

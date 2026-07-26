@@ -127,6 +127,6 @@ ${buildFooter(rows.length)}
 </html>`;
 }
 
-export function openPrintReport<T>(def: PrintReportDefinition<T>): void {
-  openInWindow(buildPrintHtml(def));
+export function openPrintReport<T>(def: PrintReportDefinition<T>, win?: Window | null): void {
+  openInWindow(buildPrintHtml(def), win);
 }

@@ -206,27 +206,32 @@ export function FaturaDetailPage() {
 
   async function handlePdfExport() {
     if (!detail) return;
-    const rows = await fetchAllItems();
-    if (isPwa()) {
-      openMobilePrintReport({
-        title: `Fatura ${detail.cartaoNome} — ${formatMonthYearBR(detail.competencia)}`,
-        rows,
-        dateValue: (r) => r.dataCompra,
-        descriptionValue: (r) => r.descricao,
-        subtitleValue: (r) => r.recebedorNome,
-        signedValue: (r) => r.ehEstorno ? r.valorLiquido : -r.valorLiquido,
-      });
-    } else {
-      openPrintReport({
-        title: `Fatura ${detail.cartaoNome} — ${formatMonthYearBR(detail.competencia)}`,
-        summary: [
-          { label: 'Total da fatura', value: formatCurrencyBRL(detail.valorTotal), type: 'neg' },
-        ],
-        columns: printColumns, rows, showTotals: true,
-        groupByDate: true,
-        dateValue: (r) => r.dataCompra,
-        signedValue: (r) => r.ehEstorno ? r.valorLiquido : -r.valorLiquido,
-      });
+    const win = window.open('', '_blank', 'noopener,noreferrer');
+    try {
+      const rows = await fetchAllItems();
+      if (isPwa()) {
+        openMobilePrintReport({
+          title: `Fatura ${detail.cartaoNome} — ${formatMonthYearBR(detail.competencia)}`,
+          rows,
+          dateValue: (r) => r.dataCompra,
+          descriptionValue: (r) => r.descricao,
+          subtitleValue: (r) => r.recebedorNome,
+          signedValue: (r) => r.ehEstorno ? r.valorLiquido : -r.valorLiquido,
+        }, win);
+      } else {
+        openPrintReport({
+          title: `Fatura ${detail.cartaoNome} — ${formatMonthYearBR(detail.competencia)}`,
+          summary: [
+            { label: 'Total da fatura', value: formatCurrencyBRL(detail.valorTotal), type: 'neg' },
+          ],
+          columns: printColumns, rows, showTotals: true,
+          groupByDate: true,
+          dateValue: (r) => r.dataCompra,
+          signedValue: (r) => r.ehEstorno ? r.valorLiquido : -r.valorLiquido,
+        }, win);
+      }
+    } catch {
+      win?.close();
     }
   }
 

@@ -21,6 +21,7 @@ import { cadastrosApi } from '../../../services/http/cadastros-api';
 import { dashboardApi } from '../../../services/http/dashboard-api';
 import { orcamentosApi } from '../../../services/http/orcamentos-api';
 import { formatCurrencyBRL } from '../../../shared/currency';
+import { printDashboard } from '../../../shared/export/printDashboard';
 
 function getCurrentReferenceMonth() {
   const now = new Date();
@@ -73,6 +74,37 @@ export function DashboardPage() {
   const categoriasEstouradas = (orcamentoData?.itens ?? []).filter((item) => item.estourado);
   const errorMessage = summaryError instanceof Error ? summaryError.message : summaryError ? 'Falha ao carregar dashboard.' : undefined;
 
+  function handleExportPdf() {
+    const win = window.open('', '_blank', 'noopener,noreferrer');
+    const metaMap = new Map(
+      (orcamentoData?.itens ?? [])
+        .filter((i) => i.valorMeta !== null)
+        .map((i) => [i.contaGerencialId, i.valorMeta!])
+    );
+    printDashboard({
+      referenceMonth,
+      saldoAtual: summary?.saldoAtual ?? 0,
+      totalAPagar: summary?.totalAPagar ?? 0,
+      totalAReceber: summary?.totalAReceber ?? 0,
+      saldoProjetado: summary?.saldoProjetado ?? 0,
+      receitas: contasGerenciaisData?.totalReceitas ?? 0,
+      despesas: contasGerenciaisData?.totalDespesas ?? 0,
+      resultadoMes: contasGerenciaisData?.saldo ?? 0,
+      contas: (contasBancariasData?.items ?? []).filter((c) => c.ativo),
+      agenda: summary?.contasAVencer ?? [],
+      movimentacoes: (summary?.movimentacoesRecentes ?? []).map((m) => ({
+        dataMovimentacao: m.dataMovimentacao,
+        observacaoResumida: m.observacaoResumida,
+        natureza: String(m.natureza),
+        tipo: m.tipo,
+        valor: m.valor,
+      })),
+      despesasCategorias: (contasGerenciaisData?.itens ?? [])
+        .filter((i) => i.tipo === 'Despesa')
+        .map((i) => ({ descricao: i.descricao, valorTotal: i.valorTotal, meta: metaMap.get(i.contaGerencialId) ?? null })),
+    }, win);
+  }
+
   if (loadingSummary && !summary && !cashFlow) {
     return <PageState state="loading" title="Carregando dashboard" />;
   }
@@ -111,9 +143,10 @@ export function DashboardPage() {
           <Button
             type="button"
             variant="primary"
+            onClick={handleExportPdf}
             icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>download</span>}
           >
-            Exportar
+            Exportar PDF
           </Button>
         </div>
 

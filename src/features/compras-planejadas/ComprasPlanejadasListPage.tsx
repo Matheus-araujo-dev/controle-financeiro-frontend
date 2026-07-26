@@ -275,7 +275,7 @@ export function ComprasPlanejadasListPage() {
     });
   }
 
-  function handlePdfExport(rows: CompraPlanejadaResumo[]) {
+  function handlePdfExport(rows: CompraPlanejadaResumo[], win?: Window | null) {
     const totalEstimadoExport = rows.reduce((s, r) => s + r.valorEstimado, 0);
     openPrintReport({
       title: 'Compras Planejadas',
@@ -287,10 +287,10 @@ export function ComprasPlanejadasListPage() {
       groupByDate: true,
       dateValue: (r) => r.dataDesejada ?? new Date().toISOString().slice(0, 10),
       signedValue: (r) => -r.valorEstimado,
-    });
+    }, win);
   }
 
-  function handleMobileExport(rows: CompraPlanejadaResumo[]) {
+  function handleMobileExport(rows: CompraPlanejadaResumo[], win?: Window | null) {
     openMobilePrintReport({
       title: 'Compras Planejadas',
       filters: buildExportFilters(),
@@ -299,7 +299,7 @@ export function ComprasPlanejadasListPage() {
       descriptionValue: (r) => r.titulo,
       subtitleValue: (r) => r.responsavelNome ?? '',
       signedValue: (r) => -r.valorEstimado,
-    });
+    }, win);
   }
 
   const fetchPageTyped = comprasPlanejadasApi.listar as (f: CompraPlanejadaFilters) => Promise<{ items: CompraPlanejadaResumo[]; totalItems: number; totalPages: number }>;
@@ -324,7 +324,7 @@ export function ComprasPlanejadasListPage() {
             columns={[]}
             filename="compras-planejadas"
             label="PDF"
-            onExport={(rows) => isPwa() ? handleMobileExport(rows) : handlePdfExport(rows)}
+            onExport={(rows, win) => isPwa() ? handleMobileExport(rows, win) : handlePdfExport(rows, win)}
           />
           <Button to="/compras-planejadas/novo" icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>add_circle</span>}>
             Nova compra planejada
