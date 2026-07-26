@@ -19,6 +19,8 @@ import type {
   LiquidacaoPayload,
   CancelarContaPagarPayload,
   CancelarContaReceberPayload,
+  CriarReembolsoPayload,
+  CriarReembolsoResponse,
   MovimentacaoDetalhe,
   MovimentacaoFilters,
   MovimentacaoListSummary,
@@ -165,6 +167,9 @@ export const financeiroApi = {
       confirmar: (payload: ConfirmarImportacaoPayload): Promise<ConfirmarImportacaoResponse> =>
         post<ConfirmarImportacaoResponse>('/faturas/importar/confirmar', payload),
     },
+  },
+  reembolsos: {
+    criar: (payload: CriarReembolsoPayload) => post<CriarReembolsoResponse>('/reembolsos/contas-pagar', payload)
   },
   transferencias: {
     listar: (params: TransferenciaFilters) =>

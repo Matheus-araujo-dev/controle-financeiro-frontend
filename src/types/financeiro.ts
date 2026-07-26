@@ -12,6 +12,56 @@ export type ContaVinculadaResumo = {
   statusNome: string;
   dataVencimento: string;
 };
+
+export type GrupoContaResumo = {
+  id: string;
+  tipo: TipoContaVinculada;
+  descricao: string;
+  valorLiquido: number;
+  numeroParcela: number;
+  quantidadeParcelas: number;
+  statusCodigo: string;
+  statusNome: string;
+  pessoaNome: string;
+};
+
+export type GrupoReembolsoInfo = {
+  grupoReembolsoId: string;
+  contas: GrupoContaResumo[];
+};
+
+export type GrupoResponsaveisInfo = {
+  grupoResponsaveisId: string;
+  contas: GrupoContaResumo[];
+};
+
+export type CriarReembolsoPayload = {
+  contaOrigemId: string;
+  parcelarIgual: boolean;
+  valorTotal: number;
+  pagadoresIds: string[];
+  formaPagamentoId: string;
+  dataVencimento: string;
+  descricao: string;
+  observacao: string | null;
+  rateios: RateioPayload[];
+};
+
+export type ReembolsoContaResumo = {
+  id: string;
+  pagadorId: string;
+  pagadorNome: string;
+  numeroParcela: number;
+  quantidadeParcelas: number;
+  valorLiquido: number;
+  dataVencimento: string;
+  descricao: string;
+};
+
+export type CriarReembolsoResponse = {
+  grupoReembolsoId: string;
+  contasReceber: ReembolsoContaResumo[];
+};
 export type StatusContaCodigo = 'PENDENTE' | 'LIQUIDADA' | 'VENCIDA' | 'CANCELADA' | 'PARCIAL' | 'EM_FATURA' | 'FUTURO';
 export type StatusFaturaCodigo = 'ABERTA' | 'PAGA' | 'FECHADA';
 export type TipoMovimentacao = 'Entrada' | 'Saida';
@@ -175,6 +225,10 @@ export type ContaPagarDetalhe = {
   createdAtUtc: string;
   updatedAtUtc: string;
   contaVinculada: ContaVinculadaResumo | null;
+  grupoReembolsoId?: string | null;
+  grupoResponsaveisId?: string | null;
+  grupoReembolso?: GrupoReembolsoInfo | null;
+  grupoResponsaveis?: GrupoResponsaveisInfo | null;
 };
 
 export type ContaPagarPayload = {
@@ -282,6 +336,10 @@ export type ContaReceberDetalhe = {
   createdAtUtc: string;
   updatedAtUtc: string;
   contaVinculada: ContaVinculadaResumo | null;
+  grupoReembolsoId?: string | null;
+  grupoResponsaveisId?: string | null;
+  grupoReembolso?: GrupoReembolsoInfo | null;
+  grupoResponsaveis?: GrupoResponsaveisInfo | null;
 };
 
 export type ContaReceberPayload = {

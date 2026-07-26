@@ -5,7 +5,8 @@ import { Button } from '../../../components/ui/Button';
 import { formatCurrencyBRL } from '../../../shared/currency';
 import { formatDateBR } from '../../../shared/date';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
-import type { CancelarContaPagarPayload } from '../../../types/financeiro';
+import type { CancelarContaPagarPayload, CriarReembolsoResponse } from '../../../types/financeiro';
+import { ReembolsoModal } from './ReembolsoModal';
 
 type SummarySidebarProps = {
   form: FinancialAccountFormApi;
@@ -339,6 +340,11 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     onConfirmAlterarFuturas,
     clearPendingScope,
     contaVinculada,
+    grupoReembolsoId,
+    grupoReembolso,
+    isPagar,
+    pessoaOptions,
+    formaPagamentoOptions,
     pendingPropagation,
     propagarParaVinculada,
     dismissPropagation
@@ -346,6 +352,8 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
   const showSubmitError = Boolean(errorMessage) && !isSubmitting;
 
   const [confirm, setConfirm] = useState<ConfirmState>(null);
+  const [reembolsoModalOpen, setReembolsoModalOpen] = useState(false);
+  const [reembolsoResult, setReembolsoResult] = useState<CriarReembolsoResponse | null>(null);
   const [plannedPurchaseConfirmOpen, setPlannedPurchaseConfirmOpen] = useState(false);
   const [recorrenciaConfirmOpen, setRecorrenciaConfirmOpen] = useState(false);
   const [parcelasConfirmOpen, setParcelasConfirmOpen] = useState(false);
@@ -437,6 +445,71 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
               >
                 Ver conta vinculada
               </Button>
+            </div>
+          ) : null}
+
+          {/* Grupo de reembolso — mostra quando há reembolso gerado */}
+          {grupoReembolso ? (
+            <div className="rounded-2xl border border-secondary/20 bg-secondary/5 p-4 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-base text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-secondary">Reembolso Gerado</span>
+                </div>
+                <span className="text-[10px] font-bold text-secondary/70">{grupoReembolso.contas.length} conta{grupoReembolso.contas.length !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="space-y-1.5">
+                {grupoReembolso.contas.slice(0, 4).map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="flex w-full items-center justify-between rounded-xl px-2 py-1.5 text-left text-xs transition-colors hover:bg-white/6"
+                    onClick={() => navigate(`/contas-receber/${c.id}`)}
+                  >
+                    <span className="truncate text-on-surface font-medium">{c.pessoaNome}</span>
+                    <span className="shrink-0 ml-2 font-mono text-on-surface-variant">{formatCurrencyBRL(c.valorLiquido)}</span>
+                  </button>
+                ))}
+                {grupoReembolso.contas.length > 4 && (
+                  <p className="text-[10px] text-on-surface-variant/60 px-2">
+                    + {grupoReembolso.contas.length - 4} contas
+                  </p>
+                )}
+              </div>
+              <p className="text-xs text-secondary/70 font-semibold text-right">
+                Total: {formatCurrencyBRL(grupoReembolso.contas.reduce((s, c) => s + c.valorLiquido, 0))}
+              </p>
+            </div>
+          ) : null}
+
+          {/* Botão "Gerar Reembolso" — só para ContasPagar sem reembolso existente */}
+          {isPagar && id && id !== 'novo' && !grupoReembolsoId && !reembolsoResult &&
+            (detailStatus === 'PENDENTE' || detailStatus === 'VENCIDA' || detailStatus === 'EM_FATURA' || detailStatus === 'LIQUIDADA') ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              className="w-full rounded-2xl font-bold gap-2 border-secondary/30! text-secondary!"
+              onClick={() => setReembolsoModalOpen(true)}
+            >
+              <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>
+              Gerar Reembolso
+            </Button>
+          ) : null}
+
+          {/* Card de resultado após criar reembolso */}
+          {reembolsoResult ? (
+            <div className="rounded-2xl border border-secondary/30 bg-secondary/8 p-4 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-base text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-secondary">Reembolso criado</span>
+              </div>
+              <p className="text-sm text-on-surface">
+                {reembolsoResult.contasReceber.length} conta{reembolsoResult.contasReceber.length !== 1 ? 's' : ''} a receber gerada{reembolsoResult.contasReceber.length !== 1 ? 's' : ''}.
+              </p>
+              <p className="text-xs text-on-surface-variant">
+                Total: {formatCurrencyBRL(reembolsoResult.contasReceber.reduce((s, c) => s + c.valorLiquido, 0))}
+              </p>
             </div>
           ) : null}
 
@@ -572,6 +645,23 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
           void onConfirmAlterarFuturas().finally(() => setScopeSubmitting(false));
         }}
       />
+      {id && id !== 'novo' && (
+        <ReembolsoModal
+          open={reembolsoModalOpen}
+          contaId={id}
+          descricao={String(watchedValues.descricao ?? '')}
+          valorLiquido={valorLiquido}
+          quantidadeParcelas={Number(watchedValues.quantidadeParcelas) || 1}
+          dataVencimento={String(watchedValues.dataVencimento ?? '')}
+          pessoaOptions={pessoaOptions}
+          formaPagamentoOptions={formaPagamentoOptions}
+          onClose={() => setReembolsoModalOpen(false)}
+          onSuccess={(result) => {
+            setReembolsoModalOpen(false);
+            setReembolsoResult(result);
+          }}
+        />
+      )}
     </div>
   );
 }
