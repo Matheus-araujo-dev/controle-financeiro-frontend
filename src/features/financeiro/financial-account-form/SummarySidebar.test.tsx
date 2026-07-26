@@ -1,8 +1,19 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { vi } from 'vitest';
 import { SummarySidebar } from './SummarySidebar';
 import type { FinancialAccountFormApi } from './useFinancialAccountForm';
+
+vi.mock('./ReembolsoModal', () => ({
+  ReembolsoModal: ({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess: (r: unknown) => void }) =>
+    open ? (
+      <div role="dialog" aria-label="Gerar reembolso">
+        <button onClick={onClose}>Fechar modal</button>
+        <button onClick={() => onSuccess({ grupoReembolsoId: 'gr1', contasReceber: [{ id: 'cr1', pagadorId: 'p1', pagadorNome: 'Alice', valorLiquido: 500, numeroParcela: 1, quantidadeParcelas: 1, dataVencimento: '2026-08-01', descricao: 'R' }] })}>Confirmar</button>
+      </div>
+    ) : null,
+}));
 
 function makeMockForm(overrides: Partial<Record<string, unknown>> = {}): FinancialAccountFormApi {
   return {
@@ -445,5 +456,82 @@ describe('SummarySidebar', () => {
     renderSidebar({ errorMessage: 'Falha ao salvar' });
     // Error appears in both mobile footer and FormActionPanel
     expect(screen.getAllByText('Falha ao salvar').length).toBeGreaterThanOrEqual(1);
+  });
+
+  // ── Grupo de reembolso ─────────────────────────────────────────────────────
+
+  it('shows grupoReembolso card with contas when grupoReembolso is set', () => {
+    renderSidebar({
+      grupoReembolso: {
+        grupoReembolsoId: 'gr1',
+        contas: [
+          { id: 'cr1', tipo: 'Receber', descricao: 'Reembolso Alice', valorLiquido: 250, numeroParcela: 1, quantidadeParcelas: 1, statusCodigo: 'PENDENTE', statusNome: 'Pendente', pessoaNome: 'Alice' },
+          { id: 'cr2', tipo: 'Receber', descricao: 'Reembolso Bob', valorLiquido: 250, numeroParcela: 1, quantidadeParcelas: 1, statusCodigo: 'PENDENTE', statusNome: 'Pendente', pessoaNome: 'Bob' },
+        ],
+      },
+    });
+    expect(screen.getByText(/Reembolso Gerado/i)).toBeInTheDocument();
+    expect(screen.getByText('Alice')).toBeInTheDocument();
+    expect(screen.getByText('Bob')).toBeInTheDocument();
+  });
+
+  it('shows "+ N contas" overflow when grupoReembolso has more than 4 contas', () => {
+    const contas = Array.from({ length: 6 }, (_, i) => ({
+      id: `cr${i}`, tipo: 'Receber' as const, descricao: `Reembolso ${i}`, valorLiquido: 100,
+      numeroParcela: 1, quantidadeParcelas: 1, statusCodigo: 'PENDENTE', statusNome: 'Pendente',
+      pessoaNome: `Pessoa ${i}`,
+    }));
+    renderSidebar({ grupoReembolso: { grupoReembolsoId: 'gr1', contas } });
+    expect(screen.getByText(/\+ 2 contas/i)).toBeInTheDocument();
+  });
+
+  // ── Botão "Gerar Reembolso" ────────────────────────────────────────────────
+
+  it('shows "Gerar Reembolso" button for isPagar=true + PENDENTE + no existing reembolso', () => {
+    renderSidebar({ id: 'c1', isPagar: true, detailStatus: 'PENDENTE', grupoReembolsoId: null });
+    expect(screen.getByRole('button', { name: /Gerar Reembolso/i })).toBeInTheDocument();
+  });
+
+  it('shows "Gerar Reembolso" button for VENCIDA status', () => {
+    renderSidebar({ id: 'c1', isPagar: true, detailStatus: 'VENCIDA', grupoReembolsoId: null });
+    expect(screen.getByRole('button', { name: /Gerar Reembolso/i })).toBeInTheDocument();
+  });
+
+  it('shows "Gerar Reembolso" button for LIQUIDADA status', () => {
+    renderSidebar({ id: 'c1', isPagar: true, detailStatus: 'LIQUIDADA', grupoReembolsoId: null });
+    expect(screen.getByRole('button', { name: /Gerar Reembolso/i })).toBeInTheDocument();
+  });
+
+  it('hides "Gerar Reembolso" button when isPagar=false', () => {
+    renderSidebar({ id: 'c1', isPagar: false, detailStatus: 'PENDENTE', grupoReembolsoId: null });
+    expect(screen.queryByRole('button', { name: /Gerar Reembolso/i })).not.toBeInTheDocument();
+  });
+
+  it('hides "Gerar Reembolso" button when grupoReembolsoId is set', () => {
+    renderSidebar({ id: 'c1', isPagar: true, detailStatus: 'PENDENTE', grupoReembolsoId: 'gr1' });
+    expect(screen.queryByRole('button', { name: /Gerar Reembolso/i })).not.toBeInTheDocument();
+  });
+
+  it('hides "Gerar Reembolso" button for CANCELADA status', () => {
+    renderSidebar({ id: 'c1', isPagar: true, detailStatus: 'CANCELADA', grupoReembolsoId: null });
+    expect(screen.queryByRole('button', { name: /Gerar Reembolso/i })).not.toBeInTheDocument();
+  });
+
+  it('opens ReembolsoModal when "Gerar Reembolso" is clicked', async () => {
+    renderSidebar({ id: 'c1', isPagar: true, detailStatus: 'PENDENTE', grupoReembolsoId: null });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /Gerar Reembolso/i }));
+    expect(screen.getByRole('dialog', { name: /Gerar reembolso/i })).toBeInTheDocument();
+  });
+
+  it('shows result card after ReembolsoModal onSuccess and hides the button', async () => {
+    renderSidebar({ id: 'c1', isPagar: true, detailStatus: 'PENDENTE', grupoReembolsoId: null });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /Gerar Reembolso/i }));
+    await user.click(screen.getByRole('button', { name: /Confirmar/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/Reembolso criado/i)).toBeInTheDocument()
+    );
+    expect(screen.queryByRole('button', { name: /Gerar Reembolso/i })).not.toBeInTheDocument();
   });
 });
