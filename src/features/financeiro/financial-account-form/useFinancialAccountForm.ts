@@ -18,7 +18,7 @@ import { calculateValorLiquido, resolveFormaPagamentoBehavior } from '../module-
 import { financialAccountFormSchema } from '../schemas';
 import { formatMonthYearBR } from '../../../shared/date';
 import { extractCardInvoicePreview, type CardInvoicePreview } from './card-invoice';
-import type { CancelarContaPagarPayload, ContaVinculadaResumo } from '../../../types/financeiro';
+import type { CancelarContaPagarPayload, ContaVinculadaResumo, GrupoReembolsoInfo } from '../../../types/financeiro';
 import type { DuplicateItemSummary } from '../financial-rules';
 import { financeiroApi } from '../../../services/http/financeiro-api';
 import { contasPagarModuleConfig, contasReceberModuleConfig } from '../module-config';
@@ -92,6 +92,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [gerarReembolso, setGerarReembolso] = useState(false);
   const [reembolsoData, setReembolsoData] = useState<QuickLaunchInitialValues | null>(null);
   const [contaVinculada, setContaVinculada] = useState<ContaVinculadaResumo | null>(null);
+  const [grupoReembolsoId, setGrupoReembolsoId] = useState<string | null>(null);
+  const [grupoReembolso, setGrupoReembolso] = useState<GrupoReembolsoInfo | null>(null);
   const [pendingPropagation, setPendingPropagation] = useState<PendingPropagation | null>(null);
   const originalValuesRef = useRef<FinanceiroFormValues | null>(null);
 
@@ -226,6 +228,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         setDetailFaturaStatus('statusFaturaCartao' in detail ? (detail as Record<string, unknown>).statusFaturaCartao as string | null : null);
         setCardInvoicePreview(extractCardInvoicePreview(detail));
         setContaVinculada((detail as Record<string, unknown>).contaVinculada as ContaVinculadaResumo | null ?? null);
+        setGrupoReembolsoId((detail as Record<string, unknown>).grupoReembolsoId as string | null ?? null);
+        setGrupoReembolso((detail as Record<string, unknown>).grupoReembolso as GrupoReembolsoInfo | null ?? null);
         if ('grupoParcelamentoId' in detail) {
           setGrupoParcelamentoId((detail as Record<string, unknown>).grupoParcelamentoId as string | null);
           setNumeroParcela((detail as Record<string, unknown>).numeroParcela as number | undefined);
@@ -601,6 +605,9 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     reembolsoData,
     clearReembolso,
     contaVinculada,
+    grupoReembolsoId,
+    grupoReembolso,
+    isPagar: config.key === 'contas-pagar',
     pendingPropagation,
     propagarParaVinculada,
     dismissPropagation
