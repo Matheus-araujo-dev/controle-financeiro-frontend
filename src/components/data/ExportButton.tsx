@@ -10,10 +10,12 @@ interface ExportButtonProps<T, F extends PageQuery> {
   format?: 'xlsx' | 'csv';
   label?: string;
   disabled?: boolean;
-  /** Override the default XLSX export — receives all fetched rows and handles the download.
-   *  The second argument is a pre-opened window (opened synchronously before the async fetch
-   *  so popup blockers don't interfere). Pass it to openPrintReport / openMobilePrintReport. */
+  /** Override the default XLSX export — receives all fetched rows and handles the download. */
   onExport?: (rows: T[], win: Window | null) => void;
+  /** Set to true for PDF exports. Opens a blank window synchronously (trusted gesture context)
+   *  before the async fetch so popup blockers don't interfere. Pass the window to
+   *  openPrintReport / openMobilePrintReport. Has no effect without onExport. */
+  opensWindow?: boolean;
 }
 
 function DownloadIcon({ className = '' }: { className?: string }) {
@@ -34,15 +36,14 @@ export function ExportButton<T, F extends PageQuery>({
   label = 'Exportar',
   disabled = false,
   onExport,
+  opensWindow = false,
 }: ExportButtonProps<T, F>) {
   const [loading, setLoading] = useState(false);
 
   async function handleExport() {
     if (loading || disabled) return;
 
-    // Open window synchronously (trusted user-gesture context) before any await,
-    // so popup blockers allow it and only one tab is ever opened.
-    const win = onExport ? window.open('', '_blank', 'noopener,noreferrer') : null;
+    const win = (onExport && opensWindow) ? window.open('', '_blank', 'noopener,noreferrer') : null;
 
     setLoading(true);
     try {

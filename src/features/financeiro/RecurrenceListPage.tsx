@@ -123,7 +123,7 @@ export function RecurrenceListPage() {
     downloadRichExport({ title: 'Recorrências', filename: 'recorrencias', sheetName: 'Recorrências', columns: richExportColumns, rows, showTotals: true });
   }
 
-  function handlePdfExport(rows: RecorrenciaListItem[]) {
+  function handlePdfExport(rows: RecorrenciaListItem[], win?: Window | null) {
     const totalReceitas = rows.filter((r) => r.contaOrigemTipo === 'ContaReceber').reduce((s, r) => s + r.valorLiquido, 0);
     const totalDespesas = rows.filter((r) => r.contaOrigemTipo === 'ContaPagar').reduce((s, r) => s + r.valorLiquido, 0);
     openPrintReport({
@@ -133,7 +133,7 @@ export function RecurrenceListPage() {
         { label: 'Despesas mensais', value: formatCurrencyBRL(totalDespesas), type: 'neg' },
       ],
       columns: printColumns, rows, showTotals: true,
-    });
+    }, win);
   }
 
   const fetchPageTyped = financeiroApi.recorrencias.listar as (f: RecorrenciaFilters) => Promise<{ items: RecorrenciaListItem[]; totalItems: number; totalPages: number }>;
@@ -145,7 +145,7 @@ export function RecurrenceListPage() {
       actions={
         <div className="flex gap-2">
           <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="recorrencias" label="XLSX" onExport={handleXlsxExport} />
-          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="recorrencias" label="PDF" onExport={handlePdfExport} />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="recorrencias" label="PDF" opensWindow onExport={handlePdfExport} />
         </div>
       }
       summary={

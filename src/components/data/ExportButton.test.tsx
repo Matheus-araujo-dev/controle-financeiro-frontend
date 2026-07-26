@@ -31,12 +31,24 @@ describe('ExportButton', () => {
     expect(screen.getByRole('button', { name: /Baixar CSV/i })).toBeInTheDocument();
   });
 
-  it('calls onExport override instead of default when provided', async () => {
+  it('calls onExport with null win when opensWindow is not set', async () => {
+    const onExport = vi.fn();
+    render(
+      <ExportButton fetchPage={fetchPage} filters={{} as never} columns={columns} filename="test" onExport={onExport} />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /Exportar/i }));
+
+    await waitFor(() => expect(onExport).toHaveBeenCalledWith([{ id: '1' }], null));
+    expect(exportListing.exportListing).not.toHaveBeenCalled();
+  });
+
+  it('opens window and passes it to onExport when opensWindow is true', async () => {
     const mockWin = {} as Window;
     vi.spyOn(window, 'open').mockReturnValue(mockWin);
     const onExport = vi.fn();
     render(
-      <ExportButton fetchPage={fetchPage} filters={{} as never} columns={columns} filename="test" onExport={onExport} />
+      <ExportButton fetchPage={fetchPage} filters={{} as never} columns={columns} filename="test" opensWindow onExport={onExport} />
     );
 
     await userEvent.click(screen.getByRole('button', { name: /Exportar/i }));

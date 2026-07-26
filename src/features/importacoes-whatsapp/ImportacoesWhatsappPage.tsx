@@ -82,8 +82,8 @@ export function ImportacoesWhatsappPage() {
     downloadRichExport({ title: 'Importações WhatsApp', filename: 'importacoes-whatsapp', sheetName: 'Importações', columns: richExportColumns, rows });
   }
 
-  function handlePdfExport(rows: ImportacaoWhatsappResumo[]) {
-    openPrintReport({ title: 'Importações WhatsApp', columns: printColumns, rows });
+  function handlePdfExport(rows: ImportacaoWhatsappResumo[], win?: Window | null) {
+    openPrintReport({ title: 'Importações WhatsApp', columns: printColumns, rows }, win);
   }
 
   const fetchPageTyped = importacoesWhatsappApi.listar as (f: ImportacoesWhatsappFilters) => Promise<{ items: ImportacaoWhatsappResumo[]; totalItems: number; totalPages: number }>;
@@ -122,7 +122,7 @@ export function ImportacoesWhatsappPage() {
       actions={
         <div className="flex gap-2">
           <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="importacoes-whatsapp" label="XLSX" onExport={handleXlsxExport} />
-          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="importacoes-whatsapp" label="PDF" onExport={handlePdfExport} />
+          <ExportButton fetchPage={fetchPageTyped} filters={filters} columns={[]} filename="importacoes-whatsapp" label="PDF" opensWindow onExport={handlePdfExport} />
         </div>
       }
       filters={
