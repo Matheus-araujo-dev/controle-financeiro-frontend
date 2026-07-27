@@ -747,37 +747,24 @@ export function QuickLaunchModal({
                           <label className={formLabelClass}>
                             Responsáv{responsaveisAdicionaisIds.length > 0 ? 'eis' : 'el'}
                           </label>
-                          <div className="flex items-center gap-1.5">
-                            <div className="flex-1">
-                              <ComboBox
-                                aria-label="Adicionar responsável"
-                                value={addingResponsavelId}
-                                onChange={setAddingResponsavelId}
-                                options={responsaveis.filter((r) => r.value !== responsavelId && !responsaveisAdicionaisIds.includes(r.value))}
-                                placeholder="Adicionar responsável..."
-                                onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
-                                addNewLabel="Nova pessoa"
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              aria-label="add"
-                              disabled={!addingResponsavelId}
-                              onClick={() => {
-                                if (!addingResponsavelId) return;
-                                if (!responsavelId) {
-                                  setResponsavelId(addingResponsavelId);
-                                } else {
-                                  setResponsaveisAdicionaisIds([...responsaveisAdicionaisIds, addingResponsavelId]);
-                                }
-                                setResponsaveisValores([]);
-                                setAddingResponsavelId('');
-                              }}
-                              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-surface-container text-on-surface-variant transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-40"
-                            >
-                              <span className="material-symbols-outlined text-lg leading-none">add</span>
-                            </button>
-                          </div>
+                          <ComboBox
+                            aria-label="Adicionar responsável"
+                            value={addingResponsavelId}
+                            onChange={(val) => {
+                              if (!val) return;
+                              if (!responsavelId) {
+                                setResponsavelId(val);
+                              } else {
+                                setResponsaveisAdicionaisIds([...responsaveisAdicionaisIds, val]);
+                              }
+                              setResponsaveisValores([]);
+                              setAddingResponsavelId('');
+                            }}
+                            options={responsaveis.filter((r) => r.value !== responsavelId && !responsaveisAdicionaisIds.includes(r.value))}
+                            placeholder="Adicionar responsável..."
+                            onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
+                            addNewLabel="Nova pessoa"
+                          />
                         </div>
                       </div>
 
