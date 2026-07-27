@@ -83,6 +83,7 @@ export type FinanceiroFormValues = {
   recorrenciaPermiteEdicaoOcorrenciaIndividual: boolean;
   recorrenciaObservacao: string;
   recorrenciaGerarAteData: string;
+  responsaveisAdicionaisIds: string[];
 };
 
 export type MeioPagamento = {
@@ -183,7 +184,8 @@ const defaultValues: FinanceiroFormValues = {
   recorrenciaDataFim: '',
   recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
   recorrenciaObservacao: '',
-  recorrenciaGerarAteData: ''
+  recorrenciaGerarAteData: '',
+  responsaveisAdicionaisIds: []
 };
 
 function buildContaFinanceiraSummaryItems(summary: FinanceiroResumo): SummaryCardItem[] {
@@ -413,7 +415,8 @@ function buildContaPagarPayload(values: FinanceiroFormValues, opts?: { forcarPro
       valor: item.valor
     })),
     recorrencia: buildRecorrenciaPayload(values),
-    forcarProximaFatura: opts?.forcarProximaFatura
+    forcarProximaFatura: opts?.forcarProximaFatura,
+    responsaveisAdicionaisIds: values.responsaveisAdicionaisIds?.length ? values.responsaveisAdicionaisIds : undefined
   };
 }
 
@@ -439,7 +442,8 @@ function buildContaReceberPayload(values: FinanceiroFormValues): ContaReceberPay
       contaGerencialId: item.contaGerencialId,
       valor: item.valor
     })),
-    recorrencia: buildRecorrenciaPayload(values)
+    recorrencia: buildRecorrenciaPayload(values),
+    responsaveisAdicionaisIds: values.responsaveisAdicionaisIds?.length ? values.responsaveisAdicionaisIds : undefined
   };
 }
 
@@ -503,7 +507,8 @@ function buildToFormValues(detail: {
     recorrenciaDataFim: toMonthInputValue(detail.recorrencia?.dataFim),
     recorrenciaPermiteEdicaoOcorrenciaIndividual: detail.recorrencia?.permiteEdicaoOcorrenciaIndividual ?? true,
     recorrenciaObservacao: detail.recorrencia?.observacao ?? '',
-    recorrenciaGerarAteData: detail.recorrencia?.dataFim ?? ''
+    recorrenciaGerarAteData: detail.recorrencia?.dataFim ?? '',
+    responsaveisAdicionaisIds: []
   };
 }
 
