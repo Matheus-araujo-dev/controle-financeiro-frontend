@@ -30,9 +30,7 @@ export const useNotificationStore = create<NotificationState>((set) => ({
 export const useNotificationCount = () => useNotificationStore((state) => state.queue.length);
 
 export function notify(level: AppNotificationLevel, title: string, description?: string) {
-  useNotificationStore.getState().push({
-    level,
-    title,
-    description
-  });
+  const { queue, push } = useNotificationStore.getState();
+  const duplicate = queue.some((n) => n.level === level && n.title === title && n.description === description);
+  if (!duplicate) push({ level, title, description });
 }

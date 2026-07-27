@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { App as AntdApp } from 'antd';
 import { useNotificationStore } from '../../store/notification-store';
 
@@ -6,31 +6,36 @@ type LiveAnnouncement = { text: string; assertive: boolean } | null;
 
 export function NotificationCenter() {
   const { notification } = AntdApp.useApp();
+  const notificationRef = useRef(notification);
+  notificationRef.current = notification;
+
   const item = useNotificationStore((state) => state.queue[0]);
   const shift = useNotificationStore((state) => state.shift);
   const [announcement, setAnnouncement] = useState<LiveAnnouncement>(null);
 
   useEffect(() => {
-    if (!item) {
-      return;
-    }
+    if (!item) return;
 
-    notification[item.level]({
-      title: item.title,
-      description: item.description,
-      placement: 'topRight',
-      duration: 4,
-    });
+    // Defer to the next task so the current React commit phase completes before
+    // AntD's CSSMotion schedules its own setState, preventing the infinite update loop.
+    const t = setTimeout(() => {
+      notificationRef.current[item.level]({
+        message: item.title,
+        description: item.description,
+        placement: 'topRight',
+        duration: 4,
+      });
 
-    // Anuncia a notificação para leitores de tela via região live (o toast do AntD
-    // não é anunciado de forma confiável). Erros/avisos são assertivos; info/sucesso, polite.
-    setAnnouncement({
-      text: item.description ? `${item.title}. ${item.description}` : item.title,
-      assertive: item.level === 'error' || item.level === 'warning',
-    });
+      setAnnouncement({
+        text: item.description ? `${item.title}. ${item.description}` : item.title,
+        assertive: item.level === 'error' || item.level === 'warning',
+      });
 
-    shift();
-  }, [item, notification, shift]);
+      shift();
+    }, 0);
+
+    return () => clearTimeout(t);
+  }, [item, shift]);
 
   return (
     <>
