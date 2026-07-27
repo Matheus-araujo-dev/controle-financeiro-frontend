@@ -16,7 +16,12 @@ function renderCenter() {
 }
 
 describe('NotificationCenter — regiões live', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   afterEach(() => {
+    vi.useRealTimers();
     useNotificationStore.getState().clear();
   });
 
@@ -29,12 +34,14 @@ describe('NotificationCenter — regiões live', () => {
   it('anuncia sucesso na região polite', () => {
     const { polite } = renderCenter();
     act(() => notify('success', 'Salvo', 'Tudo certo'));
+    act(() => vi.runAllTimers());
     expect(polite).toHaveTextContent('Salvo. Tudo certo');
   });
 
   it('anuncia erro na região assertive', () => {
     const { assertive } = renderCenter();
     act(() => notify('error', 'Falhou'));
+    act(() => vi.runAllTimers());
     expect(assertive).toHaveTextContent('Falhou');
   });
 });
