@@ -250,8 +250,8 @@ describe('financeiro module config', () => {
         dataLiquidacao: null,
         cartaoId: null,
         contaBancariaId: null,
-        pagadorId: 'pessoa-1',
-        responsavelId: 'resp-1',
+        pagadorId: 'resp-1',
+        responsavelId: 'pessoa-1',
         recorrencia: null
       })
     );
@@ -284,7 +284,7 @@ describe('financeiro module config', () => {
         pagadorId: 'pessoa-2',
         responsavelId: 'resp-2'
       } as never)
-    ).toEqual(expect.objectContaining({ pessoaId: 'pessoa-2', responsavelId: 'resp-2', formaPagamentoId: 'forma-1' }));
+    ).toEqual(expect.objectContaining({ pessoaId: 'resp-2', responsavelId: 'pessoa-2', formaPagamentoId: 'forma-1' }));
   });
 
   it('loads select options and builds summary items', async () => {

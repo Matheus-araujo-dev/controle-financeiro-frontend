@@ -68,11 +68,13 @@ const OPTIONS = [
 function Wrapper({
   defaultValues,
   canEdit = true,
-  valorLiquido = 0
+  valorLiquido = 0,
+  personRole
 }: {
   defaultValues?: Partial<FinanceiroFormValues>;
   canEdit?: boolean;
   valorLiquido?: number;
+  personRole?: 'recebedor' | 'pagador';
 }) {
   const { control, setValue, formState: { errors } } = useForm<FinanceiroFormValues>({
     defaultValues: {
@@ -87,12 +89,13 @@ function Wrapper({
     errors,
     canEdit,
     responsavelOptions: OPTIONS,
+    pessoaOptions: OPTIONS,
     setValue,
     valorLiquido,
     reloadResponsavelOptions: vi.fn().mockResolvedValue(undefined)
   } as unknown as FinancialAccountFormApi;
 
-  return <ResponsaveisChipsSection form={form} />;
+  return <ResponsaveisChipsSection form={form} personRole={personRole} />;
 }
 
 describe('ResponsaveisChipsSection', () => {
@@ -216,5 +219,17 @@ describe('ResponsaveisChipsSection', () => {
     render(<Wrapper />);
     // singular: Responsáv + el
     expect(screen.getByText('Responsável')).toBeInTheDocument();
+  });
+
+  it('personRole=pagador renders Pagador label, pagador aria-label and uses pessoaOptions', () => {
+    render(<Wrapper personRole="pagador" />);
+    expect(screen.getByText('Pagador')).toBeInTheDocument();
+    expect(screen.getByLabelText('Adicionar pagador')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Adicionar responsável')).not.toBeInTheDocument();
+  });
+
+  it('personRole=pagador shows Pagadores label when count > 1', () => {
+    render(<Wrapper personRole="pagador" defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: ['r2'] }} />);
+    expect(screen.getByText('Pagadores')).toBeInTheDocument();
   });
 });
