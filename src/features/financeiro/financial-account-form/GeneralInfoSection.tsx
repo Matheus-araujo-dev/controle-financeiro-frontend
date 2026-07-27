@@ -11,6 +11,7 @@ import { ComboBox } from '../../../components/forms/ComboBox';
 import { FormSection } from '../../../components/layout';
 import { QuickAddPessoaModal } from '../../cadastros/quick-add/QuickAddPessoaModal';
 import { QuickAddContaGerencialModal } from '../../cadastros/quick-add/QuickAddContaGerencialModal';
+import { ResponsaveisChipsSection } from './ResponsaveisChipsSection';
 
 type GeneralInfoSectionProps = {
   form: FinancialAccountFormApi;
@@ -18,7 +19,7 @@ type GeneralInfoSectionProps = {
   personRole: 'pagador' | 'recebedor';
 };
 
-type PessoaTarget = 'pessoaId' | 'responsavelId' | null;
+type PessoaTarget = 'pessoaId' | null;
 
 export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInfoSectionProps) {
   const {
@@ -28,16 +29,14 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
     origemCompraPlanejadaId,
     cardInvoicePreview,
     pessoaOptions,
-    responsavelOptions,
     rateioOptions,
     setValue,
     reloadPessoaOptions,
-    reloadResponsavelOptions,
     reloadRateioOptions
   } = form;
 
   const [pessoaModalTarget, setPessoaModalTarget] = useState<PessoaTarget>(null);
-  const [contaGerencialModalOpen, setContaGerencialModalOpen] = useState(false);
+  const [contaGerencialModalOpen, setContaGerencialModalOpen] = useState<boolean>(false);
   const [aiSugestao, setAiSugestao] = useState<{ id: string; descricao: string; confianca: number } | null>(null);
   const aiDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -45,6 +44,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
   const categoriaAtual = useWatch({ control, name: 'rateios.0.contaGerencialId' });
   const pessoaWatched = useWatch({ control, name: 'pessoaId' });
   const responsavelAtual = useWatch({ control, name: 'responsavelId' });
+  const responsaveisAdicionaisAtual = useWatch({ control, name: 'responsaveisAdicionaisIds' }) ?? [];
   const lastAutoFilledContaRef = useRef<string | null>(null);
   const lastAutoFilledResponsavelRef = useRef<string | null>(null);
 
@@ -71,11 +71,13 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
     const option = rateioOptions.find((o) => o.value === categoriaAtual);
     const responsavelId = option?.responsavelPadraoId;
     if (!responsavelId) return;
+    // Skip auto-fill when there are multiple responsáveis (user is managing chips manually)
+    if (responsaveisAdicionaisAtual.length > 0) return;
     const manuallyChanged = responsavelAtual && responsavelAtual !== lastAutoFilledResponsavelRef.current;
     if (manuallyChanged) return;
     setValue('responsavelId', responsavelId);
     lastAutoFilledResponsavelRef.current = responsavelId;
-  }, [categoriaAtual, rateioOptions, responsavelAtual, setValue]);
+  }, [categoriaAtual, rateioOptions, responsavelAtual, responsaveisAdicionaisAtual, setValue]);
 
   useEffect(() => {
     if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current);
@@ -106,14 +108,9 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
   }, [descricaoWatched, canEdit]);
 
   function handlePessoaSuccess(newId: string) {
-    const target = pessoaModalTarget;
-    if (target === 'responsavelId') {
-      void reloadResponsavelOptions().then(() => setValue(target, newId));
-    } else {
-      void reloadPessoaOptions().then(() => {
-        if (target) setValue(target, newId);
-      });
-    }
+    void reloadPessoaOptions().then(() => {
+      if (pessoaModalTarget) setValue(pessoaModalTarget, newId);
+    });
   }
 
   function handleContaGerencialSuccess(newId: string) {
@@ -263,30 +260,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
         </div>
 
         <div className="space-y-2">
-          <label className={fieldLabelClass}>Responsável</label>
-          <Controller
-            control={control}
-            name="responsavelId"
-            render={({ field }) => (
-              <div className="space-y-1">
-                <div className={errors.responsavelId ? 'rounded-xl ring-1 ring-error' : ''}>
-                  <ComboBox
-                    {...field}
-                    disabled={!canEdit}
-                    onAddNew={canEdit ? () => setPessoaModalTarget('responsavelId') : undefined}
-                  >
-                    <option value="">Selecionar...</option>
-                    {responsavelOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </ComboBox>
-                </div>
-                {errors.responsavelId ? <span className={errorTextClass}>{errors.responsavelId.message}</span> : null}
-              </div>
-            )}
-          />
+          <ResponsaveisChipsSection form={form} />
         </div>
       </div>
 
@@ -294,7 +268,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
         open={pessoaModalTarget !== null}
         onClose={() => setPessoaModalTarget(null)}
         onSuccess={handlePessoaSuccess}
-        defaultRole={pessoaModalTarget === 'responsavelId' ? 'responsavel' : personRole}
+        defaultRole={personRole}
       />
       <QuickAddContaGerencialModal open={contaGerencialModalOpen} onClose={() => setContaGerencialModalOpen(false)} onSuccess={handleContaGerencialSuccess} />
     </FormSection>
