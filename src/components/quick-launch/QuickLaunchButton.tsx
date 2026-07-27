@@ -390,7 +390,7 @@ export function QuickLaunchModal({
     ? valor > 0 && Boolean(contaOrigemId) && Boolean(contaDestinoId) && contaOrigemId !== contaDestinoId
     : descricao.trim().length > 0 &&
       valor > 0 &&
-      (tipo === 'receber' || Boolean(pessoaId)) &&
+      Boolean(pessoaId) &&
       Boolean(responsavelId) &&
       Boolean(formaPagamentoId) &&
       Boolean(contaGerencialId) &&
@@ -495,7 +495,7 @@ export function QuickLaunchModal({
       return async () => {
         const result = await financeiroApi.contasReceber.criar({
           ...base,
-          responsavelId: pessoaId || null,
+          responsavelId: pessoaId,
           pagadorId: responsavelId,
           contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
           ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
