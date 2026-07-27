@@ -204,7 +204,8 @@ const contasBancariasResponse = {
 const pessoasResponse = {
   items: [
     { id: 'p1', nome: 'Mercado', ehResponsavel: false },
-    { id: 'r1', nome: 'Responsavel', ehResponsavel: true }
+    { id: 'r1', nome: 'Responsavel', ehResponsavel: true },
+    { id: 'r2', nome: 'Responsavel Dois', ehResponsavel: true }
   ]
 };
 
@@ -447,6 +448,137 @@ describe('QuickLaunchButton', () => {
       })
     );
     expect(notify).toHaveBeenCalledWith('success', 'Transferência registrada');
+  });
+
+  it('mostra chips com QLValorInput para multiplos responsaveis e envia responsaveisAdicionaisIds', async () => {
+    const { user, dialog } = await openQuickLaunch();
+
+    await user.type(within(dialog).getByPlaceholderText(/mercado/i), 'Rateio teste');
+    await user.type(within(dialog).getByLabelText('Valor'), '200');
+    await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
+
+    // Adiciona primeiro responsável
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
+    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
+
+    // Chip do primeiro responsável aparece
+    await waitFor(() =>
+      expect(within(dialog).getByRole('button', { name: /Remover Responsavel$/i })).toBeInTheDocument()
+    );
+
+    // Adiciona segundo responsável
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r2');
+    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
+
+    // Chip do segundo responsável aparece e QLValorInputs ficam visíveis (count > 1)
+    await waitFor(() =>
+      expect(within(dialog).getByRole('button', { name: /Remover Responsavel Dois/i })).toBeInTheDocument()
+    );
+    // Dois inputs de valor devem existir (QLValorInput para cada responsável)
+    const valorInputs = within(dialog).getAllByDisplayValue(/R\$/);
+    expect(valorInputs.length).toBeGreaterThanOrEqual(2);
+
+    await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-pix');
+    await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cd1');
+    await user.click(within(dialog).getByRole('button', { name: /^Lan./i }));
+
+    await waitFor(() => expect(financeiroApi.contasPagar.criar).toHaveBeenCalledTimes(1));
+    expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        responsaveisAdicionaisIds: ['r1', 'r2']
+      })
+    );
+  });
+
+  it('remove responsavel secundario mantendo o primario como chip', async () => {
+    const { user, dialog } = await openQuickLaunch();
+
+    await user.selectOptions(await within(dialog).findByLabelText(/adicionar respons.vel/i), 'r1');
+    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r2');
+    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
+
+    await waitFor(() =>
+      expect(within(dialog).getByRole('button', { name: /Remover Responsavel Dois/i })).toBeInTheDocument()
+    );
+
+    // Remove o secundário (else branch em removeResp)
+    await user.click(within(dialog).getByRole('button', { name: /Remover Responsavel Dois/i }));
+
+    await waitFor(() =>
+      expect(within(dialog).queryByRole('button', { name: /Remover Responsavel Dois/i })).not.toBeInTheDocument()
+    );
+    // Primário permanece
+    expect(within(dialog).getByRole('button', { name: /Remover Responsavel$/i })).toBeInTheDocument();
+    // Com apenas 1 responsável, nenhum QLValorInput deve aparecer (count <= 1)
+    expect(within(dialog).queryAllByDisplayValue(/R\$/).length).toBe(0);
+  });
+
+  it('fecha QuickAdd modals via handler onClose sem salvar', async () => {
+    const { user, dialog } = await openQuickLaunch();
+
+    // Abre QuickAddPessoa e fecha via onClose
+    await user.click(within(dialog).getAllByRole('button', { name: 'Nova pessoa' })[0]);
+    expect(screen.getByRole('dialog', { name: 'Nova pessoa' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Fechar pessoa' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Nova pessoa' })).not.toBeInTheDocument());
+
+    // Abre QuickAddFormaPagamento e fecha via onClose
+    await user.click(within(dialog).getByRole('button', { name: 'Nova forma de pagamento' }));
+    expect(screen.getByRole('dialog', { name: 'Nova forma de pagamento' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Fechar forma' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Nova forma de pagamento' })).not.toBeInTheDocument());
+
+    // Abre QuickAddContaGerencial e fecha via onClose
+    await user.click(within(dialog).getByRole('button', { name: 'Nova categoria' }));
+    await user.click(screen.getByRole('button', { name: 'Fechar conta' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /Nova conta gerencial/i })).not.toBeInTheDocument());
+  });
+
+  it('QLValorInput: focus mostra valor raw, blur com novo valor distribui remainder e envia valoresPorResponsavel', async () => {
+    const { user, dialog } = await openQuickLaunch();
+
+    await user.type(within(dialog).getByPlaceholderText(/mercado/i), 'Teste valor');
+    await user.type(within(dialog).getByLabelText('Valor'), '200');
+    await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
+
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
+    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r2');
+    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
+
+    await waitFor(() =>
+      expect(within(dialog).getByRole('button', { name: /Remover Responsavel Dois/i })).toBeInTheDocument()
+    );
+
+    // Chip inputs mostram valor formatado (unfocused branch)
+    const valorInputs = within(dialog).getAllByDisplayValue(/R\$/);
+    expect(valorInputs).toHaveLength(2);
+
+    // Focus no primeiro chip → mostra raw (focused branch)
+    fireEvent.focus(valorInputs[0]);
+    const rawInput = within(dialog).getAllByDisplayValue(/100[,.]00/)[0];
+    fireEvent.change(rawInput, { target: { value: '150,00' } });
+    fireEvent.blur(rawInput);
+
+    // Após blur: handleValorChange distribui remainder (50) ao outro chip
+    await waitFor(() => {
+      const inputs = within(dialog).getAllByDisplayValue(/R\$/);
+      expect(inputs).toHaveLength(2);
+    });
+
+    await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-pix');
+    await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cd1');
+    await user.click(within(dialog).getByRole('button', { name: /^Lan./i }));
+
+    await waitFor(() => expect(financeiroApi.contasPagar.criar).toHaveBeenCalledTimes(1));
+    // valoresOk = true → payload inclui valoresPorResponsavel
+    expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        responsaveisAdicionaisIds: ['r1', 'r2'],
+        valoresPorResponsavel: [150, 50]
+      })
+    );
   });
 
   it('shows confirm-close dialog when dirty form receives close request', async () => {
