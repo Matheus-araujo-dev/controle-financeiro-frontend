@@ -52,7 +52,8 @@ const validValues = {
   recorrenciaObservacao: 'Contrato mensal',
   recorrenciaGerarAteData: '2026-10-20',
   dataCompra: '2026-04-04',
-  responsaveisAdicionaisIds: []
+  responsaveisAdicionaisIds: [],
+  responsaveisValores: []
 };
 
 function createConfig() {
