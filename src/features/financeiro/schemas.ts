@@ -36,7 +36,7 @@ export const financialAccountFormSchema = z
     recorrenciaPermiteEdicaoOcorrenciaIndividual: z.boolean(),
     recorrenciaObservacao: z.string(),
     recorrenciaGerarAteData: z.string(),
-    responsaveisAdicionaisIds: z.array(z.string()).default([])
+    responsaveisAdicionaisIds: z.array(z.string())
   })
   .superRefine((values, context) => {
     const valorLiquido = calculateValorLiquido(values);
