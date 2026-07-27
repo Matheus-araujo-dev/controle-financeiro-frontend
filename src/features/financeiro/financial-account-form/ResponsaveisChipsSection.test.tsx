@@ -141,20 +141,20 @@ describe('ResponsaveisChipsSection', () => {
     expect(screen.queryByRole('button', { name: /Remover Bob/i })).not.toBeInTheDocument();
   });
 
-  it('shows divisão igualitária when count > 1 and valorLiquido > 0', () => {
+  it('shows total distribuído and valor inputs when count > 1 and valorLiquido > 0', () => {
     render(
       <Wrapper
         defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: ['r2'] }}
         valorLiquido={300}
       />
     );
-    expect(screen.getByText(/por responsável/i)).toBeInTheDocument();
-    expect(screen.getByText(/R\$\s*150/)).toBeInTheDocument();
+    expect(screen.getByText(/total distribuído/i)).toBeInTheDocument();
+    expect(screen.getAllByRole('textbox').some((el) => (el as HTMLInputElement).value.includes('150'))).toBe(true);
   });
 
-  it('does not show divisão igualitária when only one responsável', () => {
+  it('does not show total distribuído when only one responsável', () => {
     render(<Wrapper defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: [] }} valorLiquido={300} />);
-    expect(screen.queryByText(/por responsável/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/total distribuído/i)).not.toBeInTheDocument();
   });
 
   it('hides add controls when canEdit is false', () => {

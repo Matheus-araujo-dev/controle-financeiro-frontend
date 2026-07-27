@@ -84,6 +84,7 @@ export type FinanceiroFormValues = {
   recorrenciaObservacao: string;
   recorrenciaGerarAteData: string;
   responsaveisAdicionaisIds: string[];
+  responsaveisValores: number[];
 };
 
 export type MeioPagamento = {
@@ -185,7 +186,8 @@ const defaultValues: FinanceiroFormValues = {
   recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
   recorrenciaObservacao: '',
   recorrenciaGerarAteData: '',
-  responsaveisAdicionaisIds: []
+  responsaveisAdicionaisIds: [],
+  responsaveisValores: []
 };
 
 function buildContaFinanceiraSummaryItems(summary: FinanceiroResumo): SummaryCardItem[] {
@@ -416,7 +418,25 @@ function buildContaPagarPayload(values: FinanceiroFormValues, opts?: { forcarPro
     })),
     recorrencia: buildRecorrenciaPayload(values),
     forcarProximaFatura: opts?.forcarProximaFatura,
-    responsaveisAdicionaisIds: values.responsaveisAdicionaisIds?.length ? values.responsaveisAdicionaisIds : undefined
+    ...buildResponsaveisPayload(values)
+  };
+}
+
+function buildResponsaveisPayload(values: FinanceiroFormValues) {
+  const allIds = [values.responsavelId, ...values.responsaveisAdicionaisIds].filter(Boolean);
+  if (allIds.length < 2) return {};
+  return {
+    responsaveisAdicionaisIds: allIds,
+    ...(values.responsaveisValores.length === allIds.length && { valoresPorResponsavel: values.responsaveisValores })
+  };
+}
+
+function buildPagadoresPayload(values: FinanceiroFormValues) {
+  const allIds = [values.responsavelId, ...values.responsaveisAdicionaisIds].filter(Boolean);
+  if (allIds.length < 2) return {};
+  return {
+    pagadoresAdicionaisIds: allIds,
+    ...(values.responsaveisValores.length === allIds.length && { valoresPorPagador: values.responsaveisValores })
   };
 }
 
@@ -443,7 +463,7 @@ function buildContaReceberPayload(values: FinanceiroFormValues): ContaReceberPay
       valor: item.valor
     })),
     recorrencia: buildRecorrenciaPayload(values),
-    responsaveisAdicionaisIds: values.responsaveisAdicionaisIds?.length ? values.responsaveisAdicionaisIds : undefined
+    ...buildPagadoresPayload(values)
   };
 }
 
@@ -508,7 +528,8 @@ function buildToFormValues(detail: {
     recorrenciaPermiteEdicaoOcorrenciaIndividual: detail.recorrencia?.permiteEdicaoOcorrenciaIndividual ?? true,
     recorrenciaObservacao: detail.recorrencia?.observacao ?? '',
     recorrenciaGerarAteData: detail.recorrencia?.dataFim ?? '',
-    responsaveisAdicionaisIds: []
+    responsaveisAdicionaisIds: [],
+    responsaveisValores: []
   };
 }
 
