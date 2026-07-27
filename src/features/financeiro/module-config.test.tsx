@@ -376,6 +376,40 @@ describe('financeiro module config', () => {
     expect(financeiroApi.contasReceber.liquidar).toHaveBeenCalledWith('cr-1', expect.objectContaining({ valorLiquidacao: 90 }));
   });
 
+  it('inclui responsaveisAdicionaisIds quando ha multiplos responsaveis sem valores customizados', async () => {
+    const values = formValues({ responsaveisAdicionaisIds: ['resp-2'], responsaveisValores: [] });
+
+    await contasPagarModuleConfig.create(values);
+    expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
+      expect.objectContaining({ responsaveisAdicionaisIds: ['resp-1', 'resp-2'] })
+    );
+    expect(financeiroApi.contasPagar.criar).not.toHaveBeenCalledWith(
+      expect.objectContaining({ valoresPorResponsavel: expect.anything() })
+    );
+
+    await contasReceberModuleConfig.create(values);
+    expect(financeiroApi.contasReceber.criar).toHaveBeenCalledWith(
+      expect.objectContaining({ pagadoresAdicionaisIds: ['resp-1', 'resp-2'] })
+    );
+    expect(financeiroApi.contasReceber.criar).not.toHaveBeenCalledWith(
+      expect.objectContaining({ valoresPorPagador: expect.anything() })
+    );
+  });
+
+  it('inclui valoresPorResponsavel e valoresPorPagador quando array de valores bate com total de ids', async () => {
+    const values = formValues({ responsaveisAdicionaisIds: ['resp-2'], responsaveisValores: [60, 40] });
+
+    await contasPagarModuleConfig.create(values);
+    expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
+      expect.objectContaining({ responsaveisAdicionaisIds: ['resp-1', 'resp-2'], valoresPorResponsavel: [60, 40] })
+    );
+
+    await contasReceberModuleConfig.create(values);
+    expect(financeiroApi.contasReceber.criar).toHaveBeenCalledWith(
+      expect.objectContaining({ pagadoresAdicionaisIds: ['resp-1', 'resp-2'], valoresPorPagador: [60, 40] })
+    );
+  });
+
   it('loads rateio options typed as Receita from receivable config', async () => {
     await expect(contasReceberModuleConfig.loadRateioOptions()).resolves.toEqual([
       expect.objectContaining({ value: 'g2', displayText: '2.1 - Receita', label: '2.1 - Receita' })
