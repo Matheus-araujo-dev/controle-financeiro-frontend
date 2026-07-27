@@ -122,6 +122,8 @@ export function QuickLaunchModal({
   const [contaBancariaLiquidacaoId, setContaBancariaLiquidacaoId] = useState('');
   const [pessoaId, setPessoaId] = useState(() => initialValues?.pessoaId ?? '');
   const [responsavelId, setResponsavelId] = useState(() => initialValues?.responsavelId ?? '');
+  const [responsaveisAdicionaisIds, setResponsaveisAdicionaisIds] = useState<string[]>([]);
+  const [addingResponsavelId, setAddingResponsavelId] = useState('');
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
   const [cartaoId, setCartaoId] = useState('');
   const [contaGerencialId, setContaGerencialId] = useState('');
@@ -142,6 +144,7 @@ export function QuickLaunchModal({
     valor !== 0 ||
     pessoaId !== '' ||
     responsavelId !== '' ||
+    responsaveisAdicionaisIds.length > 0 ||
     formaPagamentoId !== '' ||
     contaGerencialId !== '' ||
     contaOrigemId !== '' ||
@@ -455,7 +458,8 @@ export function QuickLaunchModal({
             recebedorId: pessoaId,
             dataCompra: exigeCartao ? dataVencimento : null,
             forcarProximaFatura,
-            contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null
+            contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
+            responsaveisAdicionaisIds: responsaveisAdicionaisIds.length ? responsaveisAdicionaisIds : undefined
           });
           notify('success', 'Lançamento criado', base.descricao);
           return result.id;
@@ -466,7 +470,8 @@ export function QuickLaunchModal({
           ...base,
           responsavelId,
           pagadorId: pessoaId,
-          contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null
+          contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
+          responsaveisAdicionaisIds: responsaveisAdicionaisIds.length ? responsaveisAdicionaisIds : undefined
         });
         notify('success', 'Lançamento criado', base.descricao);
         return result.id;
@@ -678,16 +683,75 @@ export function QuickLaunchModal({
                   </div>
 
                   <div className="space-y-2">
-                    <label className={formLabelClass}>Responsável</label>
-                    <ComboBox
-                      aria-label="Responsável"
-                      value={responsavelId}
-                      onChange={setResponsavelId}
-                      options={responsaveis}
-                      placeholder="Selecionar responsável..."
-                      onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
-                      addNewLabel="Nova pessoa"
-                    />
+                    <label className={formLabelClass}>
+                      Responsáv{responsaveisAdicionaisIds.length > 0 ? 'eis' : 'el'}
+                    </label>
+                    {/* Chips dos responsáveis selecionados */}
+                    {(responsavelId || responsaveisAdicionaisIds.length > 0) && (
+                      <div className="flex flex-wrap gap-1.5 rounded-xl border border-white/8 bg-surface-container px-2.5 py-2">
+                        {[responsavelId, ...responsaveisAdicionaisIds].filter(Boolean).map((rid) => {
+                          const label = responsaveis.find((r) => r.value === rid)?.label ?? rid;
+                          return (
+                            <span key={rid} className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/10 pl-2 pr-1 py-0.5 text-xs font-semibold text-primary">
+                              {label}
+                              <button
+                                type="button"
+                                aria-label={`Remover ${label}`}
+                                onClick={() => {
+                                  if (rid === responsavelId) {
+                                    const [next, ...rest] = responsaveisAdicionaisIds;
+                                    setResponsavelId(next ?? '');
+                                    setResponsaveisAdicionaisIds(rest ?? []);
+                                  } else {
+                                    setResponsaveisAdicionaisIds(responsaveisAdicionaisIds.filter((x) => x !== rid));
+                                  }
+                                }}
+                                className="grid h-3.5 w-3.5 place-items-center rounded-full text-primary/60 hover:text-primary"
+                              >
+                                <span className="material-symbols-outlined text-[11px] leading-none">close</span>
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {/* Adicionar responsável */}
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex-1">
+                        <ComboBox
+                          aria-label="Adicionar responsável"
+                          value={addingResponsavelId}
+                          onChange={setAddingResponsavelId}
+                          options={responsaveis.filter((r) => r.value !== responsavelId && !responsaveisAdicionaisIds.includes(r.value))}
+                          placeholder="Adicionar responsável..."
+                          onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
+                          addNewLabel="Nova pessoa"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        aria-label="add"
+                        disabled={!addingResponsavelId}
+                        onClick={() => {
+                          if (!addingResponsavelId) return;
+                          if (!responsavelId) {
+                            setResponsavelId(addingResponsavelId);
+                          } else {
+                            setResponsaveisAdicionaisIds([...responsaveisAdicionaisIds, addingResponsavelId]);
+                          }
+                          setAddingResponsavelId('');
+                        }}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-surface-container text-on-surface-variant transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-40"
+                      >
+                        <span className="material-symbols-outlined text-lg leading-none">add</span>
+                      </button>
+                    </div>
+                    {/* Divisão igualitária */}
+                    {responsaveisAdicionaisIds.length > 0 && valor > 0 && (
+                      <p className="text-[10px] text-on-surface-variant/70 ml-1">
+                        {(valor / (responsaveisAdicionaisIds.length + 1)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} por responsável
+                      </p>
+                    )}
                   </div>
                 </div>
 

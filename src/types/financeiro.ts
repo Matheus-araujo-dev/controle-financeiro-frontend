@@ -254,6 +254,7 @@ export type ContaPagarPayload = {
   recorrencia: RecorrenciaPayload | null;
   forcarProximaFatura?: boolean;
   contaVinculadaOrigemId?: string | null;
+  responsaveisAdicionaisIds?: string[];
 };
 
 export type ContaPagarFilters = ListQueryBase & {
@@ -362,6 +363,7 @@ export type ContaReceberPayload = {
   rateios: RateioPayload[];
   recorrencia: RecorrenciaPayload | null;
   contaVinculadaOrigemId?: string | null;
+  responsaveisAdicionaisIds?: string[];
 };
 
 export type ContaReceberFilters = ListQueryBase & {

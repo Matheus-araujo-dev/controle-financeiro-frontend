@@ -342,6 +342,8 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     contaVinculada,
     grupoReembolsoId,
     grupoReembolso,
+    grupoResponsaveisId,
+    grupoResponsaveis,
     isPagar,
     pessoaOptions,
     formaPagamentoOptions,
@@ -445,6 +447,40 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
               >
                 Ver conta vinculada
               </Button>
+            </div>
+          ) : null}
+
+          {/* Grupo de responsáveis — mostra quando conta é parte de um grupo criado com multi-responsável */}
+          {grupoResponsaveis ? (
+            <div className="rounded-2xl border border-tertiary/20 bg-tertiary/5 p-4 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-base text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>group</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-tertiary">Grupo de Responsáveis</span>
+                </div>
+                <span className="text-[10px] font-bold text-tertiary/70">{grupoResponsaveis.contas.length} conta{grupoResponsaveis.contas.length !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="space-y-1.5">
+                {grupoResponsaveis.contas.slice(0, 4).map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="flex w-full items-center justify-between rounded-xl px-2 py-1.5 text-left text-xs transition-colors hover:bg-white/6"
+                    onClick={() => navigate(`${isPagar ? '/contas-pagar' : '/contas-receber'}/${c.id}`)}
+                  >
+                    <span className="truncate text-on-surface font-medium">{c.pessoaNome}</span>
+                    <span className="shrink-0 ml-2 font-mono text-on-surface-variant">{formatCurrencyBRL(c.valorLiquido)}</span>
+                  </button>
+                ))}
+                {grupoResponsaveis.contas.length > 4 && (
+                  <p className="text-[10px] text-on-surface-variant/60 px-2">
+                    + {grupoResponsaveis.contas.length - 4} contas
+                  </p>
+                )}
+              </div>
+              <p className="text-xs text-tertiary/70 font-semibold text-right">
+                Total: {formatCurrencyBRL(grupoResponsaveis.contas.reduce((s, c) => s + c.valorLiquido, 0))}
+              </p>
             </div>
           ) : null}
 

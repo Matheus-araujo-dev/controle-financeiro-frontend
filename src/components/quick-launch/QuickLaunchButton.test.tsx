@@ -300,7 +300,8 @@ describe('QuickLaunchButton', () => {
     await user.type(within(dialog).getByPlaceholderText(/mercado/i), 'Compra do mes');
     await user.type(within(dialog).getByLabelText('Valor'), '120');
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
-    await user.selectOptions(within(dialog).getByLabelText(/respons.vel/i), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
+    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
     await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-card');
     await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cd1');
 
@@ -336,7 +337,8 @@ describe('QuickLaunchButton', () => {
 
     await user.click(within(dialog).getAllByRole('button', { name: 'Nova pessoa' })[0]);
     await user.click(screen.getByRole('button', { name: 'Salvar pessoa' }));
-    await user.selectOptions(within(dialog).getByLabelText(/respons.vel/i), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
+    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
     await user.click(within(dialog).getByRole('button', { name: 'Nova forma de pagamento' }));
     await user.click(screen.getByRole('button', { name: 'Salvar forma' }));
     await user.click(within(dialog).getByRole('button', { name: 'Nova categoria' }));
@@ -378,7 +380,8 @@ describe('QuickLaunchButton', () => {
     await user.type(within(dialog).getByLabelText('Valor'), '300');
     fireEvent.change(within(dialog).getByLabelText('Número de parcelas'), { target: { value: '3' } });
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
-    await user.selectOptions(within(dialog).getByLabelText(/respons.vel/i), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
+    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
     await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-pix');
     await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cd1');
 
@@ -404,9 +407,9 @@ describe('QuickLaunchButton', () => {
 
     await user.selectOptions(await within(dialog).findByLabelText('Categoria'), 'cd1');
 
+    // Auto-fill adds responsável as a chip — verify via the remove button's aria-label
     await waitFor(() => {
-      const select = within(dialog).getByLabelText(/respons.vel/i) as HTMLSelectElement;
-      expect(select.value).toBe('r1');
+      expect(within(dialog).getByRole('button', { name: /Remover Responsavel/i })).toBeInTheDocument();
     });
   });
 
