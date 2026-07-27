@@ -22,6 +22,27 @@ import { mapContaGerencialHierarchyData } from '../../shared/conta-gerencial';
 import { handleIntegerPaste, keepOnlyDigits, preventScientificNotation } from '../../shared/number-input';
 import type { ComboBoxOption } from '../forms/ComboBox';
 
+function QLValorInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [raw, setRaw] = useState('');
+  const [focused, setFocused] = useState(false);
+  const display = focused ? raw : value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={display}
+      onFocus={() => { setRaw(value.toFixed(2).replace('.', ',')); setFocused(true); }}
+      onChange={(e) => setRaw(e.target.value)}
+      onBlur={() => {
+        setFocused(false);
+        const parsed = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
+        if (!isNaN(parsed) && parsed >= 0) onChange(parsed);
+      }}
+      className="w-28 rounded-xl bg-surface-container ring-1 ring-white/5 px-2 py-1 text-right text-xs font-medium text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/40"
+    />
+  );
+}
+
 type Option = { label: string; value: string };
 type ContaGerencialOption = ComboBoxOption & { responsavelPadraoId?: string | null };
 type QuickLaunchTipo = 'pagar' | 'receber' | 'transferencia';
@@ -123,6 +144,7 @@ export function QuickLaunchModal({
   const [pessoaId, setPessoaId] = useState(() => initialValues?.pessoaId ?? '');
   const [responsavelId, setResponsavelId] = useState(() => initialValues?.responsavelId ?? '');
   const [responsaveisAdicionaisIds, setResponsaveisAdicionaisIds] = useState<string[]>([]);
+  const [responsaveisValores, setResponsaveisValores] = useState<number[]>([]);
   const [addingResponsavelId, setAddingResponsavelId] = useState('');
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
   const [cartaoId, setCartaoId] = useState('');
@@ -449,6 +471,10 @@ export function QuickLaunchModal({
     };
 
     function buildLaunchFn(forcarProximaFatura: boolean): () => Promise<string> {
+      const allRespIds = [responsavelId, ...responsaveisAdicionaisIds].filter(Boolean);
+      const temMultiplos = allRespIds.length >= 2;
+      const valoresOk = responsaveisValores.length === allRespIds.length;
+
       if (tipo === 'pagar') {
         return async () => {
           const result = await financeiroApi.contasPagar.criar({
@@ -459,7 +485,8 @@ export function QuickLaunchModal({
             dataCompra: exigeCartao ? dataVencimento : null,
             forcarProximaFatura,
             contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
-            responsaveisAdicionaisIds: responsaveisAdicionaisIds.length ? responsaveisAdicionaisIds : undefined
+            ...(temMultiplos && { responsaveisAdicionaisIds: allRespIds }),
+            ...(temMultiplos && valoresOk && { valoresPorResponsavel: responsaveisValores })
           });
           notify('success', 'Lançamento criado', base.descricao);
           return result.id;
@@ -471,7 +498,8 @@ export function QuickLaunchModal({
           responsavelId,
           pagadorId: pessoaId,
           contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
-          responsaveisAdicionaisIds: responsaveisAdicionaisIds.length ? responsaveisAdicionaisIds : undefined
+          ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
+          ...(temMultiplos && valoresOk && { valoresPorPagador: responsaveisValores })
         });
         notify('success', 'Lançamento criado', base.descricao);
         return result.id;
@@ -506,6 +534,7 @@ export function QuickLaunchModal({
     setContaDestinoId('');
     setJaLiquidada(false);
     setContaBancariaLiquidacaoId('');
+    setResponsaveisValores([]);
   }
 
   function handlePessoaSuccess(target: QuickAddTarget, newId: string, label: string) {
@@ -687,36 +716,70 @@ export function QuickLaunchModal({
                       Responsáv{responsaveisAdicionaisIds.length > 0 ? 'eis' : 'el'}
                     </label>
                     {/* Chips dos responsáveis selecionados */}
-                    {(responsavelId || responsaveisAdicionaisIds.length > 0) && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {[responsavelId, ...responsaveisAdicionaisIds].filter(Boolean).map((rid) => {
-                          const label = responsaveis.find((r) => r.value === rid)?.label ?? rid;
-                          return (
-                            <span key={rid} className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                              {label}
-                              <button
-                                type="button"
-                                aria-label={`Remover ${label}`}
-                                onClick={() => {
-                                  if (rid === responsavelId) {
-                                    const [next, ...rest] = responsaveisAdicionaisIds;
-                                    setResponsavelId(next ?? '');
-                                    setResponsaveisAdicionaisIds(rest ?? []);
-                                  } else {
-                                    setResponsaveisAdicionaisIds(responsaveisAdicionaisIds.filter((x) => x !== rid));
-                                  }
-                                }}
-                                className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary/20 text-primary/70 transition-colors hover:bg-primary/40 hover:text-primary leading-none"
-                              >
-                                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
-                                  <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                </svg>
-                              </button>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
+                    {(() => {
+                      const allIds = [responsavelId, ...responsaveisAdicionaisIds].filter(Boolean);
+                      const count = allIds.length;
+                      const totalValores = count > 0 ? allIds.reduce((acc, _, i) => {
+                        const v = responsaveisValores.length === count ? responsaveisValores[i] : Math.round((valor / count) * 100) / 100;
+                        return acc + v;
+                      }, 0) : 0;
+                      const totalFecha = count > 1 && Math.abs(totalValores - valor) < 0.02;
+
+                      function getValorForIndex(i: number) {
+                        return responsaveisValores.length === count ? responsaveisValores[i] : count > 0 ? Math.round((valor / count) * 100) / 100 : 0;
+                      }
+
+                      function handleValorChange(changedIdx: number, newValor: number) {
+                        const remainder = Math.max(0, valor - newValor);
+                        const others = allIds.map((_, i) => i).filter((i) => i !== changedIdx);
+                        const perOther = others.length > 0 ? Math.round((remainder / others.length) * 100) / 100 : 0;
+                        setResponsaveisValores(allIds.map((_, i) => (i === changedIdx ? newValor : perOther)));
+                      }
+
+                      return count > 0 ? (
+                        <div className="space-y-1.5">
+                          {allIds.map((rid, i) => {
+                            const label = responsaveis.find((r) => r.value === rid)?.label ?? rid;
+                            return (
+                              <div key={rid} className="flex items-center gap-2 rounded-xl border border-white/8 bg-surface-container px-3 py-2">
+                                <span className="flex-1 truncate text-xs font-medium text-on-surface">{label}</span>
+                                {count > 1 && (
+                                  <QLValorInput value={getValorForIndex(i)} onChange={(v) => handleValorChange(i, v)} />
+                                )}
+                                <button
+                                  type="button"
+                                  aria-label={`Remover ${label}`}
+                                  onClick={() => {
+                                    if (rid === responsavelId) {
+                                      const [next, ...rest] = responsaveisAdicionaisIds;
+                                      setResponsavelId(next ?? '');
+                                      setResponsaveisAdicionaisIds(rest ?? []);
+                                    } else {
+                                      setResponsaveisAdicionaisIds(responsaveisAdicionaisIds.filter((x) => x !== rid));
+                                    }
+                                    setResponsaveisValores([]);
+                                  }}
+                                  className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary/70 transition-colors hover:bg-primary/40 hover:text-primary leading-none"
+                                >
+                                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                                    <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                  </svg>
+                                </button>
+                              </div>
+                            );
+                          })}
+                          {count > 1 && (
+                            <div className="flex items-center justify-between px-1 text-[11px]">
+                              <span className="text-on-surface-variant/60">Total distribuído</span>
+                              <span className={totalFecha ? 'font-medium text-primary' : 'font-medium text-red-400'}>
+                                {totalValores.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                {totalFecha ? ' ✓' : ` (faltam ${(valor - totalValores).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ) : null;
+                    })()}
                     {/* Adicionar responsável */}
                     <div className="flex items-center gap-1.5">
                       <div className="flex-1">
@@ -741,6 +804,7 @@ export function QuickLaunchModal({
                           } else {
                             setResponsaveisAdicionaisIds([...responsaveisAdicionaisIds, addingResponsavelId]);
                           }
+                          setResponsaveisValores([]);
                           setAddingResponsavelId('');
                         }}
                         className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-surface-container text-on-surface-variant transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-40"
@@ -748,12 +812,6 @@ export function QuickLaunchModal({
                         <span className="material-symbols-outlined text-lg leading-none">add</span>
                       </button>
                     </div>
-                    {/* Divisão igualitária */}
-                    {responsaveisAdicionaisIds.length > 0 && valor > 0 && (
-                      <p className="text-[10px] text-on-surface-variant/70 ml-1">
-                        {(valor / (responsaveisAdicionaisIds.length + 1)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} por responsável
-                      </p>
-                    )}
                   </div>
                 </div>
 
