@@ -79,41 +79,6 @@ export function ResponsaveisChipsSection({ form }: ResponsaveisChipsSectionProps
         render={() => <input type="hidden" />}
       />
 
-      {/* Chips dos responsáveis selecionados */}
-      {allSelected.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {allSelected.map((chip) => (
-            <span
-              key={chip.id}
-              className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-            >
-              {chip.label}
-              {canEdit && (
-                <button
-                  type="button"
-                  aria-label={`Remover ${chip.label}`}
-                  onClick={() => handleRemove(chip.id)}
-                  className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary/20 text-primary/70 transition-colors hover:bg-primary/40 hover:text-primary leading-none"
-                >
-                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
-                    <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                </button>
-              )}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Divisão igualitária */}
-      {valorPorResponsavel !== null && (
-        <p className="ml-1 text-[11px] text-on-surface-variant/70">
-          Valor dividido igualmente: <strong className="text-on-surface">
-            {valorPorResponsavel.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-          </strong> por responsável
-        </p>
-      )}
-
       {/* Campo para adicionar novo responsável */}
       {canEdit && (
         <div className="flex items-center gap-2">
@@ -148,6 +113,41 @@ export function ResponsaveisChipsSection({ form }: ResponsaveisChipsSectionProps
       {errors.responsavelId ? (
         <span className={errorTextClass}>{errors.responsavelId.message}</span>
       ) : null}
+
+      {/* Chips dos responsáveis selecionados */}
+      {allSelected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {allSelected.map((chip) => (
+            <span
+              key={chip.id}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+            >
+              {chip.label}
+              {canEdit && (
+                <button
+                  type="button"
+                  aria-label={`Remover ${chip.label}`}
+                  onClick={() => handleRemove(chip.id)}
+                  className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary/20 text-primary/70 transition-colors hover:bg-primary/40 hover:text-primary leading-none"
+                >
+                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                    <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Divisão igualitária */}
+      {valorPorResponsavel !== null && (
+        <p className="ml-1 text-[11px] text-on-surface-variant/70">
+          Valor dividido igualmente: <strong className="text-on-surface">
+            {valorPorResponsavel.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </strong> por responsável
+        </p>
+      )}
 
       <QuickAddPessoaModal
         open={quickAddOpen}
