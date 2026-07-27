@@ -688,11 +688,11 @@ export function QuickLaunchModal({
                     </label>
                     {/* Chips dos responsáveis selecionados */}
                     {(responsavelId || responsaveisAdicionaisIds.length > 0) && (
-                      <div className="flex flex-wrap gap-1.5 rounded-xl border border-white/8 bg-surface-container px-2.5 py-2">
+                      <div className="flex flex-wrap gap-1.5">
                         {[responsavelId, ...responsaveisAdicionaisIds].filter(Boolean).map((rid) => {
                           const label = responsaveis.find((r) => r.value === rid)?.label ?? rid;
                           return (
-                            <span key={rid} className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/10 pl-2 pr-1 py-0.5 text-xs font-semibold text-primary">
+                            <span key={rid} className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                               {label}
                               <button
                                 type="button"
@@ -706,9 +706,11 @@ export function QuickLaunchModal({
                                     setResponsaveisAdicionaisIds(responsaveisAdicionaisIds.filter((x) => x !== rid));
                                   }
                                 }}
-                                className="grid h-3.5 w-3.5 place-items-center rounded-full text-primary/60 hover:text-primary"
+                                className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary/20 text-primary/70 transition-colors hover:bg-primary/40 hover:text-primary leading-none"
                               >
-                                <span className="material-symbols-outlined text-[11px] leading-none">close</span>
+                                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                                  <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                </svg>
                               </button>
                             </span>
                           );
