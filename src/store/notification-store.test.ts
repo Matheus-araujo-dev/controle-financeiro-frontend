@@ -39,4 +39,11 @@ describe('notification-store', () => {
 
     expect(result.current).toBe(1);
   });
+
+  it('deduplica notificacoes identicas', () => {
+    notify('error', 'Falha', 'Detalhes');
+    notify('error', 'Falha', 'Detalhes');
+
+    expect(useNotificationStore.getState().queue).toHaveLength(1);
+  });
 });
