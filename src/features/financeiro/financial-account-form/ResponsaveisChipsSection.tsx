@@ -8,10 +8,13 @@ import type { SelectOption } from '../module-config';
 
 type ResponsaveisChipsSectionProps = {
   form: FinancialAccountFormApi;
+  personRole?: 'recebedor' | 'pagador';
 };
 
-export function ResponsaveisChipsSection({ form }: ResponsaveisChipsSectionProps) {
-  const { control, errors, canEdit, responsavelOptions, setValue, reloadResponsavelOptions } = form;
+export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: ResponsaveisChipsSectionProps) {
+  const { control, errors, canEdit, responsavelOptions, pessoaOptions, setValue, reloadResponsavelOptions } = form;
+  const isPagador = personRole === 'pagador';
+  const chipOptions = isPagador ? pessoaOptions : responsavelOptions;
 
   const [addingId, setAddingId] = useState('');
   const [quickAddOpen, setQuickAddOpen] = useState(false);
@@ -29,7 +32,7 @@ export function ResponsaveisChipsSection({ form }: ResponsaveisChipsSectionProps
   const count = allSelected.length;
   const valorLiquido = form.valorLiquido;
 
-  const available = responsavelOptions.filter(
+  const available = chipOptions.filter(
     (o) => o.value !== responsavelId && !responsaveisAdicionaisIds.includes(o.value)
   );
 
@@ -84,7 +87,7 @@ export function ResponsaveisChipsSection({ form }: ResponsaveisChipsSectionProps
 
   return (
     <div className="space-y-2">
-      <label className={fieldLabelClass}>Responsáv{count > 1 ? 'eis' : 'el'}</label>
+      <label className={fieldLabelClass}>{isPagador ? `Pagador${count > 1 ? 'es' : ''}` : `Responsáv${count > 1 ? 'eis' : 'el'}`}</label>
 
       {/* Hidden controllers to wire into RHF */}
       <Controller control={control} name="responsavelId" render={() => <input type="hidden" />} />
@@ -98,11 +101,11 @@ export function ResponsaveisChipsSection({ form }: ResponsaveisChipsSectionProps
             <ComboBox
               value={addingId}
               onChange={setAddingId}
-              aria-label="Adicionar responsável"
+              aria-label={isPagador ? 'Adicionar pagador' : 'Adicionar responsável'}
               onAddNew={() => setQuickAddOpen(true)}
               addNewLabel="Nova pessoa"
             >
-              <option value="">Adicionar responsável...</option>
+              <option value="">{isPagador ? 'Adicionar pagador...' : 'Adicionar responsável...'}</option>
               {available.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}

@@ -260,7 +260,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
         </div>
 
         <div className="space-y-2">
-          <ResponsaveisChipsSection form={form} />
+          <ResponsaveisChipsSection form={form} personRole={personRole} />
         </div>
       </div>
 
