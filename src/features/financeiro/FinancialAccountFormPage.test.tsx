@@ -51,7 +51,8 @@ const validValues = {
   recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
   recorrenciaObservacao: 'Contrato mensal',
   recorrenciaGerarAteData: '2026-10-20',
-  dataCompra: '2026-04-04'
+  dataCompra: '2026-04-04',
+  responsaveisAdicionaisIds: []
 };
 
 function createConfig() {
@@ -291,9 +292,9 @@ describe('FinancialAccountFormPage', () => {
     renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
 
     await waitFor(() => expect(config.loadRateioOptions).toHaveBeenCalled());
-    // After options load, the ComboBox for Responsável should display the auto-filled label
+    // After options load, the auto-filled responsável appears as a chip with a remove button
     await waitFor(() => {
-      expect(screen.getByDisplayValue('Gerente')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Remover Gerente/i })).toBeInTheDocument();
     });
   }, 20000);
 
