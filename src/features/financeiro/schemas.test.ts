@@ -29,7 +29,8 @@ const validValues = {
   recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
   recorrenciaObservacao: '',
   recorrenciaGerarAteData: '',
-  responsaveisAdicionaisIds: []
+  responsaveisAdicionaisIds: [],
+  responsaveisValores: []
 };
 
 describe('financialAccountFormSchema', () => {

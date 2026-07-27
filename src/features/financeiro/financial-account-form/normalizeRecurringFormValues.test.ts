@@ -32,6 +32,7 @@ function makeValues(overrides: Partial<FinanceiroFormValues> = {}): FinanceiroFo
     recorrenciaGerarAteData: '',
     origemCompraPlanejadaId: '',
     responsaveisAdicionaisIds: [],
+    responsaveisValores: [],
     ...overrides
   };
 }
