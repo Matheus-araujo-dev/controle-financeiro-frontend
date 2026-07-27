@@ -173,6 +173,7 @@ export function ResponsaveisChipsSection({ form }: ResponsaveisChipsSectionProps
         </div>
       )}
 
+
       <QuickAddPessoaModal
         open={quickAddOpen}
         onClose={() => setQuickAddOpen(false)}
