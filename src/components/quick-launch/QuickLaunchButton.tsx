@@ -390,7 +390,7 @@ export function QuickLaunchModal({
     ? valor > 0 && Boolean(contaOrigemId) && Boolean(contaDestinoId) && contaOrigemId !== contaDestinoId
     : descricao.trim().length > 0 &&
       valor > 0 &&
-      Boolean(pessoaId) &&
+      (tipo === 'receber' || Boolean(pessoaId)) &&
       Boolean(responsavelId) &&
       Boolean(formaPagamentoId) &&
       Boolean(contaGerencialId) &&
@@ -495,8 +495,8 @@ export function QuickLaunchModal({
       return async () => {
         const result = await financeiroApi.contasReceber.criar({
           ...base,
-          responsavelId,
-          pagadorId: pessoaId,
+          responsavelId: pessoaId || null,
+          pagadorId: responsavelId,
           contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
           ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
           ...(temMultiplos && valoresOk && { valoresPorPagador: responsaveisValores })
@@ -717,9 +717,9 @@ export function QuickLaunchModal({
                     <>
                       <div className="md:col-span-2 grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="space-y-2">
-                          <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
+                          <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Responsável'}</label>
                           <ComboBox
-                            aria-label={tipo === 'pagar' ? 'Recebedor' : 'Pagador'}
+                            aria-label={tipo === 'pagar' ? 'Recebedor' : 'Responsável'}
                             value={pessoaId}
                             onChange={setPessoaId}
                             options={pessoas}
@@ -745,10 +745,12 @@ export function QuickLaunchModal({
 
                         <div className="space-y-2">
                           <label className={formLabelClass}>
-                            Responsáv{responsaveisAdicionaisIds.length > 0 ? 'eis' : 'el'}
+                            {tipo === 'pagar'
+                              ? `Responsáv${responsaveisAdicionaisIds.length > 0 ? 'eis' : 'el'}`
+                              : `Pagador${responsaveisAdicionaisIds.length > 0 ? 'es' : ''}`}
                           </label>
                           <ComboBox
-                            aria-label="Adicionar responsável"
+                            aria-label={tipo === 'pagar' ? 'Adicionar responsável' : 'Adicionar pagador'}
                             value={addingResponsavelId}
                             onChange={(val) => {
                               if (!val) return;
@@ -760,8 +762,8 @@ export function QuickLaunchModal({
                               setResponsaveisValores([]);
                               setAddingResponsavelId('');
                             }}
-                            options={responsaveis.filter((r) => r.value !== responsavelId && !responsaveisAdicionaisIds.includes(r.value))}
-                            placeholder="Adicionar responsável..."
+                            options={(tipo === 'pagar' ? responsaveis : pessoas).filter((r) => r.value !== responsavelId && !responsaveisAdicionaisIds.includes(r.value))}
+                            placeholder={tipo === 'pagar' ? 'Adicionar responsável...' : 'Adicionar pagador...'}
                             onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
                             addNewLabel="Nova pessoa"
                           />
@@ -773,7 +775,8 @@ export function QuickLaunchModal({
                         <div className="md:col-span-2 space-y-1.5">
                           <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                             {allRespIds.map((rid, i) => {
-                              const label = responsaveis.find((r) => r.value === rid)?.label ?? rid;
+                              const chipList = tipo === 'pagar' ? responsaveis : pessoas;
+                              const label = chipList.find((r) => r.value === rid)?.label ?? rid;
                               return (
                                 <div key={rid} className="flex items-center gap-2 rounded-xl border border-white/8 bg-surface-container px-3 py-2">
                                   <span className="flex-1 truncate text-xs font-medium text-on-surface">{label}</span>
