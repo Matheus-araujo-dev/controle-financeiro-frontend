@@ -682,92 +682,131 @@ export function QuickLaunchModal({
                   />
                 </div>
 
-                {/* Row 2: Recebedor | Conta gerencial | Responsável */}
-                <div className="md:col-span-2 grid grid-cols-1 gap-4 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
-                    <ComboBox
-                      aria-label={tipo === 'pagar' ? 'Recebedor' : 'Pagador'}
-                      value={pessoaId}
-                      onChange={setPessoaId}
-                      options={pessoas}
-                      placeholder="Selecionar pessoa..."
-                      onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
-                      addNewLabel="Nova pessoa"
-                    />
-                  </div>
+                {/* Row 2: Recebedor | Conta gerencial | Responsável (só o combobox de adicionar) */}
+                {(() => {
+                  const allRespIds = [responsavelId, ...responsaveisAdicionaisIds].filter(Boolean);
+                  const count = allRespIds.length;
+                  const totalValores = allRespIds.reduce((acc, _, i) => {
+                    return acc + (responsaveisValores.length === count ? responsaveisValores[i] : Math.round((valor / count) * 100) / 100);
+                  }, 0);
+                  const totalFecha = count > 1 && Math.abs(totalValores - valor) < 0.02;
 
-                  <div className="space-y-2">
-                    <label className={formLabelClass}>Categoria</label>
-                    <ComboBox
-                      aria-label="Categoria"
-                      value={contaGerencialId}
-                      onChange={setContaGerencialId}
-                      options={contasGerenciais}
-                      placeholder="Selecionar..."
-                      onAddNew={() => setQuickAddContaOpen(true)}
-                      addNewLabel="Nova categoria"
-                      maxVisible={50}
-                    />
-                  </div>
+                  function getValorForIndex(i: number) {
+                    return responsaveisValores.length === count ? responsaveisValores[i] : count > 0 ? Math.round((valor / count) * 100) / 100 : 0;
+                  }
 
-                  <div className="space-y-2">
-                    <label className={formLabelClass}>
-                      Responsáv{responsaveisAdicionaisIds.length > 0 ? 'eis' : 'el'}
-                    </label>
-                    {/* Chips dos responsáveis selecionados */}
-                    {(() => {
-                      const allIds = [responsavelId, ...responsaveisAdicionaisIds].filter(Boolean);
-                      const count = allIds.length;
-                      const totalValores = count > 0 ? allIds.reduce((acc, _, i) => {
-                        const v = responsaveisValores.length === count ? responsaveisValores[i] : Math.round((valor / count) * 100) / 100;
-                        return acc + v;
-                      }, 0) : 0;
-                      const totalFecha = count > 1 && Math.abs(totalValores - valor) < 0.02;
+                  function handleValorChange(changedIdx: number, newValor: number) {
+                    const remainder = Math.max(0, valor - newValor);
+                    const others = allRespIds.map((_, i) => i).filter((i) => i !== changedIdx);
+                    const perOther = others.length > 0 ? Math.round((remainder / others.length) * 100) / 100 : 0;
+                    setResponsaveisValores(allRespIds.map((_, i) => (i === changedIdx ? newValor : perOther)));
+                  }
 
-                      function getValorForIndex(i: number) {
-                        return responsaveisValores.length === count ? responsaveisValores[i] : count > 0 ? Math.round((valor / count) * 100) / 100 : 0;
-                      }
+                  function removeResp(rid: string) {
+                    if (rid === responsavelId) {
+                      const [next, ...rest] = responsaveisAdicionaisIds;
+                      setResponsavelId(next ?? '');
+                      setResponsaveisAdicionaisIds(rest ?? []);
+                    } else {
+                      setResponsaveisAdicionaisIds(responsaveisAdicionaisIds.filter((x) => x !== rid));
+                    }
+                    setResponsaveisValores([]);
+                  }
 
-                      function handleValorChange(changedIdx: number, newValor: number) {
-                        const remainder = Math.max(0, valor - newValor);
-                        const others = allIds.map((_, i) => i).filter((i) => i !== changedIdx);
-                        const perOther = others.length > 0 ? Math.round((remainder / others.length) * 100) / 100 : 0;
-                        setResponsaveisValores(allIds.map((_, i) => (i === changedIdx ? newValor : perOther)));
-                      }
+                  return (
+                    <>
+                      <div className="md:col-span-2 grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div className="space-y-2">
+                          <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Pagador'}</label>
+                          <ComboBox
+                            aria-label={tipo === 'pagar' ? 'Recebedor' : 'Pagador'}
+                            value={pessoaId}
+                            onChange={setPessoaId}
+                            options={pessoas}
+                            placeholder="Selecionar pessoa..."
+                            onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
+                            addNewLabel="Nova pessoa"
+                          />
+                        </div>
 
-                      return count > 0 ? (
-                        <div className="space-y-1.5">
-                          {allIds.map((rid, i) => {
-                            const label = responsaveis.find((r) => r.value === rid)?.label ?? rid;
-                            return (
-                              <div key={rid} className="flex items-center gap-2 rounded-xl border border-white/8 bg-surface-container px-3 py-2">
-                                <span className="flex-1 truncate text-xs font-medium text-on-surface">{label}</span>
-                                {count > 1 && (
-                                  <QLValorInput value={getValorForIndex(i)} onChange={(v) => handleValorChange(i, v)} />
-                                )}
-                                <button
-                                  type="button"
-                                  aria-label={`Remover ${label}`}
-                                  onClick={() => {
-                                    if (rid === responsavelId) {
-                                      const [next, ...rest] = responsaveisAdicionaisIds;
-                                      setResponsavelId(next ?? '');
-                                      setResponsaveisAdicionaisIds(rest ?? []);
-                                    } else {
-                                      setResponsaveisAdicionaisIds(responsaveisAdicionaisIds.filter((x) => x !== rid));
-                                    }
-                                    setResponsaveisValores([]);
-                                  }}
-                                  className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary/70 transition-colors hover:bg-primary/40 hover:text-primary leading-none"
-                                >
-                                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
-                                    <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                  </svg>
-                                </button>
-                              </div>
-                            );
-                          })}
+                        <div className="space-y-2">
+                          <label className={formLabelClass}>Categoria</label>
+                          <ComboBox
+                            aria-label="Categoria"
+                            value={contaGerencialId}
+                            onChange={setContaGerencialId}
+                            options={contasGerenciais}
+                            placeholder="Selecionar..."
+                            onAddNew={() => setQuickAddContaOpen(true)}
+                            addNewLabel="Nova categoria"
+                            maxVisible={50}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className={formLabelClass}>
+                            Responsáv{responsaveisAdicionaisIds.length > 0 ? 'eis' : 'el'}
+                          </label>
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex-1">
+                              <ComboBox
+                                aria-label="Adicionar responsável"
+                                value={addingResponsavelId}
+                                onChange={setAddingResponsavelId}
+                                options={responsaveis.filter((r) => r.value !== responsavelId && !responsaveisAdicionaisIds.includes(r.value))}
+                                placeholder="Adicionar responsável..."
+                                onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
+                                addNewLabel="Nova pessoa"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              aria-label="add"
+                              disabled={!addingResponsavelId}
+                              onClick={() => {
+                                if (!addingResponsavelId) return;
+                                if (!responsavelId) {
+                                  setResponsavelId(addingResponsavelId);
+                                } else {
+                                  setResponsaveisAdicionaisIds([...responsaveisAdicionaisIds, addingResponsavelId]);
+                                }
+                                setResponsaveisValores([]);
+                                setAddingResponsavelId('');
+                              }}
+                              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-surface-container text-on-surface-variant transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-40"
+                            >
+                              <span className="material-symbols-outlined text-lg leading-none">add</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Chips em linha própria full-width para não expandir a grid de 3 colunas */}
+                      {count > 0 && (
+                        <div className="md:col-span-2 space-y-1.5">
+                          <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+                            {allRespIds.map((rid, i) => {
+                              const label = responsaveis.find((r) => r.value === rid)?.label ?? rid;
+                              return (
+                                <div key={rid} className="flex items-center gap-2 rounded-xl border border-white/8 bg-surface-container px-3 py-2">
+                                  <span className="flex-1 truncate text-xs font-medium text-on-surface">{label}</span>
+                                  {count > 1 && (
+                                    <QLValorInput value={getValorForIndex(i)} onChange={(v) => handleValorChange(i, v)} />
+                                  )}
+                                  <button
+                                    type="button"
+                                    aria-label={`Remover ${label}`}
+                                    onClick={() => removeResp(rid)}
+                                    className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary/70 transition-colors hover:bg-primary/40 hover:text-primary leading-none"
+                                  >
+                                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                                      <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                    </svg>
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
                           {count > 1 && (
                             <div className="flex items-center justify-between px-1 text-[11px]">
                               <span className="text-on-surface-variant/60">Total distribuído</span>
@@ -778,42 +817,10 @@ export function QuickLaunchModal({
                             </div>
                           )}
                         </div>
-                      ) : null;
-                    })()}
-                    {/* Adicionar responsável */}
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex-1">
-                        <ComboBox
-                          aria-label="Adicionar responsável"
-                          value={addingResponsavelId}
-                          onChange={setAddingResponsavelId}
-                          options={responsaveis.filter((r) => r.value !== responsavelId && !responsaveisAdicionaisIds.includes(r.value))}
-                          placeholder="Adicionar responsável..."
-                          onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
-                          addNewLabel="Nova pessoa"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        aria-label="add"
-                        disabled={!addingResponsavelId}
-                        onClick={() => {
-                          if (!addingResponsavelId) return;
-                          if (!responsavelId) {
-                            setResponsavelId(addingResponsavelId);
-                          } else {
-                            setResponsaveisAdicionaisIds([...responsaveisAdicionaisIds, addingResponsavelId]);
-                          }
-                          setResponsaveisValores([]);
-                          setAddingResponsavelId('');
-                        }}
-                        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-surface-container text-on-surface-variant transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-40"
-                      >
-                        <span className="material-symbols-outlined text-lg leading-none">add</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                      )}
+                    </>
+                  );
+                })()}
 
                 {/* Row 3: Forma de pagamento | Cartão (se cartão) */}
                 <div className="space-y-2">
