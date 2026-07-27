@@ -302,7 +302,6 @@ describe('QuickLaunchButton', () => {
     await user.type(within(dialog).getByLabelText('Valor'), '120');
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
     await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
-    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
     await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-card');
     await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cd1');
 
@@ -339,7 +338,6 @@ describe('QuickLaunchButton', () => {
     await user.click(within(dialog).getAllByRole('button', { name: 'Nova pessoa' })[0]);
     await user.click(screen.getByRole('button', { name: 'Salvar pessoa' }));
     await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
-    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
     await user.click(within(dialog).getByRole('button', { name: 'Nova forma de pagamento' }));
     await user.click(screen.getByRole('button', { name: 'Salvar forma' }));
     await user.click(within(dialog).getByRole('button', { name: 'Nova categoria' }));
@@ -382,7 +380,6 @@ describe('QuickLaunchButton', () => {
     fireEvent.change(within(dialog).getByLabelText('Número de parcelas'), { target: { value: '3' } });
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
     await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
-    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
     await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-pix');
     await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cd1');
 
@@ -457,18 +454,15 @@ describe('QuickLaunchButton', () => {
     await user.type(within(dialog).getByLabelText('Valor'), '200');
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
 
-    // Adiciona primeiro responsável
+    // Selecionar auto-adiciona (não há botão add externo)
     await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
-    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
 
     // Chip do primeiro responsável aparece
     await waitFor(() =>
       expect(within(dialog).getByRole('button', { name: /Remover Responsavel$/i })).toBeInTheDocument()
     );
 
-    // Adiciona segundo responsável
     await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r2');
-    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
 
     // Chip do segundo responsável aparece e QLValorInputs ficam visíveis (count > 1)
     await waitFor(() =>
@@ -494,9 +488,7 @@ describe('QuickLaunchButton', () => {
     const { user, dialog } = await openQuickLaunch();
 
     await user.selectOptions(await within(dialog).findByLabelText(/adicionar respons.vel/i), 'r1');
-    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
     await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r2');
-    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
 
     await waitFor(() =>
       expect(within(dialog).getByRole('button', { name: /Remover Responsavel Dois/i })).toBeInTheDocument()
@@ -543,9 +535,7 @@ describe('QuickLaunchButton', () => {
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
 
     await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
-    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
     await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r2');
-    await user.click(within(dialog).getByRole('button', { name: /^add$/i }));
 
     await waitFor(() =>
       expect(within(dialog).getByRole('button', { name: /Remover Responsavel Dois/i })).toBeInTheDocument()
