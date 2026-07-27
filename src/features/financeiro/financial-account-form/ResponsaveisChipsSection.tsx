@@ -81,11 +81,11 @@ export function ResponsaveisChipsSection({ form }: ResponsaveisChipsSectionProps
 
       {/* Chips dos responsáveis selecionados */}
       {allSelected.length > 0 && (
-        <div className="flex flex-wrap gap-2 rounded-2xl border border-white/8 bg-surface-container px-3 py-2.5">
+        <div className="flex flex-wrap gap-1.5">
           {allSelected.map((chip) => (
             <span
               key={chip.id}
-              className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 pl-2.5 pr-1.5 py-0.5 text-xs font-semibold text-primary"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
             >
               {chip.label}
               {canEdit && (
@@ -93,9 +93,11 @@ export function ResponsaveisChipsSection({ form }: ResponsaveisChipsSectionProps
                   type="button"
                   aria-label={`Remover ${chip.label}`}
                   onClick={() => handleRemove(chip.id)}
-                  className="grid h-4 w-4 place-items-center rounded-full text-primary/60 transition-colors hover:bg-primary/20 hover:text-primary"
+                  className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary/20 text-primary/70 transition-colors hover:bg-primary/40 hover:text-primary leading-none"
                 >
-                  <span className="material-symbols-outlined text-[13px] leading-none">close</span>
+                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                    <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
                 </button>
               )}
             </span>
