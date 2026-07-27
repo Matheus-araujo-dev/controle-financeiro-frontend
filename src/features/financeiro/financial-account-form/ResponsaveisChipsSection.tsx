@@ -216,7 +216,7 @@ function ValorInput({
         const parsed = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
         if (!isNaN(parsed) && parsed >= 0) onChange(parsed);
       }}
-      className="w-28 rounded-lg border border-white/10 bg-surface px-2 py-1 text-right text-xs font-medium text-on-surface focus:border-primary/50 focus:outline-none disabled:opacity-50"
+      className="w-28 rounded-xl bg-surface-container ring-1 ring-white/5 px-2 py-1 text-right text-xs font-medium text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
     />
   );
 }
