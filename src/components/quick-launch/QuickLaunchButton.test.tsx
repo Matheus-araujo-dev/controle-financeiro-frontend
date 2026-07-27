@@ -337,7 +337,7 @@ describe('QuickLaunchButton', () => {
 
     await user.click(within(dialog).getAllByRole('button', { name: 'Nova pessoa' })[0]);
     await user.click(screen.getByRole('button', { name: 'Salvar pessoa' }));
-    await user.selectOptions(within(dialog).getByLabelText(/adicionar pagador/i), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
     await user.click(within(dialog).getByRole('button', { name: 'Nova forma de pagamento' }));
     await user.click(screen.getByRole('button', { name: 'Salvar forma' }));
     await user.click(within(dialog).getByRole('button', { name: 'Nova categoria' }));
@@ -351,8 +351,8 @@ describe('QuickLaunchButton', () => {
       expect.objectContaining({
         descricao: 'Servico prestado',
         valorOriginal: 300,
-        pagadorId: 'r1',
-        responsavelId: 'p-new',
+        pagadorId: 'p-new',
+        responsavelId: 'r1',
         formaPagamentoId: 'f-new',
         cartaoId: null,
         rateios: [{ contaGerencialId: 'cg-new', valor: 300 }]
