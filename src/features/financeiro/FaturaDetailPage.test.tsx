@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -31,6 +31,9 @@ vi.mock('../../services/http/cadastros-api', () => ({
   cadastrosApi: {
     contasBancarias: {
       listar: vi.fn()
+    },
+    pessoas: {
+      listar: vi.fn()
     }
   }
 }));
@@ -45,6 +48,13 @@ describe('FaturaDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queryClient = createTestQueryClient();
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 200,
+      totalItems: 0,
+      totalPages: 0
+    } as never);
   });
 
   it('loads the invoice detail, renders the redesigned summary and pays the invoice', async () => {
@@ -71,6 +81,7 @@ describe('FaturaDetailPage', () => {
       contaPagarId: 'cp1',
       descricao: 'Compra cartao abril A',
       recebedorNome: 'Fornecedor X',
+      responsavelNome: null,
       dataCompra: '2026-04-05',
       valorLiquido: 100,
       statusCodigo: 'PENDENTE',
@@ -123,6 +134,7 @@ describe('FaturaDetailPage', () => {
           contaPagarId: 'cp1',
           descricao: 'Compra cartao abril A',
           recebedorNome: 'Fornecedor X',
+      responsavelNome: null,
           dataCompra: '2026-04-05',
           valorLiquido: 100,
           statusCodigo: 'LIQUIDADA',
@@ -148,7 +160,7 @@ describe('FaturaDetailPage', () => {
     expect(screen.getByText('Itens vinculados a esta fatura')).toBeInTheDocument();
     expect(screen.getByText('Compra cartao abril A')).toBeInTheDocument();
 
-    const combobox = screen.getByRole('combobox');
+    const combobox = screen.getByRole('combobox', { name: 'Conta bancária' });
     await userEvent.click(combobox);
     await userEvent.click(await screen.findByText('Conta principal — Banco Exemplo'));
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento' }));
@@ -178,6 +190,7 @@ describe('FaturaDetailPage', () => {
         contaPagarId: 'cp1',
         descricao: 'Compra cartao abril A',
         recebedorNome: 'Fornecedor X',
+      responsavelNome: null,
         dataCompra: '2026-04-05',
         valorLiquido: 100,
         statusCodigo: 'LIQUIDADA',
@@ -209,6 +222,7 @@ describe('FaturaDetailPage', () => {
           contaPagarId: 'cp1',
           descricao: 'Compra cartao abril A',
           recebedorNome: 'Fornecedor X',
+      responsavelNome: null,
           dataCompra: '2026-04-05',
           valorLiquido: 100,
           statusCodigo: 'LIQUIDADA',
@@ -239,6 +253,7 @@ describe('FaturaDetailPage', () => {
           contaPagarId: 'cp1',
           descricao: 'Compra cartao abril A',
           recebedorNome: 'Fornecedor X',
+      responsavelNome: null,
           dataCompra: '2026-04-05',
           valorLiquido: 100,
           statusCodigo: 'PENDENTE',
@@ -268,3 +283,4 @@ describe('FaturaDetailPage', () => {
     expect(screen.getAllByText('Aberta').length).toBeGreaterThan(0);
   });
 });
+
