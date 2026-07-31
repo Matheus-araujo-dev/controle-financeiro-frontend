@@ -479,6 +479,7 @@ export type FaturaItem = {
   contaPagarId: string;
   descricao: string;
   recebedorNome: string;
+  responsavelNome: string | null;
   dataCompra: string;
   valorLiquido: number;
   statusCodigo: string;
