@@ -134,6 +134,7 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   liquidar?: (id: string, values: FinanceiroLiquidacaoFormValues) => Promise<TDetail>;
   estornar?: (id: string) => Promise<TDetail>;
   cancelar?: (id: string, options?: CancelarContaPagarPayload) => Promise<TDetail>;
+  removerDaFatura?: (id: string) => Promise<void>;
   toFormValues: (detail: TDetail) => FinanceiroFormValues;
   loadPessoaOptions: () => Promise<SelectOption[]>;
   loadResponsavelOptions: () => Promise<SelectOption[]>;
@@ -587,6 +588,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
     }),
   estornar: financeiroApi.contasPagar.estornar,
   cancelar: financeiroApi.contasPagar.cancelar,
+  removerDaFatura: financeiroApi.contasPagar.removerDaFatura,
   toFormValues: (detail) => ({
     ...buildToFormValues({
       numeroDocumento: detail.numeroDocumento,
