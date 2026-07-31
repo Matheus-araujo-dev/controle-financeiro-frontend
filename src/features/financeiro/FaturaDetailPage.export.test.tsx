@@ -20,6 +20,7 @@ vi.mock('../../services/http/financeiro-api', () => ({
 vi.mock('../../services/http/cadastros-api', () => ({
   cadastrosApi: {
     contasBancarias: { listar: vi.fn().mockResolvedValue({ items: [], totalItems: 0, totalPages: 0 }) },
+    pessoas: { listar: vi.fn().mockResolvedValue({ items: [], totalItems: 0, totalPages: 0 }) },
   },
 }));
 
@@ -37,12 +38,12 @@ const testDetail = {
 
 const testItens = [
   {
-    contaPagarId: 'item1', descricao: 'Supermercado', recebedorNome: 'Extra',
+    contaPagarId: 'item1', descricao: 'Supermercado', recebedorNome: 'Extra', responsavelNome: null,
     dataCompra: '2026-07-10', valorLiquido: 2000, statusCodigo: 'PENDENTE',
     numeroParcela: 1, quantidadeParcelas: 1, ehEstorno: false,
   },
   {
-    contaPagarId: 'item2', descricao: 'Estorno extra', recebedorNome: 'Extra',
+    contaPagarId: 'item2', descricao: 'Estorno extra', recebedorNome: 'Extra', responsavelNome: null,
     dataCompra: '2026-07-12', valorLiquido: 100, statusCodigo: 'LIQUIDADA',
     numeroParcela: 1, quantidadeParcelas: 1, ehEstorno: true,
   },
