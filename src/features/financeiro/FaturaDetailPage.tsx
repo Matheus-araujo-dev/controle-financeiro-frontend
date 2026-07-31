@@ -50,18 +50,21 @@ export function FaturaDetailPage() {
   const [itemsPageSize, setItemsPageSize] = useState(50);
   const [itemsSortBy, setItemsSortBy] = useState<string | undefined>(undefined);
   const [itemsSortDirection, setItemsSortDirection] = useState<'Asc' | 'Desc'>('Asc');
+  const [itemsResponsavelId, setItemsResponsavelId] = useState<string>('');
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['faturas', 'detail', id],
     queryFn: async () => {
       if (!id) throw new Error('Fatura não informada.');
-      const [fatura, contas] = await Promise.all([
+      const [fatura, contas, responsaveis] = await Promise.all([
         financeiroApi.faturas.obterPorId(id),
-        cadastrosApi.contasBancarias.listar({ page: 1, pageSize: 100, search: '', ativo: true })
+        cadastrosApi.contasBancarias.listar({ page: 1, pageSize: 100, search: '', ativo: true }),
+        cadastrosApi.pessoas.listar({ page: 1, pageSize: 200, search: '' })
       ]);
       return {
         detail: fatura,
-        contaOptions: contas.items.map((item) => ({ label: `${item.nome} — ${item.banco}`, value: item.id }))
+        contaOptions: contas.items.map((item) => ({ label: `${item.nome} — ${item.banco}`, value: item.id })),
+        responsavelOptions: responsaveis.items.map((item) => ({ label: item.nome, value: item.id }))
       };
     },
     enabled: !!id,
@@ -136,8 +139,8 @@ export function FaturaDetailPage() {
   };
 
   const { data: itensData, isFetching: loadingItens } = useQuery({
-    queryKey: ['faturas', 'itens', id, itemsPage, itemsPageSize, itemsSortBy, itemsSortDirection],
-    queryFn: () => financeiroApi.faturas.listarItens(id!, { page: itemsPage, pageSize: itemsPageSize, sortBy: itemsSortBy, sortDirection: itemsSortDirection }),
+    queryKey: ['faturas', 'itens', id, itemsPage, itemsPageSize, itemsSortBy, itemsSortDirection, itemsResponsavelId],
+    queryFn: () => financeiroApi.faturas.listarItens(id!, { page: itemsPage, pageSize: itemsPageSize, sortBy: itemsSortBy, sortDirection: itemsSortDirection, responsavelId: itemsResponsavelId || undefined }),
     enabled: !!data?.detail,
     staleTime: 30_000,
     placeholderData: (prev) => prev
@@ -145,6 +148,7 @@ export function FaturaDetailPage() {
 
   const detail = data?.detail;
   const contaOptions = data?.contaOptions ?? [];
+  const responsavelOptions = data?.responsavelOptions ?? [];
   const saving = pagarMutation.isPending || estornarMutation.isPending || fecharMutation.isPending;
   const errorMessage = actionError ?? (error instanceof Error ? error.message : error ? 'Falha ao carregar a fatura.' : undefined);
 
@@ -178,6 +182,7 @@ export function FaturaDetailPage() {
   const richExportColumns: RichColumn<FaturaItem>[] = [
     { header: 'Descrição', value: (r) => r.descricao, cellStyle: STYLE.DATA_TEXT, width: 36 },
     { header: 'Recebedor', value: (r) => r.recebedorNome, cellStyle: STYLE.DATA_TEXT, width: 24 },
+    { header: 'Responsável', value: (r) => r.responsavelNome ?? '—', cellStyle: STYLE.DATA_TEXT, width: 20 },
     { header: 'Data da compra', value: (r) => formatDateBR(r.dataCompra), cellStyle: STYLE.DATA_TEXT, width: 16 },
     { header: 'Valor (R$)', value: (r) => r.ehEstorno ? r.valorLiquido : -r.valorLiquido, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + (r.ehEstorno ? r.valorLiquido : -r.valorLiquido), 0), width: 14 },
     { header: 'Status', value: (r) => r.ehEstorno ? 'Estorno' : r.statusCodigo, cellStyle: STYLE.DATA_TEXT, width: 12 },
@@ -187,6 +192,7 @@ export function FaturaDetailPage() {
   const printColumns: PrintColumn<FaturaItem>[] = [
     { header: 'Descrição', value: (r) => r.descricao },
     { header: 'Recebedor', value: (r) => r.recebedorNome },
+    { header: 'Responsável', value: (r) => r.responsavelNome ?? '—' },
     { header: 'Data', value: (r) => formatDateBR(r.dataCompra) },
     { header: 'Valor (R$)', value: (r) => formatCurrencyBRL(r.valorLiquido), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorLiquido, 0)) },
     { header: 'Status', value: (r) => r.ehEstorno ? 'Estorno' : r.statusCodigo },
@@ -404,17 +410,28 @@ export function FaturaDetailPage() {
 
       {/* Items table */}
       <div className="rounded-2xl border border-white/6 bg-surface-container-low p-6">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Lançamentos do ciclo</p>
-            <h2 className="mt-1 font-headline text-lg font-bold text-on-surface">
-              Itens vinculados a esta fatura
-            </h2>
+        <div className="mb-5 flex flex-col gap-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Lançamentos do ciclo</p>
+              <h2 className="mt-1 font-headline text-lg font-bold text-on-surface">
+                Itens vinculados a esta fatura
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => void handleXlsxExport()} className="px-3 h-8 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-bold text-on-surface-variant hover:text-white transition-all uppercase tracking-wider">XLSX</button>
+              <button onClick={() => void handlePdfExport()} className="px-3 h-8 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-bold text-on-surface-variant hover:text-white transition-all uppercase tracking-wider">PDF</button>
+              <NeonBadge variant="neutral">{itensData?.totalItems ?? detail.quantidadeItens} item(ns)</NeonBadge>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => void handleXlsxExport()} className="px-3 h-8 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-bold text-on-surface-variant hover:text-white transition-all uppercase tracking-wider">XLSX</button>
-            <button onClick={() => void handlePdfExport()} className="px-3 h-8 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-bold text-on-surface-variant hover:text-white transition-all uppercase tracking-wider">PDF</button>
-            <NeonBadge variant="neutral">{detail.quantidadeItens} item(ns)</NeonBadge>
+          <div className="w-full max-w-xs">
+            <ComboBox
+              aria-label="Filtrar por responsável"
+              value={itemsResponsavelId}
+              onChange={(v) => { setItemsResponsavelId(v); setItemsPage(1); }}
+              options={responsavelOptions}
+              placeholder="Todos os responsáveis..."
+            />
           </div>
         </div>
 
@@ -446,6 +463,13 @@ export function FaturaDetailPage() {
               )
             },
             { title: 'Recebedor', dataIndex: 'recebedorNome', key: 'recebedorNome', sorter: true, mobileRole: 'subtitle' },
+            {
+              title: 'Responsável',
+              dataIndex: 'responsavelNome',
+              key: 'responsavelNome',
+              sorter: true,
+              render: (value) => <span className="text-sm text-on-surface-variant">{value ?? '—'}</span>
+            },
             {
               title: 'Data da compra',
               dataIndex: 'dataCompra',
