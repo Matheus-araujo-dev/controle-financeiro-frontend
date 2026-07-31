@@ -475,6 +475,20 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     }
   }, [id, config, contaVinculada, navigate]);
 
+  const removerDaFatura = useCallback(async () => {
+    if (!id || !config.removerDaFatura) return;
+    setActionLoading(true);
+    setErrorMessage(undefined);
+    try {
+      await config.removerDaFatura(id);
+      navigate(config.routeBase);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao remover o lançamento da fatura.');
+    } finally {
+      setActionLoading(false);
+    }
+  }, [id, config, navigate]);
+
   const estornar = useCallback(async () => {
     if (!id || !config.estornar) return;
     setActionLoading(true);
@@ -589,6 +603,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     grupoParcelamentoId,
     numeroParcela,
     cancelar,
+    removerDaFatura,
     estornar,
     pendingDuplicateValues,
     duplicateItems,

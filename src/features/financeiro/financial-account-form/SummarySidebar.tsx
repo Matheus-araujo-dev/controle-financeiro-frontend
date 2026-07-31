@@ -314,6 +314,65 @@ function ContaVinculadaPropagateDialog({
   );
 }
 
+function FaturaItemCancelDialog({
+  open,
+  onClose,
+  onRemover,
+  onEstornar
+}: {
+  open: boolean;
+  onClose: () => void;
+  onRemover: () => void;
+  onEstornar: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-surface-container-low p-7 shadow-2xl">
+        <div className="mb-6 flex items-start gap-3">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-error/12 text-error">
+            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>credit_card_off</span>
+          </div>
+          <div>
+            <h3 className="font-headline text-lg font-bold text-on-surface">Cancelar lançamento em fatura</h3>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Este lançamento está vinculado a uma fatura de cartão. Como deseja proceder?
+            </p>
+          </div>
+        </div>
+        <div className="mb-5 flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={onRemover}
+            className="flex items-start gap-3 rounded-2xl border border-error/20 bg-error/6 p-4 text-left transition-colors hover:bg-error/10"
+          >
+            <span className="material-symbols-outlined mt-0.5 shrink-0 text-xl text-error" style={{ fontVariationSettings: "'FILL' 1" }}>delete</span>
+            <div>
+              <p className="font-semibold text-on-surface">Remover da fatura</p>
+              <p className="mt-0.5 text-xs text-on-surface-variant">Lançamento errado — exclui o item da fatura como se nunca tivesse sido lançado.</p>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={onEstornar}
+            className="flex items-start gap-3 rounded-2xl border border-outline-variant/20 bg-surface-container/60 p-4 text-left transition-colors hover:bg-surface-container"
+          >
+            <span className="material-symbols-outlined mt-0.5 shrink-0 text-xl text-on-surface-variant" style={{ fontVariationSettings: "'FILL' 1" }}>undo</span>
+            <div>
+              <p className="font-semibold text-on-surface">Lançar estorno</p>
+              <p className="mt-0.5 text-xs text-on-surface-variant">A compra aconteceu mas foi devolvida — registra um estorno no valor da fatura.</p>
+            </div>
+          </button>
+        </div>
+        <div className="flex justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>Voltar</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SummarySidebar({ form }: SummarySidebarProps) {
   const navigate = useNavigate();
   const {
@@ -329,6 +388,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     errorMessage,
     onCancel,
     cancelar,
+    removerDaFatura,
     estornar,
     origemCompraPlanejadaId,
     exibeRecorrencia,
@@ -356,6 +416,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
   const [confirm, setConfirm] = useState<ConfirmState>(null);
   const [reembolsoModalOpen, setReembolsoModalOpen] = useState(false);
   const [reembolsoResult, setReembolsoResult] = useState<CriarReembolsoResponse | null>(null);
+  const [faturaItemCancelOpen, setFaturaItemCancelOpen] = useState(false);
   const [plannedPurchaseConfirmOpen, setPlannedPurchaseConfirmOpen] = useState(false);
   const [recorrenciaConfirmOpen, setRecorrenciaConfirmOpen] = useState(false);
   const [parcelasConfirmOpen, setParcelasConfirmOpen] = useState(false);
@@ -370,6 +431,28 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
     } else {
       void cancelar(options);
     }
+  }
+
+  function continuarFluxoCancelamento() {
+    if (hasPlannedPurchaseOrigin) {
+      setPlannedPurchaseConfirmOpen(true);
+      return;
+    }
+    if (hasRecorrenciaOrigin) {
+      setRecorrenciaConfirmOpen(true);
+      return;
+    }
+    if (isNonOriginParcela) {
+      setParcelasConfirmOpen(true);
+      return;
+    }
+    setConfirm({
+      title: 'Confirmar Cancelamento',
+      message: 'Tem certeza que deseja cancelar este lançamento? Esta ação não pode ser desfeita.',
+      confirmLabel: 'Sim, cancelar',
+      tone: 'danger',
+      onConfirm: () => iniciarCancelamento()
+    });
   }
 
   const valorOriginal = Number(watchedValues.valorOriginal) || 0;
@@ -565,25 +648,11 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
               size="lg"
               className="w-full rounded-2xl font-bold"
               onClick={() => {
-                if (hasPlannedPurchaseOrigin) {
-                  setPlannedPurchaseConfirmOpen(true);
+                if (detailStatus === 'EM_FATURA') {
+                  setFaturaItemCancelOpen(true);
                   return;
                 }
-                if (hasRecorrenciaOrigin) {
-                  setRecorrenciaConfirmOpen(true);
-                  return;
-                }
-                if (isNonOriginParcela) {
-                  setParcelasConfirmOpen(true);
-                  return;
-                }
-                setConfirm({
-                  title: 'Confirmar Cancelamento',
-                  message: 'Tem certeza que deseja cancelar este lançamento? Esta ação não pode ser desfeita.',
-                  confirmLabel: 'Sim, cancelar',
-                  tone: 'danger',
-                  onConfirm: () => iniciarCancelamento()
-                });
+                continuarFluxoCancelamento();
               }}
             >
               Cancelar Título
@@ -613,6 +682,18 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
       </FormActionPanel>
 
       <ConfirmDialog state={confirm} onClose={() => setConfirm(null)} />
+      <FaturaItemCancelDialog
+        open={faturaItemCancelOpen}
+        onClose={() => setFaturaItemCancelOpen(false)}
+        onRemover={() => {
+          setFaturaItemCancelOpen(false);
+          void removerDaFatura?.();
+        }}
+        onEstornar={() => {
+          setFaturaItemCancelOpen(false);
+          continuarFluxoCancelamento();
+        }}
+      />
       <RecorrenciaCancelDialog
         open={recorrenciaConfirmOpen}
         onClose={() => setRecorrenciaConfirmOpen(false)}
