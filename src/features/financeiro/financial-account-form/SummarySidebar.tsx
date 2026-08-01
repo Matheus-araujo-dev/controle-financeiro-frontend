@@ -601,27 +601,12 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
             </div>
           ) : null}
 
-          {/* Botão "Gerar Reembolso" — só para ContasPagar sem reembolso existente */}
-          {isPagar && id && id !== 'novo' && !grupoReembolsoId && !reembolsoResult &&
-            (detailStatus === 'PENDENTE' || detailStatus === 'VENCIDA' || detailStatus === 'EM_FATURA' || detailStatus === 'LIQUIDADA') ? (
-            <Button
-              type="button"
-              variant="secondary"
-              size="lg"
-              className="w-full rounded-2xl font-bold gap-2 border-secondary/30! text-secondary!"
-              onClick={() => setReembolsoModalOpen(true)}
-            >
-              <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>
-              Gerar Reembolso
-            </Button>
-          ) : null}
-
           {/* Card de resultado após criar reembolso */}
           {reembolsoResult ? (
-            <div className="rounded-2xl border border-secondary/30 bg-secondary/8 p-4 space-y-2">
+            <div className="rounded-2xl border border-primary/20 bg-primary/6 p-4 space-y-2">
               <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-base text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-secondary">Reembolso criado</span>
+                <span className="material-symbols-outlined text-base text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Reembolso criado</span>
               </div>
               <p className="text-sm text-on-surface">
                 {reembolsoResult.contasReceber.length} conta{reembolsoResult.contasReceber.length !== 1 ? 's' : ''} a receber gerada{reembolsoResult.contasReceber.length !== 1 ? 's' : ''}.
@@ -641,43 +626,60 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
             </div>
           ) : null}
 
-          {id && !faturaLocked && (detailStatus === 'PENDENTE' || detailStatus === 'FUTURO' || detailStatus === 'EM_FATURA') ? (
-            <Button
-              type="button"
-              variant="danger"
-              size="lg"
-              className="w-full rounded-2xl font-bold"
-              onClick={() => {
-                if (detailStatus === 'EM_FATURA') {
-                  setFaturaItemCancelOpen(true);
-                  return;
-                }
-                continuarFluxoCancelamento();
-              }}
-            >
-              Cancelar Título
-            </Button>
-          ) : null}
+          <div className="flex flex-col gap-3">
+            {/* Botão "Gerar Reembolso" — só para ContasPagar sem reembolso existente */}
+            {isPagar && id && id !== 'novo' && !grupoReembolsoId && !reembolsoResult &&
+              (detailStatus === 'PENDENTE' || detailStatus === 'VENCIDA' || detailStatus === 'EM_FATURA' || detailStatus === 'LIQUIDADA') ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                className="w-full rounded-2xl font-bold gap-2 border-primary/30! text-primary!"
+                onClick={() => setReembolsoModalOpen(true)}
+              >
+                <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>
+                Gerar Reembolso
+              </Button>
+            ) : null}
 
-          {id && detailStatus === 'LIQUIDADA' && !faturaLocked ? (
-            <Button
-              type="button"
-              variant="secondary"
-              size="lg"
-              className="w-full rounded-2xl border-warning/30! text-warning! font-bold"
-              onClick={() =>
-                setConfirm({
-                  title: 'Estornar Liquidacao',
-                  message: 'Deseja reverter o pagamento deste titulo?',
-                  confirmLabel: 'Sim, estornar',
-                  tone: 'warning',
-                  onConfirm: () => void estornar()
-                })
-              }
-            >
-              Estornar Pagamento
-            </Button>
-          ) : null}
+            {id && !faturaLocked && (detailStatus === 'PENDENTE' || detailStatus === 'FUTURO' || detailStatus === 'EM_FATURA') ? (
+              <Button
+                type="button"
+                variant="danger"
+                size="lg"
+                className="w-full rounded-2xl font-bold"
+                onClick={() => {
+                  if (detailStatus === 'EM_FATURA') {
+                    setFaturaItemCancelOpen(true);
+                    return;
+                  }
+                  continuarFluxoCancelamento();
+                }}
+              >
+                Cancelar Título
+              </Button>
+            ) : null}
+
+            {id && detailStatus === 'LIQUIDADA' && !faturaLocked ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                className="w-full rounded-2xl border-warning/30! text-warning! font-bold"
+                onClick={() =>
+                  setConfirm({
+                    title: 'Estornar Liquidacao',
+                    message: 'Deseja reverter o pagamento deste titulo?',
+                    confirmLabel: 'Sim, estornar',
+                    tone: 'warning',
+                    onConfirm: () => void estornar()
+                  })
+                }
+              >
+                Estornar Pagamento
+              </Button>
+            ) : null}
+          </div>
         </div>
       </FormActionPanel>
 

@@ -132,39 +132,44 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
       ) : null}
 
       {cardInvoicePreview ? (
-        <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4 space-y-3">
-          <div className="flex items-start gap-3">
+        <div className="mb-2 overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container">
+          {/* Header */}
+          <div className="flex items-center gap-2 border-b border-outline-variant/15 bg-surface-container-high px-4 py-2.5">
             <span
-              className="mt-0.5 shrink-0 text-xl text-primary material-symbols-outlined"
+              className="text-base text-primary material-symbols-outlined"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
               credit_card
             </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-black uppercase tracking-widest text-primary/70">Direcionado para fatura</p>
-              <p className="mt-0.5 font-headline text-base font-bold text-on-surface">
-                {formatMonthYearBR(cardInvoicePreview.competencia)}
-              </p>
-              <div className="mt-3 grid grid-cols-3 gap-x-4 gap-y-1">
-                {[
-                  { label: 'Cartão', value: cardInvoicePreview.cartaoNome ?? '—' },
-                  { label: 'Fechamento', value: formatDateBR(cardInvoicePreview.dataFechamento) },
-                  { label: 'Vencimento', value: formatDateBR(cardInvoicePreview.dataVencimento) },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{item.label}</p>
-                    <p className="text-xs font-bold text-on-surface truncate">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+              Direcionado para fatura
+            </p>
           </div>
-          <div className="border-t border-primary/15 pt-3">
+
+          {/* Body */}
+          <div className="px-4 py-3 space-y-3">
+            <p className="font-headline text-lg font-bold text-on-surface leading-none">
+              {formatMonthYearBR(cardInvoicePreview.competencia)}
+            </p>
+
+            <div className="grid grid-cols-3 gap-x-4 gap-y-2">
+              {[
+                { label: 'Cartão', value: cardInvoicePreview.cartaoNome ?? '—' },
+                { label: 'Fechamento', value: formatDateBR(cardInvoicePreview.dataFechamento) },
+                { label: 'Vencimento', value: formatDateBR(cardInvoicePreview.dataVencimento) },
+              ].map((item) => (
+                <div key={item.label}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/70">{item.label}</p>
+                  <p className="mt-0.5 text-xs font-semibold text-on-surface truncate">{item.value}</p>
+                </div>
+              ))}
+            </div>
+
             <Link
               to={buildCardInvoiceLink(cardInvoicePreview)}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary transition-opacity hover:opacity-75"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant transition-colors hover:text-primary"
             >
-              <span className="material-symbols-outlined text-base leading-none">open_in_new</span>
+              <span className="material-symbols-outlined text-sm leading-none">open_in_new</span>
               Abrir fatura prevista
             </Link>
           </div>
