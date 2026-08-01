@@ -125,7 +125,7 @@ export const financeiroApi = {
     liquidar: (id: string, payload: LiquidacaoPayload) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/liquidar`, payload),
     estornar: (id: string) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/estornar`),
     cancelar: (id: string, payload?: CancelarContaPagarPayload) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/cancelar`, payload),
-    removerDaFatura: (id: string) => del<void>(`/contas-pagar/${id}/remover-da-fatura`)
+    removerDaFatura: (id: string) => post<void>(`/contas-pagar/${id}/remover-da-fatura`)
   },
   contasReceber: {
     listar: (params: ContaReceberFilters) =>
