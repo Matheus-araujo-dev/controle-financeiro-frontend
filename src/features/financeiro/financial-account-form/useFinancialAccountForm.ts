@@ -72,6 +72,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(Boolean(id));
   const [errorMessage, setErrorMessage] = useState<string>();
+  const [isLoadError, setIsLoadError] = useState(false);
   const [pessoaOptions, setPessoaOptions] = useState<SelectOption[]>([]);
   const [responsavelOptions, setResponsavelOptions] = useState<SelectOption[]>([]);
   const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<FormaPagamentoOption[]>([]);
@@ -220,6 +221,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
 
     async function loadDetail(currentId: string) {
       setLoading(true);
+      setIsLoadError(false);
       setErrorMessage(undefined);
       try {
         const detail = await config.detail(currentId);
@@ -239,6 +241,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
           setNumeroParcela((detail as Record<string, unknown>).numeroParcela as number | undefined);
         }
       } catch (error) {
+        setIsLoadError(true);
         setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar o lançamento.');
       } finally {
         setLoading(false);
@@ -260,6 +263,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         reset(normalizeRecurringFormValues({ ...config.defaultValues, ...prefill }));
       } catch (error) {
         if (isCancelled) return;
+        setIsLoadError(true);
         setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar o lançamento.');
       } finally {
         if (!isCancelled) setLoading(false);
@@ -456,6 +460,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const cancelar = useCallback(async (options?: CancelarContaPagarPayload & { cancelarContaVinculada?: boolean }) => {
     if (!id || !config.cancelar) return;
     setActionLoading(true);
+    setIsLoadError(false);
     setErrorMessage(undefined);
     try {
       const { cancelarContaVinculada: cancelVinculada, ...cancelOptions } = options ?? {};
@@ -478,6 +483,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const removerDaFatura = useCallback(async () => {
     if (!id || !config.removerDaFatura) return;
     setActionLoading(true);
+    setIsLoadError(false);
     setErrorMessage(undefined);
     try {
       await config.removerDaFatura(id);
@@ -492,6 +498,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const estornar = useCallback(async () => {
     if (!id || !config.estornar) return;
     setActionLoading(true);
+    setIsLoadError(false);
     setErrorMessage(undefined);
     try {
       await config.estornar(id);
@@ -582,6 +589,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     automaticRecurringStartPreview,
     loading,
     errorMessage,
+    isLoadError,
     detailStatus,
     detailFaturaStatus,
     faturaLocked,
