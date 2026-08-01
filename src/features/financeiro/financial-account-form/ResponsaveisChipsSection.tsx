@@ -16,7 +16,6 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
   const isPagador = personRole === 'pagador';
   const chipOptions = isPagador ? pessoaOptions : responsavelOptions;
 
-  const [addingId, setAddingId] = useState('');
   const [quickAddOpen, setQuickAddOpen] = useState(false);
 
   const responsavelId = useWatch({ control, name: 'responsavelId' }) ?? '';
@@ -47,17 +46,6 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
     const perOther = others.length > 0 ? Math.round((remainder / others.length) * 100) / 100 : 0;
     const novosValores = allSelected.map((_, i) => (i === changedIndex ? newValor : perOther));
     setValue('responsaveisValores', novosValores, { shouldValidate: false });
-  }
-
-  function handleAdd() {
-    if (!addingId) return;
-    if (!responsavelId) {
-      setValue('responsavelId', addingId, { shouldValidate: true });
-    } else {
-      setValue('responsaveisAdicionaisIds', [...responsaveisAdicionaisIds, addingId], { shouldValidate: true });
-    }
-    setValue('responsaveisValores', [], { shouldValidate: false });
-    setAddingId('');
   }
 
   function handleRemove(id: string) {
@@ -94,35 +82,30 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
       <Controller control={control} name="responsaveisAdicionaisIds" render={() => <input type="hidden" />} />
       <Controller control={control} name="responsaveisValores" render={() => <input type="hidden" />} />
 
-      {/* Campo para adicionar novo responsável */}
+      {/* Campo para adicionar novo responsável — auto-adiciona ao selecionar */}
       {canEdit && (
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
-            <ComboBox
-              value={addingId}
-              onChange={setAddingId}
-              aria-label={isPagador ? 'Adicionar pagador' : 'Adicionar responsável'}
-              onAddNew={() => setQuickAddOpen(true)}
-              addNewLabel="Nova pessoa"
-            >
-              <option value="">{isPagador ? 'Adicionar pagador...' : 'Adicionar responsável...'}</option>
-              {available.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </ComboBox>
-          </div>
-          <button
-            type="button"
-            aria-label="add"
-            disabled={!addingId}
-            onClick={handleAdd}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-surface-container text-on-surface-variant transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-40"
-          >
-            <span className="material-symbols-outlined text-lg leading-none">add</span>
-          </button>
-        </div>
+        <ComboBox
+          value=""
+          onChange={(id) => {
+            if (!id) return;
+            if (!responsavelId) {
+              setValue('responsavelId', id, { shouldValidate: true });
+            } else {
+              setValue('responsaveisAdicionaisIds', [...responsaveisAdicionaisIds, id], { shouldValidate: true });
+            }
+            setValue('responsaveisValores', [], { shouldValidate: false });
+          }}
+          aria-label={isPagador ? 'Adicionar pagador' : 'Adicionar responsável'}
+          onAddNew={() => setQuickAddOpen(true)}
+          addNewLabel="Nova pessoa"
+        >
+          <option value="">{isPagador ? 'Adicionar pagador...' : 'Adicionar responsável...'}</option>
+          {available.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </ComboBox>
       )}
 
       {errors.responsavelId ? (
@@ -219,7 +202,7 @@ function ValorInput({
         const parsed = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
         if (!isNaN(parsed) && parsed >= 0) onChange(parsed);
       }}
-      className="w-28 rounded-xl bg-surface-container ring-1 ring-white/5 px-2 py-1 text-right text-xs font-medium text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+      className="w-20 min-w-0 shrink rounded-xl bg-surface-container ring-1 ring-white/5 px-2 py-1 text-right text-xs font-medium text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
     />
   );
 }
