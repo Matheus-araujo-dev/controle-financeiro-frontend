@@ -134,7 +134,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
       {cardInvoicePreview ? (
         <div className="mb-2 overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container">
           {/* Header */}
-          <div className="flex items-center gap-2 border-b border-outline-variant/15 bg-surface-container-high px-4 py-2.5">
+          <div className="flex items-center justify-center gap-2 border-b border-outline-variant/15 bg-surface-container-high px-4 py-2.5">
             <span
               className="text-base text-primary material-symbols-outlined"
               style={{ fontVariationSettings: "'FILL' 1" }}
@@ -167,7 +167,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
 
             <Link
               to={buildCardInvoiceLink(cardInvoicePreview)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant transition-colors hover:text-primary"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant! transition-colors hover:text-on-surface!"
             >
               <span className="material-symbols-outlined text-sm leading-none">open_in_new</span>
               Abrir fatura prevista
