@@ -107,20 +107,18 @@ describe('ResponsaveisChipsSection', () => {
     expect(screen.getByRole('option', { name: 'Bob' })).toBeInTheDocument();
   });
 
-  it('adds first responsável as primary (responsavelId)', () => {
+  it('auto-adiciona o primeiro responsável como primário ao selecionar', () => {
     render(<Wrapper />);
+    // Auto-adiciona ao selecionar — sem botão "+" separado
     fireEvent.change(screen.getByLabelText('Adicionar responsável'), { target: { value: 'r1' } });
-    fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
-    // Chip for Alice appears
     expect(screen.getByRole('button', { name: /Remover Alice/i })).toBeInTheDocument();
-    // Alice is no longer in the available options
+    // Alice não aparece mais como opção disponível
     expect(screen.queryByRole('option', { name: 'Alice' })).not.toBeInTheDocument();
   });
 
-  it('adds second responsável to responsaveisAdicionaisIds', () => {
+  it('auto-adiciona segundo responsável a responsaveisAdicionaisIds ao selecionar', () => {
     render(<Wrapper defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: [] }} />);
     fireEvent.change(screen.getByLabelText('Adicionar responsável'), { target: { value: 'r2' } });
-    fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
     expect(screen.getByRole('button', { name: /Remover Bob/i })).toBeInTheDocument();
   });
 
@@ -168,7 +166,6 @@ describe('ResponsaveisChipsSection', () => {
       />
     );
     expect(screen.queryByLabelText('Adicionar responsável')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^add$/i })).not.toBeInTheDocument();
     // Remove buttons also hidden
     expect(screen.queryByRole('button', { name: /Remover/i })).not.toBeInTheDocument();
   });
