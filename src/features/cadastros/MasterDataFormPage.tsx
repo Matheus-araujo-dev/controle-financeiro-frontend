@@ -278,6 +278,8 @@ export function MasterDataFormPage({
   const [loadedOptions, setLoadedOptions] = useState<Record<string, SelectOption[]>>({});
   const [responsavelModalOpen, setResponsavelModalOpen] = useState(false);
   const [contaBancariaModalOpen, setContaBancariaModalOpen] = useState(false);
+  const [duplicateItems, setDuplicateItems] = useState<Array<{ id: string; nome: string }>>([]);
+  const [pendingDuplicatePayload, setPendingDuplicatePayload] = useState<TPayload | null>(null);
 
   const {
     control,
@@ -401,27 +403,43 @@ export function MasterDataFormPage({
     setLoadedOptions((prev) => ({ ...prev, [fieldName]: options }));
   }
 
-  async function onSubmit(payload: TPayload) {
+  async function doSave(payload: TPayload) {
     setSubmitError(undefined);
     try {
       if (id) await config.update(id, payload);
       else await config.create(payload);
-
       await queryClient.invalidateQueries({ queryKey: [config.key] });
       navigate(config.routeBase);
     } catch (error) {
       const apiError = error as AxiosError<ApiErrorResponse>;
       const validationErrors = apiError.response?.data?.errors;
-
       if (validationErrors) {
         applyServerValidationErrors(validationErrors, (field, message) =>
           setError(field as never, { type: 'server', message })
         );
         return;
       }
-
       setSubmitError(error instanceof Error ? error.message : 'Falha ao salvar o cadastro.');
     }
+  }
+
+  async function onSubmit(payload: TPayload) {
+    if (!id && config.checkDuplicate) {
+      const nome = (payload as Record<string, unknown>)['nome'];
+      if (typeof nome === 'string') {
+        try {
+          const dupes = await config.checkDuplicate(nome, undefined);
+          if (dupes) {
+            setDuplicateItems(dupes);
+            setPendingDuplicatePayload(payload);
+            return;
+          }
+        } catch {
+          // se a verificação falhar por problema de rede, prossegue com o save
+        }
+      }
+    }
+    await doSave(payload);
   }
 
   function renderField(field: FormFieldConfig<TPayload>) {
@@ -646,6 +664,57 @@ export function MasterDataFormPage({
           );
         }}
       />
+
+      {duplicateItems.length > 0 && pendingDuplicatePayload && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="dup-dialog-title"
+        >
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-surface-container p-6 shadow-2xl">
+            <div className="mb-4 flex items-start gap-3">
+              <span className="material-symbols-outlined text-2xl text-amber-400" aria-hidden="true">warning</span>
+              <div>
+                <h2 id="dup-dialog-title" className="text-sm font-semibold text-on-surface">
+                  Pessoa já cadastrada
+                </h2>
+                <p className="mt-1 text-xs text-on-surface-variant">
+                  Já existe{duplicateItems.length > 1 ? 'm' : ''} {duplicateItems.length} pessoa{duplicateItems.length > 1 ? 's' : ''} com esse nome:
+                </p>
+              </div>
+            </div>
+            <ul className="mb-5 space-y-1">
+              {duplicateItems.map((item) => (
+                <li key={item.id} className="truncate rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-on-surface">
+                  {item.nome}
+                </li>
+              ))}
+            </ul>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setDuplicateItems([]); setPendingDuplicatePayload(null); }}
+                className="rounded-xl px-4 py-2 text-xs font-medium text-on-surface-variant ring-1 ring-white/10 transition-colors hover:bg-white/5"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const payload = pendingDuplicatePayload;
+                  setDuplicateItems([]);
+                  setPendingDuplicatePayload(null);
+                  void doSave(payload);
+                }}
+                className="rounded-xl bg-amber-500/20 px-4 py-2 text-xs font-medium text-amber-300 ring-1 ring-amber-500/30 transition-colors hover:bg-amber-500/30"
+              >
+                Cadastrar mesmo assim
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
