@@ -379,6 +379,35 @@ describe('cadastros module config', () => {
     expect(cadastrosApi.contasGerenciais.ativar).toHaveBeenCalledWith('cg1');
   });
 
+  it('checkDuplicate returns null for empty name', async () => {
+    const result = await pessoasModuleConfig.checkDuplicate?.('');
+    expect(result).toBeNull();
+  });
+
+  it('checkDuplicate returns null when no exact match', async () => {
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValueOnce({
+      items: [{ id: 'p1', nome: 'João Silva' }]
+    } as never);
+    const result = await pessoasModuleConfig.checkDuplicate?.('João');
+    expect(result).toBeNull();
+  });
+
+  it('checkDuplicate returns matches on exact name (case-insensitive)', async () => {
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValueOnce({
+      items: [{ id: 'p1', nome: 'Google' }, { id: 'p2', nome: 'google' }]
+    } as never);
+    const result = await pessoasModuleConfig.checkDuplicate?.('GOOGLE');
+    expect(result).toEqual([{ id: 'p1', nome: 'Google' }, { id: 'p2', nome: 'google' }]);
+  });
+
+  it('checkDuplicate excludes the current record id (edit mode)', async () => {
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValueOnce({
+      items: [{ id: 'p1', nome: 'Google' }]
+    } as never);
+    const result = await pessoasModuleConfig.checkDuplicate?.('Google', 'p1');
+    expect(result).toBeNull();
+  });
+
   it('loadContaGerencialContrariaOptions returns opposite tipo options', async () => {
     const field = contasGerenciaisModuleConfig.fields.find((f) => f.name === 'contaGerencialContrariaId');
     expect(field?.loadOptionsWith).toBeDefined();
