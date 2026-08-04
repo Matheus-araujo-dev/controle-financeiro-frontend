@@ -25,7 +25,7 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
   const allSelected: Array<{ id: string; label: string }> = buildChipList(
     responsavelId,
     responsaveisAdicionaisIds,
-    responsavelOptions
+    chipOptions
   );
 
   const count = allSelected.length;

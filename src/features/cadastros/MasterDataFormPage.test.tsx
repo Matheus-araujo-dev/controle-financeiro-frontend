@@ -767,4 +767,93 @@ describe('MasterDataFormPage', () => {
 
     await waitFor(() => expect(update).toHaveBeenCalledWith('1', { nome: 'Pessoa atualizada' }));
   });
+
+  function renderWithDuplicateCheck(checkDuplicate: Parameters<typeof MasterDataFormPage>[0]['config']['checkDuplicate']) {
+    const create = vi.fn().mockResolvedValue({});
+    render(
+      <MemoryRouter initialEntries={['/pessoas/novo']}>
+        <Routes>
+          <Route
+            path="/pessoas/novo"
+            element={
+              <MasterDataFormPage
+                config={{
+                  key: 'pessoas',
+                  title: 'Pessoas',
+                  singularTitle: 'Pessoa',
+                  routeBase: '/pessoas',
+                  emptyMessage: 'Vazio',
+                  listDescription: 'Descricao',
+                  formDescription: 'Formulario',
+                  columns: [],
+                  filters: [],
+                  fields: [{ name: 'nome', label: 'Nome', kind: 'text' }],
+                  schema: z.object({ nome: z.string().min(1) }),
+                  defaultFilters: {},
+                  defaultValues: { nome: '' },
+                  list: vi.fn(),
+                  detail: vi.fn(),
+                  create,
+                  update: vi.fn(),
+                  toFormValues: vi.fn(),
+                  checkDuplicate
+                }}
+              />
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+    return { create };
+  }
+
+  it('shows duplicate modal when checkDuplicate returns matches', async () => {
+    const checkDuplicate = vi.fn().mockResolvedValue([{ id: 'p1', nome: 'Google' }]);
+    const { create } = renderWithDuplicateCheck(checkDuplicate);
+
+    await userEvent.type(screen.getByRole('textbox'), 'Google');
+    await submitCreate();
+
+    expect(await screen.findByText('Pessoa já cadastrada')).toBeInTheDocument();
+    expect(screen.getAllByText('Google').length).toBeGreaterThan(0);
+    expect(create).not.toHaveBeenCalled();
+  }, 40000);
+
+  it('cancels duplicate modal without saving', async () => {
+    const checkDuplicate = vi.fn().mockResolvedValue([{ id: 'p1', nome: 'Google' }]);
+    const { create } = renderWithDuplicateCheck(checkDuplicate);
+
+    await userEvent.type(screen.getByRole('textbox'), 'Google');
+    await submitCreate();
+    await screen.findByText('Pessoa já cadastrada');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.queryByText('Pessoa já cadastrada')).not.toBeInTheDocument();
+    expect(create).not.toHaveBeenCalled();
+  }, 40000);
+
+  it('confirms duplicate and proceeds with save', async () => {
+    const checkDuplicate = vi.fn().mockResolvedValue([{ id: 'p1', nome: 'Google' }]);
+    const { create } = renderWithDuplicateCheck(checkDuplicate);
+
+    await userEvent.type(screen.getByRole('textbox'), 'Google');
+    await submitCreate();
+    await screen.findByText('Pessoa já cadastrada');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cadastrar mesmo assim' }));
+
+    await waitFor(() => expect(create).toHaveBeenCalledWith({ nome: 'Google' }));
+  }, 40000);
+
+  it('skips duplicate check when checkDuplicate throws (network error)', async () => {
+    const checkDuplicate = vi.fn().mockRejectedValue(new Error('Network Error'));
+    const { create } = renderWithDuplicateCheck(checkDuplicate);
+
+    await userEvent.type(screen.getByRole('textbox'), 'Google');
+    await submitCreate();
+
+    await waitFor(() => expect(create).toHaveBeenCalledWith({ nome: 'Google' }));
+    expect(screen.queryByText('Pessoa já cadastrada')).not.toBeInTheDocument();
+  }, 40000);
 });
