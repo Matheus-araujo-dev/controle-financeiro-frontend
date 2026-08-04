@@ -117,6 +117,7 @@ export type MasterDataModuleConfig<
   actionsColumnWidth?: number;
   buildSummaryItems?: (summary: unknown) => SummaryCardItem[];
   exportColumns?: ExportColumn<TSummary>[];
+  checkDuplicate?: (nome: string, excludeId?: string) => Promise<Array<{ id: string; nome: string }> | null>;
 };
 
 const statusOptions: SelectOption[] = [
@@ -329,6 +330,14 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     contaGerencialDespesaId: detail.contaGerencialDespesaId ?? '',
     contaGerencialReceitaId: detail.contaGerencialReceitaId ?? ''
   }),
+  checkDuplicate: async (nome, excludeId) => {
+    if (!nome.trim()) return null;
+    const result = await cadastrosApi.pessoas.listar({ page: 1, pageSize: 10, search: nome.trim() });
+    const matches = result.items.filter(
+      (p) => p.nome.toLowerCase() === nome.trim().toLowerCase() && p.id !== excludeId
+    );
+    return matches.length > 0 ? matches.map((p) => ({ id: p.id, nome: p.nome })) : null;
+  },
   rowActions: [
     {
       key: 'editar',

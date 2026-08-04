@@ -17,7 +17,8 @@ vi.mock('../../../services/http/cadastros-api', () => ({
       criar: vi.fn()
     },
     pessoas: {
-      criar: vi.fn()
+      criar: vi.fn(),
+      listar: vi.fn()
     }
   }
 }));
@@ -25,6 +26,7 @@ vi.mock('../../../services/http/cadastros-api', () => ({
 describe('quick add modals', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({ items: [] } as never);
   });
 
   it('creates a person with the selected type and resets the modal', async () => {
@@ -213,5 +215,53 @@ describe('quick add modals', () => {
       })
     );
     expect(onSuccess).toHaveBeenCalledWith('fp1', 'Debito Teste');
+  });
+
+  it('shows duplicate warning when pessoa with same name exists', async () => {
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({
+      items: [{ id: 'p-existing', nome: 'Google' }]
+    } as never);
+
+    render(<QuickAddPessoaModal open onClose={vi.fn()} onSuccess={vi.fn()} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/Nome completo/i), { target: { value: 'google' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Cadastro' }));
+
+    expect(await screen.findByText(/Já existe/i)).toBeInTheDocument();
+    expect(screen.getByText('Google')).toBeInTheDocument();
+    expect(cadastrosApi.pessoas.criar).not.toHaveBeenCalled();
+  });
+
+  it('proceeds with save when user confirms despite duplicate', async () => {
+    vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue({
+      items: [{ id: 'p-existing', nome: 'Google' }]
+    } as never);
+    vi.mocked(cadastrosApi.pessoas.criar).mockResolvedValue({ id: 'p-new', nome: 'google' } as never);
+    const onSuccess = vi.fn();
+
+    render(<QuickAddPessoaModal open onClose={vi.fn()} onSuccess={onSuccess} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/Nome completo/i), { target: { value: 'google' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Cadastro' }));
+    await screen.findByText(/Já existe/i);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar mesmo assim' }));
+
+    await waitFor(() => expect(cadastrosApi.pessoas.criar).toHaveBeenCalled());
+    expect(onSuccess).toHaveBeenCalledWith('p-new', 'google');
+  });
+
+  it('proceeds with save when duplicate check fails (network error)', async () => {
+    vi.mocked(cadastrosApi.pessoas.listar).mockRejectedValue(new Error('Network Error'));
+    vi.mocked(cadastrosApi.pessoas.criar).mockResolvedValue({ id: 'p-new', nome: 'Google' } as never);
+    const onSuccess = vi.fn();
+
+    render(<QuickAddPessoaModal open onClose={vi.fn()} onSuccess={onSuccess} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/Nome completo/i), { target: { value: 'Google' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Cadastro' }));
+
+    await waitFor(() => expect(cadastrosApi.pessoas.criar).toHaveBeenCalled());
+    expect(onSuccess).toHaveBeenCalledWith('p-new', 'Google');
   });
 });
