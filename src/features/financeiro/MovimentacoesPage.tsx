@@ -486,7 +486,6 @@ export function MovimentacoesPage() {
           errorMessage={errorMessage}
           emptyMessage="Nenhuma movimentação encontrada."
           onRetry={() => void refetch()}
-          onRowClick={(record) => navigate(`/movimentacoes/${record.id}`)}
           dataSource={data?.items ?? []}
           columns={[
             {
