@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { DateInput } from '../forms/DateInput';
 import { ComboBox } from '../forms/ComboBox';
 import { Button } from '../ui/Button';
@@ -129,6 +129,11 @@ export function QuickLaunchModal({
 }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    void queryClient.invalidateQueries({ queryKey: ['ql-pessoas'] });
+  }, [queryClient]);
 
   const initialDate = useRef(hojeISO());
   const [tipo, setTipo] = useState<QuickLaunchTipo>(() => initialValues?.tipo ?? 'pagar');
