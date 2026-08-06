@@ -548,3 +548,17 @@ export type TransferenciaFilters = {
   dataFinal?: string;
   cancelada?: boolean;
 };
+
+export type AlteracaoCampo = {
+  campo: string;
+  antes: string | null;
+  depois: string | null;
+};
+
+export type HistoricoEntrada = {
+  id: string;
+  acao: string;
+  realizadoPor: string;
+  ocorreuEmUtc: string;
+  alteracoes: AlteracaoCampo[];
+};

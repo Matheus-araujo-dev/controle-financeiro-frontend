@@ -33,7 +33,8 @@ import type {
   PagedFinanceiro,
   TransferenciaResumo,
   TransferenciaPayload,
-  TransferenciaFilters
+  TransferenciaFilters,
+  HistoricoEntrada
 } from '../../types/financeiro';
 
 // ── Tipos de importação de fatura ────────────────────────────────────────────
@@ -125,7 +126,8 @@ export const financeiroApi = {
     liquidar: (id: string, payload: LiquidacaoPayload) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/liquidar`, payload),
     estornar: (id: string) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/estornar`),
     cancelar: (id: string, payload?: CancelarContaPagarPayload) => post<ContaPagarDetalhe>(`/contas-pagar/${id}/cancelar`, payload),
-    removerDaFatura: (id: string) => post<void>(`/contas-pagar/${id}/remover-da-fatura`)
+    removerDaFatura: (id: string) => post<void>(`/contas-pagar/${id}/remover-da-fatura`),
+    historico: (id: string) => getById<HistoricoEntrada[]>(`/contas-pagar/${id}/historico`)
   },
   contasReceber: {
     listar: (params: ContaReceberFilters) =>
@@ -140,7 +142,8 @@ export const financeiroApi = {
       post<ContaReceberDetalhe>(`/contas-receber/${id}/encerrar-recorrencia`, payload),
     liquidar: (id: string, payload: LiquidacaoPayload) => post<ContaReceberDetalhe>(`/contas-receber/${id}/liquidar`, payload),
     estornar: (id: string) => post<ContaReceberDetalhe>(`/contas-receber/${id}/estornar`),
-    cancelar: (id: string, payload?: CancelarContaReceberPayload) => post<ContaReceberDetalhe>(`/contas-receber/${id}/cancelar`, payload)
+    cancelar: (id: string, payload?: CancelarContaReceberPayload) => post<ContaReceberDetalhe>(`/contas-receber/${id}/cancelar`, payload),
+    historico: (id: string) => getById<HistoricoEntrada[]>(`/contas-receber/${id}/historico`)
   },
   movimentacoes: {
     listar: (params: MovimentacaoFilters) =>
