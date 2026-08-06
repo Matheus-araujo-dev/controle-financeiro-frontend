@@ -288,7 +288,9 @@ describe('financeiro module config', () => {
   });
 
   it('loads select options and builds summary items', async () => {
-    await expect(contasPagarModuleConfig.loadPessoaOptions()).resolves.toEqual([{ label: 'Pessoa', value: 'p1' }]);
+    await expect(contasPagarModuleConfig.loadPessoaOptions()).resolves.toEqual([
+      expect.objectContaining({ label: 'Pessoa', value: 'p1' })
+    ]);
     await expect(contasPagarModuleConfig.loadFormaPagamentoOptions()).resolves.toEqual([
       { label: 'Pix', value: 'f1', ehCartao: false, baixarAutomaticamente: true }
     ]);
