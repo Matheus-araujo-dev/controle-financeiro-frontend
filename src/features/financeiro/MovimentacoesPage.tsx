@@ -7,6 +7,7 @@ import {
   ArrowUpOutlined,
   CreditCardOutlined,
   DollarCircleOutlined,
+  EyeOutlined,
   SearchOutlined,
   ShoppingCartOutlined,
   WalletOutlined,
@@ -18,6 +19,7 @@ import { DateInput } from '../../components/forms/DateInput';
 import type { MovimentacaoFilters, MovimentacaoResumo, TipoMovimentacao } from '../../types/financeiro';
 import { AppDataTable } from '../../components/data/AppDataTable';
 import { ExportButton } from '../../components/data/ExportButton';
+import { IconActionButton } from '../../components/data/IconActionButton';
 import { StatusBadge, type StatusTone } from '../../components/data/StatusBadge';
 import {
   FilterCard,
@@ -576,6 +578,21 @@ export function MovimentacoesPage() {
                 <div className="flex items-center gap-2 text-primary/70">
                   <UserOutlined className="text-[10px]" />
                   <span className="text-xs font-bold uppercase">{value ?? '---'}</span>
+                </div>
+              )
+            },
+            {
+              title: '',
+              key: 'actions',
+              mobileRole: 'hidden',
+              render: (_value, record: MovimentacaoResumo) => (
+                <div className="flex justify-end">
+                  <IconActionButton
+                    label="Detalhar"
+                    icon={<EyeOutlined />}
+                    href={`/movimentacoes/${record.id}`}
+                    type="text"
+                  />
                 </div>
               )
             }
