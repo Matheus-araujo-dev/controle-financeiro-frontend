@@ -106,4 +106,71 @@ describe('HistoricoSection', () => {
       expect(screen.getByText('1 evento')).toBeInTheDocument();
     });
   });
+
+  it('renderiza corretamente acoes Estorno e Exclusao com cores e icones distintos', async () => {
+    const entradas = [
+      {
+        id: 'e3',
+        acao: 'Estorno',
+        realizadoPor: 'user@test.com',
+        ocorreuEmUtc: '2026-07-15T09:00:00Z',
+        alteracoes: []
+      },
+      {
+        id: 'e4',
+        acao: 'Exclusão',
+        realizadoPor: 'admin@test.com',
+        ocorreuEmUtc: '2026-07-20T11:00:00Z',
+        alteracoes: []
+      }
+    ];
+    vi.mocked(financeiroApi.contasPagar.historico).mockResolvedValue(entradas);
+
+    renderSection('contasPagar');
+
+    await waitFor(() => {
+      expect(screen.getByText('Estorno')).toBeInTheDocument();
+      expect(screen.getByText('Exclusão')).toBeInTheDocument();
+    });
+  });
+
+  it('renderiza acao desconhecida com cor e icone padrao', async () => {
+    const entradas = [
+      {
+        id: 'e5',
+        acao: 'Edição',
+        realizadoPor: 'user@test.com',
+        ocorreuEmUtc: '2026-07-22T08:00:00Z',
+        alteracoes: []
+      }
+    ];
+    vi.mocked(financeiroApi.contasPagar.historico).mockResolvedValue(entradas);
+
+    renderSection('contasPagar');
+
+    await waitFor(() => {
+      expect(screen.getByText('Edição')).toBeInTheDocument();
+    });
+  });
+
+  it('exibe travessao quando depois e null em AlteracaoRow', async () => {
+    const entradas = [
+      {
+        id: 'e6',
+        acao: 'Edição',
+        realizadoPor: 'user@test.com',
+        ocorreuEmUtc: '2026-07-23T08:00:00Z',
+        alteracoes: [{ campo: 'Observação', antes: 'Valor antigo', depois: null }]
+      }
+    ];
+    vi.mocked(financeiroApi.contasPagar.historico).mockResolvedValue(entradas);
+
+    renderSection('contasPagar');
+
+    await waitFor(() => {
+      expect(screen.getByText('Observação')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('—')).toBeInTheDocument();
+  });
 });
