@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
-import type { MovimentacaoDetalhe } from '../../types/financeiro';
+import type { ContaPagarDetalhe, ContaReceberDetalhe, MovimentacaoDetalhe } from '../../types/financeiro';
 
 function InfoCard({ icon, label, value, accent }: { icon: string; label: string; value: string; accent?: boolean }) {
   return (
@@ -31,32 +31,27 @@ function naturezaLabel(natureza: string) {
   return natureza;
 }
 
-function originInfo(mov: MovimentacaoDetalhe): { icon: React.ReactNode; label: string; sublabel: string; route: string } | null {
+function originInfo(mov: MovimentacaoDetalhe): { icon: React.ReactNode; label: string; route: string } | null {
   if (mov.faturaCartaoId) {
-    return {
-      icon: <CreditCardOutlined />,
-      label: 'Fatura do cartão',
-      sublabel: mov.contaBancariaNome ?? 'Cartão',
-      route: `/faturas/${mov.faturaCartaoId}`
-    };
+    return { icon: <CreditCardOutlined />, label: 'Fatura do cartão', route: `/faturas/${mov.faturaCartaoId}` };
   }
   if (mov.contaReceberId) {
-    return {
-      icon: <DollarCircleOutlined />,
-      label: 'Conta a receber',
-      sublabel: mov.responsavelNome ?? '',
-      route: `/contas-receber/${mov.contaReceberId}`
-    };
+    return { icon: <DollarCircleOutlined />, label: 'Conta a receber', route: `/contas-receber/${mov.contaReceberId}` };
   }
   if (mov.contaPagarId) {
-    return {
-      icon: <ShoppingCartOutlined />,
-      label: 'Conta a pagar',
-      sublabel: mov.responsavelNome ?? '',
-      route: `/contas-pagar/${mov.contaPagarId}`
-    };
+    return { icon: <ShoppingCartOutlined />, label: 'Conta a pagar', route: `/contas-pagar/${mov.contaPagarId}` };
   }
   return null;
+}
+
+function OrigemInfoRow({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null;
+  return (
+    <div className="flex justify-between gap-2 py-1.5 border-b border-white/5 last:border-0">
+      <span className="text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">{label}</span>
+      <span className="text-xs text-on-surface font-medium text-right">{value}</span>
+    </div>
+  );
 }
 
 export function MovimentacaoDetailPage() {
@@ -68,6 +63,20 @@ export function MovimentacaoDetailPage() {
     queryFn: () => financeiroApi.movimentacoes.obterPorId(id!),
     enabled: !!id,
     staleTime: 30_000
+  });
+
+  const { data: contaPagar } = useQuery({
+    queryKey: ['contas-pagar', 'detalhe', mov?.contaPagarId],
+    queryFn: () => financeiroApi.contasPagar.obterPorId(mov!.contaPagarId!),
+    enabled: !!mov?.contaPagarId,
+    staleTime: 60_000
+  });
+
+  const { data: contaReceber } = useQuery({
+    queryKey: ['contas-receber', 'detalhe', mov?.contaReceberId],
+    queryFn: () => financeiroApi.contasReceber.obterPorId(mov!.contaReceberId!),
+    enabled: !!mov?.contaReceberId,
+    staleTime: 60_000
   });
 
   if (isLoading) {
@@ -93,6 +102,7 @@ export function MovimentacaoDetailPage() {
 
   const isEntrada = mov.tipo === 'Entrada';
   const origin = originInfo(mov);
+  const origemConta: ContaPagarDetalhe | ContaReceberDetalhe | null = contaPagar ?? contaReceber ?? null;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -191,7 +201,7 @@ export function MovimentacaoDetailPage() {
             </p>
             <button
               onClick={() => navigate(origin.route)}
-              className="flex items-center gap-3 w-full p-4 bg-surface-container rounded-2xl hover:bg-surface-container-high transition-all group"
+              className="flex items-center gap-3 w-full p-4 bg-surface-container rounded-2xl hover:bg-surface-container-high transition-all group mb-4"
             >
               <span className={`text-lg ${isEntrada ? 'text-primary' : 'text-error'}`}>
                 {origin.icon}
@@ -200,12 +210,33 @@ export function MovimentacaoDetailPage() {
                 <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
                   {origin.label}
                 </p>
-                {origin.sublabel && (
-                  <p className="text-[10px] text-on-surface-variant uppercase tracking-wider">{origin.sublabel}</p>
+                {origemConta && (
+                  <p className="text-[10px] text-on-surface-variant uppercase tracking-wider truncate">
+                    {origemConta.descricao}
+                  </p>
                 )}
               </div>
               <span className="material-symbols-outlined text-on-surface-variant shrink-0">chevron_right</span>
             </button>
+
+            {origemConta && (
+              <div className="bg-surface-container rounded-2xl p-4">
+                <OrigemInfoRow
+                  label="Responsável"
+                  value={'responsavelCompraNome' in origemConta
+                    ? origemConta.responsavelCompraNome
+                    : origemConta.responsavelNome}
+                />
+                <OrigemInfoRow
+                  label={mov.contaPagarId ? 'Recebedor' : 'Pagador'}
+                  value={'recebedorNome' in origemConta ? origemConta.recebedorNome : origemConta.pagadorNome}
+                />
+                <OrigemInfoRow label="Vencimento" value={formatDateBR(origemConta.dataVencimento)} />
+                <OrigemInfoRow label="Valor" value={formatCurrencyBRL(origemConta.valorLiquido)} />
+                <OrigemInfoRow label="Status" value={origemConta.statusNome} />
+                <OrigemInfoRow label="Forma de pagamento" value={origemConta.formaPagamentoNome} />
+              </div>
+            )}
           </>
         ) : (
           <p className="text-sm text-on-surface-variant">Lançamento avulso — sem conta de origem vinculada.</p>

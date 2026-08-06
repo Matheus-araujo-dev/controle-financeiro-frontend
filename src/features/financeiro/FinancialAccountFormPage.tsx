@@ -15,6 +15,7 @@ import { useFinancialAccountForm } from './financial-account-form/useFinancialAc
 import { DuplicateAlertModal } from './financial-account-form/DuplicateAlertModal';
 import { FaturaIndisponivelModal } from './financial-account-form/FaturaIndisponivelModal';
 import { QuickLaunchModal } from '../../components/quick-launch/QuickLaunchButton';
+import { HistoricoSection } from './financial-account-form/HistoricoSection';
 
 export function FinancialAccountFormPage({
   config
@@ -180,6 +181,13 @@ export function FinancialAccountFormPage({
         onConfirm={confirmarProximaFatura}
         onCancel={cancelarFaturaIndisponivel}
       />
+
+      {id && (
+        <HistoricoSection
+          id={id}
+          tipoConta={config.key === 'contas-receber' ? 'contasReceber' : 'contasPagar'}
+        />
+      )}
     </div>
   );
 }

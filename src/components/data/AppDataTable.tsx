@@ -613,7 +613,7 @@ export function AppDataTable<T extends object>({
                 <tr
                   key={getRowKey(rowKey, record)}
                   onClick={onRowClick ? () => onRowClick(record) : undefined}
-                  className={`group border-b border-white/5 last:border-b-0 hover:bg-primary/5 ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`group border-b border-white/5 last:border-b-0 ${onRowClick ? 'cursor-pointer hover:bg-primary/5' : ''}`}
                 >
                   {flatColumns.map((column) => (
                     <td
