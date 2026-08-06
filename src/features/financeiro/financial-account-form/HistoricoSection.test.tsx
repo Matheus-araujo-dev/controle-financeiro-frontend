@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { HistoricoSection } from './HistoricoSection';
 
 vi.mock('../../../services/http/financeiro-api', () => ({
@@ -17,9 +18,11 @@ function createQC() {
 
 function renderSection(tipoConta: 'contasPagar' | 'contasReceber' = 'contasPagar') {
   return render(
-    <QueryClientProvider client={createQC()}>
-      <HistoricoSection id="id-123" tipoConta={tipoConta} />
-    </QueryClientProvider>
+    <MemoryRouter>
+      <QueryClientProvider client={createQC()}>
+        <HistoricoSection id="id-123" tipoConta={tipoConta} />
+      </QueryClientProvider>
+    </MemoryRouter>
   );
 }
 
@@ -132,6 +135,29 @@ describe('HistoricoSection', () => {
       expect(screen.getByText('Estorno')).toBeInTheDocument();
       expect(screen.getByText('Exclusão')).toBeInTheDocument();
     });
+  });
+
+  it('exibe link clicavel para recorrencia quando regraRecorrenciaId presente', async () => {
+    const recorrenciaId = 'rec-id-999';
+    vi.mocked(financeiroApi.contasPagar.historico).mockResolvedValue([
+      {
+        id: 'e7',
+        acao: 'Criação',
+        realizadoPor: 'Recorrência automática',
+        ocorreuEmUtc: '2026-07-01T10:00:00Z',
+        alteracoes: [],
+        regraRecorrenciaId: recorrenciaId
+      }
+    ]);
+
+    renderSection('contasPagar');
+
+    await waitFor(() => {
+      expect(screen.getByText('Recorrência automática')).toBeInTheDocument();
+    });
+
+    const link = screen.getByRole('button', { name: /Recorrência automática/i });
+    expect(link).toBeInTheDocument();
   });
 
   it('renderiza acao desconhecida com cor e icone padrao', async () => {
