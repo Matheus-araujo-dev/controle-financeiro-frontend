@@ -22,6 +22,7 @@ const ImportacaoWhatsappDetailPage = lazy(() => import('../features/importacoes-
 const ImportacoesWhatsappPage = lazy(() => import('../features/importacoes-whatsapp/ImportacoesWhatsappPage').then((m) => ({ default: m.ImportacoesWhatsappPage })));
 const RecurrenceListPage = lazy(() => import('../features/financeiro/RecurrenceListPage'));
 const RecurrenceDetailPage = lazy(() => import('../features/financeiro/RecurrenceDetailPage'));
+const MovimentacaoDetailPage = lazy(() => import('../features/financeiro/MovimentacaoDetailPage'));
 const AgendaPage = lazy(() => import('../features/agenda/AgendaPage'));
 const ImportarFaturaPage = lazy(() => import('../features/financeiro/ImportarFaturaPage').then((m) => ({ default: m.ImportarFaturaPage })));
 
@@ -214,6 +215,13 @@ export const financialRouteObjects: RouteObject[] = [
     element: <MovimentacoesWorkspacePage initialTab="extrato" />,
     handle: {
       title: 'Movimentações'
+    }
+  },
+  {
+    path: 'movimentacoes/:id',
+    element: <MovimentacaoDetailPage />,
+    handle: {
+      title: 'Detalhes da movimentação'
     }
   },
   {
