@@ -1,5 +1,4 @@
 import { useDeferredValue, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -7,6 +6,7 @@ import {
   ArrowUpOutlined,
   CreditCardOutlined,
   DollarCircleOutlined,
+  EyeOutlined,
   SearchOutlined,
   ShoppingCartOutlined,
   WalletOutlined,
@@ -18,6 +18,7 @@ import { DateInput } from '../../components/forms/DateInput';
 import type { MovimentacaoFilters, MovimentacaoResumo, TipoMovimentacao } from '../../types/financeiro';
 import { AppDataTable } from '../../components/data/AppDataTable';
 import { ExportButton } from '../../components/data/ExportButton';
+import { IconActionButton } from '../../components/data/IconActionButton';
 import { StatusBadge, type StatusTone } from '../../components/data/StatusBadge';
 import {
   FilterCard,
@@ -113,7 +114,6 @@ const defaultMovimentacaoFilters: MovimentacaoFilters = {
 };
 
 export function MovimentacoesPage() {
-  const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const contaBancariaInicial = urlParams.get('contaBancariaId');
   const dataInicialParam = urlParams.get('dataInicial') ?? undefined;
@@ -484,7 +484,6 @@ export function MovimentacoesPage() {
           errorMessage={errorMessage}
           emptyMessage="Nenhuma movimentação encontrada."
           onRetry={() => void refetch()}
-          onRowClick={(record) => navigate(`/movimentacoes/${record.id}`)}
           dataSource={data?.items ?? []}
           columns={[
             {
@@ -576,6 +575,21 @@ export function MovimentacoesPage() {
                 <div className="flex items-center gap-2 text-primary/70">
                   <UserOutlined className="text-[10px]" />
                   <span className="text-xs font-bold uppercase">{value ?? '---'}</span>
+                </div>
+              )
+            },
+            {
+              title: '',
+              key: 'actions',
+              mobileRole: 'hidden',
+              render: (_value, record: MovimentacaoResumo) => (
+                <div className="flex justify-end">
+                  <IconActionButton
+                    label="Detalhar"
+                    icon={<EyeOutlined />}
+                    href={`/movimentacoes/${record.id}`}
+                    type="text"
+                  />
                 </div>
               )
             }
