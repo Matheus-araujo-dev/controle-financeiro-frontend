@@ -313,6 +313,23 @@ async function loadPessoaOptions() {
   }));
 }
 
+async function loadRecebedorOptions() {
+  const response = await cadastrosApi.pessoas.listar({
+    page: 1,
+    pageSize: 100,
+    search: '',
+    ativo: true,
+    ehRecebedor: true
+  });
+
+  return response.items.map((item) => ({
+    label: item.nome,
+    value: item.id,
+    contaGerencialDespesaId: item.contaGerencialDespesaId,
+    contaGerencialReceitaId: item.contaGerencialReceitaId
+  }));
+}
+
 async function loadResponsavelOptions() {
   const response = await cadastrosApi.pessoas.listar({
     page: 1,
@@ -614,7 +631,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
     origemCompraPlanejadaId: detail.origemCompraPlanejadaId ?? '',
     formaPagamentoId: detail.formaPagamentoId
   }),
-  loadPessoaOptions,
+  loadPessoaOptions: loadRecebedorOptions,
   loadResponsavelOptions,
   loadFormaPagamentoOptions,
   loadContaBancariaOptions,

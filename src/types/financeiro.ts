@@ -561,4 +561,5 @@ export type HistoricoEntrada = {
   realizadoPor: string;
   ocorreuEmUtc: string;
   alteracoes: AlteracaoCampo[];
+  regraRecorrenciaId?: string | null;
 };

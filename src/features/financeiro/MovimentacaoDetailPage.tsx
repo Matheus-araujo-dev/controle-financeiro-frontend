@@ -195,49 +195,43 @@ export function MovimentacaoDetailPage() {
           <h3 className="font-headline font-bold text-on-surface uppercase tracking-tight">Origem</h3>
         </div>
         {origin ? (
-          <>
-            <p className="text-xs text-on-surface-variant mb-4">
-              Esta movimentação foi gerada pelo seguinte lançamento:
-            </p>
-            <button
-              onClick={() => navigate(origin.route)}
-              className="flex items-center gap-3 w-full p-4 bg-surface-container rounded-2xl hover:bg-surface-container-high transition-all group mb-4"
-            >
-              <span className={`text-lg ${isEntrada ? 'text-primary' : 'text-error'}`}>
-                {origin.icon}
-              </span>
-              <div className="text-left min-w-0 flex-1">
-                <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
-                  {origin.label}
-                </p>
+          <button
+            onClick={() => navigate(origin.route)}
+            className="flex items-start gap-3 w-full p-4 bg-surface-container rounded-2xl hover:bg-surface-container-high transition-all group text-left"
+          >
+            <span className={`text-lg mt-0.5 ${isEntrada ? 'text-primary' : 'text-error'}`}>
+              {origin.icon}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors mb-3">
+                {origin.label}
                 {origemConta && (
-                  <p className="text-[10px] text-on-surface-variant uppercase tracking-wider truncate">
+                  <span className="ml-2 text-[10px] text-on-surface-variant uppercase tracking-wider font-normal">
                     {origemConta.descricao}
-                  </p>
+                  </span>
                 )}
-              </div>
-              <span className="material-symbols-outlined text-on-surface-variant shrink-0">chevron_right</span>
-            </button>
-
-            {origemConta && (
-              <div className="bg-surface-container rounded-2xl p-4">
-                <OrigemInfoRow
-                  label="Responsável"
-                  value={'responsavelCompraNome' in origemConta
-                    ? origemConta.responsavelCompraNome
-                    : origemConta.responsavelNome}
-                />
-                <OrigemInfoRow
-                  label={mov.contaPagarId ? 'Recebedor' : 'Pagador'}
-                  value={'recebedorNome' in origemConta ? origemConta.recebedorNome : origemConta.pagadorNome}
-                />
-                <OrigemInfoRow label="Vencimento" value={formatDateBR(origemConta.dataVencimento)} />
-                <OrigemInfoRow label="Valor" value={formatCurrencyBRL(origemConta.valorLiquido)} />
-                <OrigemInfoRow label="Status" value={origemConta.statusNome} />
-                <OrigemInfoRow label="Forma de pagamento" value={origemConta.formaPagamentoNome} />
-              </div>
-            )}
-          </>
+              </p>
+              {origemConta && (
+                <div className="space-y-0">
+                  <OrigemInfoRow
+                    label="Responsável"
+                    value={'responsavelCompraNome' in origemConta
+                      ? origemConta.responsavelCompraNome
+                      : origemConta.responsavelNome}
+                  />
+                  <OrigemInfoRow
+                    label={mov.contaPagarId ? 'Recebedor' : 'Pagador'}
+                    value={'recebedorNome' in origemConta ? origemConta.recebedorNome : origemConta.pagadorNome}
+                  />
+                  <OrigemInfoRow label="Vencimento" value={formatDateBR(origemConta.dataVencimento)} />
+                  <OrigemInfoRow label="Valor" value={formatCurrencyBRL(origemConta.valorLiquido)} />
+                  <OrigemInfoRow label="Status" value={origemConta.statusNome} />
+                  <OrigemInfoRow label="Forma de pagamento" value={origemConta.formaPagamentoNome} />
+                </div>
+              )}
+            </div>
+            <span className="material-symbols-outlined text-on-surface-variant shrink-0 mt-0.5">chevron_right</span>
+          </button>
         ) : (
           <p className="text-sm text-on-surface-variant">Lançamento avulso — sem conta de origem vinculada.</p>
         )}
