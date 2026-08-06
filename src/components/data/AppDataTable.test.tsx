@@ -358,4 +358,39 @@ describe('AppDataTable', () => {
 
     Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: originalMatchMedia });
   });
+
+  it('nao aplica hover nem cursor-pointer quando onRowClick ausente', () => {
+    const { container } = render(
+      <AppDataTable<Row>
+        columns={columns}
+        dataSource={[{ id: '1', name: 'Item A' }]}
+        rowKey="id"
+      />
+    );
+
+    const tr = container.querySelector('tr[class]');
+    expect(tr?.className).not.toContain('cursor-pointer');
+    expect(tr?.className).not.toContain('hover:bg-primary');
+  });
+
+  it('aplica hover e cursor-pointer quando onRowClick fornecido', async () => {
+    const onClick = vi.fn();
+    const user = userEvent.setup();
+
+    const { container } = render(
+      <AppDataTable<Row>
+        columns={columns}
+        dataSource={[{ id: '1', name: 'Item A' }]}
+        rowKey="id"
+        onRowClick={onClick}
+      />
+    );
+
+    const tr = container.querySelector('tr[class]');
+    expect(tr?.className).toContain('cursor-pointer');
+    expect(tr?.className).toContain('hover:bg-primary');
+
+    await user.click(tr!);
+    expect(onClick).toHaveBeenCalledWith({ id: '1', name: 'Item A' });
+  });
 });

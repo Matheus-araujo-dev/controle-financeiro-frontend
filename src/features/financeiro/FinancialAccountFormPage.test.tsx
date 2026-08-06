@@ -2,11 +2,19 @@ import { AxiosError } from 'axios';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FinancialAccountFormPage } from './FinancialAccountFormPage';
 
 vi.mock('../../services/http/agente-api', () => ({
   agenteApi: {
     categorizar: vi.fn().mockResolvedValue({ itens: [] })
+  }
+}));
+
+vi.mock('../../services/http/financeiro-api', () => ({
+  financeiroApi: {
+    contasPagar: { historico: vi.fn().mockResolvedValue([]) },
+    contasReceber: { historico: vi.fn().mockResolvedValue([]) }
   }
 }));
 
@@ -101,13 +109,19 @@ function createConfig() {
   } as any;
 }
 
+function createQC() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+}
+
 function renderWithRoute(initialEntry: string, path: string, config: ReturnType<typeof createConfig>) {
   return render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <Routes>
-        <Route path={path} element={<FinancialAccountFormPage config={config} />} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={createQC()}>
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <Routes>
+          <Route path={path} element={<FinancialAccountFormPage config={config} />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
