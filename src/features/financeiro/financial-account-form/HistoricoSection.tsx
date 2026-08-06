@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { financeiroApi } from '../../../services/http/financeiro-api';
 import type { AlteracaoCampo, HistoricoEntrada } from '../../../types/financeiro';
@@ -32,8 +33,11 @@ function AlteracaoRow({ campo, antes, depois }: AlteracaoCampo) {
 }
 
 function HistoricoCard({ entrada }: { entrada: HistoricoEntrada }) {
+  const navigate = useNavigate();
   const colorClass = acaoColor(entrada.acao);
   const icon = acaoIcon(entrada.acao);
+  const isRecorrencia = !!entrada.regraRecorrenciaId;
+  const isCriacao = entrada.acao === 'Criação';
 
   return (
     <div className="flex gap-3">
@@ -54,11 +58,26 @@ function HistoricoCard({ entrada }: { entrada: HistoricoEntrada }) {
             {formatDateTimeBR(entrada.ocorreuEmUtc)}
           </span>
         </div>
-        <p className="text-xs text-on-surface-variant mb-2 truncate">{entrada.realizadoPor}</p>
+        <div className="flex items-center gap-1.5 mb-2">
+          {isRecorrencia ? (
+            <button
+              type="button"
+              onClick={() => navigate(`/regras-recorrencia/${entrada.regraRecorrenciaId}`)}
+              className="flex items-center gap-1 text-xs text-primary hover:underline truncate"
+            >
+              <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                autorenew
+              </span>
+              {entrada.realizadoPor}
+            </button>
+          ) : (
+            <p className="text-xs text-on-surface-variant truncate">{entrada.realizadoPor}</p>
+          )}
+        </div>
         {entrada.alteracoes.length > 0 && (
           <div className="bg-surface-container rounded-xl p-3">
             <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-2">
-              Campos alterados
+              {isCriacao ? 'Dados iniciais' : 'Campos alterados'}
             </p>
             {entrada.alteracoes.map((alt, i) => (
               <AlteracaoRow key={i} {...alt} />
