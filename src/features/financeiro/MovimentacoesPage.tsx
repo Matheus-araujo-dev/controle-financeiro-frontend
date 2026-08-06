@@ -1,4 +1,5 @@
 import { useDeferredValue, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -114,6 +115,7 @@ const defaultMovimentacaoFilters: MovimentacaoFilters = {
 };
 
 export function MovimentacoesPage() {
+  const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const contaBancariaInicial = urlParams.get('contaBancariaId');
   const dataInicialParam = urlParams.get('dataInicial') ?? undefined;
@@ -484,6 +486,7 @@ export function MovimentacoesPage() {
           errorMessage={errorMessage}
           emptyMessage="Nenhuma movimentação encontrada."
           onRetry={() => void refetch()}
+          onRowClick={(record) => navigate(`/movimentacoes/${record.id}`)}
           dataSource={data?.items ?? []}
           columns={[
             {
