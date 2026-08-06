@@ -235,6 +235,11 @@ export function QuickLaunchModal({
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
   }, [extraPessoas, pessoasResult.data]);
 
+  const recebedores = useMemo<Option[]>(() => {
+    const fromServer = pessoasResult.data?.items.filter((p) => p.ehRecebedor).map((p) => ({ label: p.nome, value: p.id })) ?? [];
+    return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
+  }, [extraPessoas, pessoasResult.data]);
+
   const formas = useMemo<Array<Option & { ehCartao: boolean; baixarAutomaticamente: boolean }>>(() => {
     const fromServer = formasResult.data?.items.map((f) => ({ label: f.nome, value: f.id, ehCartao: f.ehCartao, baixarAutomaticamente: f.baixarAutomaticamente })) ?? [];
     return [...extraFormas, ...fromServer.filter((f) => !extraFormas.some((e) => e.value === f.value))];
@@ -722,7 +727,7 @@ export function QuickLaunchModal({
                             aria-label={tipo === 'pagar' ? 'Recebedor' : 'Responsável'}
                             value={pessoaId}
                             onChange={setPessoaId}
-                            options={pessoas}
+                            options={tipo === 'pagar' ? recebedores : responsaveis}
                             placeholder="Selecionar pessoa..."
                             onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
                             addNewLabel="Nova pessoa"

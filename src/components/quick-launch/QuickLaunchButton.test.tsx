@@ -203,9 +203,9 @@ const contasBancariasResponse = {
 
 const pessoasResponse = {
   items: [
-    { id: 'p1', nome: 'Mercado', ehResponsavel: false },
-    { id: 'r1', nome: 'Responsavel', ehResponsavel: true },
-    { id: 'r2', nome: 'Responsavel Dois', ehResponsavel: true }
+    { id: 'p1', nome: 'Mercado', ehResponsavel: false, ehRecebedor: true },
+    { id: 'r1', nome: 'Responsavel', ehResponsavel: true, ehRecebedor: false },
+    { id: 'r2', nome: 'Responsavel Dois', ehResponsavel: true, ehRecebedor: false }
   ]
 };
 
