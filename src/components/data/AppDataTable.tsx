@@ -67,6 +67,7 @@ type AppDataTableProps<T extends object> = {
   emptyMessage?: string;
   onRetry?: () => void;
   onTableChange?: AppTableChange<T>;
+  onRowClick?: (record: T) => void;
   size?: 'small' | 'middle' | 'large';
 };
 
@@ -370,7 +371,8 @@ export function AppDataTable<T extends object>({
   errorMessage,
   emptyMessage = 'Nenhum registro encontrado.',
   onRetry,
-  onTableChange
+  onTableChange,
+  onRowClick
 }: AppDataTableProps<T>) {
   const flatColumns = useMemo(() => getFlatColumns(columns), [columns]);
   const compactLayout = useCompactTableLayout();
@@ -485,7 +487,11 @@ export function AppDataTable<T extends object>({
               const parsedDate = parseMobileDate(dateRaw);
 
               return (
-                <article key={getRowKey(rowKey, record)} className="overflow-hidden rounded-2xl border border-white/5 bg-surface-container px-3 py-3">
+                <article
+                  key={getRowKey(rowKey, record)}
+                  onClick={onRowClick ? () => onRowClick(record) : undefined}
+                  className={`overflow-hidden rounded-2xl border border-white/5 bg-surface-container px-3 py-3 ${onRowClick ? 'cursor-pointer hover:bg-surface-container-high transition-colors' : ''}`}
+                >
                   <div className="flex items-start gap-2">
                     {/* Bloco de data à esquerda */}
                     {dateCol ? (
@@ -604,7 +610,11 @@ export function AppDataTable<T extends object>({
             </thead>
             <tbody>
               {dataSource.map((record, rowIndex) => (
-        <tr key={getRowKey(rowKey, record)} className="group border-b border-white/5 last:border-b-0 hover:bg-primary/5">
+                <tr
+                  key={getRowKey(rowKey, record)}
+                  onClick={onRowClick ? () => onRowClick(record) : undefined}
+                  className={`group border-b border-white/5 last:border-b-0 hover:bg-primary/5 ${onRowClick ? 'cursor-pointer' : ''}`}
+                >
                   {flatColumns.map((column) => (
                     <td
                       key={getColumnKey(column)}
