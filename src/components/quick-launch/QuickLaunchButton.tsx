@@ -134,6 +134,7 @@ export function QuickLaunchModal({
   useEffect(() => {
     void queryClient.invalidateQueries({ queryKey: ['ql-pessoas'] });
     void queryClient.invalidateQueries({ queryKey: ['ql-recebedores'] });
+    void queryClient.invalidateQueries({ queryKey: ['ql-responsaveis'] });
   }, [queryClient]);
 
   const initialDate = useRef(hojeISO());
@@ -207,10 +208,11 @@ export function QuickLaunchModal({
   const [quickAddContaBancariaTarget, setQuickAddContaBancariaTarget] = useState<QuickAddContaBancariaTarget>(null);
 
   // React Query: cache com staleTime alto — re-abrir o modal não refaz chamadas
-  const [pessoasResult, recebedoresResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult] = useQueries({
+  const [pessoasResult, recebedoresResult, responsaveisResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult] = useQueries({
     queries: [
       { queryKey: ['ql-pessoas'], queryFn: () => cadastrosApi.pessoas.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-recebedores'], queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true, ehRecebedor: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-responsaveis'], queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true, ehResponsavel: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-formas'], queryFn: () => cadastrosApi.formasPagamento.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-cartoes'], queryFn: () => cadastrosApi.cartoes.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-contas-despesa'], queryFn: () => cadastrosApi.contasGerenciais.listar({ page: 1, pageSize: 500, search: '', tipo: 'Despesa', ativo: true }), staleTime: STALE_5MIN },
@@ -226,7 +228,11 @@ export function QuickLaunchModal({
 
   const pessoaContaGerencialMap = useMemo(() => {
     const map = new Map<string, { despesaId?: string; receitaId?: string }>();
-    const allItems = [...(pessoasResult.data?.items ?? []), ...(recebedoresResult.data?.items ?? [])];
+    const allItems = [
+      ...(pessoasResult.data?.items ?? []),
+      ...(recebedoresResult.data?.items ?? []),
+      ...(responsaveisResult.data?.items ?? [])
+    ];
     allItems.forEach((p) => {
       if (!map.has(p.id) && (p.contaGerencialDespesaId || p.contaGerencialReceitaId)) {
         map.set(p.id, {
@@ -236,12 +242,12 @@ export function QuickLaunchModal({
       }
     });
     return map;
-  }, [pessoasResult.data, recebedoresResult.data]);
+  }, [pessoasResult.data, recebedoresResult.data, responsaveisResult.data]);
 
   const responsaveis = useMemo<Option[]>(() => {
-    const fromServer = pessoasResult.data?.items.filter((p) => p.ehResponsavel).map((p) => ({ label: p.nome, value: p.id })) ?? [];
+    const fromServer = responsaveisResult.data?.items.map((p) => ({ label: p.nome, value: p.id })) ?? [];
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
-  }, [extraPessoas, pessoasResult.data]);
+  }, [extraPessoas, responsaveisResult.data]);
 
   const recebedores = useMemo<Option[]>(() => {
     const fromServer = recebedoresResult.data?.items.map((p) => ({ label: p.nome, value: p.id })) ?? [];
@@ -861,7 +867,7 @@ export function QuickLaunchModal({
 
                 {/* Row 4: Valor | Parcelas */}
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-h-5 items-center gap-2">
                     <label className={formLabelClass}>
                       {parcelamentoMode === 'parcela' && quantidadeParcelas > 1 ? 'Valor Parcela' : quantidadeParcelas > 1 ? 'Valor Total' : 'Valor'}
                     </label>
