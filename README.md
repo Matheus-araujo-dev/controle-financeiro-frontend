@@ -76,3 +76,4 @@ Configuracao:
 - Coverage mínimo: 80% linhas, 80% funções, 80% statements, 70% branches
 - SonarQube integrado via GitHub Actions
 - npm audit para vulnerabilidades
+
