@@ -231,8 +231,14 @@ const receitasResponse = {
   items: [{ id: 'cr1', codigo: '2.1', descricao: 'Salario', aceitaLancamentos: true }]
 };
 
+const recebedoresResponse = {
+  items: [{ id: 'p1', nome: 'Mercado', ehResponsavel: false, ehRecebedor: true }]
+};
+
 function mockSuccessfulOptions() {
-  vi.mocked(cadastrosApi.pessoas.listar).mockResolvedValue(pessoasResponse as never);
+  vi.mocked(cadastrosApi.pessoas.listar).mockImplementation((filters: Record<string, unknown>) =>
+    Promise.resolve((filters.ehRecebedor === true ? recebedoresResponse : pessoasResponse) as never)
+  );
   vi.mocked(cadastrosApi.formasPagamento.listar).mockResolvedValue(formasResponse as never);
   vi.mocked(cadastrosApi.cartoes.listar).mockResolvedValue(cartoesResponse as never);
   vi.mocked(cadastrosApi.contasGerenciais.listar).mockImplementation((filters: { tipo?: string }) =>
