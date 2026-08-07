@@ -133,6 +133,7 @@ export function QuickLaunchModal({
 
   useEffect(() => {
     void queryClient.invalidateQueries({ queryKey: ['ql-pessoas'] });
+    void queryClient.invalidateQueries({ queryKey: ['ql-recebedores'] });
   }, [queryClient]);
 
   const initialDate = useRef(hojeISO());
@@ -206,9 +207,10 @@ export function QuickLaunchModal({
   const [quickAddContaBancariaTarget, setQuickAddContaBancariaTarget] = useState<QuickAddContaBancariaTarget>(null);
 
   // React Query: cache com staleTime alto — re-abrir o modal não refaz chamadas
-  const [pessoasResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult] = useQueries({
+  const [pessoasResult, recebedoresResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult] = useQueries({
     queries: [
       { queryKey: ['ql-pessoas'], queryFn: () => cadastrosApi.pessoas.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-recebedores'], queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true, ehRecebedor: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-formas'], queryFn: () => cadastrosApi.formasPagamento.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-cartoes'], queryFn: () => cadastrosApi.cartoes.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-contas-despesa'], queryFn: () => cadastrosApi.contasGerenciais.listar({ page: 1, pageSize: 500, search: '', tipo: 'Despesa', ativo: true }), staleTime: STALE_5MIN },
@@ -224,8 +226,9 @@ export function QuickLaunchModal({
 
   const pessoaContaGerencialMap = useMemo(() => {
     const map = new Map<string, { despesaId?: string; receitaId?: string }>();
-    pessoasResult.data?.items.forEach((p) => {
-      if (p.contaGerencialDespesaId || p.contaGerencialReceitaId) {
+    const allItems = [...(pessoasResult.data?.items ?? []), ...(recebedoresResult.data?.items ?? [])];
+    allItems.forEach((p) => {
+      if (!map.has(p.id) && (p.contaGerencialDespesaId || p.contaGerencialReceitaId)) {
         map.set(p.id, {
           despesaId: p.contaGerencialDespesaId ?? undefined,
           receitaId: p.contaGerencialReceitaId ?? undefined
@@ -233,7 +236,7 @@ export function QuickLaunchModal({
       }
     });
     return map;
-  }, [pessoasResult.data]);
+  }, [pessoasResult.data, recebedoresResult.data]);
 
   const responsaveis = useMemo<Option[]>(() => {
     const fromServer = pessoasResult.data?.items.filter((p) => p.ehResponsavel).map((p) => ({ label: p.nome, value: p.id })) ?? [];
@@ -241,9 +244,9 @@ export function QuickLaunchModal({
   }, [extraPessoas, pessoasResult.data]);
 
   const recebedores = useMemo<Option[]>(() => {
-    const fromServer = pessoasResult.data?.items.filter((p) => p.ehRecebedor).map((p) => ({ label: p.nome, value: p.id })) ?? [];
+    const fromServer = recebedoresResult.data?.items.map((p) => ({ label: p.nome, value: p.id })) ?? [];
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
-  }, [extraPessoas, pessoasResult.data]);
+  }, [extraPessoas, recebedoresResult.data]);
 
   const formas = useMemo<Array<Option & { ehCartao: boolean; baixarAutomaticamente: boolean }>>(() => {
     const fromServer = formasResult.data?.items.map((f) => ({ label: f.nome, value: f.id, ehCartao: f.ehCartao, baixarAutomaticamente: f.baixarAutomaticamente })) ?? [];
