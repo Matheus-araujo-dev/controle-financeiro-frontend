@@ -37,6 +37,7 @@ const defaultFilters: FaturaFilters = {
   cartaoId: undefined,
   competencias: undefined,
   statusCodigo: undefined,
+  statusCodigos: ['ABERTA'],
   dataVencimentoInicial: undefined,
   dataVencimentoFinal: undefined,
   dataFechamentoInicial: undefined,
