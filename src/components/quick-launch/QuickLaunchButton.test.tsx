@@ -236,7 +236,10 @@ const recebedoresResponse = {
 };
 
 const responsaveisResponse = {
-  items: [{ id: 'p2', nome: 'Joao', ehResponsavel: true, ehRecebedor: false }]
+  items: [
+    { id: 'r1', nome: 'Responsavel', ehResponsavel: true, ehRecebedor: false },
+    { id: 'r2', nome: 'Responsavel Dois', ehResponsavel: true, ehRecebedor: false }
+  ]
 };
 
 function mockSuccessfulOptions() {
