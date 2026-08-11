@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useQuery } from '@tanstack/react-query';
@@ -102,17 +102,25 @@ function getMovementDescriptor(item: MovimentacaoResumo) {
   };
 }
 
-const defaultMovimentacaoFilters: MovimentacaoFilters = {
-  page: 1,
-  pageSize: 20,
-  search: '',
-  dataInicial: undefined,
-  dataFinal: undefined,
-  contaBancariaIds: undefined,
-  responsavelIds: undefined,
-  pessoaIds: undefined,
-  tipo: undefined,
-};
+function getDefaultMovimentacaoFilters(): MovimentacaoFilters {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+  return {
+    page: 1,
+    pageSize: 50,
+    search: '',
+    dataInicial: `${year}-${month}-01`,
+    dataFinal: `${year}-${month}-${String(lastDay).padStart(2, '0')}`,
+    sortBy: 'dataMovimentacao',
+    sortDirection: 'Desc',
+    contaBancariaIds: undefined,
+    responsavelIds: undefined,
+    pessoaIds: undefined,
+    tipo: undefined,
+  };
+}
 
 export function MovimentacoesPage() {
   const navigate = useNavigate();
@@ -120,6 +128,8 @@ export function MovimentacoesPage() {
   const contaBancariaInicial = urlParams.get('contaBancariaId');
   const dataInicialParam = urlParams.get('dataInicial') ?? undefined;
   const dataFinalParam = urlParams.get('dataFinal') ?? undefined;
+
+  const [defaultFilters] = useState(getDefaultMovimentacaoFilters);
 
   const hasUrlParams = !!(contaBancariaInicial || dataInicialParam || dataFinalParam);
   const urlOverrides: Partial<MovimentacaoFilters> | undefined = hasUrlParams
@@ -132,7 +142,7 @@ export function MovimentacoesPage() {
 
   const { filters, setFilters, clearFilters, isModified } = usePersistedFilters(
     'filters:movimentacoes',
-    defaultMovimentacaoFilters,
+    defaultFilters,
     urlOverrides
   );
   const deferredFilters = useDeferredValue(filters);
@@ -166,6 +176,32 @@ export function MovimentacoesPage() {
   const pessoaOptions: FilterOption[] = responsavelOptions;
 
   const errorMessage = error instanceof Error ? error.message : error ? 'Falha ao carregar as movimentações.' : undefined;
+
+  const groupByContaBancaria = useCallback((item: MovimentacaoResumo) => item.contaBancariaNome ?? '(Sem conta)', []);
+
+  const renderContaBancariaHeader = useCallback((key: string, items: MovimentacaoResumo[]) => {
+    const totalEntradas = items.filter((i) => i.tipo === 'Entrada').reduce((s, i) => s + i.valor, 0);
+    const totalSaidas = items.filter((i) => i.tipo === 'Saida').reduce((s, i) => s + i.valor, 0);
+    const saldo = totalEntradas - totalSaidas;
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <WalletOutlined className="text-primary" />
+          <span className="text-sm font-bold text-on-surface">{key}</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            {items.length} {items.length === 1 ? 'movimentação' : 'movimentações'}
+          </span>
+        </div>
+        <div className="flex items-center gap-4 text-xs font-bold">
+          {totalEntradas > 0 && <span className="text-primary">+{formatCurrencyBRL(totalEntradas)}</span>}
+          {totalSaidas > 0 && <span className="text-on-surface-variant">-{formatCurrencyBRL(totalSaidas)}</span>}
+          <span className={saldo >= 0 ? 'text-primary' : 'text-red-400'}>
+            Saldo: {saldo >= 0 ? '+' : ''}{formatCurrencyBRL(saldo)}
+          </span>
+        </div>
+      </div>
+    );
+  }, []);
 
   const resumo = useMemo(() => {
     const totalEntradas = data?.summary?.totalEntradas ?? 0;
@@ -487,6 +523,8 @@ export function MovimentacoesPage() {
           emptyMessage="Nenhuma movimentação encontrada."
           onRetry={() => void refetch()}
           dataSource={data?.items ?? []}
+          groupBy={groupByContaBancaria}
+          renderGroupHeader={renderContaBancariaHeader}
           columns={[
             {
               title: 'Data',
