@@ -406,6 +406,8 @@ describe('FaturasPage', () => {
     await screen.findByText('Total consolidado');
 
     await userEvent.click(screen.getByRole('button', { name: 'Status da fatura' }));
+    // Default 'ABERTA' é pré-selecionada; desselecionar antes de aplicar 'PAGA'
+    await userEvent.click(await screen.findByRole('button', { name: 'Aberta' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Paga' }));
 
     await waitFor(() =>
