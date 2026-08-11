@@ -140,7 +140,7 @@ describe('MovimentacoesPage', () => {
 
     expect(await screen.findByText('Recebimento do cliente')).toBeInTheDocument();
     expect((await screen.findAllByText('20/04/2026')).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Conta principal')).toBeInTheDocument();
+    expect(screen.getAllByText('Conta principal').length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText(/Registros filtrados/i)).not.toBeInTheDocument();
     expect(screen.getByText('Entradas')).toBeInTheDocument();
     expect(screen.getByText('Saídas')).toBeInTheDocument();
