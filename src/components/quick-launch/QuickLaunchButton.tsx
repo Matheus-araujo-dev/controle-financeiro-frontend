@@ -541,13 +541,17 @@ export function QuickLaunchModal({
 
   function handleTipoChange(nextTipo: QuickLaunchTipo) {
     setTipo(nextTipo);
+    setPessoaId('');
+    setResponsavelId('');
+    setResponsaveisAdicionaisIds([]);
+    setAddingResponsavelId('');
+    setResponsaveisValores([]);
     setContaGerencialId('');
     setCartaoId('');
     setContaOrigemId('');
     setContaDestinoId('');
     setJaLiquidada(false);
     setContaBancariaLiquidacaoId('');
-    setResponsaveisValores([]);
   }
 
   function handlePessoaSuccess(target: QuickAddTarget, newId: string, label: string) {
@@ -857,7 +861,7 @@ export function QuickLaunchModal({
                       addNewLabel="Novo cartão"
                     />
                   </div>
-                ) : null}
+                ) : <div />}
 
                 {/* Row 4: Valor | Parcelas */}
                 <div className="space-y-2">
