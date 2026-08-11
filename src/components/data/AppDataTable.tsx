@@ -69,6 +69,8 @@ type AppDataTableProps<T extends object> = {
   onTableChange?: AppTableChange<T>;
   onRowClick?: (record: T) => void;
   size?: 'small' | 'middle' | 'large';
+  groupBy?: (record: T) => string;
+  renderGroupHeader?: (groupKey: string, items: T[]) => ReactNode;
 };
 
 const alignClass = {
@@ -372,11 +374,24 @@ export function AppDataTable<T extends object>({
   emptyMessage = 'Nenhum registro encontrado.',
   onRetry,
   onTableChange,
-  onRowClick
+  onRowClick,
+  groupBy,
+  renderGroupHeader,
 }: AppDataTableProps<T>) {
   const flatColumns = useMemo(() => getFlatColumns(columns), [columns]);
   const compactLayout = useCompactTableLayout();
   const [sortState, setSortState] = useState<{ columnKey?: string; order?: SortOrder }>({});
+
+  const groups = useMemo(() => {
+    if (!groupBy) return null;
+    const map = new Map<string, T[]>();
+    for (const item of dataSource) {
+      const key = groupBy(item);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(item);
+    }
+    return Array.from(map.entries()).map(([key, items]) => ({ key, items }));
+  }, [groupBy, dataSource]);
 
   if (loading) {
     return <PageState state="loading" title="Carregando tabela..." />;
@@ -453,9 +468,7 @@ export function AppDataTable<T extends object>({
         const detailCols = flatColumns.filter((col) => !isActionColumn(col) && !col.mobileRole);
         const hasRoles = !!(dateCol ?? titleCol ?? valueCol ?? statusCol ?? subtitleCols.length);
 
-        return (
-          <div className="grid gap-2 p-3">
-            {dataSource.map((record, rowIndex) => {
+        function renderMobileRecord(record: T, rowIndex: number) {
               if (!hasRoles) {
                 // Fallback: layout genérico por campo
                 const dataCols = flatColumns.filter((col) => !isActionColumn(col));
@@ -554,7 +567,28 @@ export function AppDataTable<T extends object>({
                   ) : null}
                 </article>
               );
-            })}
+            }
+
+        return (
+          <div className="grid gap-2 p-3">
+            {groups
+              ? groups.map((group) => (
+                  <div key={group.key}>
+                    {renderGroupHeader ? (
+                      <div className="mb-1 mt-2 first:mt-0 rounded-xl bg-surface-container px-3 py-2">
+                        {renderGroupHeader(group.key, group.items)}
+                      </div>
+                    ) : (
+                      <div className="mb-1 mt-2 first:mt-0 px-1 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+                        {group.key}
+                      </div>
+                    )}
+                    <div className="grid gap-2">
+                      {group.items.map((record, rowIndex) => renderMobileRecord(record, rowIndex))}
+                    </div>
+                  </div>
+                ))
+              : dataSource.map((record, rowIndex) => renderMobileRecord(record, rowIndex))}
           </div>
         );
       })() : (
@@ -609,24 +643,52 @@ export function AppDataTable<T extends object>({
               </tr>
             </thead>
             <tbody>
-              {dataSource.map((record, rowIndex) => (
-                <tr
-                  key={getRowKey(rowKey, record)}
-                  onClick={onRowClick ? () => onRowClick(record) : undefined}
-                  className={`group border-b border-white/5 last:border-b-0 ${onRowClick ? 'cursor-pointer hover:bg-primary/5' : ''}`}
-                >
-                  {flatColumns.map((column) => (
-                    <td
-                      key={getColumnKey(column)}
-                      className={`whitespace-nowrap px-4 py-4 text-sm text-on-surface ${alignClass[column.align ?? 'left']} ${
-                        column.fixed === 'right' ? 'sticky right-0 z-10 bg-transparent' : ''
-                      } ${column.className ?? ''}`}
+              {groups
+                ? groups.flatMap((group) => [
+                    <tr key={`__group__${group.key}`} className="border-b border-white/5 bg-surface-container/40">
+                      <td colSpan={flatColumns.length} className="px-4 py-2">
+                        {renderGroupHeader
+                          ? renderGroupHeader(group.key, group.items)
+                          : <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{group.key}</span>}
+                      </td>
+                    </tr>,
+                    ...group.items.map((record, rowIndex) => (
+                      <tr
+                        key={getRowKey(rowKey, record)}
+                        onClick={onRowClick ? () => onRowClick(record) : undefined}
+                        className={`group border-b border-white/5 last:border-b-0 ${onRowClick ? 'cursor-pointer hover:bg-primary/5' : ''}`}
+                      >
+                        {flatColumns.map((column) => (
+                          <td
+                            key={getColumnKey(column)}
+                            className={`whitespace-nowrap px-4 py-4 text-sm text-on-surface ${alignClass[column.align ?? 'left']} ${
+                              column.fixed === 'right' ? 'sticky right-0 z-10 bg-transparent' : ''
+                            } ${column.className ?? ''}`}
+                          >
+                            {renderCell(column, record, rowIndex)}
+                          </td>
+                        ))}
+                      </tr>
+                    )),
+                  ])
+                : dataSource.map((record, rowIndex) => (
+                    <tr
+                      key={getRowKey(rowKey, record)}
+                      onClick={onRowClick ? () => onRowClick(record) : undefined}
+                      className={`group border-b border-white/5 last:border-b-0 ${onRowClick ? 'cursor-pointer hover:bg-primary/5' : ''}`}
                     >
-                      {renderCell(column, record, rowIndex)}
-                    </td>
+                      {flatColumns.map((column) => (
+                        <td
+                          key={getColumnKey(column)}
+                          className={`whitespace-nowrap px-4 py-4 text-sm text-on-surface ${alignClass[column.align ?? 'left']} ${
+                            column.fixed === 'right' ? 'sticky right-0 z-10 bg-transparent' : ''
+                          } ${column.className ?? ''}`}
+                        >
+                          {renderCell(column, record, rowIndex)}
+                        </td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
             </tbody>
           </table>
         </div>
