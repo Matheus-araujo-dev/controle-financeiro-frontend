@@ -208,11 +208,12 @@ export function QuickLaunchModal({
   const [quickAddContaBancariaTarget, setQuickAddContaBancariaTarget] = useState<QuickAddContaBancariaTarget>(null);
 
   // React Query: cache com staleTime alto — re-abrir o modal não refaz chamadas
-  const [pessoasResult, recebedoresResult, responsaveisResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult] = useQueries({
+  const [pessoasResult, recebedoresResult, responsaveisResult, pagadoresResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult] = useQueries({
     queries: [
       { queryKey: ['ql-pessoas'], queryFn: () => cadastrosApi.pessoas.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-recebedores'], queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true, ehRecebedor: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-responsaveis'], queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true, ehResponsavel: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-pagadores'], queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true, ehPagador: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-formas'], queryFn: () => cadastrosApi.formasPagamento.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-cartoes'], queryFn: () => cadastrosApi.cartoes.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-contas-despesa'], queryFn: () => cadastrosApi.contasGerenciais.listar({ page: 1, pageSize: 500, search: '', tipo: 'Despesa', ativo: true }), staleTime: STALE_5MIN },
@@ -226,12 +227,18 @@ export function QuickLaunchModal({
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
   }, [extraPessoas, pessoasResult.data]);
 
+  const pagadores = useMemo<Option[]>(() => {
+    const fromServer = pagadoresResult.data?.items.map((p) => ({ label: p.nome, value: p.id })) ?? [];
+    return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
+  }, [extraPessoas, pagadoresResult.data]);
+
   const pessoaContaGerencialMap = useMemo(() => {
     const map = new Map<string, { despesaId?: string; receitaId?: string }>();
     const allItems = [
       ...(pessoasResult.data?.items ?? []),
       ...(recebedoresResult.data?.items ?? []),
-      ...(responsaveisResult.data?.items ?? [])
+      ...(responsaveisResult.data?.items ?? []),
+      ...(pagadoresResult.data?.items ?? [])
     ];
     allItems.forEach((p) => {
       if (!map.has(p.id) && (p.contaGerencialDespesaId || p.contaGerencialReceitaId)) {
@@ -242,7 +249,7 @@ export function QuickLaunchModal({
       }
     });
     return map;
-  }, [pessoasResult.data, recebedoresResult.data, responsaveisResult.data]);
+  }, [pessoasResult.data, recebedoresResult.data, responsaveisResult.data, pagadoresResult.data]);
 
   const responsaveis = useMemo<Option[]>(() => {
     const fromServer = responsaveisResult.data?.items.map((p) => ({ label: p.nome, value: p.id })) ?? [];
@@ -785,7 +792,7 @@ export function QuickLaunchModal({
                               setResponsaveisValores([]);
                               setAddingResponsavelId('');
                             }}
-                            options={(tipo === 'pagar' ? responsaveis : pessoas).filter((r) => r.value !== responsavelId && !responsaveisAdicionaisIds.includes(r.value))}
+                            options={(tipo === 'pagar' ? responsaveis : pagadores).filter((r) => r.value !== responsavelId && !responsaveisAdicionaisIds.includes(r.value))}
                             placeholder={tipo === 'pagar' ? 'Adicionar responsável...' : 'Adicionar pagador...'}
                             onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
                             addNewLabel="Nova pessoa"
@@ -798,7 +805,7 @@ export function QuickLaunchModal({
                         <div className="md:col-span-2 space-y-1.5">
                           <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                             {allRespIds.map((rid, i) => {
-                              const chipList = tipo === 'pagar' ? responsaveis : pessoas;
+                              const chipList = tipo === 'pagar' ? responsaveis : pagadores;
                               const label = chipList.find((r) => r.value === rid)?.label ?? rid;
                               return (
                                 <div key={rid} className="flex items-center gap-2 rounded-xl border border-white/8 bg-surface-container px-3 py-2">
