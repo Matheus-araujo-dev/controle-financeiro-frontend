@@ -503,7 +503,7 @@ export function AppDataTable<T extends object>({
                 <article
                   key={getRowKey(rowKey, record)}
                   onClick={onRowClick ? () => onRowClick(record) : undefined}
-                  className={`overflow-hidden rounded-2xl border border-white/5 bg-surface-container px-3 py-3 ${onRowClick ? 'cursor-pointer hover:bg-surface-container-high transition-colors' : ''}`}
+                  className={`overflow-hidden rounded-2xl border border-white/5 bg-surface-container px-3 py-3 transition-colors hover:bg-surface-container-high ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
                   <div className="flex items-start gap-2">
                     {/* Bloco de data à esquerda */}
@@ -656,7 +656,7 @@ export function AppDataTable<T extends object>({
                       <tr
                         key={getRowKey(rowKey, record)}
                         onClick={onRowClick ? () => onRowClick(record) : undefined}
-                        className={`group border-b border-white/5 last:border-b-0 ${onRowClick ? 'cursor-pointer hover:bg-primary/5' : ''}`}
+                        className={`group border-b border-white/5 last:border-b-0 transition-colors hover:bg-primary/5 ${onRowClick ? 'cursor-pointer' : ''}`}
                       >
                         {flatColumns.map((column) => (
                           <td
@@ -675,7 +675,7 @@ export function AppDataTable<T extends object>({
                     <tr
                       key={getRowKey(rowKey, record)}
                       onClick={onRowClick ? () => onRowClick(record) : undefined}
-                      className={`group border-b border-white/5 last:border-b-0 ${onRowClick ? 'cursor-pointer hover:bg-primary/5' : ''}`}
+                      className={`group border-b border-white/5 last:border-b-0 transition-colors hover:bg-primary/5 ${onRowClick ? 'cursor-pointer' : ''}`}
                     >
                       {flatColumns.map((column) => (
                         <td
