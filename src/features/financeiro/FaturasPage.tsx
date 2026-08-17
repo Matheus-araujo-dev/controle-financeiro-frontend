@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
@@ -189,6 +189,23 @@ export function FaturasPage() {
     const ids: string[] = Array.isArray(rawIds) ? rawIds : Array.isArray(rawId) ? rawId : rawId ? [rawId] : [];
     return ids.length === 1 ? ids[0] : undefined;
   }, [filters.cartaoId, filters.cartaoIds]);
+
+  const groupByCompetencia = useCallback((item: FaturaResumo) => formatMonthYearBR(item.competencia), []);
+
+  const renderCompetenciaHeader = useCallback((key: string, items: FaturaResumo[]) => {
+    const total = items.reduce((s, i) => s + i.valorTotal, 0);
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-on-surface">{key}</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            {items.length} {items.length === 1 ? 'fatura' : 'faturas'}
+          </span>
+        </div>
+        <span className="text-xs font-bold text-on-surface-variant">{formatCurrencyBRL(total)}</span>
+      </div>
+    );
+  }, []);
 
   const richExportColumns: RichColumn<FaturaResumo>[] = [
     { header: 'Competência', value: (r) => formatMonthYearBR(r.competencia), cellStyle: STYLE.DATA_TEXT, width: 14 },
@@ -512,6 +529,8 @@ export function FaturasPage() {
             pageSize: data?.pageSize ?? filters.pageSize,
             total: data?.totalItems ?? 0
           }}
+          groupBy={groupByCompetencia}
+          renderGroupHeader={renderCompetenciaHeader}
         />
       </div>
     </ListPageShell>
