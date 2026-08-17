@@ -37,7 +37,7 @@ const defaultFilters: FaturaFilters = {
   cartaoId: undefined,
   competencias: undefined,
   statusCodigo: undefined,
-  statusCodigos: ['ABERTA'],
+  statusCodigos: ['ABERTA', 'FECHADA'],
   dataVencimentoInicial: undefined,
   dataVencimentoFinal: undefined,
   dataFechamentoInicial: undefined,
@@ -46,6 +46,7 @@ const defaultFilters: FaturaFilters = {
 
 const statusOptions: Array<{ label: string; value: StatusFaturaCodigo }> = [
   { label: 'Aberta', value: 'ABERTA' },
+  { label: 'Fechada', value: 'FECHADA' },
   { label: 'Paga', value: 'PAGA' }
 ];
 
