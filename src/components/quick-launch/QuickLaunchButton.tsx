@@ -875,6 +875,13 @@ export function QuickLaunchModal({
                     <label className={formLabelClass}>
                       {parcelamentoMode === 'parcela' && quantidadeParcelas > 1 ? 'Valor Parcela' : quantidadeParcelas > 1 ? 'Valor Total' : 'Valor'}
                     </label>
+                    {quantidadeParcelas > 1 && (
+                      <span className="text-[10px] text-on-surface-variant/60">
+                        {parcelamentoMode === 'total'
+                          ? `= ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor / quantidadeParcelas)}/parcela`
+                          : `= ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)} total`}
+                      </span>
+                    )}
                     {quantidadeParcelas > 1 ? (
                       <div className="ml-auto flex rounded-lg border border-white/10 bg-surface-container p-0.5 text-xs font-medium">
                         <button
@@ -901,13 +908,6 @@ export function QuickLaunchModal({
                       className={formFieldClass}
                     />
                   )}
-                  {quantidadeParcelas > 1 ? (
-                    <p className="text-[11px] text-on-surface-variant/70">
-                      {parcelamentoMode === 'total'
-                        ? `Parcela: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor / quantidadeParcelas)}`
-                        : `Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)}`}
-                    </p>
-                  ) : null}
                 </div>
 
                 <div className="space-y-2">
