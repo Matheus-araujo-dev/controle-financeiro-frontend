@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { QuickLaunchButton } from './QuickLaunchButton';
+import { QuickLaunchButton, QuickLaunchModal } from './QuickLaunchButton';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
 import { notify } from '../../store/notification-store';
@@ -179,7 +179,7 @@ vi.mock('../../features/cadastros/quick-add/QuickAddContaBancariaModal', () => (
 
 vi.mock('../../services/http/financeiro-api', () => ({
   financeiroApi: {
-    contasPagar: { criar: vi.fn(), listar: vi.fn() },
+    contasPagar: { criar: vi.fn(), listar: vi.fn(), obterPorId: vi.fn() },
     contasReceber: { criar: vi.fn(), listar: vi.fn() },
     transferencias: { criar: vi.fn() }
   }
@@ -610,5 +610,34 @@ describe('QuickLaunchButton', () => {
     await waitFor(() => {
       expect(screen.queryByText(/Descartar dados/i)).not.toBeInTheDocument();
     });
+  });
+
+  it('preenche chips com nomes via initialValues.responsaveisAdicionaisIds e responsaveisNomes', async () => {
+    render(
+      <QuickLaunchModal
+        initialValues={{
+          tipo: 'pagar',
+          pessoaId: 'p1',
+          pessoaNome: 'Mercado',
+          responsavelId: 'r1',
+          // responsavelNome ausente propositalmente — cobre o branch `?? nomes[id]`
+          responsaveisNomes: { r1: 'Responsavel', r2: 'Responsavel Dois' },
+          responsaveisAdicionaisIds: ['r2'],
+          valor: 200,
+          dataVencimento: '2026-09-20',
+          descricao: 'Reembolso: Compra',
+          quantidadeParcelas: 5
+        }}
+        isReembolso
+        onClose={vi.fn()}
+      />,
+      { wrapper: Wrapper }
+    );
+
+    await waitFor(() => expect(cadastrosApi.pessoas.listar).toHaveBeenCalled());
+
+    // Chips devem exibir nomes (não UUIDs) mesmo antes das queries resolverem
+    expect(await screen.findByRole('button', { name: /Remover Responsavel$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Remover Responsavel Dois/i })).toBeInTheDocument();
   });
 });
