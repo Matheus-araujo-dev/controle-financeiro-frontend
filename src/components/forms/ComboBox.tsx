@@ -334,6 +334,7 @@ export function ComboBox({
           disabled={disabled}
           placeholder={resolvedPlaceholder}
           value={open ? query : selectedLabel}
+          title={!open && selectedLabel ? selectedLabel : undefined}
           onFocus={() => {
             if (disabled) return;
             setOpen(true);
