@@ -55,6 +55,8 @@ export type QuickLaunchInitialValues = {
   pessoaNome?: string;
   responsavelId?: string;
   responsavelNome?: string;
+  responsaveisAdicionaisIds?: string[];
+  responsaveisNomes?: Record<string, string>;
   valor?: number;
   dataVencimento?: string;
   descricao?: string;
@@ -153,7 +155,7 @@ export function QuickLaunchModal({
   const [contaBancariaLiquidacaoId, setContaBancariaLiquidacaoId] = useState('');
   const [pessoaId, setPessoaId] = useState(() => initialValues?.pessoaId ?? '');
   const [responsavelId, setResponsavelId] = useState(() => initialValues?.responsavelId ?? '');
-  const [responsaveisAdicionaisIds, setResponsaveisAdicionaisIds] = useState<string[]>([]);
+  const [responsaveisAdicionaisIds, setResponsaveisAdicionaisIds] = useState<string[]>(() => initialValues?.responsaveisAdicionaisIds ?? []);
   const [responsaveisValores, setResponsaveisValores] = useState<number[]>([]);
   const [addingResponsavelId, setAddingResponsavelId] = useState('');
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
@@ -201,10 +203,15 @@ export function QuickLaunchModal({
   // Pré-populado com pessoas passadas via initialValues para evitar exibir UUID no chip
   const [extraPessoas, setExtraPessoas] = useState<Option[]>(() => {
     const seed: Option[] = [];
+    const nomes = initialValues?.responsaveisNomes ?? {};
     if (initialValues?.pessoaId && initialValues?.pessoaNome)
       seed.push({ value: initialValues.pessoaId, label: initialValues.pessoaNome });
-    if (initialValues?.responsavelId && initialValues?.responsavelNome)
-      seed.push({ value: initialValues.responsavelId, label: initialValues.responsavelNome });
+    if (initialValues?.responsavelId && (initialValues?.responsavelNome ?? nomes[initialValues.responsavelId]))
+      seed.push({ value: initialValues.responsavelId, label: (initialValues.responsavelNome ?? nomes[initialValues.responsavelId])! });
+    for (const id of initialValues?.responsaveisAdicionaisIds ?? []) {
+      const nome = nomes[id];
+      if (nome) seed.push({ value: id, label: nome });
+    }
     return seed;
   });
   const [extraFormas, setExtraFormas] = useState<Array<Option & { ehCartao: boolean; baixarAutomaticamente: boolean }>>([]);
@@ -453,9 +460,15 @@ export function QuickLaunchModal({
       let responsavelNome: string | undefined;
       let pessoaNome: string | undefined;
 
+      // Monta mapa de nomes para todos os responsáveis do form atual
+      const nomesMap: Record<string, string> = {};
+      for (const id of [responsavelId, ...responsaveisAdicionaisIds].filter(Boolean)) {
+        const nome = pessoaLabelMap.get(id);
+        if (nome) nomesMap[id] = nome;
+      }
+
       // Para compras de cartão, buscar a conta criada para obter a data real da
       // primeira parcela (calculada pelo backend com base no ciclo do cartão)
-      // e o número de parcelas e nomes das pessoas
       if (exigeCartao) {
         try {
           const criada = await financeiroApi.contasPagar.obterPorId(createdId);
@@ -463,6 +476,8 @@ export function QuickLaunchModal({
           reembolsoParcelas = criada.quantidadeParcelas;
           responsavelNome = criada.responsavelCompraNome ?? undefined;
           pessoaNome = criada.recebedorNome;
+          if (criada.responsavelCompraId && criada.responsavelCompraNome)
+            nomesMap[criada.responsavelCompraId] = criada.responsavelCompraNome;
         } catch {
           // se falhar, usa os valores atuais do form
         }
@@ -474,6 +489,8 @@ export function QuickLaunchModal({
         pessoaNome,
         responsavelId: responsavelId || undefined,
         responsavelNome,
+        responsaveisAdicionaisIds: responsaveisAdicionaisIds.length > 0 ? responsaveisAdicionaisIds : undefined,
+        responsaveisNomes: Object.keys(nomesMap).length > 0 ? nomesMap : undefined,
         valor,
         dataVencimento: reembolsoDate,
         descricao: `Reembolso: ${descricao.trim()}`,
