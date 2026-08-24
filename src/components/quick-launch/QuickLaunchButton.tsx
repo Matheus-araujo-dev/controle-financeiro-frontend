@@ -52,11 +52,14 @@ type QuickAddContaBancariaTarget = 'origem' | 'destino' | null;
 export type QuickLaunchInitialValues = {
   tipo: 'pagar' | 'receber';
   pessoaId?: string;
+  pessoaNome?: string;
   responsavelId?: string;
+  responsavelNome?: string;
   valor?: number;
   dataVencimento?: string;
   descricao?: string;
   contaVinculadaOrigemId?: string;
+  quantidadeParcelas?: number;
 };
 
 function hojeISO() {
@@ -141,8 +144,8 @@ export function QuickLaunchModal({
   const [tipo, setTipo] = useState<QuickLaunchTipo>(() => initialValues?.tipo ?? 'pagar');
   const [descricao, setDescricao] = useState(() => initialValues?.descricao ?? '');
   const [valor, setValor] = useState(() => initialValues?.valor ?? 0);
-  const [quantidadeParcelas, setQuantidadeParcelas] = useState(1);
-  const [parcelasRaw, setParcelasRaw] = useState('1');
+  const [quantidadeParcelas, setQuantidadeParcelas] = useState(() => initialValues?.quantidadeParcelas ?? 1);
+  const [parcelasRaw, setParcelasRaw] = useState(() => String(initialValues?.quantidadeParcelas ?? 1));
   const [parcelamentoMode, setParcelamentoMode] = useState<'total' | 'parcela'>('total');
   const [dataVencimento, setDataVencimento] = useState(() => initialValues?.dataVencimento ?? initialDate.current);
   const [jaLiquidada, setJaLiquidada] = useState(false);
@@ -163,8 +166,9 @@ export function QuickLaunchModal({
   const [saving, setSaving] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   type LaunchFn = () => Promise<string | void>;
-  const [pendingLaunch, setPendingLaunch] = useState<{ fn: LaunchFn; retryFn: LaunchFn; items: DuplicateItemSummary[]; onSuccess: (id?: string) => void } | null>(null);
-  const [pendingFaturaIndisponivel, setPendingFaturaIndisponivel] = useState<{ retryFn: LaunchFn; message: string; onSuccess: (id?: string) => void } | null>(null);
+  type OnSuccessFn = (id?: string) => Promise<void> | void;
+  const [pendingLaunch, setPendingLaunch] = useState<{ fn: LaunchFn; retryFn: LaunchFn; items: DuplicateItemSummary[]; onSuccess: OnSuccessFn } | null>(null);
+  const [pendingFaturaIndisponivel, setPendingFaturaIndisponivel] = useState<{ retryFn: LaunchFn; message: string; onSuccess: OnSuccessFn } | null>(null);
   const lastAutoFilledContaRef = useRef<string | null>(null);
   const lastAutoFilledResponsavelRef = useRef<string | null>(null);
 
@@ -194,7 +198,15 @@ export function QuickLaunchModal({
   }
 
   // Itens adicionados via QuickAdd nesta sessão (aparecem no topo da lista)
-  const [extraPessoas, setExtraPessoas] = useState<Option[]>([]);
+  // Pré-populado com pessoas passadas via initialValues para evitar exibir UUID no chip
+  const [extraPessoas, setExtraPessoas] = useState<Option[]>(() => {
+    const seed: Option[] = [];
+    if (initialValues?.pessoaId && initialValues?.pessoaNome)
+      seed.push({ value: initialValues.pessoaId, label: initialValues.pessoaNome });
+    if (initialValues?.responsavelId && initialValues?.responsavelNome)
+      seed.push({ value: initialValues.responsavelId, label: initialValues.responsavelNome });
+    return seed;
+  });
   const [extraFormas, setExtraFormas] = useState<Array<Option & { ehCartao: boolean; baixarAutomaticamente: boolean }>>([]);
   const [extraCartoes, setExtraCartoes] = useState<Option[]>([]);
   const [extraContasDespesa, setExtraContasDespesa] = useState<ContaGerencialOption[]>([]);
@@ -319,6 +331,17 @@ export function QuickLaunchModal({
     }
   }, [pessoaId, tipo, contaGerencialId, pessoaContaGerencialMap]);
 
+  // Mapa unificado id→nome de todas as listas de pessoas para resolução de labels nos chips
+  const pessoaLabelMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const arr of [extraPessoas, pessoas, recebedores, responsaveis, pagadores]) {
+      for (const p of arr) {
+        if (!map.has(p.value)) map.set(p.value, p.label);
+      }
+    }
+    return map;
+  }, [extraPessoas, pessoas, recebedores, responsaveis, pagadores]);
+
   // Auto-fill responsável a partir da conta gerencial selecionada
   const contasGerenciais = tipo === 'pagar' ? contasDespesa : contasReceita;
   useEffect(() => {
@@ -423,16 +446,39 @@ export function QuickLaunchModal({
       (!exigeCartao || Boolean(cartaoId)) &&
       (!jaLiquidada || Boolean(contaBancariaLiquidacaoId));
 
-  function buildOnSuccess(createdId?: string) {
+  async function buildOnSuccess(createdId?: string) {
     if (!isReembolso && gerarReembolso && onGerarReembolso && createdId) {
+      let reembolsoDate = dataVencimento;
+      let reembolsoParcelas = quantidadeParcelas;
+      let responsavelNome: string | undefined;
+      let pessoaNome: string | undefined;
+
+      // Para compras de cartão, buscar a conta criada para obter a data real da
+      // primeira parcela (calculada pelo backend com base no ciclo do cartão)
+      // e o número de parcelas e nomes das pessoas
+      if (exigeCartao) {
+        try {
+          const criada = await financeiroApi.contasPagar.obterPorId(createdId);
+          reembolsoDate = criada.dataVencimento;
+          reembolsoParcelas = criada.quantidadeParcelas;
+          responsavelNome = criada.responsavelCompraNome ?? undefined;
+          pessoaNome = criada.recebedorNome;
+        } catch {
+          // se falhar, usa os valores atuais do form
+        }
+      }
+
       onGerarReembolso({
         tipo: tipo === 'pagar' ? 'receber' : 'pagar',
         pessoaId,
+        pessoaNome,
         responsavelId: responsavelId || undefined,
+        responsavelNome,
         valor,
-        dataVencimento,
+        dataVencimento: reembolsoDate,
         descricao: `Reembolso: ${descricao.trim()}`,
-        contaVinculadaOrigemId: createdId
+        contaVinculadaOrigemId: createdId,
+        quantidadeParcelas: reembolsoParcelas
       });
     } else {
       onClose();
@@ -442,12 +488,12 @@ export function QuickLaunchModal({
   async function performLaunch(
     launchFn: () => Promise<string | void>,
     retryFn?: () => Promise<string | void>,
-    onSuccess?: (id?: string) => void
+    onSuccess?: (id?: string) => Promise<void> | void
   ) {
     setSaving(true);
     try {
       const createdId = await launchFn();
-      if (onSuccess) onSuccess(typeof createdId === 'string' ? createdId : undefined);
+      if (onSuccess) await onSuccess(typeof createdId === 'string' ? createdId : undefined);
       else onClose();
     } catch (error) {
       if (isFaturaIndisponivelError(error) && retryFn) {
@@ -803,10 +849,14 @@ export function QuickLaunchModal({
                       {/* Chips em linha própria full-width para não expandir a grid de 3 colunas */}
                       {count > 0 && (
                         <div className="md:col-span-2 space-y-1.5">
+                          <span className={formLabelClass}>
+                            {tipo === 'pagar'
+                              ? `Responsáv${count > 1 ? 'eis' : 'el'} selecionado${count > 1 ? 's' : ''}`
+                              : `Pagador${count > 1 ? 'es' : ''} selecionado${count > 1 ? 's' : ''}`}
+                          </span>
                           <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                             {allRespIds.map((rid, i) => {
-                              const chipList = tipo === 'pagar' ? responsaveis : pagadores;
-                              const label = chipList.find((r) => r.value === rid)?.label ?? rid;
+                              const label = pessoaLabelMap.get(rid) ?? rid;
                               return (
                                 <div key={rid} className="flex items-center gap-2 rounded-xl border border-white/8 bg-surface-container px-3 py-2">
                                   <span className="flex-1 truncate text-xs font-medium text-on-surface">{label}</span>
