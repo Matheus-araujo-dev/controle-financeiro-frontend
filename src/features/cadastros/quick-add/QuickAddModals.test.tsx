@@ -99,6 +99,8 @@ describe('quick add modals', () => {
       ativo: true,
       icone: null,
       cor: null,
+      recebedorPadraoFaturaId: null,
+      formaPagamentoPadraoFaturaId: null,
       createdAtUtc: '2026-06-21T00:00:00Z',
       updatedAtUtc: '2026-06-21T00:00:00Z'
     });

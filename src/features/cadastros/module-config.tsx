@@ -231,6 +231,19 @@ async function loadPessoaOptions() {
   }));
 }
 
+async function loadFormaPagamentoOptions() {
+  const response = await cadastrosApi.formasPagamento.listar({
+    page: 1,
+    pageSize: 100,
+    search: ''
+  });
+
+  return response.items.map((item) => ({
+    label: item.nome,
+    value: item.id
+  }));
+}
+
 export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDetalhe, PessoaPayload, PessoaFilters> = {
   key: 'pessoas',
   title: 'Pessoas',
@@ -644,7 +657,23 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
     { name: 'limiteCredito', label: 'Limite individual', kind: 'number', step: 0.01, nullable: true, numberFormat: 'currency' },
     { name: 'ativo', label: 'Ativo', kind: 'switch' },
     { name: 'icone', label: 'Ícone', kind: 'bank-icon-picker' },
-    { name: 'cor', label: 'Cor', kind: 'color-picker' }
+    { name: 'cor', label: 'Cor', kind: 'color-picker' },
+    {
+      name: 'recebedorPadraoFaturaId',
+      label: 'Recebedor padrão da fatura',
+      kind: 'select',
+      loadOptions: loadPessoaOptions,
+      nullable: true,
+      placeholder: 'Opcional — instituição que recebe o pagamento'
+    },
+    {
+      name: 'formaPagamentoPadraoFaturaId',
+      label: 'Forma de pagamento padrão da fatura',
+      kind: 'select',
+      loadOptions: loadFormaPagamentoOptions,
+      nullable: true,
+      placeholder: 'Opcional — forma usada ao gerar a conta a pagar'
+    }
   ],
   schema: cartaoSchema,
   defaultFilters: { page: 1, pageSize: 20, search: '' },
@@ -658,19 +687,25 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
     limiteCredito: null,
     ativo: true,
     icone: 'credit_card',
-    cor: '#2bf58e'
+    cor: '#2bf58e',
+    recebedorPadraoFaturaId: '',
+    formaPagamentoPadraoFaturaId: ''
   },
   list: cadastrosApi.cartoes.listar,
   detail: cadastrosApi.cartoes.obterPorId,
   create: (payload) =>
     cadastrosApi.cartoes.criar({
       ...payload,
-      contaBancariaPagamentoPadraoId: payload.contaBancariaPagamentoPadraoId || null
+      contaBancariaPagamentoPadraoId: payload.contaBancariaPagamentoPadraoId || null,
+      recebedorPadraoFaturaId: payload.recebedorPadraoFaturaId || null,
+      formaPagamentoPadraoFaturaId: payload.formaPagamentoPadraoFaturaId || null
     }),
   update: (id, payload) =>
     cadastrosApi.cartoes.atualizar(id, {
       ...payload,
-      contaBancariaPagamentoPadraoId: payload.contaBancariaPagamentoPadraoId || null
+      contaBancariaPagamentoPadraoId: payload.contaBancariaPagamentoPadraoId || null,
+      recebedorPadraoFaturaId: payload.recebedorPadraoFaturaId || null,
+      formaPagamentoPadraoFaturaId: payload.formaPagamentoPadraoFaturaId || null
     }),
   toFormValues: (detail) => ({
     nome: detail.nome,
@@ -682,7 +717,9 @@ export const cartoesModuleConfig: MasterDataModuleConfig<CartaoResumo, CartaoDet
     limiteCredito: detail.limiteCredito,
     ativo: detail.ativo,
     icone: detail.icone ?? 'credit_card',
-    cor: detail.cor ?? '#2bf58e'
+    cor: detail.cor ?? '#2bf58e',
+    recebedorPadraoFaturaId: detail.recebedorPadraoFaturaId ?? '',
+    formaPagamentoPadraoFaturaId: detail.formaPagamentoPadraoFaturaId ?? ''
   }),
   exportColumns: [
     { header: 'Nome', value: (r: CartaoResumo) => r.nome },

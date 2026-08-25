@@ -132,6 +132,18 @@ export function FaturaDetailPage() {
     onError: (err) => setActionError(err instanceof Error ? err.message : 'Falha ao estornar o pagamento da fatura.')
   });
 
+  const reabrirMutation = useMutation({
+    mutationFn: () => financeiroApi.faturas.reabrir(id!),
+    onSuccess: (response) => {
+      queryClient.setQueryData(['faturas', 'detail', id], (old: typeof data) => ({
+        ...old,
+        detail: response
+      }));
+      setActionError(undefined);
+    },
+    onError: (err) => setActionError(err instanceof Error ? err.message : 'Falha ao reabrir a fatura.')
+  });
+
   const handleItensTableChange: AppTableChange<FaturaItem> = (_pagination, _filters, sorter) => {
     setItemsPage(1);
     setItemsSortBy(sorter.columnKey ?? undefined);
@@ -149,7 +161,7 @@ export function FaturaDetailPage() {
   const detail = data?.detail;
   const contaOptions = data?.contaOptions ?? [];
   const responsavelOptions = data?.responsavelOptions ?? [];
-  const saving = pagarMutation.isPending || estornarMutation.isPending || fecharMutation.isPending;
+  const saving = pagarMutation.isPending || estornarMutation.isPending || fecharMutation.isPending || reabrirMutation.isPending;
   const errorMessage = actionError ?? (error instanceof Error ? error.message : error ? 'Falha ao carregar a fatura.' : undefined);
 
   const kpiCards = useMemo(() => {
@@ -273,6 +285,19 @@ export function FaturaDetailPage() {
             >
               <span className="material-symbols-outlined text-base">lock</span>
               Fechar fatura
+            </Button>
+          )}
+          {detail.statusCodigo === 'FECHADA' && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={saving}
+              loading={reabrirMutation.isPending}
+              onClick={() => reabrirMutation.mutate()}
+            >
+              <span className="material-symbols-outlined text-base">lock_open</span>
+              Reabrir fatura
             </Button>
           )}
           <Link to="/faturas">
