@@ -433,6 +433,30 @@ export function buildExportDefinition(
     };
   }
 
+  if (activeReport === 'cartoes') {
+    return {
+      title: 'Relatório de cartões',
+      filename: `relatorio-cartoes-${referenceMonth}`,
+      sheets: [
+        {
+          name: 'Cartões',
+          title: 'Relatório de cartões',
+          filters,
+          rows:
+            (data.cartoes ?? []).map((c) => ({
+              Nome: c.nome,
+              Bandeira: c.bandeira,
+              'Número final': c.numeroFinal,
+              'Limite efetivo': c.limiteEfetivo ?? '',
+              'Comprometido': c.limiteComprometido,
+              'Disponível': c.limiteDisponivel ?? '',
+              Ativo: c.ativo ? 'Sim' : 'Não'
+            }))
+        }
+      ]
+    };
+  }
+
   if (activeReport === 'alertas') {
     return {
       title: 'Alertas inteligentes',

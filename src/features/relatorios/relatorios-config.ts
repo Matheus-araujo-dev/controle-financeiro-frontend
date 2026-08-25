@@ -1,3 +1,4 @@
+import type { CartaoResumo } from '../../types/cadastros';
 import type {
   CompraPlanejadaListSummary,
   CompraPlanejadaResumo,
@@ -37,7 +38,7 @@ export type ReportKey =
   | 'dre'
   | 'alertas'
   | 'analises'
-  | 'balanco-mensal';
+  | 'cartoes';
 
 export type ReportState = {
   resumo?: DashboardResumo;
@@ -51,6 +52,7 @@ export type ReportState = {
   recorrencias?: PagedFinanceiro<RecorrenciaListItem>;
   compras?: PagedCompraPlanejada<CompraPlanejadaResumo, CompraPlanejadaListSummary>;
   comparativo?: DashboardComparativoMensal;
+  cartoes?: CartaoResumo[];
 };
 
 export const MAX_REPORT_ROWS = 250;
@@ -63,19 +65,26 @@ export const reportTabs: Array<{ key: ReportKey; label: string; icon: string }> 
   { key: 'previsoes', label: 'Previsões', icon: 'event_repeat' },
   { key: 'inadimplencia', label: 'Inadimplência', icon: 'warning' },
   { key: 'faturas', label: 'Faturas', icon: 'credit_card' },
+  { key: 'cartoes', label: 'Cartões', icon: 'credit_score' },
   { key: 'recorrencias', label: 'Recorrências', icon: 'sync' },
   { key: 'compras', label: 'Compras planejadas', icon: 'shopping_cart' },
   { key: 'comparativo', label: 'Comparativo mensal', icon: 'bar_chart' },
   { key: 'dre', label: 'DRE doméstica', icon: 'receipt_long' },
   { key: 'alertas', label: 'Alertas inteligentes', icon: 'notifications_active' },
-  { key: 'analises', label: 'Análises', icon: 'analytics' },
-  { key: 'balanco-mensal', label: 'Balanço mensal', icon: 'ssid_chart' }
+  { key: 'analises', label: 'Análises', icon: 'analytics' }
 ];
 
 export const comparativoMesesOptions = [
   { value: '3', label: '3 meses' },
   { value: '6', label: '6 meses' },
   { value: '12', label: '12 meses' }
+];
+
+export const fluxoDiasOptions = [
+  { value: '15', label: '15 dias' },
+  { value: '30', label: '30 dias' },
+  { value: '60', label: '60 dias' },
+  { value: '90', label: '90 dias' }
 ];
 
 export const contaTipoOptions = [

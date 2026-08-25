@@ -16,9 +16,16 @@ function renderPage() {
     </QueryClientProvider>
   );
 }
+import { cadastrosApi } from '../../services/http/cadastros-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 import { dashboardApi } from '../../services/http/dashboard-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
+
+vi.mock('../../services/http/cadastros-api', () => ({
+  cadastrosApi: {
+    cartoes: { listar: vi.fn() }
+  }
+}));
 
 vi.mock('../../services/http/dashboard-api', () => ({
   dashboardApi: {
@@ -230,6 +237,30 @@ function mockReports() {
         saldo: 700,
         variacaoReceitas: null,
         variacaoDespesas: null
+      }
+    ]
+  } as never);
+  vi.mocked(cadastrosApi.cartoes.listar).mockResolvedValue({
+    page: 1, pageSize: 200, totalItems: 1, totalPages: 1,
+    items: [
+      {
+        id: 'card-1',
+        nome: 'Nubank',
+        numeroFinal: '1234',
+        bandeira: 'Mastercard',
+        diaFechamentoFatura: 10,
+        diaVencimentoFatura: 20,
+        contaBancariaPagamentoPadraoId: null,
+        limiteCredito: 5000,
+        usaLimiteCompartilhado: false,
+        limiteEfetivo: 5000,
+        limiteComprometido: 900,
+        limiteDisponivel: 4100,
+        ativo: true,
+        icone: null,
+        cor: null,
+        recebedorPadraoFaturaId: null,
+        formaPagamentoPadraoFaturaId: null
       }
     ]
   } as never);
@@ -731,25 +762,38 @@ describe('RelatoriosPage', () => {
     expect(await screen.findByText(/Sem despesas no período/i)).toBeInTheDocument();
   });
 
-  it('renders balanço mensal tab with chart and table data', async () => {
+  it('renders comparativo mensal tab with chart, table and balanço section', async () => {
     vi.mocked(dashboardApi.obterComparativoMensal).mockResolvedValue(richComparativo as never);
     renderPage();
     await screen.findByText(/Leitura gerencial/);
-    await userEvent.click(screen.getByRole('button', { name: /balanço mensal/i }));
+    await userEvent.click(screen.getByRole('button', { name: /comparativo mensal/i }));
     // Table rows rendered
     expect(await screen.findByText('Mai/26')).toBeInTheDocument();
     expect(screen.getByText('Jun/26')).toBeInTheDocument();
     // Variation columns
     const dashes = screen.getAllByText('—');
     expect(dashes.length).toBeGreaterThan(0);
+    // Balanço section now merged inside comparativo
+    expect(screen.getByText(/Balanço mensal/)).toBeInTheDocument();
   });
 
-  it('renders balanço mensal tab empty state when no comparativo data', async () => {
+  it('renders comparativo mensal tab empty state when no comparativo data', async () => {
     vi.mocked(dashboardApi.obterComparativoMensal).mockResolvedValue({ itens: [] } as never);
     renderPage();
     await screen.findByText(/Leitura gerencial/);
-    await userEvent.click(screen.getByRole('button', { name: /balanço mensal/i }));
+    await userEvent.click(screen.getByRole('button', { name: /comparativo mensal/i }));
     expect(await screen.findByText(/Sem dados comparativos/i)).toBeInTheDocument();
+  });
+
+  it('renders cartões tab with KPIs and card details', async () => {
+    renderPage();
+    await screen.findByText(/Leitura gerencial/);
+    await userEvent.click(screen.getByRole('button', { name: /cartões/i }));
+    expect(await screen.findByText('Cartões ativos')).toBeInTheDocument();
+    expect(await screen.findByText('Disponível total')).toBeInTheDocument();
+    // Card details rendered
+    expect(await screen.findByText(/Nubank/)).toBeInTheDocument();
+    expect(screen.getByText(/Mastercard/)).toBeInTheDocument();
   });
 
   it('handles Excel export button click', async () => {
