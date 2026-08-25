@@ -158,6 +158,7 @@ export const financeiroApi = {
     pagar: (id: string, payload: PagarFaturaPayload) => post<FaturaDetalhe>(`/faturas/${id}/pagar`, payload),
     fechar: (id: string) => post<FaturaDetalhe>(`/faturas/${id}/fechar`),
     estornar: (id: string) => post<FaturaDetalhe>(`/faturas/${id}/estornar`),
+    reabrir: (id: string) => post<FaturaDetalhe>(`/faturas/${id}/reabrir`),
     importar: {
       preview: async (cartaoId: string, arquivo: File): Promise<ImportacaoFaturaPreview> => {
         const form = new FormData();

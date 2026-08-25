@@ -175,6 +175,8 @@ export type CartaoResumo = {
   ativo: boolean;
   icone: string | null;
   cor: string | null;
+  recebedorPadraoFaturaId: string | null;
+  formaPagamentoPadraoFaturaId: string | null;
 };
 
 export type CartaoDetalhe = CartaoResumo & {
@@ -193,6 +195,8 @@ export type CartaoPayload = {
   ativo: boolean;
   icone?: string | null;
   cor?: string | null;
+  recebedorPadraoFaturaId?: string | null;
+  formaPagamentoPadraoFaturaId?: string | null;
 };
 
 export type CartaoFilters = ListQueryBase & {

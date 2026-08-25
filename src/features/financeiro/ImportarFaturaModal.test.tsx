@@ -69,7 +69,8 @@ const mockCartoes = {
     { id: 'c1', nome: 'Nubank', numeroFinal: '1234', diaFechamentoFatura: 10, diaVencimentoFatura: 20,
       contaBancariaPagamentoPadraoId: null, limiteCredito: null, usaLimiteCompartilhado: false,
       limiteEfetivo: null, limiteComprometido: 0, limiteDisponivel: null, ativo: true,
-      icone: null, cor: null, bandeira: 'Mastercard' }
+      icone: null, cor: null, bandeira: 'Mastercard',
+      recebedorPadraoFaturaId: null, formaPagamentoPadraoFaturaId: null }
   ],
   page: 1, pageSize: 100, totalItems: 1, totalPages: 1
 };

@@ -68,7 +68,9 @@ describe('FaturasPage', () => {
           limiteDisponivel: null,
           ativo: true,
           icone: null,
-          cor: null
+          cor: null,
+          recebedorPadraoFaturaId: null,
+          formaPagamentoPadraoFaturaId: null
         }
       ],
       page: 1,
@@ -343,7 +345,9 @@ describe('FaturasPage', () => {
         limiteDisponivel: 7000,
         ativo: true,
         icone: null,
-        cor: null
+        cor: null,
+        recebedorPadraoFaturaId: null,
+        formaPagamentoPadraoFaturaId: null
       }],
       page: 1, pageSize: 200, totalItems: 1, totalPages: 1
     });
@@ -373,7 +377,9 @@ describe('FaturasPage', () => {
         limiteDisponivel: null,
         ativo: true,
         icone: null,
-        cor: null
+        cor: null,
+        recebedorPadraoFaturaId: null,
+        formaPagamentoPadraoFaturaId: null
       }],
       page: 1, pageSize: 200, totalItems: 1, totalPages: 1
     });
