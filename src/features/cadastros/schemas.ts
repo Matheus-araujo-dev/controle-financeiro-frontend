@@ -99,7 +99,9 @@ export const cartaoSchema = z.object({
   limiteCredito: z.number().nullable(),
   ativo: z.boolean(),
   icone: z.string().nullable().optional(),
-  cor: z.string().nullable().optional()
+  cor: z.string().nullable().optional(),
+  recebedorPadraoFaturaId: z.string().trim().optional(),
+  formaPagamentoPadraoFaturaId: z.string().trim().optional()
 });
 
 export const contaGerencialSchema = z.object({
