@@ -796,6 +796,86 @@ describe('RelatoriosPage', () => {
     expect(screen.getByText(/Mastercard/)).toBeInTheDocument();
   });
 
+  it('renders cartões tab empty state when no active cartoes', async () => {
+    vi.mocked(cadastrosApi.cartoes.listar).mockResolvedValue({
+      page: 1, pageSize: 200, totalItems: 1, totalPages: 1,
+      items: [
+        {
+          id: 'card-2', nome: 'Cancelado', numeroFinal: '9999', bandeira: 'Visa',
+          diaFechamentoFatura: 5, diaVencimentoFatura: 15, contaBancariaPagamentoPadraoId: null,
+          limiteCredito: null, usaLimiteCompartilhado: false, limiteEfetivo: null,
+          limiteComprometido: 0, limiteDisponivel: null, ativo: false,
+          icone: null, cor: null, recebedorPadraoFaturaId: null, formaPagamentoPadraoFaturaId: null
+        }
+      ]
+    } as never);
+    renderPage();
+    await screen.findByText(/Leitura gerencial/);
+    await userEvent.click(screen.getByRole('button', { name: /cartões/i }));
+    expect(await screen.findByText('Nenhum cartão ativo')).toBeInTheDocument();
+  });
+
+  it('renders cartões tab card without limit (sem limite cadastrado branch)', async () => {
+    vi.mocked(cadastrosApi.cartoes.listar).mockResolvedValue({
+      page: 1, pageSize: 200, totalItems: 1, totalPages: 1,
+      items: [
+        {
+          id: 'card-3', nome: 'Simples', numeroFinal: '0000', bandeira: 'Elo',
+          diaFechamentoFatura: 5, diaVencimentoFatura: 15, contaBancariaPagamentoPadraoId: null,
+          limiteCredito: null, usaLimiteCompartilhado: false, limiteEfetivo: null,
+          limiteComprometido: 0, limiteDisponivel: null, ativo: true,
+          icone: null, cor: null, recebedorPadraoFaturaId: null, formaPagamentoPadraoFaturaId: null
+        }
+      ]
+    } as never);
+    renderPage();
+    await screen.findByText(/Leitura gerencial/);
+    await userEvent.click(screen.getByRole('button', { name: /cartões/i }));
+    expect(await screen.findByText(/Sem limite cadastrado/)).toBeInTheDocument();
+  });
+
+  it('filters faturas by cartão on the client side', async () => {
+    renderPage();
+    await screen.findByText('Conta vencida');
+    await userEvent.click(screen.getByRole('button', { name: /faturas/i }));
+
+    // Select the cartão filter (card-1 has cartaoId matching the fatura fixture)
+    const cartaoCombo = screen.getByLabelText('Cartão da fatura');
+    await userEvent.click(cartaoCombo);
+    const nubank = await screen.findByRole('button', { name: /Nubank/i });
+    await userEvent.click(nubank);
+
+    // Fatura matching the cartão is still visible
+    expect(await screen.findByText('Nubank')).toBeInTheDocument();
+  });
+
+  it('filters responsaveis client-side by search', async () => {
+    renderPage();
+    await screen.findByText(/Leitura gerencial/);
+    await userEvent.click(screen.getByRole('button', { name: /responsáveis/i }));
+    await screen.findByText('Matheus');
+
+    const searchInput = screen.getByPlaceholderText('Nome do responsável');
+    await userEvent.type(searchInput, 'ZZZ');
+    await waitFor(() => {
+      expect(screen.queryByText('Matheus')).not.toBeInTheDocument();
+    });
+  });
+
+  it('filters contas-gerenciais client-side by search', async () => {
+    vi.mocked(dashboardApi.obterResumoContasGerenciais).mockResolvedValue(richContasGerenciais as never);
+    renderPage();
+    await screen.findByText(/Leitura gerencial/);
+    await userEvent.click(screen.getByRole('button', { name: /contas gerenciais/i }));
+    await screen.findByText('Moradia');
+
+    const searchInput = screen.getByPlaceholderText('Descrição ou código da conta');
+    await userEvent.type(searchInput, 'ZZZ');
+    await waitFor(() => {
+      expect(screen.queryByText('Moradia')).not.toBeInTheDocument();
+    });
+  });
+
   it('handles Excel export button click', async () => {
     renderPage();
     await screen.findByText(/Leitura gerencial/);
