@@ -16,6 +16,18 @@ const referenceMonth = '2026-06';
 
 function reportData(): ReportState {
   return {
+    cartoes: [
+      {
+        id: 'card-1',
+        nome: 'Nubank',
+        numeroFinal: '1234',
+        bandeira: 'Mastercard',
+        limiteEfetivo: 5000,
+        limiteComprometido: 900,
+        limiteDisponivel: 4100,
+        ativo: true
+      } as never
+    ],
     resumo: {
       saldoAtual: 0,
       totalAPagar: 0,
@@ -222,7 +234,8 @@ describe('relatorios helpers', () => {
     'faturas',
     'recorrencias',
     'compras',
-    'geral'
+    'geral',
+    'cartoes'
   ])('builds export definition for %s', (reportKey) => {
     const definition = buildExportDefinition(reportKey, referenceMonth, reportData());
 
