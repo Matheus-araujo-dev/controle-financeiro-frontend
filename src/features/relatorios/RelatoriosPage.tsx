@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { ComboBox } from '../../components/forms/ComboBox';
 import { DateInput } from '../../components/forms/DateInput';
 import { PageState } from '../../components/states/PageState';
+import { cadastrosApi } from '../../services/http/cadastros-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 import { dashboardApi } from '../../services/http/dashboard-api';
 import { financeiroApi } from '../../services/http/financeiro-api';
@@ -30,6 +31,7 @@ import {
   compraStatusOptions,
   contaTipoOptions,
   faturaStatusOptions,
+  fluxoDiasOptions,
   inadimplenciaTipoOptions,
   MAX_REPORT_ROWS,
   origemLabels,
@@ -58,28 +60,55 @@ import { AlertCard, FilterCombo, FilterInput, MetricCard, ReportTable } from './
 export function RelatoriosPage() {
   const [activeReport, setActiveReport] = useState<ReportKey>('geral');
   const [referenceMonth, setReferenceMonth] = useState(getCurrentReferenceMonth());
+
+  // Fluxo de caixa filters
+  const [fluxoDias, setFluxoDias] = useState('30');
+
+  // Contas gerenciais / análises
   const [contaTipo, setContaTipo] = useState<string[]>([]);
+  const [contasGerenciaisSearch, setContasGerenciaisSearch] = useState('');
+  const deferredContasGerenciaisSearch = useDeferredValue(contasGerenciaisSearch);
+
+  // Responsáveis
+  const [responsaveisSearch, setResponsaveisSearch] = useState('');
+  const deferredResponsaveisSearch = useDeferredValue(responsaveisSearch);
+
+  // Previsões
   const [previsaoOrigem, setPrevisaoOrigem] = useState<string[]>([]);
   const [previsaoStatus, setPrevisaoStatus] = useState<string[]>([]);
+
+  // Inadimplência
   const [inadimplenciaTipo, setInadimplenciaTipo] = useState<string[]>([]);
   const [inadimplenciaSearch, setInadimplenciaSearch] = useState('');
+  const deferredInadimplenciaSearch = useDeferredValue(inadimplenciaSearch);
+
+  // Faturas
   const [faturaSearch, setFaturaSearch] = useState('');
   const [faturaStatus, setFaturaStatus] = useState<string[]>([]);
+  const [faturaCartaoId, setFaturaCartaoId] = useState('');
+  const deferredFaturaSearch = useDeferredValue(faturaSearch);
+
+  // Recorrências
   const [recorrenciaSearch, setRecorrenciaSearch] = useState('');
   const [recorrenciaTipo, setRecorrenciaTipo] = useState<string[]>([]);
   const [recorrenciaAtiva, setRecorrenciaAtiva] = useState<string[]>([]);
+  const deferredRecorrenciaSearch = useDeferredValue(recorrenciaSearch);
+
+  // Compras planejadas
   const [compraSearch, setCompraSearch] = useState('');
   const [compraStatus, setCompraStatus] = useState<string[]>([]);
   const [compraPrioridade, setCompraPrioridade] = useState<string[]>([]);
-  const [comparativoMeses, setComparativoMeses] = useState('6');
-  const deferredInadimplenciaSearch = useDeferredValue(inadimplenciaSearch);
-  const deferredFaturaSearch = useDeferredValue(faturaSearch);
-  const deferredRecorrenciaSearch = useDeferredValue(recorrenciaSearch);
   const deferredCompraSearch = useDeferredValue(compraSearch);
+
+  // Comparativo
+  const [comparativoMeses, setComparativoMeses] = useState('6');
 
   const reportFilters = {
     referenceMonth,
+    fluxoDias,
     contaTipo,
+    deferredContasGerenciaisSearch,
+    deferredResponsaveisSearch,
     previsaoOrigem,
     previsaoStatus,
     inadimplenciaTipo,
@@ -110,7 +139,8 @@ export function RelatoriosPage() {
         faturas,
         recorrencias,
         compras,
-        comparativo
+        comparativo,
+        cartoesResult
       ] = await Promise.all([
         dashboardApi.obterResumo({ mesReferencia: referenceMonth }),
         dashboardApi.obterResumoPorResponsaveis({ mesReferencia: referenceMonth }),
@@ -118,7 +148,7 @@ export function RelatoriosPage() {
           mesReferencia: referenceMonth,
           tipo: contaTipo[0] as DashboardContaGerencialTipo | undefined
         }),
-        dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth }),
+        dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth, dias: Number(fluxoDias) }),
         dashboardApi.obterResumoCentralPrevisao({
           mesReferencia: referenceMonth,
           origem: previsaoOrigem[0] as DashboardCentralPrevisaoOrigem | undefined,
@@ -179,7 +209,8 @@ export function RelatoriosPage() {
           sortBy: 'dataDesejada',
           sortDirection: 'Asc'
         }),
-        dashboardApi.obterComparativoMensal({ meses: Number(comparativoMeses) })
+        dashboardApi.obterComparativoMensal({ meses: Number(comparativoMeses) }),
+        cadastrosApi.cartoes.listar({ page: 1, pageSize: 200 })
       ]);
       return {
         resumo,
@@ -192,7 +223,8 @@ export function RelatoriosPage() {
         faturas,
         recorrencias,
         compras,
-        comparativo
+        comparativo,
+        cartoes: cartoesResult.items
       };
     },
     staleTime: 30_000,
@@ -210,9 +242,30 @@ export function RelatoriosPage() {
   const faturas = data.faturas?.items ?? [];
   const recorrencias = data.recorrencias?.items ?? [];
   const compras = data.compras?.items ?? [];
+  const cartoes = data.cartoes ?? [];
 
-  const maiorDespesaResponsavel = Math.max(1, ...responsaveis.map((item) => item.totalDespesas));
-  const maiorContaGerencial = Math.max(1, ...contasGerenciais.map((item) => item.valorTotal));
+  // Client-side derived filters
+  const responsaveisFiltrados = useMemo(() => {
+    const q = deferredResponsaveisSearch.toLowerCase();
+    return q ? responsaveis.filter((r) => r.responsavelNome.toLowerCase().includes(q)) : responsaveis;
+  }, [responsaveis, deferredResponsaveisSearch]);
+
+  const contasGerenciaisFiltradas = useMemo(() => {
+    const q = deferredContasGerenciaisSearch.toLowerCase();
+    return q
+      ? contasGerenciais.filter(
+          (c) => c.descricao.toLowerCase().includes(q) || (c.codigo ?? '').toLowerCase().includes(q)
+        )
+      : contasGerenciais;
+  }, [contasGerenciais, deferredContasGerenciaisSearch]);
+
+  const faturasFiltradas = useMemo(
+    () => (faturaCartaoId ? faturas.filter((f) => f.cartaoId === faturaCartaoId) : faturas),
+    [faturas, faturaCartaoId]
+  );
+
+  const maiorDespesaResponsavel = Math.max(1, ...responsaveisFiltrados.map((item) => item.totalDespesas));
+  const maiorContaGerencial = Math.max(1, ...contasGerenciaisFiltradas.map((item) => item.valorTotal));
   const fluxosComRisco = fluxoItens.filter((item) => item.riscoSaldoNegativo).length;
 
   const previsaoResumo = useMemo(() => {
@@ -241,6 +294,30 @@ export function RelatoriosPage() {
       { valor: 0, maiorAtraso: 0, faixas: {} as Record<string, number> }
     );
   }, [inadimplenciaRows]);
+
+  // Cartões tab derived data
+  const cartaoOptions = useMemo(
+    () => cartoes.map((c) => ({ value: c.id, label: `${c.nome} (${c.numeroFinal})` })),
+    [cartoes]
+  );
+
+  const faturasPorCartao = useMemo(() => {
+    const map = new Map<string, typeof faturas[number]>();
+    for (const f of faturas) {
+      if (f.cartaoId) map.set(f.cartaoId, f);
+    }
+    return map;
+  }, [faturas]);
+
+  const cartoesAtivos = useMemo(() => cartoes.filter((c) => c.ativo), [cartoes]);
+  const totalDisponivel = useMemo(
+    () => cartoesAtivos.reduce((sum, c) => sum + (c.limiteDisponivel ?? 0), 0),
+    [cartoesAtivos]
+  );
+  const totalFaturaMes = useMemo(
+    () => faturas.reduce((sum, f) => sum + f.valorTotal, 0),
+    [faturas]
+  );
 
   function handleExportExcel() {
     downloadReportWorkbook(buildExportDefinition(activeReport, referenceMonth, data));
@@ -306,7 +383,7 @@ export function RelatoriosPage() {
       </div>
 
       <div className="report-tabs rounded-2xl border border-white/5 bg-surface-container-low p-2">
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
           {reportTabs.map((tab) => (
             <button
               key={tab.key}
@@ -327,6 +404,7 @@ export function RelatoriosPage() {
 
       {loading ? <div className="text-sm font-bold text-primary">Atualizando relatórios...</div> : null}
 
+      {/* ── Visão geral ─────────────────────────────────────────────────────── */}
       {activeReport === 'geral' ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
@@ -356,12 +434,21 @@ export function RelatoriosPage() {
         </div>
       ) : null}
 
+      {/* ── Responsáveis ────────────────────────────────────────────────────── */}
       {activeReport === 'responsaveis' ? (
         <div className="space-y-5">
-          {responsaveis.length === 0 ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FilterInput
+              label="Busca por responsável"
+              value={responsaveisSearch}
+              onChange={setResponsaveisSearch}
+              placeholder="Nome do responsável"
+            />
+          </div>
+          {responsaveisFiltrados.length === 0 ? (
             <PageState state="empty" title="Nenhum lançamento no período" subtitle="Ajuste o mês de referência ou registre lançamentos com responsável." />
           ) : (
-            responsaveis.map((item) => (
+            responsaveisFiltrados.map((item) => (
               <div key={item.responsavelId ?? 'sem-responsavel'} className="space-y-3 rounded-2xl border border-white/5 bg-surface-container px-5 py-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-3">
@@ -393,6 +480,7 @@ export function RelatoriosPage() {
         </div>
       ) : null}
 
+      {/* ── Contas gerenciais ───────────────────────────────────────────────── */}
       {activeReport === 'contas-gerenciais' ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -400,17 +488,25 @@ export function RelatoriosPage() {
             <MetricCard label="Despesas" value={formatCurrencyBRL(data.contasGerenciais?.totalDespesas ?? 0)} tone="danger" />
             <MetricCard label="Saldo" value={formatCurrencyBRL(data.contasGerenciais?.saldo ?? 0)} />
             <FilterCombo label="Tipo" value={contaTipo} onChange={setContaTipo} options={contaTipoOptions} ariaLabel="Tipo de conta gerencial" />
+            <div className="md:col-span-4">
+              <FilterInput
+                label="Busca"
+                value={contasGerenciaisSearch}
+                onChange={setContasGerenciaisSearch}
+                placeholder="Descrição ou código da conta"
+              />
+            </div>
           </div>
 
           <div className="space-y-4">
-            {contasGerenciais.length === 0 ? (
+            {contasGerenciaisFiltradas.length === 0 ? (
               <PageState
                 state="empty"
                 title="Nenhuma conta gerencial com movimento"
                 subtitle="Ajuste o tipo ou o mês de referência para buscar lançamentos rateados."
               />
             ) : (
-              contasGerenciais.map((item) => (
+              contasGerenciaisFiltradas.map((item) => (
                 <div key={item.contaGerencialId} className="rounded-2xl border border-white/5 bg-surface-container p-5">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
                     <div>
@@ -439,9 +535,10 @@ export function RelatoriosPage() {
         </div>
       ) : null}
 
+      {/* ── Fluxo de caixa ──────────────────────────────────────────────────── */}
       {activeReport === 'fluxo-caixa' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Dias projetados" value={data.fluxoCaixa?.dias ?? 0} />
             <MetricCard label="Dias com risco" value={fluxosComRisco} tone={fluxosComRisco > 0 ? 'danger' : 'success'} />
             <MetricCard
@@ -449,6 +546,10 @@ export function RelatoriosPage() {
               value={formatCurrencyBRL(fluxoItens.at(-1)?.saldoFinalPrevisto ?? 0)}
               tone={(fluxoItens.at(-1)?.saldoFinalPrevisto ?? 0) < 0 ? 'danger' : 'neutral'}
             />
+            <div className="space-y-2">
+              <label className="px-1 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Horizonte</label>
+              <ComboBox value={fluxoDias} onChange={setFluxoDias} options={fluxoDiasOptions} aria-label="Horizonte do fluxo de caixa" />
+            </div>
           </div>
 
           <ReportTable headers={['Data', 'Saldo inicial', 'Entradas', 'Saídas', 'Saldo final', 'Risco']} emptyText="Nenhuma projeção de fluxo encontrada">
@@ -470,6 +571,7 @@ export function RelatoriosPage() {
         </div>
       ) : null}
 
+      {/* ── Previsões ───────────────────────────────────────────────────────── */}
       {activeReport === 'previsoes' ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
@@ -499,6 +601,7 @@ export function RelatoriosPage() {
         </div>
       ) : null}
 
+      {/* ── Inadimplência ───────────────────────────────────────────────────── */}
       {activeReport === 'inadimplencia' ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -544,18 +647,28 @@ export function RelatoriosPage() {
         </div>
       ) : null}
 
+      {/* ── Faturas ─────────────────────────────────────────────────────────── */}
       {activeReport === 'faturas' ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <MetricCard label="Faturas" value={data.faturas?.totalItems ?? 0} />
-            <MetricCard label="Valor total" value={formatCurrencyBRL(data.faturas?.summary?.valorTotal ?? faturas.reduce((total, item) => total + item.valorTotal, 0))} />
+            <MetricCard label="Faturas" value={faturasFiltradas.length} />
+            <MetricCard label="Valor total" value={formatCurrencyBRL(faturasFiltradas.reduce((t, f) => t + f.valorTotal, 0))} />
             <FilterCombo label="Status" value={faturaStatus} onChange={setFaturaStatus} options={faturaStatusOptions} ariaLabel="Status da fatura" />
-            <FilterInput label="Busca" value={faturaSearch} onChange={setFaturaSearch} placeholder="Cartão ou competência" />
+            <FilterCombo
+              label="Cartão"
+              value={faturaCartaoId ? [faturaCartaoId] : []}
+              onChange={(v) => setFaturaCartaoId(v[0] ?? '')}
+              options={cartaoOptions}
+              ariaLabel="Cartão da fatura"
+            />
+            <div className="md:col-span-4">
+              <FilterInput label="Busca" value={faturaSearch} onChange={setFaturaSearch} placeholder="Cartão ou competência" />
+            </div>
           </div>
 
           <ReportTable headers={['Cartão', 'Competência', 'Fechamento', 'Vencimento', 'Status', 'Itens', 'Valor']} emptyText="Nenhuma fatura encontrada">
-            {faturas.length
-              ? faturas.map((item) => (
+            {faturasFiltradas.length
+              ? faturasFiltradas.map((item) => (
                   <tr key={item.id} className="hover:bg-primary/5">
                     <td className="px-5 py-4 font-bold">{item.cartaoNome}</td>
                     <td className="px-5 py-4">{item.competencia}</td>
@@ -571,6 +684,81 @@ export function RelatoriosPage() {
         </div>
       ) : null}
 
+      {/* ── Cartões ─────────────────────────────────────────────────────────── */}
+      {activeReport === 'cartoes' ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <MetricCard label="Cartões ativos" value={cartoesAtivos.length} />
+            <MetricCard label="Disponível total" value={formatCurrencyBRL(totalDisponivel)} tone="success" />
+            <MetricCard label="Fatura do mês" value={formatCurrencyBRL(totalFaturaMes)} tone="warning" />
+          </div>
+
+          {cartoesAtivos.length === 0 ? (
+            <PageState state="empty" title="Nenhum cartão ativo" subtitle="Cadastre um cartão de crédito para visualizar este relatório." />
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {cartoesAtivos.map((cartao) => {
+                const fatura = faturasPorCartao.get(cartao.id);
+                const limite = cartao.limiteEfetivo ?? cartao.limiteCredito ?? 0;
+                const pct = limite > 0 ? Math.min((cartao.limiteComprometido / limite) * 100, 100) : 0;
+                const statusColor =
+                  fatura?.statusCodigo === 'PAGA'
+                    ? 'text-primary'
+                    : fatura?.statusCodigo === 'FECHADA'
+                    ? 'text-error'
+                    : 'text-tertiary';
+                return (
+                  <div key={cartao.id} className="rounded-2xl border border-white/5 bg-surface-container p-5 space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-bold text-on-surface">{cartao.nome}</div>
+                        <div className="text-xs text-on-surface-variant">{cartao.bandeira} · •••• {cartao.numeroFinal}</div>
+                      </div>
+                      {fatura ? (
+                        <div className="text-right shrink-0">
+                          <div className={`font-bold ${statusColor}`}>{formatCurrencyBRL(fatura.valorTotal)}</div>
+                          <div className="text-xs text-on-surface-variant">{fatura.statusNome}</div>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-on-surface-variant">Sem fatura no mês</div>
+                      )}
+                    </div>
+
+                    {limite > 0 ? (
+                      <>
+                        <div className="flex h-2 overflow-hidden rounded-full bg-white/5">
+                          <div
+                            className={`h-full rounded-full transition-all ${pct > 85 ? 'bg-error' : pct > 60 ? 'bg-tertiary' : 'bg-primary'}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-3 text-center">
+                          <div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Limite</div>
+                            <div className="text-sm font-bold text-on-surface">{formatCurrencyBRL(limite)}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Usado</div>
+                            <div className="text-sm font-bold text-error">{formatCurrencyBRL(cartao.limiteComprometido)}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Disponível</div>
+                            <div className="text-sm font-bold text-primary">{formatCurrencyBRL(cartao.limiteDisponivel ?? 0)}</div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-xs text-on-surface-variant italic">Sem limite cadastrado</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* ── Recorrências ────────────────────────────────────────────────────── */}
       {activeReport === 'recorrencias' ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -603,6 +791,7 @@ export function RelatoriosPage() {
         </div>
       ) : null}
 
+      {/* ── Compras planejadas ──────────────────────────────────────────────── */}
       {activeReport === 'compras' ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -647,6 +836,8 @@ export function RelatoriosPage() {
           </ReportTable>
         </div>
       ) : null}
+
+      {/* ── Comparativo mensal (inclui balanço) ─────────────────────────────── */}
       {activeReport === 'comparativo' ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -671,51 +862,88 @@ export function RelatoriosPage() {
             </div>
           </div>
 
-          {(data.comparativo?.itens.length ?? 0) > 0 ? (
-            <div className="rounded-2xl border border-white/5 bg-surface-container-low p-5">
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={data.comparativo?.itens} margin={{ top: 4, right: 8, left: 8, bottom: 4 }} barGap={4}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="competenciaLabel" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} />
-                  <YAxis tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1a1f26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
-                    labelStyle={{ color: 'rgba(255,255,255,0.8)', fontWeight: 'bold' }}
-                    formatter={(value) => formatCurrencyBRL(value as number)}
-                  />
-                  <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
-                  <Bar dataKey="receitas" name="Receitas" fill="#2bf58e" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="despesas" name="Despesas" fill="#f0857f" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : null}
+          {(data.comparativo?.itens.length ?? 0) === 0 ? (
+            <PageState state="empty" title="Sem dados comparativos" subtitle="Registre lançamentos para visualizar o comparativo mensal." />
+          ) : (
+            <>
+              {/* Gráfico: Receitas vs Despesas */}
+              <div className="rounded-2xl border border-white/5 bg-surface-container-low p-5 space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Receitas vs Despesas</p>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={data.comparativo?.itens} margin={{ top: 4, right: 8, left: 8, bottom: 4 }} barGap={4}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <XAxis dataKey="competenciaLabel" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} />
+                    <YAxis tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1a1f26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
+                      labelStyle={{ color: 'rgba(255,255,255,0.8)', fontWeight: 'bold' }}
+                      formatter={(value) => formatCurrencyBRL(value as number)}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
+                    <Bar dataKey="receitas" name="Receitas" fill="#2bf58e" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="despesas" name="Despesas" fill="#f0857f" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
 
-          <ReportTable headers={['Mês', 'Receitas', 'Despesas', 'Saldo', 'Var. Receitas', 'Var. Despesas']} emptyText="Nenhum dado de comparativo disponível">
-            {(data.comparativo?.itens.length ?? 0) > 0
-              ? data.comparativo!.itens.map((item) => {
-                  const varR = item.variacaoReceitas;
-                  const varD = item.variacaoDespesas;
-                  return (
-                    <tr key={item.competencia} className="hover:bg-primary/5">
-                      <td className="px-5 py-4 font-bold">{item.competenciaLabel}</td>
-                      <td className="px-5 py-4 text-primary">{formatCurrencyBRL(item.receitas)}</td>
-                      <td className="px-5 py-4 text-error">{formatCurrencyBRL(item.despesas)}</td>
-                      <td className={`px-5 py-4 font-bold ${item.saldo >= 0 ? 'text-primary' : 'text-error'}`}>{formatCurrencyBRL(item.saldo)}</td>
-                      <td className={`px-5 py-4 text-sm ${varR === null ? 'text-on-surface-variant' : varR >= 0 ? 'text-primary' : 'text-error'}`}>
-                        {varR === null ? '—' : `${varR >= 0 ? '+' : ''}${varR.toFixed(1)}%`}
-                      </td>
-                      <td className={`px-5 py-4 text-sm ${varD === null ? 'text-on-surface-variant' : varD > 0 ? 'text-error' : 'text-primary'}`}>
-                        {varD === null ? '—' : `${varD >= 0 ? '+' : ''}${varD.toFixed(1)}%`}
-                      </td>
-                    </tr>
-                  );
-                })
-              : null}
-          </ReportTable>
+              {/* Tabela comparativa completa */}
+              <ReportTable headers={['Mês', 'Receitas', 'Var. rec.', 'Despesas', 'Var. desp.', 'Saldo']} emptyText="">
+                {(data.comparativo?.itens ?? []).map((item) => (
+                  <tr key={item.competencia} className="hover:bg-primary/5">
+                    <td className="px-5 py-4 font-bold text-on-surface">{item.competenciaLabel}</td>
+                    <td className="px-5 py-4 text-primary font-bold">{formatCurrencyBRL(item.receitas)}</td>
+                    <td className="px-5 py-4 text-xs">
+                      {item.variacaoReceitas !== null ? (
+                        <span className={item.variacaoReceitas >= 0 ? 'text-primary' : 'text-error'}>
+                          {item.variacaoReceitas >= 0 ? '+' : ''}{item.variacaoReceitas.toFixed(1)}%
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td className="px-5 py-4 text-error font-bold">{formatCurrencyBRL(item.despesas)}</td>
+                    <td className="px-5 py-4 text-xs">
+                      {item.variacaoDespesas !== null ? (
+                        <span className={item.variacaoDespesas <= 0 ? 'text-primary' : 'text-error'}>
+                          {item.variacaoDespesas >= 0 ? '+' : ''}{item.variacaoDespesas.toFixed(1)}%
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td className={`px-5 py-4 font-extrabold ${item.saldo >= 0 ? 'text-primary' : 'text-error'}`}>
+                      {formatCurrencyBRL(item.saldo)}
+                    </td>
+                  </tr>
+                ))}
+              </ReportTable>
+
+              {/* Gráfico: Receitas / Despesas / Saldo */}
+              <div className="rounded-2xl border border-white/5 bg-surface-container-low p-5 space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Balanço mensal — Receitas, Despesas e Saldo</p>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart
+                    data={(data.comparativo?.itens ?? []).map((item) => ({
+                      mes: item.competenciaLabel,
+                      Receitas: item.receitas,
+                      Despesas: item.despesas,
+                      Saldo: item.saldo
+                    }))}
+                    margin={{ top: 8, right: 0, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="mes" tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={(v) => formatCurrencyBRL(v)} tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 10 }} axisLine={false} tickLine={false} width={90} />
+                    <Tooltip formatter={(v) => formatCurrencyBRL(Number(v))} contentStyle={{ background: '#1a1f2c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="Receitas" fill="#2bf58e" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Saldo" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </>
+          )}
         </div>
       ) : null}
 
+      {/* ── DRE Doméstica ───────────────────────────────────────────────────── */}
       {activeReport === 'dre' ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
@@ -777,6 +1005,7 @@ export function RelatoriosPage() {
         </div>
       ) : null}
 
+      {/* ── Alertas inteligentes ────────────────────────────────────────────── */}
       {activeReport === 'alertas' ? (
         <div className="space-y-4">
           {buildAlertas(data).length === 0 ? (
@@ -787,9 +1016,10 @@ export function RelatoriosPage() {
         </div>
       ) : null}
 
+      {/* ── Análises ────────────────────────────────────────────────────────── */}
       {activeReport === 'analises' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Total receitas" value={formatCurrencyBRL(data.contasGerenciais?.totalReceitas ?? 0)} tone="success" />
             <MetricCard label="Total despesas" value={formatCurrencyBRL(data.contasGerenciais?.totalDespesas ?? 0)} tone="danger" />
             <MetricCard
@@ -797,6 +1027,7 @@ export function RelatoriosPage() {
               value={formatCurrencyBRL(data.contasGerenciais?.saldo ?? 0)}
               tone={(data.contasGerenciais?.saldo ?? 0) >= 0 ? 'success' : 'danger'}
             />
+            <FilterCombo label="Tipo" value={contaTipo} onChange={setContaTipo} options={contaTipoOptions} ariaLabel="Tipo de conta gerencial" />
           </div>
 
           <div className="rounded-3xl border border-white/5 bg-surface-container-low p-6 space-y-4">
@@ -836,16 +1067,8 @@ export function RelatoriosPage() {
             <ResponsiveContainer width="100%" height={260}>
               <BarChart
                 data={[
-                  {
-                    name: 'Receitas',
-                    valor: data.contasGerenciais?.totalReceitas ?? 0,
-                    fill: '#2bf58e'
-                  },
-                  {
-                    name: 'Despesas',
-                    valor: data.contasGerenciais?.totalDespesas ?? 0,
-                    fill: '#ef4444'
-                  }
+                  { name: 'Receitas', valor: data.contasGerenciais?.totalReceitas ?? 0 },
+                  { name: 'Despesas', valor: data.contasGerenciais?.totalDespesas ?? 0 }
                 ]}
                 margin={{ top: 8, right: 0, left: 0, bottom: 0 }}
               >
@@ -857,76 +1080,6 @@ export function RelatoriosPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      ) : null}
-
-      {activeReport === 'balanco-mensal' ? (
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <FilterCombo
-              label="Período"
-              options={comparativoMesesOptions}
-              value={[comparativoMeses]}
-              onChange={(v) => setComparativoMeses(v[0] ?? '6')}
-            />
-          </div>
-
-          {(data.comparativo?.itens.length ?? 0) === 0 ? (
-            <PageState state="empty" title="Sem dados comparativos" subtitle="Registre lançamentos para visualizar o balanço mensal." />
-          ) : (
-            <>
-              <div className="rounded-3xl border border-white/5 bg-surface-container-low p-6 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Receitas e Despesas mensais</p>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart
-                    data={(data.comparativo?.itens ?? []).map((item) => ({
-                      mes: item.competenciaLabel,
-                      Receitas: item.receitas,
-                      Despesas: item.despesas,
-                      Saldo: item.saldo
-                    }))}
-                    margin={{ top: 8, right: 0, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="mes" tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tickFormatter={(v) => formatCurrencyBRL(v)} tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 10 }} axisLine={false} tickLine={false} width={90} />
-                    <Tooltip formatter={(v) => formatCurrencyBRL(Number(v))} contentStyle={{ background: '#1a1f2c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="Receitas" fill="#2bf58e" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Saldo" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <ReportTable headers={['Mês', 'Receitas', 'Var.', 'Despesas', 'Var.', 'Saldo']} emptyText="">
-                {(data.comparativo?.itens ?? []).map((item) => (
-                  <tr key={item.competencia} className="hover:bg-primary/5">
-                    <td className="px-5 py-4 font-bold text-on-surface">{item.competenciaLabel}</td>
-                    <td className="px-5 py-4 text-primary font-bold">{formatCurrencyBRL(item.receitas)}</td>
-                    <td className="px-5 py-4 text-xs">
-                      {item.variacaoReceitas !== null ? (
-                        <span className={item.variacaoReceitas >= 0 ? 'text-primary' : 'text-error'}>
-                          {item.variacaoReceitas >= 0 ? '+' : ''}{item.variacaoReceitas.toFixed(1)}%
-                        </span>
-                      ) : '—'}
-                    </td>
-                    <td className="px-5 py-4 text-error font-bold">{formatCurrencyBRL(item.despesas)}</td>
-                    <td className="px-5 py-4 text-xs">
-                      {item.variacaoDespesas !== null ? (
-                        <span className={item.variacaoDespesas <= 0 ? 'text-primary' : 'text-error'}>
-                          {item.variacaoDespesas >= 0 ? '+' : ''}{item.variacaoDespesas.toFixed(1)}%
-                        </span>
-                      ) : '—'}
-                    </td>
-                    <td className={`px-5 py-4 font-extrabold ${item.saldo >= 0 ? 'text-primary' : 'text-error'}`}>
-                      {formatCurrencyBRL(item.saldo)}
-                    </td>
-                  </tr>
-                ))}
-              </ReportTable>
-            </>
-          )}
         </div>
       ) : null}
     </div>
