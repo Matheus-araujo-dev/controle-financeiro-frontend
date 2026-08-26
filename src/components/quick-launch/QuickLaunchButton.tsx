@@ -483,14 +483,28 @@ export function QuickLaunchModal({
         }
       }
 
+      // Para ContaReceber → ContaPagar: pessoaId e responsavelId precisam ser trocados
+      // porque no form ContaReceber: pessoaId→API.responsavelId e responsavelId→API.pagadorId
+      // mas no form ContaPagar: pessoaId→API.recebedorId e responsavelId→API.responsavelCompraId
+      // Logo: pagadorId (=form.responsavelId) deve virar recebedorId (=reembolso.pessoaId)
+      //       responsavelId (=form.pessoaId) deve virar responsavelCompraId (=reembolso.responsavelId)
+      const isFromReceber = tipo === 'receber';
+      const reembolsoPessoaId = isFromReceber ? responsavelId : pessoaId;
+      const reembolsoResponsavelId = isFromReceber ? pessoaId : responsavelId;
+      const reembolsoPessoaNome = isFromReceber ? (pessoaLabelMap.get(responsavelId) ?? responsavelNome) : pessoaNome;
+      const reembolsoResponsavelNome = isFromReceber ? (pessoaLabelMap.get(pessoaId) ?? pessoaNome) : responsavelNome;
+      const reembolsoNomesMap = isFromReceber
+        ? (reembolsoResponsavelId ? { [reembolsoResponsavelId]: pessoaLabelMap.get(reembolsoResponsavelId) ?? '' } : {})
+        : nomesMap;
+
       onGerarReembolso({
         tipo: tipo === 'pagar' ? 'receber' : 'pagar',
-        pessoaId,
-        pessoaNome,
-        responsavelId: responsavelId || undefined,
-        responsavelNome,
-        responsaveisAdicionaisIds: responsaveisAdicionaisIds.length > 0 ? responsaveisAdicionaisIds : undefined,
-        responsaveisNomes: Object.keys(nomesMap).length > 0 ? nomesMap : undefined,
+        pessoaId: reembolsoPessoaId,
+        pessoaNome: reembolsoPessoaNome,
+        responsavelId: reembolsoResponsavelId || undefined,
+        responsavelNome: reembolsoResponsavelNome,
+        responsaveisAdicionaisIds: isFromReceber ? undefined : (responsaveisAdicionaisIds.length > 0 ? responsaveisAdicionaisIds : undefined),
+        responsaveisNomes: Object.keys(reembolsoNomesMap).length > 0 ? reembolsoNomesMap : undefined,
         valor,
         dataVencimento: reembolsoDate,
         descricao: `Reembolso: ${descricao.trim()}`,
