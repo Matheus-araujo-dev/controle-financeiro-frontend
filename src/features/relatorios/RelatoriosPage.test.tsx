@@ -159,32 +159,6 @@ function mockReports() {
   vi.mocked(dashboardApi.obterResumoContasGerenciais).mockResolvedValue(contasGerenciais as never);
   vi.mocked(dashboardApi.obterFluxoCaixa).mockResolvedValue(fluxoCaixa as never);
   vi.mocked(dashboardApi.obterResumoCentralPrevisao).mockResolvedValue(previsoes as never);
-  vi.mocked(financeiroApi.contasPagar.listar).mockResolvedValue({
-    ...pagedBase,
-    summary: { totalRegistros: 1, valorTotal: 250, totalPendente: 0, totalVencido: 250, totalVencendoHoje: 0, totalLiquidado: 0 },
-    items: [
-      {
-        id: 'pagar-1',
-        numeroDocumento: '1',
-        descricao: 'Aluguel vencido',
-        recebedorId: 'for-1',
-        recebedorNome: 'Imobiliária',
-        dataEmissao: '2026-06-01',
-        dataVencimento: '2026-06-10',
-        dataLiquidacao: null,
-        formaPagamentoId: 'fp-1',
-        formaPagamentoNome: 'Boleto',
-        valorLiquido: 250,
-        statusCodigo: 'VENCIDA',
-        statusNome: 'Vencida',
-        quantidadeParcelas: 1,
-        numeroParcela: 1,
-        grupoParcelamentoId: null,
-        ehRecorrente: false
-      }
-    ]
-  } as never);
-  vi.mocked(financeiroApi.contasReceber.listar).mockResolvedValue({ ...pagedBase, summary: {}, items: [] } as never);
   vi.mocked(financeiroApi.faturas.listar).mockResolvedValue({
     ...pagedBase,
     summary: { totalRegistros: 1, valorTotal: 900, porCartao: [], porCompetencia: [] },
@@ -264,6 +238,34 @@ function mockReports() {
       }
     ]
   } as never);
+  vi.mocked(financeiroApi.contasPagar.listar).mockResolvedValue({
+    ...pagedBase,
+    summary: { totalRegistros: 1, valorTotal: 250, totalPendente: 0, totalVencido: 250, totalVencendoHoje: 0, totalLiquidado: 0 },
+    items: [
+      {
+        id: 'pagar-1',
+        numeroDocumento: '1',
+        descricao: 'Aluguel vencido',
+        recebedorId: 'for-1',
+        recebedorNome: 'Imobiliária',
+        responsavelNome: 'Matheus',
+        dataEmissao: '2026-06-01',
+        dataVencimento: '2026-06-10',
+        dataLiquidacao: null,
+        formaPagamentoId: 'fp-1',
+        formaPagamentoNome: 'Boleto',
+        valorLiquido: 250,
+        valorPago: null,
+        statusCodigo: 'VENCIDA',
+        statusNome: 'Vencida',
+        quantidadeParcelas: 1,
+        numeroParcela: 1,
+        grupoParcelamentoId: null,
+        ehRecorrente: false
+      }
+    ]
+  } as never);
+  vi.mocked(financeiroApi.contasReceber.listar).mockResolvedValue({ ...pagedBase, summary: {}, items: [] } as never);
   vi.mocked(comprasPlanejadasApi.listar).mockResolvedValue({
     ...pagedBase,
     summary: { totalRegistros: 1, valorTotalEstimado: 17000 },
@@ -942,7 +944,122 @@ describe('RelatoriosPage', () => {
     await userEvent.click(option);
 
     await waitFor(() => {
-      expect(financeiroApi.contasPagar.listar).toHaveBeenLastCalledWith(
+      expect(financeiroApi.contasPagar.listar).toHaveBeenCalledWith(
+        expect.objectContaining({ responsavelIds: ['p-1'], statusCodigo: ['VENCIDA'] })
+      );
+    });
+  });
+
+  it('renders lançamentos tab with pagar item data', async () => {
+    renderPage();
+    await screen.findByText('Conta vencida');
+    await userEvent.click(screen.getByRole('button', { name: /lançamentos/i }));
+
+    expect(await screen.findByText('Aluguel vencido')).toBeInTheDocument();
+    expect(screen.getByText('Imobiliária')).toBeInTheDocument();
+    expect(screen.getByText('Vencida')).toBeInTheDocument();
+    // metric cards
+    expect(screen.getByText('Total a pagar')).toBeInTheDocument();
+    expect(screen.getByText('Total a receber')).toBeInTheDocument();
+  });
+
+  it('renders lançamentos tab parcela column as X/Y for installments', async () => {
+    vi.mocked(financeiroApi.contasPagar.listar).mockResolvedValue({
+      ...pagedBase,
+      summary: { totalRegistros: 1, valorTotal: 500, totalPendente: 500, totalVencido: 0, totalVencendoHoje: 0, totalLiquidado: 0 },
+      items: [
+        {
+          id: 'pagar-p',
+          numeroDocumento: '2',
+          descricao: 'Notebook parcelado',
+          recebedorId: 'for-2',
+          recebedorNome: 'Loja',
+          responsavelNome: null,
+          dataEmissao: '2026-06-01',
+          dataVencimento: '2026-08-01',
+          dataLiquidacao: null,
+          formaPagamentoId: 'fp-2',
+          formaPagamentoNome: 'Cartão',
+          valorLiquido: 500,
+          valorPago: null,
+          statusCodigo: 'PENDENTE',
+          statusNome: 'Pendente',
+          quantidadeParcelas: 3,
+          numeroParcela: 2,
+          grupoParcelamentoId: 'grp-1',
+          ehRecorrente: false
+        }
+      ]
+    } as never);
+    renderPage();
+    await screen.findByText('Conta vencida');
+    await userEvent.click(screen.getByRole('button', { name: /lançamentos/i }));
+    expect(await screen.findByText('2/3')).toBeInTheDocument();
+  });
+
+  it('renders lançamentos tab with receber item and LIQUIDADA status', async () => {
+    vi.mocked(financeiroApi.contasReceber.listar).mockResolvedValue({
+      ...pagedBase,
+      summary: { totalRegistros: 1, valorTotal: 800, totalPendente: 0, totalVencido: 0, totalVencendoHoje: 0, totalLiquidado: 800 },
+      items: [
+        {
+          id: 'receber-r',
+          descricao: 'Honorários',
+          pagadorNome: 'Cliente XYZ',
+          responsavelNome: null,
+          dataEmissao: '2026-06-05',
+          dataVencimento: '2026-06-20',
+          dataLiquidacao: '2026-06-20',
+          formaPagamentoId: 'fp-3',
+          formaPagamentoNome: 'Transferência',
+          valorLiquido: 800,
+          valorPago: 800,
+          statusCodigo: 'LIQUIDADA',
+          statusNome: 'Liquidada',
+          quantidadeParcelas: 1,
+          numeroParcela: 1,
+          grupoParcelamentoId: null,
+          ehRecorrente: false
+        }
+      ]
+    } as never);
+    renderPage();
+    await screen.findByText('Conta vencida');
+    await userEvent.click(screen.getByRole('button', { name: /lançamentos/i }));
+    expect(await screen.findByText('Honorários')).toBeInTheDocument();
+    expect(screen.getByText('Liquidada')).toBeInTheDocument();
+    // Receber type renders 'A receber'
+    expect(screen.getAllByText('A receber').length).toBeGreaterThan(0);
+  });
+
+  it('renders lançamentos tab empty state when tipo filter excludes all', async () => {
+    renderPage();
+    await screen.findByText('Conta vencida');
+    await userEvent.click(screen.getByRole('button', { name: /lançamentos/i }));
+    // select only 'receber' → pagar call returns empty, receber mock also returns empty
+    const tipoCombo = screen.getByLabelText('Tipo de lançamento');
+    await userEvent.click(tipoCombo);
+    const receberOpt = await screen.findByRole('button', { name: /^A receber$/i });
+    await userEvent.click(receberOpt);
+    await waitFor(() => {
+      expect(screen.getByText('Nenhum lançamento encontrado no período')).toBeInTheDocument();
+    });
+  });
+
+  it('passes responsavelId to lançamentos API calls', async () => {
+    renderPage();
+    await screen.findByText('Conta vencida');
+    await userEvent.click(screen.getByRole('button', { name: /lançamentos/i }));
+    // wait for the tab data to render
+    await screen.findByText('Total a pagar');
+
+    const comboBtn = screen.getByLabelText('Responsável (lançamentos)');
+    await userEvent.click(comboBtn);
+    const option = await screen.findByRole('button', { name: /Matheus/i });
+    await userEvent.click(option);
+
+    await waitFor(() => {
+      expect(financeiroApi.contasPagar.listar).toHaveBeenCalledWith(
         expect.objectContaining({ responsavelIds: ['p-1'] })
       );
     });
