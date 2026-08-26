@@ -215,6 +215,22 @@ function reportData(): ReportState {
           statusNome: 'Liquidada',
           statusCodigo: 'LIQUIDADA',
           quantidadeParcelas: 3,
+          numeroParcela: 1,
+          grupoParcelamentoId: 'grp-r1'
+        },
+        {
+          id: 'rl-2',
+          descricao: 'Honorários',
+          pagadorNome: 'Cliente XYZ',
+          responsavelNome: null,
+          dataEmissao: '2026-06-05',
+          dataVencimento: '2026-07-20',
+          dataLiquidacao: null,
+          formaPagamentoNome: 'Transferência',
+          valorLiquido: 800,
+          statusNome: 'Futuro',
+          statusCodigo: 'FUTURO',
+          quantidadeParcelas: 3,
           numeroParcela: 2,
           grupoParcelamentoId: 'grp-r1'
         }

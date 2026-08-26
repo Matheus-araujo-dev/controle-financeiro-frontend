@@ -963,13 +963,34 @@ describe('RelatoriosPage', () => {
     expect(screen.getByText('Total a receber')).toBeInTheDocument();
   });
 
-  it('renders lançamentos tab parcela column as X/Y for installments', async () => {
+  it('renders lançamentos tab agrupando parcelas por grupoParcelamentoId', async () => {
     vi.mocked(financeiroApi.contasPagar.listar).mockResolvedValue({
       ...pagedBase,
-      summary: { totalRegistros: 1, valorTotal: 500, totalPendente: 500, totalVencido: 0, totalVencendoHoje: 0, totalLiquidado: 0 },
+      summary: { totalRegistros: 3, valorTotal: 1500, totalPendente: 1500, totalVencido: 0, totalVencendoHoje: 0, totalLiquidado: 0 },
       items: [
         {
-          id: 'pagar-p',
+          id: 'pagar-p1',
+          numeroDocumento: '1',
+          descricao: 'Notebook parcelado',
+          recebedorId: 'for-2',
+          recebedorNome: 'Loja',
+          responsavelNome: null,
+          dataEmissao: '2026-06-01',
+          dataVencimento: '2026-07-01',
+          dataLiquidacao: null,
+          formaPagamentoId: 'fp-2',
+          formaPagamentoNome: 'Cartão',
+          valorLiquido: 500,
+          valorPago: null,
+          statusCodigo: 'PENDENTE',
+          statusNome: 'Pendente',
+          quantidadeParcelas: 3,
+          numeroParcela: 1,
+          grupoParcelamentoId: 'grp-1',
+          ehRecorrente: false
+        },
+        {
+          id: 'pagar-p2',
           numeroDocumento: '2',
           descricao: 'Notebook parcelado',
           recebedorId: 'for-2',
@@ -988,13 +1009,38 @@ describe('RelatoriosPage', () => {
           numeroParcela: 2,
           grupoParcelamentoId: 'grp-1',
           ehRecorrente: false
+        },
+        {
+          id: 'pagar-p3',
+          numeroDocumento: '3',
+          descricao: 'Notebook parcelado',
+          recebedorId: 'for-2',
+          recebedorNome: 'Loja',
+          responsavelNome: null,
+          dataEmissao: '2026-06-01',
+          dataVencimento: '2026-09-01',
+          dataLiquidacao: null,
+          formaPagamentoId: 'fp-2',
+          formaPagamentoNome: 'Cartão',
+          valorLiquido: 500,
+          valorPago: null,
+          statusCodigo: 'PENDENTE',
+          statusNome: 'Pendente',
+          quantidadeParcelas: 3,
+          numeroParcela: 3,
+          grupoParcelamentoId: 'grp-1',
+          ehRecorrente: false
         }
       ]
     } as never);
     renderPage();
     await screen.findByText('Conta vencida');
     await userEvent.click(screen.getByRole('button', { name: /lançamentos/i }));
-    expect(await screen.findByText('2/3')).toBeInTheDocument();
+    // 3 parcelas com mesmo grupoParcelamentoId → 1 linha
+    expect(await screen.findByText('Notebook parcelado')).toBeInTheDocument();
+    expect(screen.getAllByText('Notebook parcelado')).toHaveLength(1);
+    // Parcela exibida como "Nx"
+    expect(screen.getByText('3x')).toBeInTheDocument();
   });
 
   it('renders lançamentos tab with receber item and LIQUIDADA status', async () => {

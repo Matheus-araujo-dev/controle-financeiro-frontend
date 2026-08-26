@@ -458,32 +458,48 @@ export function buildExportDefinition(
   }
 
   if (activeReport === 'lancamentos') {
-    const pagarRows = (data.contasPagarLancamentos?.items ?? []).map((p) => ({
-      Tipo: 'Pagar',
-      Descrição: p.descricao,
-      Parcela: p.quantidadeParcelas > 1 ? `${p.numeroParcela}/${p.quantidadeParcelas}` : '-',
-      Recebedor: p.recebedorNome,
-      Responsável: p.responsavelNome ?? '-',
-      Emissão: p.dataEmissao,
-      Vencimento: p.dataVencimento,
-      Liquidação: p.dataLiquidacao ?? '-',
-      Forma: p.formaPagamentoNome,
-      Valor: p.valorLiquido,
-      Status: p.statusNome
-    }));
-    const receberRows = (data.contasReceberLancamentos?.items ?? []).map((r) => ({
-      Tipo: 'Receber',
-      Descrição: r.descricao,
-      Parcela: r.quantidadeParcelas > 1 ? `${r.numeroParcela}/${r.quantidadeParcelas}` : '-',
-      Recebedor: r.pagadorNome,
-      Responsável: r.responsavelNome ?? '-',
-      Emissão: r.dataEmissao,
-      Vencimento: r.dataVencimento,
-      Liquidação: r.dataLiquidacao ?? '-',
-      Forma: r.formaPagamentoNome,
-      Valor: r.valorLiquido,
-      Status: r.statusNome
-    }));
+    const seenGroupsPagar = new Set<string>();
+    const pagarRows = (data.contasPagarLancamentos?.items ?? [])
+      .filter((p) => {
+        if (!p.grupoParcelamentoId) return true;
+        if (seenGroupsPagar.has(p.grupoParcelamentoId)) return false;
+        seenGroupsPagar.add(p.grupoParcelamentoId);
+        return true;
+      })
+      .map((p) => ({
+        Tipo: 'Pagar',
+        Descrição: p.descricao,
+        Parcela: p.grupoParcelamentoId && p.quantidadeParcelas > 1 ? `${p.quantidadeParcelas}x` : '-',
+        Recebedor: p.recebedorNome,
+        Responsável: p.responsavelNome ?? '-',
+        Emissão: p.dataEmissao,
+        Vencimento: p.dataVencimento,
+        Liquidação: p.dataLiquidacao ?? '-',
+        Forma: p.formaPagamentoNome,
+        Valor: p.valorLiquido,
+        Status: p.statusNome
+      }));
+    const seenGroupsReceber = new Set<string>();
+    const receberRows = (data.contasReceberLancamentos?.items ?? [])
+      .filter((r) => {
+        if (!r.grupoParcelamentoId) return true;
+        if (seenGroupsReceber.has(r.grupoParcelamentoId)) return false;
+        seenGroupsReceber.add(r.grupoParcelamentoId);
+        return true;
+      })
+      .map((r) => ({
+        Tipo: 'Receber',
+        Descrição: r.descricao,
+        Parcela: r.grupoParcelamentoId && r.quantidadeParcelas > 1 ? `${r.quantidadeParcelas}x` : '-',
+        Recebedor: r.pagadorNome,
+        Responsável: r.responsavelNome ?? '-',
+        Emissão: r.dataEmissao,
+        Vencimento: r.dataVencimento,
+        Liquidação: r.dataLiquidacao ?? '-',
+        Forma: r.formaPagamentoNome,
+        Valor: r.valorLiquido,
+        Status: r.statusNome
+      }));
     return {
       title: 'Relatório de lançamentos',
       filename: `relatorio-lancamentos-${referenceMonth}`,

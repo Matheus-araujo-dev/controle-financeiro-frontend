@@ -333,8 +333,8 @@ export function RelatoriosPage() {
     const pagar = (data.contasPagarLancamentos?.items ?? []).map((p) => ({
       tipo: 'Pagar' as const,
       id: p.id,
+      grupoParcelamentoId: p.grupoParcelamentoId,
       descricao: p.descricao,
-      numeroParcela: p.numeroParcela,
       quantidadeParcelas: p.quantidadeParcelas,
       pessoa: p.recebedorNome,
       responsavelNome: p.responsavelNome,
@@ -349,8 +349,8 @@ export function RelatoriosPage() {
     const receber = (data.contasReceberLancamentos?.items ?? []).map((r) => ({
       tipo: 'Receber' as const,
       id: r.id,
+      grupoParcelamentoId: r.grupoParcelamentoId,
       descricao: r.descricao,
-      numeroParcela: r.numeroParcela,
       quantidadeParcelas: r.quantidadeParcelas,
       pessoa: r.pagadorNome,
       responsavelNome: r.responsavelNome,
@@ -362,7 +362,14 @@ export function RelatoriosPage() {
       statusNome: r.statusNome,
       statusCodigo: r.statusCodigo
     }));
-    return [...pagar, ...receber].sort((a, b) => {
+    const seenGroups = new Set<string>();
+    const grouped = [...pagar, ...receber].filter((item) => {
+      if (!item.grupoParcelamentoId) return true;
+      if (seenGroups.has(item.grupoParcelamentoId)) return false;
+      seenGroups.add(item.grupoParcelamentoId);
+      return true;
+    });
+    return grouped.sort((a, b) => {
       const resp = (a.responsavelNome ?? '').localeCompare(b.responsavelNome ?? '');
       if (resp !== 0) return resp;
       return b.dataEmissao.localeCompare(a.dataEmissao);
@@ -944,7 +951,7 @@ export function RelatoriosPage() {
                       <td className={`px-5 py-4 font-bold text-xs ${item.tipo === 'Pagar' ? 'text-error' : 'text-primary'}`}>{item.tipo}</td>
                       <td className="px-5 py-4 font-bold">{item.descricao}</td>
                       <td className="px-5 py-4 text-on-surface-variant text-sm">
-                        {item.quantidadeParcelas > 1 ? `${item.numeroParcela}/${item.quantidadeParcelas}` : '-'}
+                        {item.grupoParcelamentoId && item.quantidadeParcelas > 1 ? `${item.quantidadeParcelas}x` : '-'}
                       </td>
                       <td className="px-5 py-4 text-on-surface-variant">{item.pessoa}</td>
                       <td className="px-5 py-4 text-on-surface-variant">{item.responsavelNome ?? '-'}</td>
