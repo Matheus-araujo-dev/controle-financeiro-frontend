@@ -179,6 +179,46 @@ function reportData(): ReportState {
           link: null
         }
       ]
+    } as never,
+    contasPagarLancamentos: {
+      items: [
+        {
+          id: 'pl-1',
+          descricao: 'Aluguel',
+          recebedorNome: 'Imobiliária',
+          responsavelNome: 'Maria',
+          dataEmissao: '2026-06-01',
+          dataVencimento: '2026-06-10',
+          dataLiquidacao: null,
+          formaPagamentoNome: 'Boleto',
+          valorLiquido: 1200,
+          statusNome: 'Vencida',
+          statusCodigo: 'VENCIDA',
+          quantidadeParcelas: 1,
+          numeroParcela: 1,
+          grupoParcelamentoId: null
+        }
+      ]
+    } as never,
+    contasReceberLancamentos: {
+      items: [
+        {
+          id: 'rl-1',
+          descricao: 'Honorários',
+          pagadorNome: 'Cliente XYZ',
+          responsavelNome: null,
+          dataEmissao: '2026-06-05',
+          dataVencimento: '2026-06-20',
+          dataLiquidacao: '2026-06-20',
+          formaPagamentoNome: 'Transferência',
+          valorLiquido: 800,
+          statusNome: 'Liquidada',
+          statusCodigo: 'LIQUIDADA',
+          quantidadeParcelas: 3,
+          numeroParcela: 2,
+          grupoParcelamentoId: 'grp-r1'
+        }
+      ]
     } as never
   };
 }
@@ -235,7 +275,8 @@ describe('relatorios helpers', () => {
     'recorrencias',
     'compras',
     'geral',
-    'cartoes'
+    'cartoes',
+    'lancamentos'
   ])('builds export definition for %s', (reportKey) => {
     const definition = buildExportDefinition(reportKey, referenceMonth, reportData());
 

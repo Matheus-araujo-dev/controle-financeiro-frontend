@@ -21,6 +21,7 @@ import type {
   ContaFinanceiraListSummary,
   ContaPagarResumo,
   ContaReceberResumo,
+  StatusContaCodigo,
   StatusFaturaCodigo
 } from '../../types/financeiro';
 import { downloadReportWorkbook } from './report-export';
@@ -33,6 +34,8 @@ import {
   faturaStatusOptions,
   fluxoDiasOptions,
   inadimplenciaTipoOptions,
+  lancamentosStatusOptions,
+  lancamentosTipoOptions,
   MAX_REPORT_ROWS,
   origemLabels,
   origemOptions,
@@ -106,6 +109,13 @@ export function RelatoriosPage() {
   // Responsável (filtro compartilhado: DRE, Contas Gerenciais, Análises, Inadimplência, Compras, Recorrências)
   const [responsavelId, setResponsavelId] = useState('');
 
+  // Lançamentos (a pagar/receber)
+  const [lancamentosTipo, setLancamentosTipo] = useState<string[]>([]);
+  const [lancamentosStatus, setLancamentosStatus] = useState<string[]>([]);
+  const [lancamentosResponsavelId, setLancamentosResponsavelId] = useState('');
+  const [lancamentosSearch, setLancamentosSearch] = useState('');
+  const deferredLancamentosSearch = useDeferredValue(lancamentosSearch);
+
   const reportFilters = {
     referenceMonth,
     fluxoDias,
@@ -125,7 +135,11 @@ export function RelatoriosPage() {
     compraStatus,
     compraPrioridade,
     deferredCompraSearch,
-    comparativoMeses
+    comparativoMeses,
+    lancamentosTipo,
+    lancamentosStatus,
+    lancamentosResponsavelId,
+    deferredLancamentosSearch
   };
 
   const { data: reportData, isFetching: loading, error: reportError } = useQuery({
@@ -144,7 +158,9 @@ export function RelatoriosPage() {
         recorrencias,
         compras,
         comparativo,
-        cartoesResult
+        cartoesResult,
+        contasPagarLancamentosResult,
+        contasReceberLancamentosResult
       ] = await Promise.all([
         dashboardApi.obterResumo({ mesReferencia: referenceMonth }),
         dashboardApi.obterResumoPorResponsaveis({ mesReferencia: referenceMonth }),
@@ -218,7 +234,33 @@ export function RelatoriosPage() {
           sortDirection: 'Asc'
         }),
         dashboardApi.obterComparativoMensal({ meses: Number(comparativoMeses) }),
-        cadastrosApi.cartoes.listar({ page: 1, pageSize: 200 })
+        cadastrosApi.cartoes.listar({ page: 1, pageSize: 200 }),
+        (!lancamentosTipo.length || lancamentosTipo.includes('pagar'))
+          ? financeiroApi.contasPagar.listar({
+              page: 1,
+              pageSize: MAX_REPORT_ROWS,
+              search: deferredLancamentosSearch,
+              dataEmissaoInicial: range.start,
+              dataEmissaoFinal: range.end,
+              responsavelIds: lancamentosResponsavelId ? [lancamentosResponsavelId] : undefined,
+              statusCodigo: lancamentosStatus[0] as StatusContaCodigo | undefined,
+              sortBy: 'dataEmissao',
+              sortDirection: 'Desc'
+            })
+          : Promise.resolve(emptyPaged<ContaPagarResumo, ContaFinanceiraListSummary>()),
+        (!lancamentosTipo.length || lancamentosTipo.includes('receber'))
+          ? financeiroApi.contasReceber.listar({
+              page: 1,
+              pageSize: MAX_REPORT_ROWS,
+              search: deferredLancamentosSearch,
+              dataEmissaoInicial: range.start,
+              dataEmissaoFinal: range.end,
+              responsavelIds: lancamentosResponsavelId ? [lancamentosResponsavelId] : undefined,
+              statusCodigo: lancamentosStatus[0] as StatusContaCodigo | undefined,
+              sortBy: 'dataEmissao',
+              sortDirection: 'Desc'
+            })
+          : Promise.resolve(emptyPaged<ContaReceberResumo, ContaFinanceiraListSummary>())
       ]);
       return {
         resumo,
@@ -232,7 +274,9 @@ export function RelatoriosPage() {
         recorrencias,
         compras,
         comparativo,
-        cartoes: cartoesResult.items
+        cartoes: cartoesResult.items,
+        contasPagarLancamentos: contasPagarLancamentosResult,
+        contasReceberLancamentos: contasReceberLancamentosResult
       };
     },
     staleTime: 30_000,
@@ -284,6 +328,46 @@ export function RelatoriosPage() {
     const name = option.label.toLowerCase();
     return recorrencias.filter((r) => r.responsavelNome?.toLowerCase() === name);
   }, [recorrencias, responsavelId, responsavelOptions]);
+
+  const lancamentosRows = useMemo(() => {
+    const pagar = (data.contasPagarLancamentos?.items ?? []).map((p) => ({
+      tipo: 'Pagar' as const,
+      id: p.id,
+      descricao: p.descricao,
+      numeroParcela: p.numeroParcela,
+      quantidadeParcelas: p.quantidadeParcelas,
+      pessoa: p.recebedorNome,
+      responsavelNome: p.responsavelNome,
+      dataEmissao: p.dataEmissao,
+      dataVencimento: p.dataVencimento,
+      dataLiquidacao: p.dataLiquidacao,
+      formaPagamentoNome: p.formaPagamentoNome,
+      valorLiquido: p.valorLiquido,
+      statusNome: p.statusNome,
+      statusCodigo: p.statusCodigo
+    }));
+    const receber = (data.contasReceberLancamentos?.items ?? []).map((r) => ({
+      tipo: 'Receber' as const,
+      id: r.id,
+      descricao: r.descricao,
+      numeroParcela: r.numeroParcela,
+      quantidadeParcelas: r.quantidadeParcelas,
+      pessoa: r.pagadorNome,
+      responsavelNome: r.responsavelNome,
+      dataEmissao: r.dataEmissao,
+      dataVencimento: r.dataVencimento,
+      dataLiquidacao: r.dataLiquidacao,
+      formaPagamentoNome: r.formaPagamentoNome,
+      valorLiquido: r.valorLiquido,
+      statusNome: r.statusNome,
+      statusCodigo: r.statusCodigo
+    }));
+    return [...pagar, ...receber].sort((a, b) => {
+      const resp = (a.responsavelNome ?? '').localeCompare(b.responsavelNome ?? '');
+      if (resp !== 0) return resp;
+      return b.dataEmissao.localeCompare(a.dataEmissao);
+    });
+  }, [data.contasPagarLancamentos, data.contasReceberLancamentos]);
 
   const maiorDespesaResponsavel = Math.max(1, ...responsaveisFiltrados.map((item) => item.totalDespesas));
   const maiorContaGerencial = Math.max(1, ...contasGerenciaisFiltradas.map((item) => item.valorTotal));
@@ -790,6 +874,93 @@ export function RelatoriosPage() {
               })}
             </div>
           )}
+        </div>
+      ) : null}
+
+      {/* ── Lançamentos (a pagar / a receber) ───────────────────────────────── */}
+      {activeReport === 'lancamentos' ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <MetricCard
+              label="Total a pagar"
+              value={formatCurrencyBRL(data.contasPagarLancamentos?.summary?.valorTotal ?? 0)}
+              tone="danger"
+            />
+            <MetricCard
+              label="Total a receber"
+              value={formatCurrencyBRL(data.contasReceberLancamentos?.summary?.valorTotal ?? 0)}
+              tone="success"
+            />
+            <MetricCard label="Lançamentos" value={(data.contasPagarLancamentos?.totalItems ?? 0) + (data.contasReceberLancamentos?.totalItems ?? 0)} />
+            <FilterCombo
+              label="Tipo"
+              value={lancamentosTipo}
+              onChange={setLancamentosTipo}
+              options={lancamentosTipoOptions}
+              ariaLabel="Tipo de lançamento"
+            />
+            <FilterCombo
+              label="Status"
+              value={lancamentosStatus}
+              onChange={setLancamentosStatus}
+              options={lancamentosStatusOptions}
+              ariaLabel="Status do lançamento"
+            />
+            <FilterCombo
+              label="Responsável"
+              value={lancamentosResponsavelId ? [lancamentosResponsavelId] : []}
+              onChange={(v) => setLancamentosResponsavelId(v[0] ?? '')}
+              options={responsavelOptions}
+              ariaLabel="Responsável (lançamentos)"
+            />
+            <div className="md:col-span-1">
+              <FilterInput
+                label="Busca"
+                value={lancamentosSearch}
+                onChange={setLancamentosSearch}
+                placeholder="Descrição ou pessoa"
+              />
+            </div>
+          </div>
+
+          <ReportTable
+            headers={['Tipo', 'Descrição', 'Parcela', 'Pessoa', 'Responsável', 'Emissão', 'Vencimento', 'Liquidação', 'Forma', 'Valor', 'Status']}
+            emptyText="Nenhum lançamento encontrado no período"
+          >
+            {lancamentosRows.length
+              ? lancamentosRows.map((item) => {
+                  const statusClass =
+                    item.statusCodigo === 'LIQUIDADA'
+                      ? 'text-primary'
+                      : item.statusCodigo === 'VENCIDA'
+                      ? 'text-error'
+                      : item.statusCodigo === 'CANCELADA'
+                      ? 'text-on-surface-variant'
+                      : item.statusCodigo === 'PARCIAL'
+                      ? 'text-tertiary'
+                      : 'text-on-surface';
+                  return (
+                    <tr key={`${item.tipo}-${item.id}`} className="hover:bg-primary/5">
+                      <td className={`px-5 py-4 font-bold text-xs ${item.tipo === 'Pagar' ? 'text-error' : 'text-primary'}`}>{item.tipo}</td>
+                      <td className="px-5 py-4 font-bold">{item.descricao}</td>
+                      <td className="px-5 py-4 text-on-surface-variant text-sm">
+                        {item.quantidadeParcelas > 1 ? `${item.numeroParcela}/${item.quantidadeParcelas}` : '-'}
+                      </td>
+                      <td className="px-5 py-4 text-on-surface-variant">{item.pessoa}</td>
+                      <td className="px-5 py-4 text-on-surface-variant">{item.responsavelNome ?? '-'}</td>
+                      <td className="px-5 py-4">{formatDateBR(item.dataEmissao)}</td>
+                      <td className="px-5 py-4">{formatDateBR(item.dataVencimento)}</td>
+                      <td className="px-5 py-4">{item.dataLiquidacao ? formatDateBR(item.dataLiquidacao) : '-'}</td>
+                      <td className="px-5 py-4 text-on-surface-variant">{item.formaPagamentoNome}</td>
+                      <td className={`px-5 py-4 font-bold ${item.tipo === 'Pagar' ? 'text-error' : 'text-primary'}`}>
+                        {formatCurrencyBRL(item.valorLiquido)}
+                      </td>
+                      <td className={`px-5 py-4 font-bold ${statusClass}`}>{item.statusNome}</td>
+                    </tr>
+                  );
+                })
+              : null}
+          </ReportTable>
         </div>
       ) : null}
 
