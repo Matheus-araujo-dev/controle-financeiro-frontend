@@ -457,6 +457,42 @@ export function buildExportDefinition(
     };
   }
 
+  if (activeReport === 'lancamentos') {
+    const pagarRows = (data.contasPagarLancamentos?.items ?? []).map((p) => ({
+      Tipo: 'Pagar',
+      Descrição: p.descricao,
+      Parcela: p.quantidadeParcelas > 1 ? `${p.numeroParcela}/${p.quantidadeParcelas}` : '-',
+      Recebedor: p.recebedorNome,
+      Responsável: p.responsavelNome ?? '-',
+      Emissão: p.dataEmissao,
+      Vencimento: p.dataVencimento,
+      Liquidação: p.dataLiquidacao ?? '-',
+      Forma: p.formaPagamentoNome,
+      Valor: p.valorLiquido,
+      Status: p.statusNome
+    }));
+    const receberRows = (data.contasReceberLancamentos?.items ?? []).map((r) => ({
+      Tipo: 'Receber',
+      Descrição: r.descricao,
+      Parcela: r.quantidadeParcelas > 1 ? `${r.numeroParcela}/${r.quantidadeParcelas}` : '-',
+      Recebedor: r.pagadorNome,
+      Responsável: r.responsavelNome ?? '-',
+      Emissão: r.dataEmissao,
+      Vencimento: r.dataVencimento,
+      Liquidação: r.dataLiquidacao ?? '-',
+      Forma: r.formaPagamentoNome,
+      Valor: r.valorLiquido,
+      Status: r.statusNome
+    }));
+    return {
+      title: 'Relatório de lançamentos',
+      filename: `relatorio-lancamentos-${referenceMonth}`,
+      sheets: [
+        { name: 'Lançamentos', title: 'Relatório de lançamentos', filters, rows: [...pagarRows, ...receberRows] }
+      ]
+    };
+  }
+
   if (activeReport === 'alertas') {
     return {
       title: 'Alertas inteligentes',

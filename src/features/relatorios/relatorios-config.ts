@@ -38,7 +38,8 @@ export type ReportKey =
   | 'dre'
   | 'alertas'
   | 'analises'
-  | 'cartoes';
+  | 'cartoes'
+  | 'lancamentos';
 
 export type ReportState = {
   resumo?: DashboardResumo;
@@ -53,6 +54,8 @@ export type ReportState = {
   compras?: PagedCompraPlanejada<CompraPlanejadaResumo, CompraPlanejadaListSummary>;
   comparativo?: DashboardComparativoMensal;
   cartoes?: CartaoResumo[];
+  contasPagarLancamentos?: PagedFinanceiro<ContaPagarResumo, ContaFinanceiraListSummary>;
+  contasReceberLancamentos?: PagedFinanceiro<ContaReceberResumo, ContaFinanceiraListSummary>;
 };
 
 export const MAX_REPORT_ROWS = 250;
@@ -66,6 +69,7 @@ export const reportTabs: Array<{ key: ReportKey; label: string; icon: string }> 
   { key: 'inadimplencia', label: 'Inadimplência', icon: 'warning' },
   { key: 'faturas', label: 'Faturas', icon: 'credit_card' },
   { key: 'cartoes', label: 'Cartões', icon: 'credit_score' },
+  { key: 'lancamentos', label: 'Lançamentos', icon: 'list_alt' },
   { key: 'recorrencias', label: 'Recorrências', icon: 'sync' },
   { key: 'compras', label: 'Compras planejadas', icon: 'shopping_cart' },
   { key: 'comparativo', label: 'Comparativo mensal', icon: 'bar_chart' },
@@ -136,6 +140,21 @@ export const compraPrioridadeOptions = [
   { value: 'Baixa', label: 'Baixa' },
   { value: 'Media', label: 'Média' },
   { value: 'Alta', label: 'Alta' }
+];
+
+export const lancamentosTipoOptions = [
+  { value: 'pagar', label: 'A pagar' },
+  { value: 'receber', label: 'A receber' }
+];
+
+export const lancamentosStatusOptions = [
+  { value: 'PENDENTE', label: 'Pendente' },
+  { value: 'LIQUIDADA', label: 'Liquidada' },
+  { value: 'VENCIDA', label: 'Vencida' },
+  { value: 'CANCELADA', label: 'Cancelada' },
+  { value: 'PARCIAL', label: 'Parcial' },
+  { value: 'EM_FATURA', label: 'Em fatura' },
+  { value: 'FUTURO', label: 'Futuro' }
 ];
 
 export const origemLabels: Record<DashboardCentralPrevisaoOrigem, string> = {
