@@ -892,4 +892,59 @@ describe('RelatoriosPage', () => {
     expect(printSpy).toHaveBeenCalled();
     printSpy.mockRestore();
   });
+
+  it('passes responsavelId to contasGerenciais API when filter is selected', async () => {
+    renderPage();
+    await screen.findByText('Conta vencida');
+    await userEvent.click(screen.getByRole('button', { name: /contas gerenciais/i }));
+
+    const comboBtn = screen.getByLabelText('Responsável (contas gerenciais)');
+    await userEvent.click(comboBtn);
+    const option = await screen.findByRole('button', { name: /Matheus/i });
+    await userEvent.click(option);
+
+    await waitFor(() => {
+      expect(dashboardApi.obterResumoContasGerenciais).toHaveBeenLastCalledWith(
+        expect.objectContaining({ responsavelId: 'p-1' })
+      );
+    });
+  });
+
+  it('filters recorrencias client-side by responsavelId', async () => {
+    vi.mocked(financeiroApi.recorrencias.listar).mockResolvedValue(recorrenciasRich as never);
+    renderPage();
+    await screen.findByText(/Leitura gerencial/);
+    await userEvent.click(screen.getByRole('button', { name: /recorrências/i }));
+    await screen.findByText('Aluguel recebido');
+
+    const comboBtn = screen.getByLabelText('Responsável (recorrências)');
+    await userEvent.click(comboBtn);
+    // 'Gerente' corresponds to 'rec-paused'; only that item has a matching responsavelNome
+    // (no responsavelId match since 'Gerente' isn't in responsavelOptions → empty result)
+    const option = await screen.findByRole('button', { name: /Matheus/i });
+    await userEvent.click(option);
+
+    await waitFor(() => {
+      // p-1 maps to 'Matheus'; recorrencias use responsavelNome for client-side match
+      // rec-1 has responsavelNome 'Matheus' → still visible
+      expect(screen.queryByText('Aluguel recebido')).not.toBeInTheDocument();
+    });
+  });
+
+  it('passes responsavelId to inadimplencia API calls', async () => {
+    renderPage();
+    await screen.findByText('Conta vencida');
+    await userEvent.click(screen.getByRole('button', { name: /inadimplência/i }));
+
+    const comboBtn = screen.getByLabelText('Responsável (inadimplência)');
+    await userEvent.click(comboBtn);
+    const option = await screen.findByRole('button', { name: /Matheus/i });
+    await userEvent.click(option);
+
+    await waitFor(() => {
+      expect(financeiroApi.contasPagar.listar).toHaveBeenLastCalledWith(
+        expect.objectContaining({ responsavelIds: ['p-1'] })
+      );
+    });
+  });
 });
