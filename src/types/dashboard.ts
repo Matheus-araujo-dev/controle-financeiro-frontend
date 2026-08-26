@@ -28,6 +28,7 @@ export type DashboardContaGerencialResumoFilters = {
   dataInicial?: string;
   dias?: number;
   tipo?: DashboardContaGerencialTipo;
+  responsavelId?: string;
 };
 
 export type DashboardContaGerencialSerieFilters = {

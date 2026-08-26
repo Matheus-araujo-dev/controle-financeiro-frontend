@@ -103,10 +103,14 @@ export function RelatoriosPage() {
   // Comparativo
   const [comparativoMeses, setComparativoMeses] = useState('6');
 
+  // Responsável (filtro compartilhado: DRE, Contas Gerenciais, Análises, Inadimplência, Compras, Recorrências)
+  const [responsavelId, setResponsavelId] = useState('');
+
   const reportFilters = {
     referenceMonth,
     fluxoDias,
     contaTipo,
+    responsavelId,
     deferredContasGerenciaisSearch,
     deferredResponsaveisSearch,
     previsaoOrigem,
@@ -146,7 +150,8 @@ export function RelatoriosPage() {
         dashboardApi.obterResumoPorResponsaveis({ mesReferencia: referenceMonth }),
         dashboardApi.obterResumoContasGerenciais({
           mesReferencia: referenceMonth,
-          tipo: contaTipo[0] as DashboardContaGerencialTipo | undefined
+          tipo: contaTipo[0] as DashboardContaGerencialTipo | undefined,
+          responsavelId: responsavelId || undefined
         }),
         dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth, dias: Number(fluxoDias) }),
         dashboardApi.obterResumoCentralPrevisao({
@@ -162,6 +167,7 @@ export function RelatoriosPage() {
               statusCodigo: ['VENCIDA'],
               dataInicial: range.start,
               dataFinal: range.end,
+              responsavelIds: responsavelId ? [responsavelId] : undefined,
               sortBy: 'dataVencimento',
               sortDirection: 'Asc'
             })
@@ -174,6 +180,7 @@ export function RelatoriosPage() {
               statusCodigo: ['VENCIDA'],
               dataInicial: range.start,
               dataFinal: range.end,
+              responsavelIds: responsavelId ? [responsavelId] : undefined,
               sortBy: 'dataVencimento',
               sortDirection: 'Asc'
             })
@@ -206,6 +213,7 @@ export function RelatoriosPage() {
           prioridade: compraPrioridade[0] as CompraPlanejadaPrioridade | undefined,
           dataDesejadaInicial: range.start,
           dataDesejadaFinal: range.end,
+          responsavelId: responsavelId || undefined,
           sortBy: 'dataDesejada',
           sortDirection: 'Asc'
         }),
@@ -263,6 +271,19 @@ export function RelatoriosPage() {
     () => (faturaCartaoId ? faturas.filter((f) => f.cartaoId === faturaCartaoId) : faturas),
     [faturas, faturaCartaoId]
   );
+
+  const responsavelOptions = useMemo(
+    () => (data.responsaveis?.itens ?? []).map((r) => ({ value: r.responsavelId ?? '', label: r.responsavelNome })),
+    [data.responsaveis]
+  );
+
+  const recorrenciasFiltradas = useMemo(() => {
+    if (!responsavelId) return recorrencias;
+    const option = responsavelOptions.find((o) => o.value === responsavelId);
+    if (!option) return recorrencias;
+    const name = option.label.toLowerCase();
+    return recorrencias.filter((r) => r.responsavelNome?.toLowerCase() === name);
+  }, [recorrencias, responsavelId, responsavelOptions]);
 
   const maiorDespesaResponsavel = Math.max(1, ...responsaveisFiltrados.map((item) => item.totalDespesas));
   const maiorContaGerencial = Math.max(1, ...contasGerenciaisFiltradas.map((item) => item.valorTotal));
@@ -488,7 +509,14 @@ export function RelatoriosPage() {
             <MetricCard label="Despesas" value={formatCurrencyBRL(data.contasGerenciais?.totalDespesas ?? 0)} tone="danger" />
             <MetricCard label="Saldo" value={formatCurrencyBRL(data.contasGerenciais?.saldo ?? 0)} />
             <FilterCombo label="Tipo" value={contaTipo} onChange={setContaTipo} options={contaTipoOptions} ariaLabel="Tipo de conta gerencial" />
-            <div className="md:col-span-4">
+            <FilterCombo
+              label="Responsável"
+              value={responsavelId ? [responsavelId] : []}
+              onChange={(v) => setResponsavelId(v[0] ?? '')}
+              options={responsavelOptions}
+              ariaLabel="Responsável (contas gerenciais)"
+            />
+            <div className="md:col-span-3">
               <FilterInput
                 label="Busca"
                 value={contasGerenciaisSearch}
@@ -615,7 +643,14 @@ export function RelatoriosPage() {
               options={inadimplenciaTipoOptions}
               ariaLabel="Tipo de inadimplência"
             />
-            <div className="md:col-span-4">
+            <FilterCombo
+              label="Responsável"
+              value={responsavelId ? [responsavelId] : []}
+              onChange={(v) => setResponsavelId(v[0] ?? '')}
+              options={responsavelOptions}
+              ariaLabel="Responsável (inadimplência)"
+            />
+            <div className="md:col-span-3">
               <FilterInput
                 label="Busca"
                 value={inadimplenciaSearch}
@@ -763,17 +798,24 @@ export function RelatoriosPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Recorrências" value={data.recorrencias?.totalItems ?? 0} />
-            <MetricCard label="Valor mensal" value={formatCurrencyBRL(recorrencias.reduce((total, item) => total + item.valorLiquido, 0))} />
+            <MetricCard label="Valor mensal" value={formatCurrencyBRL(recorrenciasFiltradas.reduce((total, item) => total + item.valorLiquido, 0))} />
             <FilterCombo label="Tipo" value={recorrenciaTipo} onChange={setRecorrenciaTipo} options={recorrenciaTipoOptions} ariaLabel="Tipo de recorrência" />
             <FilterCombo label="Situação" value={recorrenciaAtiva} onChange={setRecorrenciaAtiva} options={ativoOptions} ariaLabel="Situação da recorrência" />
-            <div className="md:col-span-4">
+            <FilterCombo
+              label="Responsável"
+              value={responsavelId ? [responsavelId] : []}
+              onChange={(v) => setResponsavelId(v[0] ?? '')}
+              options={responsavelOptions}
+              ariaLabel="Responsável (recorrências)"
+            />
+            <div className="md:col-span-3">
               <FilterInput label="Busca" value={recorrenciaSearch} onChange={setRecorrenciaSearch} placeholder="Descrição, pessoa ou responsável" />
             </div>
           </div>
 
           <ReportTable headers={['Tipo', 'Descrição', 'Pessoa', 'Responsável', 'Valor', 'Início', 'Fim', 'Dia', 'Situação']} emptyText="Nenhuma recorrência encontrada">
-            {recorrencias.length
-              ? recorrencias.map((item) => (
+            {recorrenciasFiltradas.length
+              ? recorrenciasFiltradas.map((item) => (
                   <tr key={item.id} className="hover:bg-primary/5">
                     <td className="px-5 py-4 font-bold">{getRecorrenciaTipoLabel(item.contaOrigemTipo)}</td>
                     <td className="px-5 py-4 font-bold">{item.descricao}</td>
@@ -787,6 +829,7 @@ export function RelatoriosPage() {
                   </tr>
                 ))
               : null}
+
           </ReportTable>
         </div>
       ) : null}
@@ -809,7 +852,14 @@ export function RelatoriosPage() {
               options={compraPrioridadeOptions}
               ariaLabel="Prioridade da compra planejada"
             />
-            <div className="md:col-span-4">
+            <FilterCombo
+              label="Responsável"
+              value={responsavelId ? [responsavelId] : []}
+              onChange={(v) => setResponsavelId(v[0] ?? '')}
+              options={responsavelOptions}
+              ariaLabel="Responsável (compras planejadas)"
+            />
+            <div className="md:col-span-3">
               <FilterInput label="Busca" value={compraSearch} onChange={setCompraSearch} placeholder="Título, conta, responsável ou link" />
             </div>
           </div>
@@ -946,13 +996,20 @@ export function RelatoriosPage() {
       {/* ── DRE Doméstica ───────────────────────────────────────────────────── */}
       {activeReport === 'dre' ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <MetricCard label="Receitas" value={formatCurrencyBRL(data.contasGerenciais?.totalReceitas ?? 0)} tone="success" />
             <MetricCard label="Despesas" value={formatCurrencyBRL(data.contasGerenciais?.totalDespesas ?? 0)} tone="danger" />
             <MetricCard
               label="Resultado"
               value={formatCurrencyBRL(data.contasGerenciais?.saldo ?? 0)}
               tone={(data.contasGerenciais?.saldo ?? 0) >= 0 ? 'success' : 'danger'}
+            />
+            <FilterCombo
+              label="Responsável"
+              value={responsavelId ? [responsavelId] : []}
+              onChange={(v) => setResponsavelId(v[0] ?? '')}
+              options={responsavelOptions}
+              ariaLabel="Responsável (DRE)"
             />
           </div>
 
@@ -1028,6 +1085,13 @@ export function RelatoriosPage() {
               tone={(data.contasGerenciais?.saldo ?? 0) >= 0 ? 'success' : 'danger'}
             />
             <FilterCombo label="Tipo" value={contaTipo} onChange={setContaTipo} options={contaTipoOptions} ariaLabel="Tipo de conta gerencial" />
+            <FilterCombo
+              label="Responsável"
+              value={responsavelId ? [responsavelId] : []}
+              onChange={(v) => setResponsavelId(v[0] ?? '')}
+              options={responsavelOptions}
+              ariaLabel="Responsável (análises)"
+            />
           </div>
 
           <div className="rounded-3xl border border-white/5 bg-surface-container-low p-6 space-y-4">
