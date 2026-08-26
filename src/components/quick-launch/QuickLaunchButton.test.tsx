@@ -612,6 +612,49 @@ describe('QuickLaunchButton', () => {
     });
   });
 
+  it('gerar reembolso de ContaReceber inverte pessoaId e responsavelId no onGerarReembolso', async () => {
+    const onGerarReembolso = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <QuickLaunchModal
+        onClose={vi.fn()}
+        onGerarReembolso={onGerarReembolso}
+      />,
+      { wrapper: Wrapper }
+    );
+
+    const dialog = await screen.findByRole('dialog', { name: /lan.amento r.pido/i });
+    await waitFor(() => expect(cadastrosApi.pessoas.listar).toHaveBeenCalled());
+
+    await user.click(within(dialog).getByRole('button', { name: /conta a receber/i }));
+
+    await user.type(within(dialog).getByPlaceholderText(/sal.rio/i), 'Vale salario');
+    await user.type(within(dialog).getByLabelText('Valor'), '1000');
+    await user.selectOptions(await within(dialog).findByLabelText('Responsável'), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar pagador/i), 'r2');
+    await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-pix');
+    await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cr1');
+
+    await user.click(within(dialog).getByRole('switch', { name: /gerar reembolso/i }));
+
+    vi.mocked(financeiroApi.contasReceber.criar).mockResolvedValueOnce({ id: 'cr-456' } as never);
+    await user.click(within(dialog).getByRole('button', { name: /^Lan./i }));
+
+    await waitFor(() => expect(onGerarReembolso).toHaveBeenCalledTimes(1));
+    expect(onGerarReembolso).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tipo: 'pagar',
+        pessoaId: 'r2',
+        pessoaNome: 'Responsavel Dois',
+        responsavelId: 'r1',
+        responsavelNome: 'Responsavel',
+        responsaveisAdicionaisIds: undefined,
+        contaVinculadaOrigemId: 'cr-456'
+      })
+    );
+  });
+
   it('preenche chips com nomes via initialValues.responsaveisAdicionaisIds e responsaveisNomes', async () => {
     render(
       <QuickLaunchModal
