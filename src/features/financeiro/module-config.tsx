@@ -297,12 +297,13 @@ export function resolveStatusTone(statusCodigo: StatusContaCodigo) {
   return 'warning';
 }
 
-async function loadPessoaOptions() {
+async function loadPagadorOptions() {
   const response = await cadastrosApi.pessoas.listar({
     page: 1,
     pageSize: 100,
     search: '',
-    ativo: true
+    ativo: true,
+    ehPagador: true
   });
 
   return response.items.map((item) => ({
@@ -746,7 +747,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
     }),
     formaPagamentoId: detail.formaPagamentoId
   }),
-  loadPessoaOptions,
+  loadPessoaOptions: loadPagadorOptions,
   loadResponsavelOptions,
   loadFormaPagamentoOptions,
   loadContaBancariaOptions,
