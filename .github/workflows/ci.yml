@@ -12,8 +12,6 @@ jobs:
 
     env:
       NODE_VERSION: '22'
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +23,7 @@ jobs:
           cache: npm
 
       - name: Install
-        run: npm install --no-save
+        run: npm ci
 
       - name: Lint
         run: npm run lint
@@ -53,7 +51,7 @@ jobs:
           cache: npm
 
       - name: Install
-        run: npm install --no-save
+        run: npm ci
 
       - name: Build
         run: npm run build
@@ -61,12 +59,21 @@ jobs:
       - name: Test with coverage
         run: npm run coverage
 
+      - name: Preserve coverage evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: coverage/lcov.info
+          if-no-files-found: error
+
   security-and-sonar:
     runs-on: ubuntu-latest
-    needs: lint-and-security
+    needs: test
 
     env:
       NODE_VERSION: '22'
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -77,8 +84,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Install
-        run: npm install --no-save
+      - name: Restore coverage from tested commit
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: coverage
 
       - name: Sonar scan
         if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}
