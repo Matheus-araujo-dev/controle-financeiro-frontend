@@ -29,3 +29,4 @@ serão registrados na continuação deste documento após confirmação remota.
 - Relatórios/paginação/URL/estados: REPORTS_IMPLEMENTATION.md.
 - Contratos OpenAPI e tipos reproduzíveis, preservando builds independentes.
 - Arquitetura/documentação e plataforma conforme plano do workspace.
+Primeira execução develop 34350834119 falhou em npm ci: faltavam @emnapi/core e @emnapi/runtime. Lockfile regenerado com npm 10.9.8 em diretório sem node_modules; nenhuma versão existente de pacote foi alterada. A validação dry-run anterior no Windows não detectou a divergência do runner Linux.
