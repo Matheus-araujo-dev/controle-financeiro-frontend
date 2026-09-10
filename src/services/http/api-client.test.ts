@@ -177,3 +177,74 @@ describe('registerApiClientInterceptors — JWT token path', () => {
     useAuthStore.setState({ token: null });
   });
 });
+
+it('does not restore a session when a pending refresh finishes after logout', async () => {
+  useAuthStore.getState().signIn({ userId: 'old', displayName: 'Old' });
+  let finish!: (value: unknown) => void;
+  const post = vi.spyOn(axios, 'post').mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+  const client = createAxiosClient(401);
+  registerApiClientInterceptors(client);
+  const request = client.get('/seguro').catch((error: unknown) => error);
+  await vi.waitFor(() => expect(post).toHaveBeenCalled());
+  useAuthStore.getState().clearSession();
+  useAuthStore.getState().signIn({ userId: 'new', displayName: 'New' });
+  finish({ data: { accessToken: 'old-token', usuario: { id: 'old', nome: 'Old' } } });
+  await request;
+  expect(useAuthStore.getState().currentUser?.userId).toBe('new');
+  post.mockRestore();
+});
+
+it('renews once for concurrent unauthorized requests and retries with the new token', async () => {
+  useAuthStore.getState().signIn({ userId: 'renew', displayName: 'Renew' });
+  useAuthStore.getState().setToken('expired');
+  const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { accessToken: 'fresh', usuario: { id: 'renew', nome: 'Renew' } } });
+  const client = axios.create({ adapter: async (config) => {
+    if (config.headers.Authorization !== 'Bearer fresh') throw new AxiosError('Unauthorized', 'ERR_TEST', config, undefined, { status: 401, statusText: 'Unauthorized', headers: {}, config, data: {} });
+    return { status: 200, statusText: 'OK', headers: {}, config, data: 'private' };
+  } });
+  registerApiClientInterceptors(client);
+  const responses = await Promise.all([client.get('/one'), client.get('/two')]);
+  expect(responses.map((response) => response.data)).toEqual(['private', 'private']);
+  expect(post).toHaveBeenCalledOnce();
+  post.mockRestore();
+});
+
+it('discards a successful response issued before changing workspaces', async () => {
+  useAuthStore.getState().signIn({ userId: 'user', displayName: 'User' });
+  let finish!: () => void;
+  const client = axios.create({ adapter: (config) => new Promise((resolve) => { finish = () => resolve({ status: 200, statusText: 'OK', headers: {}, config, data: 'old-private-data' }); }) });
+  registerApiClientInterceptors(client);
+  const request = client.get('/saldo').catch((error: unknown) => error);
+  await vi.waitFor(() => expect(finish).toBeDefined());
+  useAuthStore.getState().signIn({ userId: 'user', displayName: 'User', workspace: { id: 'new', nome: 'New', papel: 'Membro' } });
+  finish();
+  expect(axios.isCancel(await request)).toBe(true);
+});
+
+it('cancels a retry if the session changes before its request interceptors execute', async () => {
+  useAuthStore.getState().signIn({ userId: 'original', displayName: 'Original' });
+  useAuthStore.getState().setToken('expired');
+  const refresh = vi.spyOn(axios, 'post').mockResolvedValue({ data: { accessToken: 'renewed', usuario: { id: 'original', nome: 'Original' } } });
+  const adapter = vi.fn(async (config: InternalAxiosRequestConfig) => {
+    if (config.headers.Authorization === 'Bearer expired') throw new AxiosError('Unauthorized', 'ERR_TEST', config, undefined, { status: 401, statusText: 'Unauthorized', headers: {}, config, data: {} });
+    return { status: 200, statusText: 'OK', headers: {}, config, data: 'mutation-applied' };
+  });
+  const client = axios.create({ adapter });
+  registerApiClientInterceptors(client);
+  // Axios runs request interceptors asynchronously, in reverse registration order.
+  client.interceptors.request.use((config) => {
+    if ((config as InternalAxiosRequestConfig & { _retried?: boolean })._retried) {
+      useAuthStore.getState().signIn({ userId: 'other', displayName: 'Other' });
+      useAuthStore.getState().setToken('other-token');
+    }
+    return config;
+  });
+  try {
+    const result = await client.post('/contas-pagar', { valor: 10 }).catch((error: unknown) => error);
+    expect(axios.isCancel(result)).toBe(true);
+    expect(adapter).toHaveBeenCalledOnce();
+    expect(useAuthStore.getState().currentUser?.userId).toBe('other');
+  } finally {
+    refresh.mockRestore();
+  }
+});

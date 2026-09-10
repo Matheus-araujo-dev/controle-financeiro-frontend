@@ -1,43 +1,11 @@
-export type PlanoResumo = {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  valorMensal: number;
-  numParcelas: number;
-  contaBancariaCaixaId: string;
-  contaBancariaNome: string;
-  formaPagamentoId: string | null;
-  recebedorId: string | null;
-  contaGerencialId: string | null;
-  parcelasPagas: number;
-  totalRetirado: number;
-  valorTotal: number;
-  totalAcumulado: number;
-  concluido: boolean;
-  cancelado: boolean;
-  createdAtUtc: string;
-};
+import type * as Api from './generated/api';
+import type { ApiContract } from './api-contract';
 
-export type PlanoPayload = {
-  nome: string;
-  descricao?: string;
-  valorMensal: number;
-  numParcelas: number;
-  contaBancariaCaixaId: string;
-  formaPagamentoId?: string;
-  recebedorId?: string;
-  contaGerencialId?: string;
-};
+export type PlanoResumo = ApiContract<Api.PlanoResumoResponse, 'descricao' | 'formaPagamentoId' | 'recebedorId' | 'contaGerencialId'>;
 
-export type PlanoUpdatePayload = {
-  nome: string;
-  descricao?: string;
-  valorMensal: number;
-  numParcelas: number;
-  formaPagamentoId?: string;
-  recebedorId?: string;
-  contaGerencialId?: string;
-};
+export type PlanoPayload = ApiContract<Api.CriarPlanoRequest, never, 'descricao' | 'formaPagamentoId' | 'recebedorId' | 'contaGerencialId'>;
+
+export type PlanoUpdatePayload = ApiContract<Api.AtualizarPlanoRequest, never, 'descricao' | 'formaPagamentoId' | 'recebedorId' | 'contaGerencialId'>;
 
 export type PlanoListQuery = {
   page: number;

@@ -1,7 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { getApiErrorMessage } from './api-error';
 import { notify } from '../../store/notification-store';
-import { useAuthStore } from '../../store/auth-store';
+import { getSessionRevision, useAuthStore } from '../../store/auth-store';
 import type { AuthTokenResponse } from '../../types/auth';
 
 type BrowserLocationLike = Pick<Location, 'hostname' | 'protocol' | 'port'>;
@@ -28,22 +28,26 @@ export function resolveApiBaseUrl(envBaseUrl?: string, browserLocation: BrowserL
   return `${protocol}//${hostname}${portSegment}/api/v1`;
 }
 
-type RetriableRequestConfig = InternalAxiosRequestConfig & { _retried?: boolean; _silentError?: boolean };
+type RetriableRequestConfig = InternalAxiosRequestConfig & { _retried?: boolean; _silentError?: boolean; _sessionRevision?: number };
 
+let refreshRevision = -1;
 let refreshPromise: Promise<AuthTokenResponse | null> | null = null;
 
 async function tryRefreshSession(baseURL: string): Promise<AuthTokenResponse | null> {
+  const revision = getSessionRevision();
+  if (refreshRevision !== revision) { refreshPromise = null; refreshRevision = revision; }
   // Refresh token is sent automatically via HttpOnly cookie — no body needed.
   // Compartilha uma única renovação entre requisições concorrentes que tomaram 401.
   refreshPromise ??= axios
     .post<AuthTokenResponse>(`${baseURL}/auth/refresh`, {}, { timeout: 10000, withCredentials: true })
     .then((response) => {
+      if (revision !== getSessionRevision()) return null;
       useAuthStore.getState().applyTokenResponse(response.data);
       return response.data;
     })
     .catch(() => null)
     .finally(() => {
-      refreshPromise = null;
+      if (refreshRevision === revision) refreshPromise = null;
     });
 
   return refreshPromise;
@@ -53,6 +57,13 @@ export function registerApiClientInterceptors(client: ReturnType<typeof axios.cr
   client.interceptors.request.use((config) => {
     const { mode, currentUser, token } = useAuthStore.getState();
 
+    const request = config as RetriableRequestConfig;
+    const revision = getSessionRevision();
+    // A retry belongs to the original identity even if Axios schedules it after a session change.
+    if (request._sessionRevision !== undefined && request._sessionRevision !== revision) {
+      throw new axios.CanceledError('Session changed');
+    }
+    request._sessionRevision ??= revision;
     config.headers = config.headers ?? {};
 
     if (token) {
@@ -65,14 +76,21 @@ export function registerApiClientInterceptors(client: ReturnType<typeof axios.cr
   });
 
   return client.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      if ((response.config as RetriableRequestConfig)._sessionRevision !== getSessionRevision()) throw new axios.CanceledError('Session changed');
+      return response;
+    },
     async (error: AxiosError) => {
       const status = error.response?.status;
       const originalRequest = error.config as RetriableRequestConfig | undefined;
 
+      if (axios.isCancel(error) || (originalRequest?._sessionRevision !== undefined && originalRequest._sessionRevision !== getSessionRevision())) return Promise.reject(new axios.CanceledError('Session changed'));
+
       if (status === 401 && originalRequest && !originalRequest._retried) {
         originalRequest._retried = true;
         const renewed = await tryRefreshSession(client.defaults.baseURL ?? '');
+
+        if (originalRequest._sessionRevision !== getSessionRevision()) return Promise.reject(new axios.CanceledError('Session changed'));
 
         if (renewed) {
           originalRequest.headers.Authorization = `Bearer ${renewed.accessToken}`;

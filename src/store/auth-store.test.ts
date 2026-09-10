@@ -121,3 +121,15 @@ describe('useAuthStore', () => {
     });
   });
 });
+
+it('supports workspace-only and legacy family-only token responses', () => {
+  const usuario = { id: 'fallback', nome: 'Fallback', email: 'fallback@example.com', avatarUrl: null };
+  const workspace = { id: 'workspace', nome: 'Workspace', papel: 'Membro' };
+  useAuthStore.getState().applyTokenResponse({ accessToken: 'one', expiresAtUtc: '', usuario: { ...usuario, workspace } });
+  expect(useAuthStore.getState().currentUser?.familia).toEqual(workspace);
+  useAuthStore.getState().applyTokenResponse({ accessToken: 'two', expiresAtUtc: '', usuario: { ...usuario, familia: workspace } });
+  expect(useAuthStore.getState().currentUser?.workspace).toEqual(workspace);
+  useAuthStore.getState().applyTokenResponse({ accessToken: 'three', expiresAtUtc: '', usuario });
+  expect(useAuthStore.getState().currentUser?.workspace).toBeNull();
+  useAuthStore.getState().clearSession();
+});

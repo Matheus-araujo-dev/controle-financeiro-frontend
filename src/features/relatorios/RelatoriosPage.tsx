@@ -1,29 +1,14 @@
-import { useDeferredValue, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useReportUrlState } from './use-report-url-state';
+import { useReportData } from './use-report-data';
+import { useReportSearch } from './use-report-search';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Button } from '../../components/ui/Button';
 import { ComboBox } from '../../components/forms/ComboBox';
 import { DateInput } from '../../components/forms/DateInput';
 import { PageState } from '../../components/states/PageState';
-import { cadastrosApi } from '../../services/http/cadastros-api';
-import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
-import { dashboardApi } from '../../services/http/dashboard-api';
-import { financeiroApi } from '../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
-import type { CompraPlanejadaPrioridade, CompraPlanejadaStatus } from '../../types/compras-planejadas';
-import type {
-  DashboardCentralPrevisaoOrigem,
-  DashboardCentralPrevisaoStatus,
-  DashboardContaGerencialTipo
-} from '../../types/dashboard';
-import type {
-  ContaFinanceiraListSummary,
-  ContaPagarResumo,
-  ContaReceberResumo,
-  StatusContaCodigo,
-  StatusFaturaCodigo
-} from '../../types/financeiro';
 import { downloadReportWorkbook } from './report-export';
 import {
   ativoOptions,
@@ -36,87 +21,83 @@ import {
   inadimplenciaTipoOptions,
   lancamentosStatusOptions,
   lancamentosTipoOptions,
-  MAX_REPORT_ROWS,
   origemLabels,
   origemOptions,
   recorrenciaTipoOptions,
   reportTabs,
   statusLabels,
   statusPrevisaoOptions,
-  type ReportKey,
-  type ReportState
+  type ReportKey
 } from './relatorios-config';
 import {
   agingBucket,
   buildAlertas,
   buildExportDefinition,
   buildInadimplenciaRows,
-  emptyPaged,
   exportarPdf,
   getCurrentReferenceMonth,
-  getMonthRange,
   getRecorrenciaTipoLabel
 } from './relatorios-helpers';
 import { AlertCard, FilterCombo, FilterInput, MetricCard, ReportTable } from './relatorios-components';
 
 
 export function RelatoriosPage() {
-  const [activeReport, setActiveReport] = useState<ReportKey>('geral');
-  const [referenceMonth, setReferenceMonth] = useState(getCurrentReferenceMonth());
+  const [activeReport, setActiveReport] = useReportUrlState<ReportKey>('activeReport', 'geral', value => reportTabs.some(tab => tab.key === value));
+  const [referenceMonth, setReferenceMonth] = useReportUrlState<string>('referenceMonth', getCurrentReferenceMonth(), value => /^\d{4}-(0[1-9]|1[0-2])$/.test(value));
 
   // Fluxo de caixa filters
-  const [fluxoDias, setFluxoDias] = useState('30');
+  const [fluxoDias, setFluxoDias] = useReportUrlState<string>('fluxoDias', '30', value => fluxoDiasOptions.some(option => option.value === value));
 
   // Contas gerenciais / análises
-  const [contaTipo, setContaTipo] = useState<string[]>([]);
-  const [contasGerenciaisSearch, setContasGerenciaisSearch] = useState('');
-  const deferredContasGerenciaisSearch = useDeferredValue(contasGerenciaisSearch);
+  const [contaTipo, setContaTipo] = useReportUrlState<string[]>('contaTipo', []);
+  const [contasGerenciaisSearch, setContasGerenciaisSearch] = useReportUrlState<string>('contasGerenciaisSearch', '');
+  const deferredContasGerenciaisSearch = useReportSearch(contasGerenciaisSearch);
 
   // Responsáveis
-  const [responsaveisSearch, setResponsaveisSearch] = useState('');
-  const deferredResponsaveisSearch = useDeferredValue(responsaveisSearch);
+  const [responsaveisSearch, setResponsaveisSearch] = useReportUrlState<string>('responsaveisSearch', '');
+  const deferredResponsaveisSearch = useReportSearch(responsaveisSearch);
 
   // Previsões
-  const [previsaoOrigem, setPrevisaoOrigem] = useState<string[]>([]);
-  const [previsaoStatus, setPrevisaoStatus] = useState<string[]>([]);
+  const [previsaoOrigem, setPrevisaoOrigem] = useReportUrlState<string[]>('previsaoOrigem', []);
+  const [previsaoStatus, setPrevisaoStatus] = useReportUrlState<string[]>('previsaoStatus', []);
 
   // Inadimplência
-  const [inadimplenciaTipo, setInadimplenciaTipo] = useState<string[]>([]);
-  const [inadimplenciaSearch, setInadimplenciaSearch] = useState('');
-  const deferredInadimplenciaSearch = useDeferredValue(inadimplenciaSearch);
+  const [inadimplenciaTipo, setInadimplenciaTipo] = useReportUrlState<string[]>('inadimplenciaTipo', []);
+  const [inadimplenciaSearch, setInadimplenciaSearch] = useReportUrlState<string>('inadimplenciaSearch', '');
+  const deferredInadimplenciaSearch = useReportSearch(inadimplenciaSearch);
 
   // Faturas
-  const [faturaSearch, setFaturaSearch] = useState('');
-  const [faturaStatus, setFaturaStatus] = useState<string[]>([]);
-  const [faturaCartaoId, setFaturaCartaoId] = useState('');
-  const deferredFaturaSearch = useDeferredValue(faturaSearch);
+  const [faturaSearch, setFaturaSearch] = useReportUrlState<string>('faturaSearch', '');
+  const [faturaStatus, setFaturaStatus] = useReportUrlState<string[]>('faturaStatus', []);
+  const [faturaCartaoId, setFaturaCartaoId] = useReportUrlState<string>('faturaCartaoId', '');
+  const deferredFaturaSearch = useReportSearch(faturaSearch);
 
   // Recorrências
-  const [recorrenciaSearch, setRecorrenciaSearch] = useState('');
-  const [recorrenciaTipo, setRecorrenciaTipo] = useState<string[]>([]);
-  const [recorrenciaAtiva, setRecorrenciaAtiva] = useState<string[]>([]);
-  const deferredRecorrenciaSearch = useDeferredValue(recorrenciaSearch);
+  const [recorrenciaSearch, setRecorrenciaSearch] = useReportUrlState<string>('recorrenciaSearch', '');
+  const [recorrenciaTipo, setRecorrenciaTipo] = useReportUrlState<string[]>('recorrenciaTipo', []);
+  const [recorrenciaAtiva, setRecorrenciaAtiva] = useReportUrlState<string[]>('recorrenciaAtiva', []);
+  const deferredRecorrenciaSearch = useReportSearch(recorrenciaSearch);
 
   // Compras planejadas
-  const [compraSearch, setCompraSearch] = useState('');
-  const [compraStatus, setCompraStatus] = useState<string[]>([]);
-  const [compraPrioridade, setCompraPrioridade] = useState<string[]>([]);
-  const deferredCompraSearch = useDeferredValue(compraSearch);
+  const [compraSearch, setCompraSearch] = useReportUrlState<string>('compraSearch', '');
+  const [compraStatus, setCompraStatus] = useReportUrlState<string[]>('compraStatus', []);
+  const [compraPrioridade, setCompraPrioridade] = useReportUrlState<string[]>('compraPrioridade', []);
+  const deferredCompraSearch = useReportSearch(compraSearch);
 
   // Comparativo
-  const [comparativoMeses, setComparativoMeses] = useState('6');
+  const [comparativoMeses, setComparativoMeses] = useReportUrlState<string>('comparativoMeses', '6', value => comparativoMesesOptions.some(option => option.value === value));
 
   // Responsável (filtro compartilhado: DRE, Contas Gerenciais, Análises, Inadimplência, Compras, Recorrências)
-  const [responsavelId, setResponsavelId] = useState('');
+  const [responsavelId, setResponsavelId] = useReportUrlState<string>('responsavelId', '');
 
   // Lançamentos (a pagar/receber)
-  const [lancamentosTipo, setLancamentosTipo] = useState<string[]>([]);
-  const [lancamentosStatus, setLancamentosStatus] = useState<string[]>([]);
-  const [lancamentosResponsavelId, setLancamentosResponsavelId] = useState('');
-  const [lancamentosSearch, setLancamentosSearch] = useState('');
-  const deferredLancamentosSearch = useDeferredValue(lancamentosSearch);
+  const [lancamentosTipo, setLancamentosTipo] = useReportUrlState<string[]>('lancamentosTipo', []);
+  const [lancamentosStatus, setLancamentosStatus] = useReportUrlState<string[]>('lancamentosStatus', []);
+  const [lancamentosResponsavelId, setLancamentosResponsavelId] = useReportUrlState<string>('lancamentosResponsavelId', '');
+  const [lancamentosSearch, setLancamentosSearch] = useReportUrlState<string>('lancamentosSearch', '');
+  const deferredLancamentosSearch = useReportSearch(lancamentosSearch);
 
-  const reportFilters = {
+  const { data, loading, errors, ready } = useReportData(activeReport, {
     referenceMonth,
     fluxoDias,
     contaTipo,
@@ -140,161 +121,19 @@ export function RelatoriosPage() {
     lancamentosStatus,
     lancamentosResponsavelId,
     deferredLancamentosSearch
-  };
-
-  const { data: reportData, isFetching: loading, error: reportError } = useQuery({
-    queryKey: ['relatorios', reportFilters],
-    queryFn: async (): Promise<ReportState> => {
-      const range = getMonthRange(referenceMonth);
-      const [
-        resumo,
-        responsaveis,
-        contasGerenciais,
-        fluxoCaixa,
-        previsoes,
-        contasPagarVencidas,
-        contasReceberVencidas,
-        faturas,
-        recorrencias,
-        compras,
-        comparativo,
-        cartoesResult,
-        contasPagarLancamentosResult,
-        contasReceberLancamentosResult
-      ] = await Promise.all([
-        dashboardApi.obterResumo({ mesReferencia: referenceMonth }),
-        dashboardApi.obterResumoPorResponsaveis({ mesReferencia: referenceMonth }),
-        dashboardApi.obterResumoContasGerenciais({
-          mesReferencia: referenceMonth,
-          tipo: contaTipo[0] as DashboardContaGerencialTipo | undefined,
-          responsavelId: responsavelId || undefined
-        }),
-        dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth, dias: Number(fluxoDias) }),
-        dashboardApi.obterResumoCentralPrevisao({
-          mesReferencia: referenceMonth,
-          origem: previsaoOrigem[0] as DashboardCentralPrevisaoOrigem | undefined,
-          status: previsaoStatus[0] as DashboardCentralPrevisaoStatus | undefined
-        }),
-        (!inadimplenciaTipo.length || inadimplenciaTipo.includes('pagar'))
-          ? financeiroApi.contasPagar.listar({
-              page: 1,
-              pageSize: MAX_REPORT_ROWS,
-              search: deferredInadimplenciaSearch,
-              statusCodigo: ['VENCIDA'],
-              dataInicial: range.start,
-              dataFinal: range.end,
-              responsavelIds: responsavelId ? [responsavelId] : undefined,
-              sortBy: 'dataVencimento',
-              sortDirection: 'Asc'
-            })
-          : Promise.resolve(emptyPaged<ContaPagarResumo, ContaFinanceiraListSummary>()),
-        (!inadimplenciaTipo.length || inadimplenciaTipo.includes('receber'))
-          ? financeiroApi.contasReceber.listar({
-              page: 1,
-              pageSize: MAX_REPORT_ROWS,
-              search: deferredInadimplenciaSearch,
-              statusCodigo: ['VENCIDA'],
-              dataInicial: range.start,
-              dataFinal: range.end,
-              responsavelIds: responsavelId ? [responsavelId] : undefined,
-              sortBy: 'dataVencimento',
-              sortDirection: 'Asc'
-            })
-          : Promise.resolve(emptyPaged<ContaReceberResumo, ContaFinanceiraListSummary>()),
-        financeiroApi.faturas.listar({
-          page: 1,
-          pageSize: MAX_REPORT_ROWS,
-          search: deferredFaturaSearch,
-          competencia: referenceMonth,
-          statusCodigo: faturaStatus[0] as StatusFaturaCodigo | undefined,
-          sortBy: 'dataVencimento',
-          sortDirection: 'Asc'
-        }),
-        financeiroApi.recorrencias.listar({
-          page: 1,
-          pageSize: MAX_REPORT_ROWS,
-          search: deferredRecorrenciaSearch,
-          tipo: recorrenciaTipo[0] as 'Pagar' | 'Receber' | undefined,
-          ativa: recorrenciaAtiva[0] === 'true' ? true : recorrenciaAtiva[0] === 'false' ? false : undefined,
-          dataReferenciaInicial: range.start,
-          dataReferenciaFinal: range.end,
-          sortBy: 'dataInicio',
-          sortDirection: 'Asc'
-        }),
-        comprasPlanejadasApi.listar({
-          page: 1,
-          pageSize: MAX_REPORT_ROWS,
-          search: deferredCompraSearch,
-          status: compraStatus[0] as CompraPlanejadaStatus | undefined,
-          prioridade: compraPrioridade[0] as CompraPlanejadaPrioridade | undefined,
-          dataDesejadaInicial: range.start,
-          dataDesejadaFinal: range.end,
-          responsavelId: responsavelId || undefined,
-          sortBy: 'dataDesejada',
-          sortDirection: 'Asc'
-        }),
-        dashboardApi.obterComparativoMensal({ meses: Number(comparativoMeses) }),
-        cadastrosApi.cartoes.listar({ page: 1, pageSize: 200 }),
-        (!lancamentosTipo.length || lancamentosTipo.includes('pagar'))
-          ? financeiroApi.contasPagar.listar({
-              page: 1,
-              pageSize: MAX_REPORT_ROWS,
-              search: deferredLancamentosSearch,
-              dataEmissaoInicial: range.start,
-              dataEmissaoFinal: range.end,
-              responsavelIds: lancamentosResponsavelId ? [lancamentosResponsavelId] : undefined,
-              statusCodigo: lancamentosStatus[0] as StatusContaCodigo | undefined,
-              sortBy: 'dataEmissao',
-              sortDirection: 'Desc'
-            })
-          : Promise.resolve(emptyPaged<ContaPagarResumo, ContaFinanceiraListSummary>()),
-        (!lancamentosTipo.length || lancamentosTipo.includes('receber'))
-          ? financeiroApi.contasReceber.listar({
-              page: 1,
-              pageSize: MAX_REPORT_ROWS,
-              search: deferredLancamentosSearch,
-              dataEmissaoInicial: range.start,
-              dataEmissaoFinal: range.end,
-              responsavelIds: lancamentosResponsavelId ? [lancamentosResponsavelId] : undefined,
-              statusCodigo: lancamentosStatus[0] as StatusContaCodigo | undefined,
-              sortBy: 'dataEmissao',
-              sortDirection: 'Desc'
-            })
-          : Promise.resolve(emptyPaged<ContaReceberResumo, ContaFinanceiraListSummary>())
-      ]);
-      return {
-        resumo,
-        responsaveis,
-        contasGerenciais,
-        fluxoCaixa,
-        previsoes,
-        contasPagarVencidas,
-        contasReceberVencidas,
-        faturas,
-        recorrencias,
-        compras,
-        comparativo,
-        cartoes: cartoesResult.items,
-        contasPagarLancamentos: contasPagarLancamentosResult,
-        contasReceberLancamentos: contasReceberLancamentosResult
-      };
-    },
-    staleTime: 30_000,
-    placeholderData: (prev) => prev
   });
+  const searchPending = contasGerenciaisSearch !== deferredContasGerenciaisSearch || responsaveisSearch !== deferredResponsaveisSearch || inadimplenciaSearch !== deferredInadimplenciaSearch || faturaSearch !== deferredFaturaSearch || recorrenciaSearch !== deferredRecorrenciaSearch || compraSearch !== deferredCompraSearch || lancamentosSearch !== deferredLancamentosSearch;
+  const errorMessage = errors.length ? errors.map(error => error instanceof Error ? error.message : 'Falha ao carregar relatórios.').join("; ") : undefined;
 
-  const data: ReportState = reportData ?? {};
-  const errorMessage = reportError instanceof Error ? reportError.message : reportError ? 'Falha ao carregar relatórios.' : undefined;
-
-  const responsaveis = data.responsaveis?.itens ?? [];
-  const contasGerenciais = data.contasGerenciais?.itens ?? [];
+  const responsaveis = useMemo(() => data.responsaveis?.itens ?? [], [data.responsaveis]);
+  const contasGerenciais = useMemo(() => data.contasGerenciais?.itens ?? [], [data.contasGerenciais]);
   const fluxoItens = data.fluxoCaixa?.itens ?? [];
   const previsoes = useMemo(() => data.previsoes?.itens ?? [], [data.previsoes]);
   const inadimplenciaRows = buildInadimplenciaRows(data);
-  const faturas = data.faturas?.items ?? [];
-  const recorrencias = data.recorrencias?.items ?? [];
+  const faturas = useMemo(() => data.faturas?.items ?? [], [data.faturas]);
+  const recorrencias = useMemo(() => data.recorrencias?.items ?? [], [data.recorrencias]);
   const compras = data.compras?.items ?? [];
-  const cartoes = data.cartoes ?? [];
+  const cartoes = useMemo(() => data.cartoes ?? [], [data.cartoes]);
 
   // Client-side derived filters
   const responsaveisFiltrados = useMemo(() => {
@@ -460,6 +299,7 @@ export function RelatoriosPage() {
               type="button"
               variant="primary"
               className="flex-1"
+              disabled={!ready || searchPending}
               onClick={handleExportExcel}
               icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>table_view</span>}
             >
@@ -469,6 +309,7 @@ export function RelatoriosPage() {
               type="button"
               variant="primary"
               className="flex-1"
+              disabled={!ready || searchPending}
               onClick={exportarPdf}
               icon={<span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>picture_as_pdf</span>}
             >
@@ -479,7 +320,7 @@ export function RelatoriosPage() {
       </div>
 
       {errorMessage ? (
-        <div className="rounded-2xl border border-error/30 bg-error/10 p-4 text-sm font-bold text-error">{errorMessage}</div>
+        <div className="rounded-2xl border border-error/30 bg-error/10 p-4 text-sm font-bold text-error">{errorMessage}<p>Dados incompletos: a exportação ficará disponível após atualizar todas as fontes deste relatório.</p></div>
       ) : null}
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -500,6 +341,7 @@ export function RelatoriosPage() {
             <button
               key={tab.key}
               type="button"
+              aria-pressed={activeReport === tab.key}
               onClick={() => setActiveReport(tab.key)}
               className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-bold transition-colors ${
                 activeReport === tab.key
@@ -514,7 +356,7 @@ export function RelatoriosPage() {
         </div>
       </div>
 
-      {loading ? <div className="text-sm font-bold text-primary">Atualizando relatórios...</div> : null}
+      {loading || searchPending ? <div role="status" className="text-sm font-bold text-primary">Atualizando relatórios...</div> : null}
 
       {/* ── Visão geral ─────────────────────────────────────────────────────── */}
       {activeReport === 'geral' ? (

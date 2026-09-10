@@ -1,3 +1,6 @@
+import type * as Api from './generated/api';
+import type { ApiContract } from './api-contract';
+
 import type { PagedResult } from './api';
 
 export type CompraPlanejadaPrioridade = 'Baixa' | 'Media' | 'Alta';
@@ -11,58 +14,19 @@ export type ListQueryBase = {
   sortDirection?: 'Asc' | 'Desc';
 };
 
-export type CompraPlanejadaResumo = {
-  id: string;
-  titulo: string;
-  valorEstimado: number;
-  dataDesejada: string | null;
+export type CompraPlanejadaResumo = Omit<ApiContract<Api.CompraPlanejadaResumoResponse, 'dataDesejada' | 'quantidadeParcelasDesejada' | 'link' | 'contaPagarGeradaId' | 'convertidaEmContaPagarEmUtc'>, 'prioridade' | 'status'> & {
   prioridade: CompraPlanejadaPrioridade;
   status: CompraPlanejadaStatus;
-  parcelavel: boolean;
-  quantidadeParcelasDesejada: number | null;
-  contaGerencialId: string;
-  contaGerencialDescricao: string;
-  responsavelId: string;
-  responsavelNome: string;
-  link: string | null;
-  contaPagarGeradaId: string | null;
-  convertidaEmContaPagarEmUtc: string | null;
 };
 
-export type CompraPlanejadaDetalhe = CompraPlanejadaResumo & {
-  descricao: string | null;
-  observacao: string | null;
-  createdAtUtc: string;
-  updatedAtUtc: string;
-};
+export type CompraPlanejadaDetalhe = CompraPlanejadaResumo & ApiContract<Pick<Api.CompraPlanejadaDetalheResponse, 'descricao' | 'observacao' | 'createdAtUtc' | 'updatedAtUtc'>, 'descricao' | 'observacao'>;
 
-export type CompraPlanejadaPayload = {
-  titulo: string;
-  descricao: string;
-  valorEstimado: number;
-  dataDesejada: string;
+export type CompraPlanejadaPayload = Omit<ApiContract<Api.CriarCompraPlanejadaRequest, 'quantidadeParcelasDesejada'>, 'prioridade' | 'status'> & {
   prioridade: CompraPlanejadaPrioridade;
   status: CompraPlanejadaStatus;
-  parcelavel: boolean;
-  quantidadeParcelasDesejada: number | null;
-  contaGerencialId: string;
-  responsavelId: string;
-  link: string;
-  observacao: string;
 };
 
-export type RealizarCompraPlanejadaPayload = {
-  dataCompra: string;
-  dataVencimento: string | null;
-  recebedorId: string;
-  formaPagamentoId: string;
-  cartaoId: string | null;
-  contaBancariaId: string | null;
-  quantidadeParcelas: number;
-  numeroDocumento: string;
-  descricao: string;
-  observacao: string;
-};
+export type RealizarCompraPlanejadaPayload = ApiContract<Api.RealizarCompraPlanejadaRequest, 'dataVencimento' | 'cartaoId' | 'contaBancariaId'>;
 
 export type CompraPlanejadaFilters = ListQueryBase & {
   prioridade?: CompraPlanejadaPrioridade;
@@ -79,9 +43,6 @@ export type CompraPlanejadaFilters = ListQueryBase & {
   link?: string;
 };
 
-export type CompraPlanejadaListSummary = {
-  totalRegistros: number;
-  valorTotalEstimado: number;
-};
+export type CompraPlanejadaListSummary = ApiContract<Api.CompraPlanejadaListSummaryResponse>;
 
 export type PagedCompraPlanejada<T, TSummary = unknown> = PagedResult<T, TSummary>;

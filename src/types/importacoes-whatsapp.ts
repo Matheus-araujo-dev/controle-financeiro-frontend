@@ -1,3 +1,6 @@
+import type * as Api from './generated/api';
+import type { ApiContract } from './api-contract';
+
 import type { PagedResult } from './api';
 
 export type TipoOrigemImportacaoWhatsappCodigo = 'TEXTO' | 'IMAGEM' | 'PDF' | 'ARQUIVO';
@@ -17,17 +20,7 @@ export type TipoSugestaoImportacaoWhatsappCodigo =
   | 'ITEM_EXTRATO';
 export type StatusItemImportadoWhatsappCodigo = 'SUGERIDO' | 'CONFIRMADO' | 'REJEITADO';
 
-export type PredicaoClassificacaoImportacaoWhatsapp = {
-  contaGerencialId: string | null;
-  contaGerencialDescricao: string | null;
-  responsavelId: string | null;
-  responsavelNome: string | null;
-  descricaoAjustada: string | null;
-  gerarContaReceber: boolean;
-  marcarComoRecorrente: boolean;
-  quantidadeOcorrencias: number;
-  confiancaHistorico: number;
-};
+export type PredicaoClassificacaoImportacaoWhatsapp = ApiContract<Api.PredicaoClassificacaoImportacaoWhatsappResponse, 'contaGerencialId' | 'contaGerencialDescricao' | 'responsavelId' | 'responsavelNome' | 'descricaoAjustada'>;
 
 export type ImportacoesWhatsappFilters = {
   page: number;
@@ -48,43 +41,15 @@ export type ImportacoesWhatsappFilters = {
   processadoEmFinal?: string;
 };
 
-export type ImportacaoWhatsappResumo = {
-  id: string;
+export type ImportacaoWhatsappResumo = Omit<ApiContract<Api.ImportacaoWhatsappResumoResponse, 'textoBruto' | 'nomeArquivo' | 'mimeType' | 'confiancaExtracao' | 'processadoEmUtc'>, 'tipoOrigemCodigo' | 'statusCodigo'> & {
   tipoOrigemCodigo: TipoOrigemImportacaoWhatsappCodigo;
-  tipoOrigemNome: string;
-  remetente: string;
-  textoBruto: string | null;
-  nomeArquivo: string | null;
-  mimeType: string | null;
   statusCodigo: StatusImportacaoWhatsappCodigo;
-  statusNome: string;
-  confiancaExtracao: number | null;
-  quantidadeItens: number;
-  quantidadePendentes: number;
-  recebidoEmUtc: string;
-  processadoEmUtc: string | null;
 };
 
-export type ItemImportadoWhatsapp = {
-  id: string;
-  importacaoWhatsappId: string;
+export type ItemImportadoWhatsapp = Omit<ApiContract<Api.ItemImportadoWhatsappResponse, 'descricaoAjustada' | 'contaGerencialId' | 'contaGerencialDescricao' | 'responsavelId' | 'responsavelNome' | 'contaReceberId' | 'statusPrevisaoNome' | 'observacao' | 'confirmadoEmUtc' | 'rejeitadoEmUtc'>, 'tipoSugestaoCodigo' | 'statusCodigo' | 'statusPrevisaoCodigo' | 'predicao'> & {
   tipoSugestaoCodigo: TipoSugestaoImportacaoWhatsappCodigo;
-  tipoSugestaoNome: string;
-  payloadSugeridoJson: string;
   statusCodigo: StatusItemImportadoWhatsappCodigo;
-  statusNome: string;
-  descricaoAjustada: string | null;
-  marcarComoRecorrente: boolean;
-  contaGerencialId: string | null;
-  contaGerencialDescricao: string | null;
-  responsavelId: string | null;
-  responsavelNome: string | null;
-  contaReceberId: string | null;
   statusPrevisaoCodigo: 'PREVISTO' | 'NAO_PREVISTO' | null;
-  statusPrevisaoNome: string | null;
-  observacao: string | null;
-  confirmadoEmUtc: string | null;
-  rejeitadoEmUtc: string | null;
   predicao: PredicaoClassificacaoImportacaoWhatsapp | null;
 };
 
@@ -97,19 +62,9 @@ export type ImportacaoWhatsappDetalhe = Omit<ImportacaoWhatsappResumo, 'quantida
   itens: ItemImportadoWhatsapp[];
 };
 
-export type RevisarItemImportadoPayload = {
-  observacao: string | null;
-  descricaoAjustada: string | null;
-  contaGerencialId: string | null;
-  responsavelId: string | null;
-  dataVencimentoContaReceber: string | null;
-  gerarContaReceber: boolean;
-  marcarComoRecorrente: boolean;
-};
+export type RevisarItemImportadoPayload = ApiContract<Api.RevisarItemImportadoWhatsappRequest, 'observacao' | 'descricaoAjustada' | 'contaGerencialId' | 'responsavelId' | 'dataVencimentoContaReceber'>;
 
-export type AprovarImportacaoWhatsappPayload = {
-  recebedorFaturaId: string | null;
-  responsavelPagamentoFaturaId: string | null;
+export type AprovarImportacaoWhatsappPayload = Omit<ApiContract<Api.AprovarImportacaoWhatsappRequest, 'recebedorFaturaId' | 'responsavelPagamentoFaturaId'>, 'cartaoIds'> & {
   cartaoIds: string[];
 };
 

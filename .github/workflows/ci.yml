@@ -28,6 +28,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Generated API contract check
+        run: npm run contracts:check
+
       - name: Typecheck
         run: npm run typecheck
 

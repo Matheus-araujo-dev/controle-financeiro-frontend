@@ -1,4 +1,5 @@
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -12,7 +13,7 @@ function renderPage() {
   const queryClient = createTestQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <RelatoriosPage />
+      <MemoryRouter><RelatoriosPage /></MemoryRouter>
     </QueryClientProvider>
   );
 }
@@ -265,7 +266,7 @@ function mockReports() {
       }
     ]
   } as never);
-  vi.mocked(financeiroApi.contasReceber.listar).mockResolvedValue({ ...pagedBase, summary: {}, items: [] } as never);
+  vi.mocked(financeiroApi.contasReceber.listar).mockResolvedValue({ ...pagedBase, totalItems: 0, totalPages: 0, summary: {}, items: [] } as never);
   vi.mocked(comprasPlanejadasApi.listar).mockResolvedValue({
     ...pagedBase,
     summary: { totalRegistros: 1, valorTotalEstimado: 17000 },
@@ -437,9 +438,9 @@ const recorrenciasRich = {
 const comprasRich = {
   page: 1,
   pageSize: 250,
-  totalItems: 3,
+  totalItems: 2,
   totalPages: 1,
-  summary: { totalRegistros: 3, valorTotalEstimado: 10000 },
+  summary: { totalRegistros: 2, valorTotalEstimado: 10000 },
   items: [
     {
       id: 'c-1',
@@ -484,23 +485,29 @@ describe('RelatoriosPage', () => {
     mockReports();
   });
 
-  it('loads all report sources and renders the overview', async () => {
+  it('loads only common metrics for overview and lazily fetches the active report', async () => {
     renderPage();
+    await screen.findByText('Conta vencida');
+    expect(dashboardApi.obterResumo).toHaveBeenCalledTimes(1);
+    expect(financeiroApi.faturas.listar).not.toHaveBeenCalled();
+    expect(dashboardApi.obterFluxoCaixa).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: /faturas/i }));
+    await waitFor(() => expect(financeiroApi.faturas.listar).toHaveBeenCalledTimes(1));
+    expect(dashboardApi.obterResumo).toHaveBeenCalledTimes(1);
+    expect(dashboardApi.obterFluxoCaixa).not.toHaveBeenCalled();
+  });
 
-    expect(await screen.findByText(/Leitura gerencial do período/i)).toBeInTheDocument();
+  it('isolates source failures and disables incomplete exports', async () => {
+    vi.mocked(financeiroApi.faturas.listar).mockRejectedValue(new Error('Faturas indisponíveis'));
+    renderPage();
+    await screen.findByText('Conta vencida');
+    await userEvent.click(screen.getByRole('button', { name: /faturas/i }));
+    await screen.findByText('Faturas indisponíveis');
+    expect(screen.getByRole('button', { name: /Excel/i })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: /visão geral/i }));
     expect(await screen.findByText('Conta vencida')).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(dashboardApi.obterResumo).toHaveBeenCalledWith(expect.objectContaining({ mesReferencia: expect.any(String) }));
-      expect(dashboardApi.obterResumoPorResponsaveis).toHaveBeenCalled();
-      expect(dashboardApi.obterResumoContasGerenciais).toHaveBeenCalled();
-      expect(dashboardApi.obterFluxoCaixa).toHaveBeenCalled();
-      expect(dashboardApi.obterResumoCentralPrevisao).toHaveBeenCalled();
-      expect(financeiroApi.contasPagar.listar).toHaveBeenCalledWith(expect.objectContaining({ statusCodigo: ['VENCIDA'] }));
-      expect(financeiroApi.faturas.listar).toHaveBeenCalled();
-      expect(financeiroApi.recorrencias.listar).toHaveBeenCalled();
-      expect(comprasPlanejadasApi.listar).toHaveBeenCalled();
-    });
+    expect(screen.queryByText('Faturas indisponíveis')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Excel/i })).toBeEnabled();
   });
 
   it('allows switching between the available report tabs', async () => {
@@ -966,6 +973,7 @@ describe('RelatoriosPage', () => {
   it('renders lançamentos tab agrupando parcelas por grupoParcelamentoId', async () => {
     vi.mocked(financeiroApi.contasPagar.listar).mockResolvedValue({
       ...pagedBase,
+      totalItems: 3,
       summary: { totalRegistros: 3, valorTotal: 1500, totalPendente: 1500, totalVencido: 0, totalVencendoHoje: 0, totalLiquidado: 0 },
       items: [
         {

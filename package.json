@@ -11,13 +11,14 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "coverage": "vitest run --coverage",
-    "quality:gate": "npm run security:audit && npm run lint && npm run build && npm run test -- --coverage --threshold.lines=80 --threshold.functions=80 --threshold.statements=80 --threshold.branches=80",
+    "quality:gate": "npm run security:audit && npm run lint && npm run build && npm run coverage",
     "quality:check": "npm run lint && npm run build && npm run coverage",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "security:audit": "audit-ci",
+    "security:audit": "audit-ci --config .audit-ci.json",
     "security:audit:fix": "npm audit fix --audit-level=moderate",
-    "generate:types": "swagger-typescript-api generate -p http://localhost:5000/swagger/v1/swagger.json -o src/types/generated -n api.ts --extract-enums --modular --add-headers --clean-output"
+    "generate:types": "node scripts/generate-types.mjs",
+    "contracts:check": "node scripts/generate-types.mjs --check"
   },
   "license": "ISC",
   "type": "module",
@@ -32,7 +33,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.72.1",
-    "react-router-dom": "7.18.1",
+    "react-router-dom": "7.18.3",
     "recharts": "^3.8.1",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"

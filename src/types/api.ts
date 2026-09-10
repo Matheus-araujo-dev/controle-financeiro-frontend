@@ -1,8 +1,8 @@
-export type ApiErrorResponse = {
-  code: string;
-  message: string;
+import type * as Api from './generated/api';
+import type { ApiContract } from './api-contract';
+
+export type ApiErrorResponse = Omit<ApiContract<Api.ApiErrorResponse>, 'errors'> & {
   errors: Record<string, string[]>;
-  traceId: string;
 };
 
 export type PagedResult<T, TSummary = unknown> = {

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { FaturasPage } from './FaturasPage';
 
 vi.mock('../../services/http/financeiro-api', () => ({
   financeiroApi: {
@@ -53,7 +54,6 @@ async function renderPage() {
     summary: { totalRegistros: 2, valorTotal: 3500, porCartao: [], porCompetencia: [] },
   } as Awaited<ReturnType<typeof financeiroApi.faturas.listar>>);
 
-  const { FaturasPage } = await import('./FaturasPage');
   const qc = createQC();
   render(
     <QueryClientProvider client={qc}>

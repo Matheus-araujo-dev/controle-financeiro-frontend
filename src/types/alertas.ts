@@ -1,29 +1,12 @@
-export type ConfiguracaoNotificacao = {
-  emailAtivo: boolean;
-  emailDestinatario: string | null;
-  emailVencimento: boolean;
-  emailDiasAntecedencia: number;
-  emailLimiteCategoria: boolean;
-  pushAtivo: boolean;
-  pushVencimento: boolean;
-  pushDiasAntecedencia: number;
-  pushLimiteCategoria: boolean;
-};
+import type * as Api from './generated/api';
+import type { ApiContract } from './api-contract';
+
+export type ConfiguracaoNotificacao = ApiContract<Api.ConfiguracaoNotificacaoResponse, 'emailDestinatario'>;
 
 export type SalvarConfiguracaoNotificacaoPayload = ConfiguracaoNotificacao;
 
-export type PushSubscriptionRecord = {
-  id: string;
-  endpoint: string;
-  ativo: boolean;
-};
+export type PushSubscriptionRecord = ApiContract<Api.PushSubscriptionResponse>;
 
-export type RegistrarPushSubscriptionPayload = {
-  endpoint: string;
-  p256dh: string;
-  auth: string;
-};
+export type RegistrarPushSubscriptionPayload = ApiContract<Api.RegistrarPushSubscriptionRequest>;
 
-export type VapidPublicKeyResponse = {
-  publicKey: string;
-};
+export type VapidPublicKeyResponse = ApiContract<Api.VapidPublicKeyResponse>;
