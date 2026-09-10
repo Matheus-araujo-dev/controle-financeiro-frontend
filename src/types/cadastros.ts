@@ -1,16 +1,12 @@
+import type * as Api from './generated/api';
+import type { ApiContract } from './api-contract';
+
 import type { PagedResult } from './api';
 
-export type PessoaTipo = 'Fisica' | 'Juridica';
-export type PessoaChavePixTipo = 'CpfCnpj' | 'Email' | 'Telefone' | 'Aleatoria';
-export type FormaPagamentoTipo =
-  | 'Dinheiro'
-  | 'Pix'
-  | 'Boleto'
-  | 'Transferencia'
-  | 'Debito'
-  | 'Credito'
-  | 'Outro';
-export type ContaGerencialTipo = 'Receita' | 'Despesa';
+export type PessoaTipo = Api.PessoaTipo;
+export type PessoaChavePixTipo = Api.PessoaChavePixTipo;
+export type FormaPagamentoTipo = Api.FormaPagamentoTipo;
+export type ContaGerencialTipo = Api.ContaGerencialTipo;
 
 export type ListQueryBase = {
   page: number;
@@ -20,46 +16,21 @@ export type ListQueryBase = {
   sortDirection?: 'Asc' | 'Desc';
 };
 
-export type PessoaResumo = {
-  id: string;
-  nome: string;
+export type PessoaResumo = Omit<ApiContract<Api.PessoaResumoResponse, 'cpfCnpj' | 'email' | 'telefone' | 'contaGerencialDespesaId' | 'contaGerencialReceitaId'>, 'tipoPessoa'> & {
   tipoPessoa: PessoaTipo;
-  cpfCnpj: string | null;
-  email: string | null;
-  telefone: string | null;
-  ativo: boolean;
-  ehPagador: boolean;
-  ehRecebedor: boolean;
-  ehResponsavel: boolean;
-  contaGerencialDespesaId: string | null;
-  contaGerencialReceitaId: string | null;
 };
 
-export type PessoaChavePix = {
+export type PessoaChavePix = Omit<ApiContract<Api.PessoaChavePixResponse>, 'tipo'> & {
   tipo: PessoaChavePixTipo;
-  chave: string;
 };
 
-export type PessoaDetalhe = PessoaResumo & {
-  observacao: string | null;
+export type PessoaDetalhe = PessoaResumo & ApiContract<Pick<Api.PessoaDetalheResponse, 'observacao' | 'createdAtUtc' | 'updatedAtUtc'>, 'observacao'> & {
   chavesPix: PessoaChavePix[];
-  createdAtUtc: string;
-  updatedAtUtc: string;
 };
 
-export type PessoaPayload = {
-  nome: string;
+export type PessoaPayload = Omit<ApiContract<Api.CriarPessoaRequest>, 'tipoPessoa' | 'chavesPix'> & {
   tipoPessoa: PessoaTipo;
-  cpfCnpj: string;
-  email: string;
-  telefone: string;
-  observacao: string;
   chavesPix: PessoaChavePix[];
-  ehPagador: boolean;
-  ehRecebedor: boolean;
-  ehResponsavel: boolean;
-  contaGerencialDespesaId: string;
-  contaGerencialReceitaId: string;
 };
 
 export type PessoaFilters = ListQueryBase & {
@@ -74,27 +45,13 @@ export type PessoaFilters = ListQueryBase & {
   telefone?: string;
 };
 
-export type PessoaListSummary = {
-  total: number;
-  ativos: number;
-  inativos: number;
-  fisicas: number;
-  juridicas: number;
-};
+export type PessoaListSummary = ApiContract<Api.PessoaListSummaryResponse>;
 
-export type FormaPagamentoResumo = {
-  id: string;
-  nome: string;
+export type FormaPagamentoResumo = Omit<ApiContract<Api.FormaPagamentoResumoResponse>, 'tipo'> & {
   tipo: FormaPagamentoTipo;
-  ehCartao: boolean;
-  baixarAutomaticamente: boolean;
-  ativo: boolean;
 };
 
-export type FormaPagamentoDetalhe = FormaPagamentoResumo & {
-  createdAtUtc: string;
-  updatedAtUtc: string;
-};
+export type FormaPagamentoDetalhe = FormaPagamentoResumo & ApiContract<Pick<Api.FormaPagamentoDetalheResponse, 'createdAtUtc' | 'updatedAtUtc'>>;
 
 export type FormaPagamentoPayload = Omit<FormaPagamentoResumo, 'id'>;
 
@@ -106,42 +63,11 @@ export type FormaPagamentoFilters = ListQueryBase & {
   ativo?: boolean;
 };
 
-export type ContaBancariaResumo = {
-  id: string;
-  nome: string;
-  banco: string;
-  agencia: string | null;
-  numeroConta: string | null;
-  tipoConta: string | null;
-  saldoInicial: number;
-  dataSaldoInicial: string;
-  saldoAtual: number;
-  limiteCartoesCompartilhado: number | null;
-  limiteCartoesComprometido: number;
-  limiteCartoesDisponivel: number | null;
-  ativo: boolean;
-  icone: string | null;
-  cor: string | null;
-};
+export type ContaBancariaResumo = ApiContract<Api.ContaBancariaResumoResponse, 'agencia' | 'numeroConta' | 'tipoConta' | 'limiteCartoesCompartilhado' | 'limiteCartoesDisponivel' | 'icone' | 'cor'>;
 
-export type ContaBancariaDetalhe = ContaBancariaResumo & {
-  createdAtUtc: string;
-  updatedAtUtc: string;
-};
+export type ContaBancariaDetalhe = ContaBancariaResumo & ApiContract<Pick<Api.ContaBancariaDetalheResponse, 'createdAtUtc' | 'updatedAtUtc'>>;
 
-export type ContaBancariaPayload = {
-  nome: string;
-  banco: string;
-  agencia: string;
-  numeroConta: string;
-  tipoConta: string;
-  saldoInicial: number;
-  dataSaldoInicial: string;
-  limiteCartoesCompartilhado: number | null;
-  ativo: boolean;
-  icone?: string | null;
-  cor?: string | null;
-};
+export type ContaBancariaPayload = ApiContract<Api.CriarContaBancariaRequest, 'limiteCartoesCompartilhado' | 'icone' | 'cor', 'icone' | 'cor'>;
 
 export type ContaBancariaFilters = ListQueryBase & {
   banco?: string;
@@ -152,52 +78,13 @@ export type ContaBancariaFilters = ListQueryBase & {
   tiposConta?: string[];
 };
 
-export type ContaBancariaListSummary = {
-  total: number;
-  ativas: number;
-  saldoTotal: number;
-  creditoDisponivel: number;
-};
+export type ContaBancariaListSummary = ApiContract<Api.ContaBancariaListSummaryResponse>;
 
-export type CartaoResumo = {
-  id: string;
-  nome: string;
-  bandeira: string;
-  numeroFinal: string;
-  diaFechamentoFatura: number;
-  diaVencimentoFatura: number;
-  contaBancariaPagamentoPadraoId: string | null;
-  limiteCredito: number | null;
-  usaLimiteCompartilhado: boolean;
-  limiteEfetivo: number | null;
-  limiteComprometido: number;
-  limiteDisponivel: number | null;
-  ativo: boolean;
-  icone: string | null;
-  cor: string | null;
-  recebedorPadraoFaturaId: string | null;
-  formaPagamentoPadraoFaturaId: string | null;
-};
+export type CartaoResumo = ApiContract<Api.CartaoResumoResponse, 'contaBancariaPagamentoPadraoId' | 'limiteCredito' | 'limiteEfetivo' | 'limiteDisponivel' | 'icone' | 'cor' | 'recebedorPadraoFaturaId' | 'formaPagamentoPadraoFaturaId'>;
 
-export type CartaoDetalhe = CartaoResumo & {
-  createdAtUtc: string;
-  updatedAtUtc: string;
-};
+export type CartaoDetalhe = CartaoResumo & ApiContract<Pick<Api.CartaoDetalheResponse, 'createdAtUtc' | 'updatedAtUtc'>>;
 
-export type CartaoPayload = {
-  nome: string;
-  bandeira: string;
-  numeroFinal: string;
-  diaFechamentoFatura: number;
-  diaVencimentoFatura: number;
-  contaBancariaPagamentoPadraoId: string | null;
-  limiteCredito: number | null;
-  ativo: boolean;
-  icone?: string | null;
-  cor?: string | null;
-  recebedorPadraoFaturaId?: string | null;
-  formaPagamentoPadraoFaturaId?: string | null;
-};
+export type CartaoPayload = ApiContract<Api.CriarCartaoRequest, 'contaBancariaPagamentoPadraoId' | 'limiteCredito' | 'icone' | 'cor' | 'recebedorPadraoFaturaId' | 'formaPagamentoPadraoFaturaId', 'icone' | 'cor' | 'recebedorPadraoFaturaId' | 'formaPagamentoPadraoFaturaId'>;
 
 export type CartaoFilters = ListQueryBase & {
   bandeira?: string;
@@ -208,26 +95,11 @@ export type CartaoFilters = ListQueryBase & {
   ativo?: boolean;
 };
 
-export type ContaGerencialResumo = {
-  id: string;
-  codigo: string | null;
-  descricao: string;
+export type ContaGerencialResumo = Omit<ApiContract<Api.ContaGerencialResumoResponse, 'codigo' | 'contaPaiId' | 'contaPaiDescricao' | 'responsavelPadraoId' | 'responsavelPadraoNome' | 'contaGerencialContrariaId' | 'contaGerencialContrariaNome'>, 'tipo'> & {
   tipo: ContaGerencialTipo;
-  contaPaiId: string | null;
-  contaPaiDescricao: string | null;
-  responsavelPadraoId: string | null;
-  responsavelPadraoNome: string | null;
-  ativo: boolean;
-  aceitaLancamentos: boolean;
-  ehPadraoRecebimentoFaturaCartao: boolean;
-  contaGerencialContrariaId: string | null;
-  contaGerencialContrariaNome: string | null;
 };
 
-export type ContaGerencialDetalhe = ContaGerencialResumo & {
-  createdAtUtc: string;
-  updatedAtUtc: string;
-};
+export type ContaGerencialDetalhe = ContaGerencialResumo & ApiContract<Pick<Api.ContaGerencialDetalheResponse, 'createdAtUtc' | 'updatedAtUtc'>>;
 
 export type ContaGerencialPayload = Omit<
   ContaGerencialResumo,

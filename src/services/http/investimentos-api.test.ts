@@ -47,3 +47,11 @@ describe('investimentosApi', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/investimentos/indicadores-bcb');
   });
 });
+
+it('normalizes investment enum strings from the API while preserving numeric legacy responses', async () => {
+  vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { items: [{ id: 'a', tipo: 'RendaFixa', liquidez: 'Diaria' }, { id: 'b', tipo: 2, liquidez: 3 }] } } as never);
+  const result = await investimentosApi.listar({ page: 1, pageSize: 20 });
+  expect(result.items.map(({ tipo, liquidez }) => [tipo, liquidez])).toEqual([[1, 1], [2, 3]]);
+  vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { id: 'a', tipo: 'FundoImobiliario', liquidez: 'Vencimento' } } as never);
+  expect(await investimentosApi.obterPorId('a')).toMatchObject({ tipo: 3, liquidez: 2 });
+});

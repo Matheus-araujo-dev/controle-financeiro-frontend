@@ -1,10 +1,9 @@
+import type * as Api from './generated/api';
+import type { ApiContract } from './api-contract';
+
 export type AuthMode = 'disabled' | 'development' | 'jwt' | 'google';
 
-export type WorkspaceResumo = {
-  id: string;
-  nome: string;
-  papel: string;
-};
+export type WorkspaceResumo = ApiContract<Api.WorkspaceResumoResponse>;
 
 export type FamiliaResumo = WorkspaceResumo;
 
@@ -17,17 +16,9 @@ export type AuthUser = {
   familia?: FamiliaResumo | null;
 };
 
-export type AuthTokens = {
-  accessToken: string;
-  expiresAtUtc: string;
-  refreshToken?: string;
-};
+export type AuthTokens = ApiContract<Pick<Api.AuthTokenResponse, 'accessToken' | 'expiresAtUtc' | 'refreshToken'>, never, 'refreshToken'>;
 
-export type UsuarioAutenticadoResponse = {
-  id: string;
-  email: string;
-  nome: string;
-  avatarUrl: string | null;
+export type UsuarioAutenticadoResponse = Omit<ApiContract<Api.UsuarioAutenticadoResponse, 'avatarUrl'>, 'workspace' | 'familia'> & {
   workspace?: WorkspaceResumo | null;
   familia?: FamiliaResumo | null;
 };

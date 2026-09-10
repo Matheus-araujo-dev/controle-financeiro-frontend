@@ -1,34 +1,12 @@
-export type OrcamentoItem = {
-  metaId: string | null;
-  contaGerencialId: string;
-  contaPaiId: string | null;
-  contaGerencialCodigo: string | null;
-  contaGerencialDescricao: string;
-  valorMeta: number | null;
-  valorRealizado: number;
-  percentualConsumido: number | null;
-  estourado: boolean;
-  aceitaLancamentos: boolean;
-};
+import type * as Api from './generated/api';
+import type { ApiContract } from './api-contract';
 
-export type OrcamentoCompetencia = {
-  competencia: string;
-  totalMeta: number;
-  totalRealizado: number;
-  percentualConsumido: number | null;
-  possuiEstouro: boolean;
+export type OrcamentoItem = ApiContract<Api.OrcamentoItemResponse, 'metaId' | 'contaPaiId' | 'contaGerencialCodigo' | 'valorMeta' | 'percentualConsumido'>;
+
+export type OrcamentoCompetencia = Omit<ApiContract<Api.OrcamentoCompetenciaResponse, 'percentualConsumido'>, 'itens'> & {
   itens: OrcamentoItem[];
 };
 
-export type UpsertMetaOrcamentoPayload = {
-  contaGerencialId: string;
-  competencia: string;
-  valorMeta: number;
-};
+export type UpsertMetaOrcamentoPayload = ApiContract<Api.UpsertMetaOrcamentoRequest>;
 
-export type MetaOrcamento = {
-  id: string;
-  contaGerencialId: string;
-  competencia: string;
-  valorMeta: number;
-};
+export type MetaOrcamento = ApiContract<Api.MetaOrcamentoResponse>;

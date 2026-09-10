@@ -67,3 +67,11 @@ export const useCurrentUser = () => useAuthStore((state) => state.currentUser);
 export const useIsAuthenticated = () => useAuthStore((state) => !!state.currentUser);
 export const useWorkspaceAtual = () => useAuthStore((state) => state.currentUser?.workspace ?? state.currentUser?.familia ?? null);
 export const useFamiliaAtual = () => useAuthStore((state) => state.currentUser?.familia ?? null);
+
+// Changes only at identity/workspace boundaries, never during normal token renewal.
+let sessionRevision = 0;
+const sessionIdentity = (user: AuthUser | null) => JSON.stringify([user?.userId, user?.workspace?.id ?? user?.familia?.id]);
+useAuthStore.subscribe((state, previous) => {
+  if (sessionIdentity(state.currentUser) !== sessionIdentity(previous.currentUser)) sessionRevision += 1;
+});
+export const getSessionRevision = () => sessionRevision;

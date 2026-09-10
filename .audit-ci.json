@@ -1,7 +1,5 @@
 {
   "moderate": true,
-  "omit": ["dev"],
-  "allowlist": [
-    "GHSA-qwww-vcr4-c8h2"
-  ]
+  "skip-dev": true,
+  "allowlist": []
 }

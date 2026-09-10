@@ -1,13 +1,11 @@
+import type * as Api from './generated/api';
+import type { ApiContract } from './api-contract';
+
 import type { NaturezaMovimentacao, TipoMovimentacao } from './financeiro';
 export type DashboardTipoLancamento = 'ContaPagar' | 'ContaReceber';
-export type DashboardContaGerencialTipo = 'Receita' | 'Despesa';
-export type DashboardCentralPrevisaoOrigem =
-  | 'Recorrencia'
-  | 'Parcela'
-  | 'CompraRecorrenteImportada'
-  | 'CompraPlanejada'
-  | 'ContaFuturaGerada';
-export type DashboardCentralPrevisaoStatus = 'Realizado' | 'Previsto' | 'Substituido';
+export type DashboardContaGerencialTipo = Api.ContaGerencialTipo;
+export type DashboardCentralPrevisaoOrigem = Api.DashboardCentralPrevisaoOrigem;
+export type DashboardCentralPrevisaoStatus = Api.DashboardCentralPrevisaoStatus;
 
 export type DashboardResumoFilters = {
   mesReferencia?: string;
@@ -59,151 +57,71 @@ export type DashboardCentralPrevisaoItensFilters = DashboardCentralPrevisaoResum
   data?: string;
 };
 
-export type DashboardContaResumo = {
-  id: string;
+export type DashboardContaResumo = Omit<ApiContract<Api.DashboardContaResumoResponse>, 'tipoLancamento'> & {
   tipoLancamento: DashboardTipoLancamento;
-  descricao: string;
-  pessoaNome: string;
-  dataVencimento: string;
-  valor: number;
-  statusCodigo: string;
-  statusNome: string;
 };
 
-export type DashboardMovimentacaoResumo = {
-  id: string;
-  dataMovimentacao: string;
+export type DashboardMovimentacaoResumo = Omit<ApiContract<Api.DashboardMovimentacaoResumoResponse, 'observacaoResumida' | 'contaPagarId' | 'contaReceberId' | 'faturaCartaoId'>, 'tipo' | 'natureza'> & {
   tipo: TipoMovimentacao;
   natureza: NaturezaMovimentacao;
-  valor: number;
-  observacaoResumida: string | null;
-  contaPagarId: string | null;
-  contaReceberId: string | null;
-  faturaCartaoId: string | null;
 };
 
-export type DashboardResumo = {
-  saldoAtual: number;
-  totalAPagar: number;
-  totalAReceber: number;
-  saldoProjetado: number;
-  riscoSaldoNegativo: boolean;
+export type DashboardResumo = Omit<ApiContract<Api.DashboardResumoResponse>, 'contasVencidas' | 'contasAVencer' | 'movimentacoesRecentes'> & {
   contasVencidas: DashboardContaResumo[];
   contasAVencer: DashboardContaResumo[];
   movimentacoesRecentes: DashboardMovimentacaoResumo[];
 };
 
-export type DashboardFluxoCaixaDia = {
-  data: string;
-  saldoInicial: number;
-  entradasPrevistas: number;
-  saidasPrevistas: number;
-  saldoFinalPrevisto: number;
-  riscoSaldoNegativo: boolean;
-};
+export type DashboardFluxoCaixaDia = ApiContract<Api.DashboardFluxoCaixaDiaResponse>;
 
-export type DashboardFluxoCaixa = {
+export type DashboardFluxoCaixa = Omit<ApiContract<Api.DashboardFluxoCaixaResponse>, 'visao' | 'itens'> & {
   visao: 'Caixa' | 'Economica';
-  dataInicial: string;
-  dias: number;
-  riscoSaldoNegativo: boolean;
   itens: DashboardFluxoCaixaDia[];
 };
 
-export type DashboardContaGerencialResumoItem = {
-  contaGerencialId: string;
-  codigo: string | null;
-  descricao: string;
+export type DashboardContaGerencialResumoItem = Omit<ApiContract<Api.DashboardContaGerencialResumoItemResponse, 'codigo'>, 'tipo'> & {
   tipo: DashboardContaGerencialTipo;
-  valorTotal: number;
-  quantidadeLancamentos: number;
-  ultimaDataLancamento: string;
 };
 
-export type DashboardContaGerencialResumo = {
-  dataInicial: string;
-  dias: number;
-  totalReceitas: number;
-  totalDespesas: number;
-  saldo: number;
+export type DashboardContaGerencialResumo = Omit<ApiContract<Api.DashboardContaGerencialResumoResponse>, 'itens'> & {
   itens: DashboardContaGerencialResumoItem[];
 };
 
-export type DashboardContaGerencialSerieDia = {
-  data: string;
-  totalReceitas: number;
-  totalDespesas: number;
-  saldo: number;
-};
+export type DashboardContaGerencialSerieDia = ApiContract<Api.DashboardContaGerencialSerieDiaResponse>;
 
-export type DashboardContaGerencialSerie = {
-  dataInicial: string;
-  dias: number;
+export type DashboardContaGerencialSerie = Omit<ApiContract<Api.DashboardContaGerencialSerieResponse, 'contaGerencialId'>, 'tipo' | 'itens'> & {
   tipo: DashboardContaGerencialTipo | null;
-  contaGerencialId: string | null;
   itens: DashboardContaGerencialSerieDia[];
 };
 
-export type DashboardContaGerencialLancamentoItem = {
-  lancamentoId: string;
+export type DashboardContaGerencialLancamentoItem = Omit<ApiContract<Api.DashboardContaGerencialLancamentoItemResponse>, 'tipoLancamento'> & {
   tipoLancamento: DashboardTipoLancamento;
-  descricao: string;
-  pessoaNome: string;
-  dataEmissao: string;
-  dataVencimento: string;
-  valorLancamento: number;
-  valorRateio: number;
-  statusCodigo: string;
-  statusNome: string;
 };
 
-export type DashboardContaGerencialLancamentos = {
-  dataInicial: string;
-  dias: number;
+export type DashboardContaGerencialLancamentos = Omit<ApiContract<Api.DashboardContaGerencialLancamentosResponse, 'contaGerencialCodigo'>, 'tipo' | 'itens'> & {
   tipo: DashboardContaGerencialTipo;
-  contaGerencialId: string;
-  contaGerencialCodigo: string | null;
-  contaGerencialDescricao: string;
   itens: DashboardContaGerencialLancamentoItem[];
 };
 
-export type DashboardCentralPrevisaoResumoItem = {
-  data: string;
+export type DashboardCentralPrevisaoResumoItem = Omit<ApiContract<Api.DashboardCentralPrevisaoResumoItemResponse>, 'tipoMovimentacao' | 'origem' | 'status'> & {
   tipoMovimentacao: TipoMovimentacao;
   origem: DashboardCentralPrevisaoOrigem;
   status: DashboardCentralPrevisaoStatus;
-  quantidadeItens: number;
-  valorTotal: number;
 };
 
-export type DashboardCentralPrevisaoResumo = {
-  dataInicial: string;
-  dias: number;
+export type DashboardCentralPrevisaoResumo = Omit<ApiContract<Api.DashboardCentralPrevisaoResumoResponse>, 'origem' | 'status' | 'itens'> & {
   origem: DashboardCentralPrevisaoOrigem | null;
   status: DashboardCentralPrevisaoStatus | null;
   itens: DashboardCentralPrevisaoResumoItem[];
 };
 
-export type DashboardCentralPrevisaoItem = {
-  tipoReferencia: string;
-  referenciaId: string;
-  data: string;
+export type DashboardCentralPrevisaoItem = Omit<ApiContract<Api.DashboardCentralPrevisaoItemResponse, 'pessoaNome' | 'responsavelNome' | 'contaGerencialId' | 'contaGerencialCodigo' | 'contaGerencialDescricao'>, 'tipoMovimentacao' | 'origem' | 'status'> & {
   tipoMovimentacao: TipoMovimentacao;
   origem: DashboardCentralPrevisaoOrigem;
   status: DashboardCentralPrevisaoStatus;
-  descricao: string;
-  valor: number;
-  pessoaNome: string | null;
-  responsavelNome: string | null;
-  contaGerencialId: string | null;
-  contaGerencialCodigo: string | null;
-  contaGerencialDescricao: string | null;
 };
 
-export type DashboardCentralPrevisaoItens = {
-  dataInicial: string;
-  dias: number;
-  data: string | null;
+export type DashboardCentralPrevisaoItens = Omit<ApiContract<Api.DashboardCentralPrevisaoItensResponse, 'data'>, 'origem' | 'status' | 'itens'> & {
   origem: DashboardCentralPrevisaoOrigem | null;
   status: DashboardCentralPrevisaoStatus | null;
   itens: DashboardCentralPrevisaoItem[];
@@ -215,21 +133,9 @@ export type DashboardResponsavelFilters = {
   dias?: number;
 };
 
-export type DashboardResponsavelItem = {
-  responsavelId: string | null;
-  responsavelNome: string;
-  totalDespesas: number;
-  totalDespesasCartao: number;
-  totalReceitas: number;
-  saldoLiquido: number;
-  quantidadeLancamentos: number;
-};
+export type DashboardResponsavelItem = ApiContract<Api.DashboardResponsavelItemResponse, 'responsavelId'>;
 
-export type DashboardResponsavelResumo = {
-  dataInicial: string;
-  dias: number;
-  totalDespesas: number;
-  totalReceitas: number;
+export type DashboardResponsavelResumo = Omit<ApiContract<Api.DashboardResponsavelResumoResponse>, 'itens'> & {
   itens: DashboardResponsavelItem[];
 };
 
@@ -237,16 +143,8 @@ export type DashboardComparativoMensalFilters = {
   meses?: number;
 };
 
-export type DashboardComparativoMensalItem = {
-  competencia: string;
-  competenciaLabel: string;
-  receitas: number;
-  despesas: number;
-  saldo: number;
-  variacaoReceitas: number | null;
-  variacaoDespesas: number | null;
-};
+export type DashboardComparativoMensalItem = ApiContract<Api.DashboardComparativoMensalItemResponse, 'variacaoReceitas' | 'variacaoDespesas'>;
 
-export type DashboardComparativoMensal = {
+export type DashboardComparativoMensal = Omit<ApiContract<Api.DashboardComparativoMensalResponse>, 'itens'> & {
   itens: DashboardComparativoMensalItem[];
 };

@@ -1,3 +1,6 @@
+import type * as Api from './generated/api';
+import type { ApiContract } from './api-contract';
+
 export type TipoInvestimento = 1 | 2 | 3 | 4 | 5;
 export type LiquidezInvestimento = 1 | 2 | 3;
 
@@ -15,46 +18,19 @@ export const LiquidezInvestimentoLabels: Record<LiquidezInvestimento, string> = 
   3: 'Ilíquido'
 };
 
-export type InvestimentoResumo = {
-  id: string;
-  nome: string;
-  emissor: string | null;
+export type InvestimentoResumo = Omit<ApiContract<Api.InvestimentoResumoResponse, 'emissor' | 'dataVencimento' | 'taxaAnual'>, 'tipo' | 'liquidez'> & {
   tipo: TipoInvestimento;
-  tipoLabel: string;
   liquidez: LiquidezInvestimento;
-  liquidezLabel: string;
-  valorInvestido: number;
-  valorAtual: number;
-  rendimento: number;
-  rendimentoPercent: number;
-  dataAplicacao: string;
-  dataVencimento: string | null;
-  taxaAnual: number | null;
-  contaBancariaVinculadaId: string;
-  contaBancariaNome: string;
-  encerrado: boolean;
-  createdAtUtc: string;
 };
 
-export type InvestimentoPayload = {
-  nome: string;
-  emissor?: string;
+export type InvestimentoPayload = Omit<ApiContract<Api.CriarInvestimentoRequest, never, 'emissor' | 'dataVencimento' | 'taxaAnual'>, 'tipo' | 'liquidez'> & {
   tipo: TipoInvestimento;
   liquidez: LiquidezInvestimento;
-  valorInvestido: number;
-  dataAplicacao: string;
-  dataVencimento?: string;
-  taxaAnual?: number;
-  contaBancariaVinculadaId: string;
 };
 
-export type InvestimentoUpdatePayload = {
-  nome: string;
-  emissor?: string;
+export type InvestimentoUpdatePayload = Omit<ApiContract<Api.AtualizarInvestimentoRequest, never, 'emissor' | 'dataVencimento' | 'taxaAnual'>, 'tipo' | 'liquidez'> & {
   tipo: TipoInvestimento;
   liquidez: LiquidezInvestimento;
-  dataVencimento?: string;
-  taxaAnual?: number;
 };
 
 export type InvestimentoListQuery = {
@@ -66,9 +42,4 @@ export type InvestimentoListQuery = {
   contaBancariaVinculadaId?: string;
 };
 
-export type IndicadoresBcb = {
-  selicAnual: number | null;
-  cdiAnual: number | null;
-  ipcaAcumulado12m: number | null;
-  atualizadoEm: string | null;
-};
+export type IndicadoresBcb = ApiContract<Api.IndicadoresBcbResponse, 'selicAnual' | 'cdiAnual' | 'ipcaAcumulado12m' | 'atualizadoEm'>;
