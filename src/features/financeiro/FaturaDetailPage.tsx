@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
+import { EyeOutlined } from '@ant-design/icons';
+import { IconActionButton } from '../../components/data/IconActionButton';
 import { AppDataTable, type AppTableChange } from '../../components/data/AppDataTable';
 import { ComboBox } from '../../components/forms/ComboBox';
 import { DateInput } from '../../components/forms/DateInput';
@@ -535,6 +537,22 @@ export function FaturaDetailPage() {
                 <span className="text-xs font-bold text-on-surface-variant">
                   {record.numeroParcela}/{record.quantidadeParcelas}
                 </span>
+              )
+            },
+            {
+              title: 'Ações',
+              key: 'acoes',
+              width: 80,
+              align: 'right',
+              render: (_value, record) => (
+                <div className="flex justify-end gap-1">
+                  <IconActionButton
+                    label="Detalhar"
+                    icon={<EyeOutlined />}
+                    href={`/contas-pagar/${record.contaPagarId}`}
+                    type="text"
+                  />
+                </div>
               )
             }
           ]}

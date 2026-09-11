@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -55,6 +55,38 @@ describe('FaturaDetailPage', () => {
       totalItems: 0,
       totalPages: 0
     } as never);
+  });
+
+  it.each([false, true])('opens the payable account from an invoice item (refund: %s)', async (ehEstorno) => {
+    const item = {
+      contaPagarId: 'conta-original', descricao: ehEstorno ? 'Estorno: Compra' : 'Compra de tênis',
+      recebedorNome: 'Loja', responsavelNome: null, dataCompra: '2026-04-05',
+      valorLiquido: ehEstorno ? -100 : 100, statusCodigo: ehEstorno ? 'ESTORNO' : 'EM_FATURA',
+      numeroParcela: 1, quantidadeParcelas: 1, ehEstorno
+    };
+    vi.mocked(cadastrosApi.contasBancarias.listar).mockResolvedValue({ items: [] } as never);
+    vi.mocked(financeiroApi.faturas.obterPorId).mockResolvedValue({
+      id: 'f1', cartaoNome: 'Visa', competencia: '2026-04', dataFechamento: '2026-04-10',
+      dataVencimento: '2026-04-20', valorTotal: 100, quantidadeItens: 1,
+      statusCodigo: 'ABERTA', statusNome: 'Aberta', itens: [item]
+    } as never);
+    vi.mocked(financeiroApi.faturas.listarItens).mockResolvedValue({
+      items: [item], page: 1, pageSize: 50, totalItems: 1, totalPages: 1
+    });
+    render(
+      <MemoryRouter initialEntries={['/faturas/f1']}>
+        <Routes>
+          <Route path="/faturas/:id" element={<FaturaDetailPage />} />
+          <Route path="/contas-pagar/:id" element={<p>Detalhe da conta a pagar</p>} />
+        </Routes>
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
+    );
+    const link = await screen.findByRole('link', { name: 'Detalhar' });
+    expect(screen.getByText(item.descricao).closest('a')).toBeNull();
+    expect(link).toHaveAttribute('href', '/contas-pagar/conta-original');
+    await userEvent.click(link);
+    expect(await screen.findByText('Detalhe da conta a pagar')).toBeInTheDocument();
   });
 
   it('loads the invoice detail, renders the redesigned summary and pays the invoice', async () => {

@@ -100,3 +100,13 @@
 ## Pendencias nao criticas
 - configurar secrets reais de SonarQube/SonarCloud no CI para ativar o quality gate remoto.
 - reduzir o bundle inicial quando novos modulos forem adicionados, preferencialmente com code-splitting por rota.
+
+
+## 11/09/2026 — Acesso aos lançamentos da fatura
+
+- A coluna Ações de cada item em `/faturas/:id` usa o mesmo IconActionButton Detalhar com EyeOutlined da tela de recorrências e abre `/contas-pagar/:contaPagarId`, inclusive para estornos. A descrição mantém a apresentação original.
+- Contas canceladas com cartão passam a oferecer `Remover estorno da fatura` quando a fatura não está bloqueada. A confirmação informa a exclusão definitiva da conta, parcelas futuras e reembolsos associados ainda não recebidos, reutilizando `removerDaFatura`.
+- Edição e troca de cartão continuam no formulário existente. Faturas fechadas/pagas permanecem bloqueadas.
+- Sem mudança de DTO, esquema OpenAPI ou payload HTTP; a mudança de elegibilidade foi refletida na ação do formulário e em testes.
+- TDD: navegação de compra/estorno e confirmação de remoção falharam antes da implementação e passaram após a alteração.
+- Validação final: 1.262 testes em 127 arquivos aprovados; cobertura 88,36% linhas, 86,45% statements, 84,06% funções e 80,88% branches. Lint sem erros (38 avisos preexistentes), TypeScript, build Vite/PWA, contratos e auditoria de produção aprovados. Não publicado.
