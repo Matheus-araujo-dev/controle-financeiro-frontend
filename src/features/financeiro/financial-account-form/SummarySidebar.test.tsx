@@ -535,3 +535,27 @@ describe('SummarySidebar', () => {
     expect(screen.queryByRole('button', { name: /Gerar Reembolso/i })).not.toBeInTheDocument();
   });
 });
+
+describe('invoice refund removal', () => {
+  it('confirms before removing a cancelled card item', async () => {
+    const removerDaFatura = vi.fn();
+    const form = makeMockForm({ id: 'cp1', isPagar: true, detailStatus: 'CANCELADA',
+      watchedValues: { valorOriginal: 100, quantidadeParcelas: 1, cartaoId: 'c1' }, removerDaFatura });
+    render(<MemoryRouter><SummarySidebar form={form} /></MemoryRouter>);
+    await userEvent.click(screen.getByRole('button', { name: 'Remover estorno da fatura' }));
+    expect(removerDaFatura).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Sim, remover' }));
+    expect(removerDaFatura).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    { faturaLocked: true, isPagar: true, cartaoId: 'c1' },
+    { faturaLocked: false, isPagar: true, cartaoId: '' },
+    { faturaLocked: false, isPagar: false, cartaoId: 'c1' }
+  ])('does not offer removal outside an unlocked card payable: %o', (scenario) => {
+    const form = makeMockForm({ id: 'cp1', detailStatus: 'CANCELADA', ...scenario,
+      watchedValues: { valorOriginal: 100, quantidadeParcelas: 1, cartaoId: scenario.cartaoId } });
+    render(<MemoryRouter><SummarySidebar form={form} /></MemoryRouter>);
+    expect(screen.queryByRole('button', { name: 'Remover estorno da fatura' })).not.toBeInTheDocument();
+  });
+});

@@ -660,6 +660,24 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
               </Button>
             ) : null}
 
+            {isPagar && id && detailStatus === 'CANCELADA' && watchedValues.cartaoId && !faturaLocked ? (
+              <Button
+                type="button"
+                variant="danger"
+                size="lg"
+                disabled={actionLoading}
+                onClick={() => setConfirm({
+                  title: 'Remover estorno da fatura',
+                  message: 'Esta ação exclui definitivamente o lançamento cancelado, suas parcelas futuras e os reembolsos associados ainda não recebidos. O crédito deixará de compor a fatura. Deseja continuar?',
+                  confirmLabel: 'Sim, remover',
+                  tone: 'danger',
+                  onConfirm: () => void removerDaFatura()
+                })}
+              >
+                Remover estorno da fatura
+              </Button>
+            ) : null}
+
             {id && detailStatus === 'LIQUIDADA' && !faturaLocked ? (
               <Button
                 type="button"
