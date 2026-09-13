@@ -19,6 +19,7 @@ const WhatsappVinculoPage = lazy(() => import('../features/agente/WhatsappVincul
 const PlanosPage = lazy(() => import('../features/planos/PlanosPage').then(m => ({ default: m.PlanosPage })));
 const InvestimentosPage = lazy(() => import('../features/investimentos/InvestimentosPage').then(m => ({ default: m.InvestimentosPage })));
 const AlertasConfigPage = lazy(() => import('../features/alertas/AlertasConfigPage').then(m => ({ default: m.AlertasConfigPage })));
+const FechamentoPage = lazy(() => import('../features/fechamento/FechamentoPage').then(m => ({ default: m.FechamentoPage })));
 
 export const appRoutes: RouteObject[] = [
   {
@@ -49,6 +50,13 @@ export const appRoutes: RouteObject[] = [
         element: <OrcamentoPage />,
         handle: {
           title: 'Orçamento'
+        }
+      },
+      {
+        path: 'fechamento',
+        element: <FechamentoPage />,
+        handle: {
+          title: 'Fechamento do mês'
         }
       },
       {
