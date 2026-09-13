@@ -19,7 +19,8 @@ export const navigationStructure: NavGroup[] = [
       { key: '/dashboard', label: 'Dashboard' },
       { key: '/orcamento', label: 'Orçamento' },
       { key: '/relatorios', label: 'Relatórios' },
-      { key: '/agenda', label: 'Agenda' }
+      { key: '/agenda', label: 'Agenda' },
+      { key: '/fechamento', label: 'Fechamento' }
     ]
   },
   {
