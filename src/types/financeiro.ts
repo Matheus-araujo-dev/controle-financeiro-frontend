@@ -51,7 +51,7 @@ export type RateioPayload = ApiContract<Api.RateioRequest>;
 
 export type RateioDetalhe = ApiContract<Api.RateioResponse, 'contaGerencialCodigo' | 'percentual'>;
 
-export type RecorrenciaDetalhe = Omit<ApiContract<Api.RecorrenciaResponse, 'dataFim' | 'observacao'>, 'tipoPeriodicidade' | 'tipoDia' | 'contaOrigemTipo'> & {
+export type RecorrenciaDetalhe = Omit<ApiContract<Api.RecorrenciaResponse, 'dataFim' | 'observacao', 'encerrada'>, 'tipoPeriodicidade' | 'tipoDia' | 'contaOrigemTipo'> & {
   tipoPeriodicidade: TipoPeriodicidadeRecorrencia;
   tipoDia: TipoDiaRecorrencia;
   contaOrigemTipo: 'ContaPagar' | 'ContaReceber';

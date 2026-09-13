@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftOutlined, PauseCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, PauseCircleOutlined, PlayCircleOutlined, StopOutlined } from '@ant-design/icons';
 import { PageState } from '../../components/states/PageState';
 import { Button } from '../../components/ui/Button';
 import { financeiroApi } from '../../services/http/financeiro-api';
@@ -10,7 +10,7 @@ import { formatDateBR } from '../../shared/date';
 import { notify } from '../../store/notification-store';
 import type { RecorrenciaListItem } from '../../types/financeiro';
 
-function StatusBadge({ ativa }: { ativa: boolean }) {
+function StatusBadge({ ativa, encerrada }: { ativa: boolean; encerrada?: boolean }) {
   return ativa ? (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
       <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
@@ -19,7 +19,7 @@ function StatusBadge({ ativa }: { ativa: boolean }) {
   ) : (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] border border-white/8 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
       <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>pause_circle</span>
-      Pausada
+      {encerrada ? 'Encerrada' : 'Pausada'}
     </span>
   );
 }
@@ -95,6 +95,20 @@ export function RecurrenceDetailPage() {
     }
   }
 
+  async function handleEncerrar() {
+    if (!id || !recorrencia || recorrencia.ativa || recorrencia.encerrada) return;
+    setActionLoading(true);
+    try {
+      await financeiroApi.recorrencias.encerrar(id);
+      await queryClient.invalidateQueries({ queryKey: ['recorrencias'] });
+      notify('success', 'Recorrência encerrada com sucesso.');
+    } catch {
+      notify('error', 'Falha ao encerrar a recorrência.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   if (isLoading) {
     return <PageState state="loading" title="Carregando recorrência" />;
   }
@@ -150,7 +164,7 @@ export function RecurrenceDetailPage() {
               <p className="text-sm text-on-surface-variant mt-1">{recorrencia.pessoaNome}</p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <TipoBadge tipo={recorrencia.contaOrigemTipo} />
-                <StatusBadge ativa={recorrencia.ativa} />
+                <StatusBadge ativa={recorrencia.ativa} encerrada={recorrencia.encerrada} />
               </div>
             </div>
           </div>
@@ -163,7 +177,7 @@ export function RecurrenceDetailPage() {
                 {isDespesa ? '- ' : '+ '}{formatCurrencyBRL(recorrencia.valorLiquido)}
               </p>
             </div>
-            {recorrencia.ativa ? (
+            {!recorrencia.encerrada && (recorrencia.ativa ? (
               <Button
                 variant="secondary"
                 icon={<PauseCircleOutlined />}
@@ -180,6 +194,11 @@ export function RecurrenceDetailPage() {
                 onClick={() => void handleRetomar()}
               >
                 Retomar recorrência
+              </Button>
+            ))}
+            {!recorrencia.ativa && !recorrencia.encerrada && (
+              <Button variant="secondary" icon={<StopOutlined />} loading={actionLoading} onClick={() => void handleEncerrar()}>
+                Encerrar recorrência
               </Button>
             )}
           </div>

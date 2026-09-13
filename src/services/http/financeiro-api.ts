@@ -45,6 +45,9 @@ export interface ImportacaoFaturaItemPreview {
   valor: number;
   jaImportado: boolean;
   chaveImportacao: string;
+  dataVencimentoFatura?: string | null;
+  numeroParcela?: number;
+  quantidadeParcelas?: number;
 }
 
 export interface ImportacaoFaturaPreview {
@@ -189,8 +192,7 @@ export const financeiroApi = {
     listarAtivas: () => getById<RecorrenciaListResponse>('/recorrencias'),
     obter: (id: string) => getById<RecorrenciaListItem>(`/recorrencias/${id}`),
     pausar: (id: string) => post<RecorrenciaListItem>(`/recorrencias/${id}/pausar`, {}),
-    retomar: (id: string) => post<RecorrenciaListItem>(`/recorrencias/${id}/retomar`, {}),
-    encerrar: (tipoConta: 'ContaPagar' | 'ContaReceber', id: string) =>
-      post<void>(`/${tipoConta === 'ContaPagar' ? 'contas-pagar' : 'contas-receber'}/${id}/encerrar-recorrencia`, {})
+    encerrar: (id: string) => post<RecorrenciaListItem>(`/recorrencias/${id}/encerrar`, {}),
+    retomar: (id: string) => post<RecorrenciaListItem>(`/recorrencias/${id}/retomar`, {})
   }
 };

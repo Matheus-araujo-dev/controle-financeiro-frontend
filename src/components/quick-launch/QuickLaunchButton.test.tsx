@@ -354,7 +354,7 @@ describe('QuickLaunchButton', () => {
     vi.mocked(financeiroApi.contasReceber.criar).mockRejectedValueOnce(new Error('falha'));
     const { user, dialog } = await openQuickLaunch();
 
-    await user.click(within(dialog).getByRole('button', { name: /conta a receber/i }));
+    await user.click(within(dialog).getByRole('button', { name: /vou receber/i }));
     await user.type(within(dialog).getByPlaceholderText(/sal.rio/i), 'Servico prestado');
     await user.type(within(dialog).getByLabelText('Valor'), '300');
 
@@ -446,7 +446,7 @@ describe('QuickLaunchButton', () => {
     vi.mocked(financeiroApi.transferencias.criar).mockResolvedValue(undefined as never);
     const { user, dialog } = await openQuickLaunch();
 
-    await user.click(within(dialog).getByRole('button', { name: /transfer.ncia/i }));
+    await user.click(within(dialog).getByRole('button', { name: /transferir/i }));
 
     // Should now show conta origem/destino selects
     await waitFor(() =>
@@ -627,7 +627,7 @@ describe('QuickLaunchButton', () => {
     const dialog = await screen.findByRole('dialog', { name: /lan.amento r.pido/i });
     await waitFor(() => expect(cadastrosApi.pessoas.listar).toHaveBeenCalled());
 
-    await user.click(within(dialog).getByRole('button', { name: /conta a receber/i }));
+    await user.click(within(dialog).getByRole('button', { name: /vou receber/i }));
 
     await user.type(within(dialog).getByPlaceholderText(/sal.rio/i), 'Vale salario');
     await user.type(within(dialog).getByLabelText('Valor'), '1000');

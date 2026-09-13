@@ -13,7 +13,8 @@ vi.mock('../../services/http/financeiro-api', () => ({
     recorrencias: {
       obter: vi.fn(),
       pausar: vi.fn(),
-      retomar: vi.fn()
+      retomar: vi.fn(),
+      encerrar: vi.fn()
     }
   }
 }));
@@ -142,4 +143,21 @@ describe('RecurrenceDetailPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /Retomar recorrência/i }));
     await waitFor(() => expect(notify).toHaveBeenCalledWith('error', 'Falha ao retomar a recorrência.'));
   });
+
+  it('oferece encerramento apenas quando pausada e impede ações após encerramento', async () => {
+    vi.mocked(financeiroApi.recorrencias.obter).mockResolvedValue({ ...baseRecorrencia, ativa: false });
+    vi.mocked(financeiroApi.recorrencias.encerrar).mockResolvedValue(undefined as never);
+    renderPage();
+    await userEvent.click(await screen.findByRole('button', { name: /Encerrar recorrência/i }));
+    await waitFor(() => expect(financeiroApi.recorrencias.encerrar).toHaveBeenCalledWith('rec-1'));
+ });
+
+ it('não oferece retomada nem encerramento para recorrência encerrada', async () => {
+    vi.mocked(financeiroApi.recorrencias.obter).mockResolvedValue({ ...baseRecorrencia, ativa: false, encerrada: true });
+    renderPage();
+    expect(await screen.findByText('Encerrada')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Retomar recorrência/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Encerrar recorrência/i })).not.toBeInTheDocument();
+ });
+
 });
