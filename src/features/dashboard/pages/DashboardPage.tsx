@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '../../../components/ui/Button';
@@ -7,6 +7,7 @@ import { DashboardKpiGrid } from '../components/DashboardKpiGrid';
 import { DashboardFaturasCartao } from '../components/DashboardFaturasCartao';
 import { DashboardCashPulse } from '../components/DashboardCashPulse';
 import { DashboardOperationalAgenda } from '../components/DashboardOperationalAgenda';
+import { DashboardPendingActions } from '../components/DashboardPendingActions';
 import { DashboardTransactionList } from '../components/DashboardTransactionList';
 import { DashboardAiInsights } from '../components/DashboardAiInsights';
 import { DashboardSaldoPorConta } from '../components/DashboardSaldoPorConta';
@@ -199,6 +200,10 @@ export function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <DashboardCashPulse items={cashFlow?.itens ?? []} />
           <DashboardOperationalAgenda items={summary?.contasAVencer ?? []} referenceMonth={referenceMonth} />
+          <DashboardPendingActions
+            vencidas={summary?.contasVencidas ?? []}
+            aVencer={summary?.contasAVencer ?? []}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
