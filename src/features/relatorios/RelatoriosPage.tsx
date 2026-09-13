@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 import { useReportUrlState } from './use-report-url-state';
 import { useReportData } from './use-report-data';
 import { useReportSearch } from './use-report-search';
@@ -24,6 +24,7 @@ import {
   origemLabels,
   origemOptions,
   recorrenciaTipoOptions,
+  reportGroups,
   reportTabs,
   statusLabels,
   statusPrevisaoOptions,
@@ -335,25 +336,38 @@ export function RelatoriosPage() {
         />
       </div>
 
-      <div className="report-tabs rounded-2xl border border-white/5 bg-surface-container-low p-2">
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
-          {reportTabs.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              aria-pressed={activeReport === tab.key}
-              onClick={() => setActiveReport(tab.key)}
-              className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-bold transition-colors ${
-                activeReport === tab.key
-                  ? 'bg-primary/20 text-primary shadow-[0_0_18px_rgba(43,245,142,0.12)]'
-                  : 'text-on-surface-variant hover:bg-primary/10 hover:text-primary'
-              }`}
-            >
-              <span className="material-symbols-outlined text-base">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="report-tabs rounded-2xl border border-white/5 bg-surface-container-low p-4 space-y-4">
+        {reportGroups.map((group) => (
+          <div key={group.group}>
+            <div className="flex items-center gap-2 mb-2 px-1">
+              <span className="material-symbols-outlined text-sm text-on-surface-variant">{group.icon}</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{group.group}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
+              {group.tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  aria-pressed={activeReport === tab.key}
+                  onClick={() => setActiveReport(tab.key)}
+                  className={`inline-flex flex-col items-start gap-0.5 rounded-xl px-3 py-2.5 text-left transition-colors ${
+                    activeReport === tab.key
+                      ? 'bg-primary/20 text-primary shadow-[0_0_18px_rgba(43,245,142,0.12)]'
+                      : 'text-on-surface-variant hover:bg-primary/10 hover:text-primary'
+                  }`}
+                >
+                  <span className="flex items-center gap-2 text-sm font-bold">
+                    <span className="material-symbols-outlined text-base">{tab.icon}</span>
+                    {tab.label}
+                  </span>
+                  {tab.description && (
+                    <span className="text-[11px] font-normal text-on-surface-variant/70 pl-7">{tab.description}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
       {loading || searchPending ? <div role="status" className="text-sm font-bold text-primary">Atualizando relatórios...</div> : null}
