@@ -23,6 +23,7 @@ import {
   WorkspaceActionsSlotContext,
   filterInputClass
 } from '../../components/layout';
+import { SavedViewsDropdown } from '../../components/filters/SavedViewsDropdown';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
 import { notify } from '../../store/notification-store';
@@ -684,6 +685,15 @@ export function FinancialAccountListPage({
       }
 
       <ListSummaryCards items={summaryItems} columns={5} />
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 flex-wrap" />
+        <SavedViewsDropdown
+          moduleKey={config.key}
+          currentFilters={filters as unknown as Record<string, unknown>}
+          onLoadView={(viewFilters) => setFilters((current) => ({ ...current, ...viewFilters, page: 1 }))}
+        />
+      </div>
 
       <FilterCard onClear={isModified ? clearFilters : undefined}>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
