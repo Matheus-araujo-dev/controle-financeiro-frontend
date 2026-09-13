@@ -20,6 +20,7 @@ const PlanosPage = lazy(() => import('../features/planos/PlanosPage').then(m => 
 const InvestimentosPage = lazy(() => import('../features/investimentos/InvestimentosPage').then(m => ({ default: m.InvestimentosPage })));
 const AlertasConfigPage = lazy(() => import('../features/alertas/AlertasConfigPage').then(m => ({ default: m.AlertasConfigPage })));
 const FechamentoPage = lazy(() => import('../features/fechamento/FechamentoPage').then(m => ({ default: m.FechamentoPage })));
+const SimuladorCompraPage = lazy(() => import('../features/simulador/SimuladorCompraPage').then(m => ({ default: m.SimuladorCompraPage })));
 
 export const appRoutes: RouteObject[] = [
   {
@@ -60,79 +61,7 @@ export const appRoutes: RouteObject[] = [
         }
       },
       {
-        path: 'relatorios',
-        element: <RelatoriosPage />,
+        path: 'simulador-compra',
+        element: <SimuladorCompraPage />,
         handle: {
-          title: 'Relatórios'
-        }
-      },
-      {
-        path: 'familia',
-        element: <FamiliaPage />,
-        handle: {
-          title: 'Espaços'
-        }
-      },
-      {
-        path: 'compras-planejadas',
-        handle: {
-          title: 'Planejador de Compras'
-        },
-        children: comprasPlanejadasRouteObjects
-      },
-      {
-        path: 'planos',
-        element: <PlanosPage />,
-        handle: { title: 'Planos de poupança' }
-      },
-      {
-        path: 'investimentos',
-        element: <InvestimentosPage />,
-        handle: { title: 'Investimentos' }
-      },
-      {
-        path: 'alertas',
-        element: <AlertasConfigPage />,
-        handle: { title: 'Notificações' }
-      },
-      {
-        path: 'agente/chat',
-        element: <AgenteChatPage />,
-        handle: { title: 'Chat financeiro' }
-      },
-      {
-        path: 'agente/whatsapp',
-        element: <WhatsappVinculoPage />,
-        handle: { title: 'Vínculo WhatsApp' }
-      },
-      ...supportRegistryRouteObjects,
-      ...financialRouteObjects,
-      ...placeholderRouteObjects
-    ]
-  },
-  {
-    path: '/convite/:token',
-    element: <AceitarConvitePage />,
-    errorElement: <RouteErrorPage />
-  },
-  {
-    path: '/login',
-    element: <LoginPage />,
-    errorElement: <RouteErrorPage />
-  },
-  {
-    path: '/auth/callback',
-    element: <AuthCallbackPage />,
-    errorElement: <RouteErrorPage />
-  },
-  {
-    path: '/acesso-negado',
-    element: <AccessDeniedPage />
-  },
-  {
-    path: '*',
-    element: <NotFoundPage />
-  }
-];
-
-export const appRouter = createBrowserRouter(appRoutes);
+          title: 'Simulador de compra'
