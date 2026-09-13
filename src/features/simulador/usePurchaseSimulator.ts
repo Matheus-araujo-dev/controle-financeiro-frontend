@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 
 export interface SimulationInput {
   valor: number;
@@ -100,5 +100,5 @@ export function usePurchaseSimulator(input: SimulationInput | null) {
   return useMemo(() => {
     if (!input || input.valor <= 0 || input.parcelas < 2) return null;
     return simular(input);
-  }, [input?.valor, input?.parcelas, input?.taxaJuros, input?.saldoAtual, input?.receitaMensal, input?.despesaMensal]);
+  }, [input]);
 }

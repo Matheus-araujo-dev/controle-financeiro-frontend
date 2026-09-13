@@ -65,3 +65,82 @@ export const appRoutes: RouteObject[] = [
         element: <SimuladorCompraPage />,
         handle: {
           title: 'Simulador de compra'
+        }
+      },
+      {
+        path: 'relatorios',
+        element: <RelatoriosPage />,
+        handle: {
+          title: 'Relatórios'
+        }
+      },
+      {
+        path: 'familia',
+        element: <FamiliaPage />,
+        handle: {
+          title: 'Espaços'
+        }
+      },
+      {
+        path: 'compras-planejadas',
+        handle: {
+          title: 'Planejador de Compras'
+        },
+        children: comprasPlanejadasRouteObjects
+      },
+      {
+        path: 'planos',
+        element: <PlanosPage />,
+        handle: { title: 'Planos de poupança' }
+      },
+      {
+        path: 'investimentos',
+        element: <InvestimentosPage />,
+        handle: { title: 'Investimentos' }
+      },
+      {
+        path: 'alertas',
+        element: <AlertasConfigPage />,
+        handle: { title: 'Notificações' }
+      },
+      {
+        path: 'agente/chat',
+        element: <AgenteChatPage />,
+        handle: { title: 'Chat financeiro' }
+      },
+      {
+        path: 'agente/whatsapp',
+        element: <WhatsappVinculoPage />,
+        handle: { title: 'Vínculo WhatsApp' }
+      },
+      ...supportRegistryRouteObjects,
+      ...financialRouteObjects,
+      ...placeholderRouteObjects
+    ]
+  },
+  {
+    path: '/convite/:token',
+    element: <AceitarConvitePage />,
+    errorElement: <RouteErrorPage />
+  },
+  {
+    path: '/login',
+    element: <LoginPage />,
+    errorElement: <RouteErrorPage />
+  },
+  {
+    path: '/auth/callback',
+    element: <AuthCallbackPage />,
+    errorElement: <RouteErrorPage />
+  },
+  {
+    path: '/acesso-negado',
+    element: <AccessDeniedPage />
+  },
+  {
+    path: '*',
+    element: <NotFoundPage />
+  }
+];
+
+export const appRouter = createBrowserRouter(appRoutes);

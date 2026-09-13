@@ -97,7 +97,7 @@ export function SimuladorCompraPage() {
   const receitaMensal = contasGerenciais?.totalReceitas ?? 0;
   const despesaMensal = contasGerenciais?.totalDespesas ?? 0;
 
-  const parsedValor = parseFloat(valor.replace(/[^\d,.\-]/g, '').replace(',', '.'));
+  const parsedValor = parseFloat(valor.replace(/[^\d,.-]/g, '').replace(',', '.'));
   const parsedTaxa = parseFloat(taxaJuros.replace(',', '.'));
 
   const input: SimulationInput | null =
