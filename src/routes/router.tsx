@@ -20,6 +20,7 @@ const PlanosPage = lazy(() => import('../features/planos/PlanosPage').then(m => 
 const InvestimentosPage = lazy(() => import('../features/investimentos/InvestimentosPage').then(m => ({ default: m.InvestimentosPage })));
 const AlertasConfigPage = lazy(() => import('../features/alertas/AlertasConfigPage').then(m => ({ default: m.AlertasConfigPage })));
 const FechamentoPage = lazy(() => import('../features/fechamento/FechamentoPage').then(m => ({ default: m.FechamentoPage })));
+const SimuladorCompraPage = lazy(() => import('../features/simulador/SimuladorCompraPage').then(m => ({ default: m.SimuladorCompraPage })));
 
 export const appRoutes: RouteObject[] = [
   {
@@ -57,6 +58,13 @@ export const appRoutes: RouteObject[] = [
         element: <FechamentoPage />,
         handle: {
           title: 'Fechamento do mês'
+        }
+      },
+      {
+        path: 'simulador-compra',
+        element: <SimuladorCompraPage />,
+        handle: {
+          title: 'Simulador de compra'
         }
       },
       {
