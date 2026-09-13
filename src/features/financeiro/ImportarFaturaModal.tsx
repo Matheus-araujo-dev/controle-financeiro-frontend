@@ -145,7 +145,7 @@ export function ImportarFaturaModal({ open, onClose, onSuccess, initialCartaoId 
       setTimeout(() => tableRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
 
       const descricoes = resp.itens.filter(i => !i.jaImportado).map(i => i.descricao);
-      if (descricoes.length > 0) {
+      if (descricoes.length > 0 && !resp.itens.some(i => i.dataVencimentoFatura)) {
         setLoadingCategorizacao(true);
         agenteApi.categorizar(descricoes).then((catResp) => {
           const map: Record<string, ItemCategoria> = {};
@@ -187,6 +187,9 @@ export function ImportarFaturaModal({ open, onClose, onSuccess, initialCartaoId 
           descricao: i.descricao,
           valor: i.valor,
           chaveImportacao: i.chaveImportacao,
+          dataVencimentoFatura: i.dataVencimentoFatura,
+          numeroParcela: i.numeroParcela,
+          quantidadeParcelas: i.quantidadeParcelas,
           contaGerencialId: categorizacoes[i.chaveImportacao]?.contaGerencialId ?? undefined,
         })),
       });
@@ -229,6 +232,7 @@ export function ImportarFaturaModal({ open, onClose, onSuccess, initialCartaoId 
     },
     { title: 'Data', dataIndex: 'dataTransacao', width: 90, render: v => formatDateBR(String(v)) },
     { title: 'Descrição', dataIndex: 'descricao', ellipsis: true },
+    ...(preview?.some(i => i.dataVencimentoFatura) ? [{ title: 'Vencimento da fatura', dataIndex: 'dataVencimentoFatura', width: 135, render: (v: unknown) => v ? formatDateBR(String(v)) : '—' }] : []),
     { title: 'Valor', dataIndex: 'valor', width: 110, align: 'right', render: v => formatCurrencyBRL(Number(v)) },
     {
       title: (

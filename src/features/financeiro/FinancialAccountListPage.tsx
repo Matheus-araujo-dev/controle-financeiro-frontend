@@ -3,6 +3,7 @@ import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { DateInput } from '../../components/forms/DateInput';
 import { ConfirmDialog } from '../../components/feedback/ConfirmDialog';
 import { LiquidarModal } from './LiquidarModal';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
@@ -22,6 +23,7 @@ import {
   WorkspaceActionsSlotContext,
   filterInputClass
 } from '../../components/layout';
+import { SavedViewsDropdown } from '../../components/filters/SavedViewsDropdown';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
 import { notify } from '../../store/notification-store';
@@ -94,6 +96,17 @@ function todayIso() {
   return new Date().toISOString().split('T')[0];
 }
 
+const periodPresetOptions = [
+  { value: '', label: 'Todos' },
+  { value: 'hoje', label: 'Hoje' },
+  { value: 'proximos7', label: 'Próximos 7 dias' },
+  { value: 'proximos30', label: 'Próximos 30 dias' },
+  { value: 'esteMes', label: 'Este mês' },
+  { value: 'mesAnterior', label: 'Mês anterior' },
+  { value: 'vencidos', label: 'Vencidos' },
+  { value: 'personalizado', label: 'Personalizado' }
+];
+
 function periodFromPreset(value: string) {
   const today = new Date();
 
@@ -117,7 +130,32 @@ function periodFromPreset(value: string) {
     };
   }
 
+  if (value === 'mesAnterior') {
+    const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const end = new Date(today.getFullYear(), today.getMonth(), 0);
+    return {
+      dataInicial: start.toISOString().split('T')[0],
+      dataFinal: end.toISOString().split('T')[0]
+    };
+  }
+
+  if (value === 'vencidos') {
+    return { dataInicial: undefined, dataFinal: todayIso() };
+  }
+
   return { dataInicial: undefined, dataFinal: undefined };
+}
+
+/** Detect which preset matches the current date range (recalculating relative presets from today). */
+function detectPeriodPreset(dataInicial?: string, dataFinal?: string): string {
+  if (!dataInicial && !dataFinal) return '';
+  for (const opt of periodPresetOptions) {
+    if (!opt.value || opt.value === 'personalizado') continue;
+    const range = periodFromPreset(opt.value);
+    if (range.dataInicial === dataInicial && range.dataFinal === dataFinal) return opt.value;
+  }
+  if (dataInicial || dataFinal) return 'personalizado';
+  return '';
 }
 
 function readStatusLabel(status: StatusContaCodigo) {
@@ -515,6 +553,34 @@ export function FinancialAccountListPage({
     if (filters.statusCodigo.length) {
       result.push(['Status:', filters.statusCodigo.map(readStatusLabel).join(', ')]);
     }
+    const pessoaIds = isPagar ? filters.recebedorIds : filters.pagadorIds;
+    if (pessoaIds?.length) {
+      const labels = pessoaIds
+        .map((id) => pessoaOptions.find((o) => o.value === id)?.label ?? id)
+        .join(', ');
+      result.push([`${config.personLabel}:`, labels]);
+    }
+    if (filters.responsavelIds?.length) {
+      const labels = filters.responsavelIds
+        .map((id) => responsavelOptions.find((o) => o.value === id)?.label ?? id)
+        .join(', ');
+      result.push(['Responsável:', labels]);
+    }
+    if (filters.formaPagamentoIds?.length) {
+      const labels = filters.formaPagamentoIds
+        .map((id) => formaPagamentoOptions.find((o) => o.value === id)?.label ?? id)
+        .join(', ');
+      result.push(['Forma de pagamento:', labels]);
+    }
+    if (filters.ehRecorrente !== undefined) {
+      result.push(['Recorrência:', filters.ehRecorrente ? 'Somente recorrentes' : 'Não recorrentes']);
+    }
+    if (filters.numeroDocumento) {
+      result.push(['Nº Documento:', filters.numeroDocumento]);
+    }
+    if (filters.descricao) {
+      result.push(['Descrição:', filters.descricao]);
+    }
     if (filters.search) {
       result.push(['Busca:', filters.search]);
     }
@@ -620,6 +686,15 @@ export function FinancialAccountListPage({
 
       <ListSummaryCards items={summaryItems} columns={5} />
 
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 flex-wrap" />
+        <SavedViewsDropdown
+          moduleKey={config.key}
+          currentFilters={filters as unknown as Record<string, unknown>}
+          onLoadView={(viewFilters) => setFilters((current) => ({ ...current, ...viewFilters, page: 1 }))}
+        />
+      </div>
+
       <FilterCard onClear={isModified ? clearFilters : undefined}>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <FilterField label="Status">
@@ -683,23 +758,49 @@ export function FinancialAccountListPage({
             <ComboBox
               compact
               aria-label="Período de vencimento"
-              value=""
-              options={[
-                { value: '', label: 'Todos' },
-                { value: 'hoje', label: 'Hoje' },
-                { value: 'proximos7', label: 'Próximos 7 dias' },
-                { value: 'proximos30', label: 'Próximos 30 dias' },
-                { value: 'esteMes', label: 'Este mês' }
-              ]}
-              onChange={(value) =>
-                setFilters((current) => ({
-                  ...current,
-                  ...periodFromPreset(value),
-                  page: 1
-                }))
-              }
+              value={detectPeriodPreset(filters.dataInicial, filters.dataFinal)}
+              options={periodPresetOptions}
+              onChange={(value) => {
+                if (value === 'personalizado') {
+                  // Keep current dates or set today as start
+                  setFilters((current) => ({
+                    ...current,
+                    dataInicial: current.dataInicial || todayIso(),
+                    dataFinal: current.dataFinal || todayIso(),
+                    page: 1
+                  }));
+                } else {
+                  setFilters((current) => ({
+                    ...current,
+                    ...periodFromPreset(value),
+                    page: 1
+                  }));
+                }
+              }}
             />
           </FilterField>
+
+          {detectPeriodPreset(filters.dataInicial, filters.dataFinal) === 'personalizado' && (
+            <FilterField label="Intervalo personalizado">
+              <div className="flex items-center gap-2">
+                <DateInput
+                  ariaLabel="Data inicial"
+                  value={filters.dataInicial ?? ''}
+                  onChange={(value) =>
+                    setFilters((current) => ({ ...current, dataInicial: value || undefined, page: 1 }))
+                  }
+                />
+                <span className="text-xs text-on-surface-variant">a</span>
+                <DateInput
+                  ariaLabel="Data final"
+                  value={filters.dataFinal ?? ''}
+                  onChange={(value) =>
+                    setFilters((current) => ({ ...current, dataFinal: value || undefined, page: 1 }))
+                  }
+                />
+              </div>
+            </FilterField>
+          )}
 
           <FilterField label="Número do documento">
             <FilterInputWrapper>

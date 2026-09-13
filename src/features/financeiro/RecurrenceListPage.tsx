@@ -94,7 +94,7 @@ export function RecurrenceListPage() {
       valorReceitas,
       valorDespesas,
       countAtivas: recorrencias.filter((item) => item.ativa).length,
-      countPausadas: recorrencias.filter((item) => !item.ativa).length
+      countPausadas: recorrencias.filter((item) => !item.ativa && !item.encerrada).length
     };
   }, [data, recorrencias]);
 
@@ -104,7 +104,7 @@ export function RecurrenceListPage() {
     { header: 'Pessoa', value: (r) => r.pessoaNome, cellStyle: STYLE.DATA_TEXT, width: 22 },
     { header: 'Responsável', value: (r) => r.responsavelNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
     { header: 'Valor (R$)', value: (r) => r.valorLiquido, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + r.valorLiquido, 0), width: 14 },
-    { header: 'Situação', value: (r) => r.ativa ? 'Ativa' : 'Pausada', cellStyle: STYLE.DATA_TEXT, width: 10 },
+    { header: 'Situação', value: (r) => r.encerrada ? 'Encerrada' : r.ativa ? 'Ativa' : 'Pausada', cellStyle: STYLE.DATA_TEXT, width: 10 },
     { header: 'Dia do mês', value: (r) => r.diaOrdemMensal, cellStyle: STYLE.DATA_TEXT, width: 12 },
     { header: 'Início', value: (r) => formatDateBR(r.dataInicio), cellStyle: STYLE.DATA_TEXT, width: 12 },
     { header: 'Fim', value: (r) => r.dataFim ? formatDateBR(r.dataFim) : '', cellStyle: STYLE.DATA_TEXT, width: 12 },
@@ -115,7 +115,7 @@ export function RecurrenceListPage() {
     { header: 'Tipo', value: (r) => r.contaOrigemTipo === 'ContaReceber' ? 'Receita' : 'Despesa' },
     { header: 'Pessoa', value: (r) => r.pessoaNome },
     { header: 'Valor (R$)', value: (r) => formatCurrencyBRL(r.valorLiquido), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorLiquido, 0)) },
-    { header: 'Situação', value: (r) => r.ativa ? 'Ativa' : 'Pausada' },
+    { header: 'Situação', value: (r) => r.encerrada ? 'Encerrada' : r.ativa ? 'Ativa' : 'Pausada' },
     { header: 'Início', value: (r) => formatDateBR(r.dataInicio) },
   ];
 
@@ -187,7 +187,7 @@ export function RecurrenceListPage() {
                 ariaLabel="Status"
                 options={[
                   { label: 'Ativa', value: 'true' },
-                  { label: 'Pausada', value: 'false' }
+                  { label: 'Inativa (pausada ou encerrada)', value: 'false' }
                 ]}
                 value={filters.ativa === undefined ? [] : [String(filters.ativa)]}
                 onChange={(next) => setFilters((f) => ({ ...f, page: 1, ativa: next.length === 1 ? next[0] === 'true' : undefined }))}
@@ -281,14 +281,14 @@ export function RecurrenceListPage() {
             key: 'ativa',
             mobileRole: 'status',
             align: 'center',
-            render: (value: boolean) =>
+            render: (value: boolean, record: RecorrenciaDisplayItem) =>
               value ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
                   <CheckCircleFilled className="text-[10px]" /> Ativa
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] border border-white/8 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-                  <PauseCircleOutlined className="text-[10px]" /> Pausada
+                  <PauseCircleOutlined className="text-[10px]" /> {record.encerrada ? 'Encerrada' : 'Pausada'}
                 </span>
               )
           },
@@ -299,13 +299,13 @@ export function RecurrenceListPage() {
             align: 'right',
             render: (_value, record: RecorrenciaDisplayItem) => (
               <div className="flex justify-end gap-1">
-                <IconActionButton
+                {!record.encerrada && <IconActionButton
                   label={record.ativa ? 'Pausar' : 'Retomar'}
                   icon={record.ativa ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
                   type="text"
-                  disabled={actionLoadingId === record.id}
+                  disabled={actionLoadingId === record.id || record.encerrada}
                   onClick={() => void handleToggleAtiva(record)}
-                />
+                />}
                 <IconActionButton
                   label="Detalhar"
                   icon={<EyeOutlined />}

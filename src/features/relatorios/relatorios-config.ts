@@ -60,22 +60,53 @@ export type ReportState = {
 
 export const MAX_REPORT_ROWS = 250;
 
-export const reportTabs: Array<{ key: ReportKey; label: string; icon: string }> = [
-  { key: 'geral', label: 'Visão geral', icon: 'query_stats' },
-  { key: 'responsaveis', label: 'Responsáveis', icon: 'groups' },
-  { key: 'contas-gerenciais', label: 'Contas gerenciais', icon: 'account_tree' },
-  { key: 'fluxo-caixa', label: 'Fluxo de caixa', icon: 'monitoring' },
-  { key: 'previsoes', label: 'Previsões', icon: 'event_repeat' },
-  { key: 'inadimplencia', label: 'Inadimplência', icon: 'warning' },
-  { key: 'faturas', label: 'Faturas', icon: 'credit_card' },
-  { key: 'cartoes', label: 'Cartões', icon: 'credit_score' },
-  { key: 'lancamentos', label: 'Lançamentos', icon: 'list_alt' },
-  { key: 'recorrencias', label: 'Recorrências', icon: 'sync' },
-  { key: 'compras', label: 'Compras planejadas', icon: 'shopping_cart' },
-  { key: 'comparativo', label: 'Comparativo mensal', icon: 'bar_chart' },
-  { key: 'dre', label: 'DRE doméstica', icon: 'receipt_long' },
-  { key: 'alertas', label: 'Alertas inteligentes', icon: 'notifications_active' },
-  { key: 'analises', label: 'Análises', icon: 'analytics' }
+export type ReportTab = { key: ReportKey; label: string; icon: string; description?: string };
+
+export type ReportGroup = {
+  group: string;
+  icon: string;
+  tabs: ReportTab[];
+};
+
+export const reportTabs: ReportTab[] = [
+  { key: 'geral', label: 'Visão geral', icon: 'query_stats', description: 'Resumo financeiro do mês' },
+  { key: 'responsaveis', label: 'Responsáveis', icon: 'groups', description: 'Gastos por responsável' },
+  { key: 'contas-gerenciais', label: 'Contas gerenciais', icon: 'account_tree', description: 'Classificação por conta gerencial' },
+  { key: 'fluxo-caixa', label: 'Fluxo de caixa', icon: 'monitoring', description: 'Projeção de entradas e saídas' },
+  { key: 'previsoes', label: 'Previsões', icon: 'event_repeat', description: 'O que está por vir' },
+  { key: 'inadimplencia', label: 'Inadimplência', icon: 'warning', description: 'Contas vencidas e envelhecimento' },
+  { key: 'faturas', label: 'Faturas', icon: 'credit_card', description: 'Faturas do cartão de crédito' },
+  { key: 'cartoes', label: 'Cartões', icon: 'credit_score', description: 'Limite e uso dos cartões' },
+  { key: 'lancamentos', label: 'Lançamentos', icon: 'list_alt', description: 'Todas as contas a pagar e receber' },
+  { key: 'recorrencias', label: 'Recorrências', icon: 'sync', description: 'Compromissos fixos e recorrentes' },
+  { key: 'compras', label: 'Compras planejadas', icon: 'shopping_cart', description: 'Planejamento de compras futuras' },
+  { key: 'comparativo', label: 'Comparativo mensal', icon: 'bar_chart', description: 'Evolução mês a mês' },
+  { key: 'dre', label: 'DRE doméstica', icon: 'receipt_long', description: 'Demonstração de resultado' },
+  { key: 'alertas', label: 'Alertas inteligentes', icon: 'notifications_active', description: 'Situações que precisam de atenção' },
+  { key: 'analises', label: 'Análises', icon: 'analytics', description: 'Análise detalhada de gastos' }
+];
+
+export const reportGroups: ReportGroup[] = [
+  {
+    group: 'Acompanhar o mês',
+    icon: 'calendar_month',
+    tabs: ['geral', 'fluxo-caixa', 'lancamentos', 'faturas'].map(k => reportTabs.find(t => t.key === k)!)
+  },
+  {
+    group: 'Entender gastos',
+    icon: 'pie_chart',
+    tabs: ['responsaveis', 'contas-gerenciais', 'comparativo', 'dre', 'analises'].map(k => reportTabs.find(t => t.key === k)!)
+  },
+  {
+    group: 'Planejar compromissos',
+    icon: 'event_upcoming',
+    tabs: ['previsoes', 'recorrencias', 'cartoes', 'compras'].map(k => reportTabs.find(t => t.key === k)!)
+  },
+  {
+    group: 'Revisar pendências',
+    icon: 'checklist',
+    tabs: ['inadimplencia', 'alertas'].map(k => reportTabs.find(t => t.key === k)!)
+  }
 ];
 
 export const comparativoMesesOptions = [
