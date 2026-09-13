@@ -629,6 +629,105 @@ export function QuickLaunchModal({
     await performLaunch(launchFn, launchFnForcado, buildOnSuccess);
   }
 
+  function resetFormForAnother() {
+    // Keep stable fields: tipo, pessoaId, responsavelId, formaPagamentoId, contaGerencialId, cartaoId
+    // Reset transient fields: descricao, valor, dataVencimento, parcelas, liquidação
+    setDescricao('');
+    setValor(0);
+    setQuantidadeParcelas(1);
+    setParcelasRaw('1');
+    setParcelamentoMode('total');
+    setDataVencimento(hojeISO());
+    setJaLiquidada(false);
+    setDataLiquidacao(hojeISO());
+    setContaBancariaLiquidacaoId('');
+    setGerarReembolso(false);
+    setResponsaveisValores([]);
+  }
+
+  async function handleSaveAndLaunchAnother() {
+    if (!podeSalvar) return;
+
+    const base = {
+      numeroDocumento: null,
+      dataEmissao: exigeCartao ? dataVencimento : hojeISO(),
+      dataVencimento,
+      formaPagamentoId,
+      cartaoId: exigeCartao ? cartaoId : null,
+      contaBancariaId: jaLiquidada ? contaBancariaLiquidacaoId || null : null,
+      dataLiquidacao: jaLiquidada ? dataLiquidacao : null,
+      valorOriginal: valor,
+      valorDesconto: 0,
+      valorJuros: 0,
+      valorMulta: 0,
+      quantidadeParcelas,
+      descricao: descricao.trim(),
+      observacao: null,
+      rateios: [{ contaGerencialId, valor }],
+      recorrencia: null
+    };
+
+    function buildLaunchFn(forcarProximaFatura: boolean): () => Promise<string> {
+      const allRespIds = [responsavelId, ...responsaveisAdicionaisIds].filter(Boolean);
+      const temMultiplos = allRespIds.length >= 2;
+      const valoresOk = responsaveisValores.length === allRespIds.length;
+
+      if (tipo === 'pagar') {
+        return async () => {
+          const result = await financeiroApi.contasPagar.criar({
+            ...base,
+            origemCompraPlanejadaId: null,
+            responsavelCompraId: responsavelId,
+            recebedorId: pessoaId,
+            dataCompra: exigeCartao ? dataVencimento : null,
+            forcarProximaFatura,
+            contaVinculadaOrigemId: null,
+            ...(temMultiplos && { responsaveisAdicionaisIds: allRespIds }),
+            ...(temMultiplos && valoresOk && { valoresPorResponsavel: responsaveisValores })
+          });
+          notify('success', 'Lançamento criado', base.descricao);
+          return result.id;
+        };
+      }
+      return async () => {
+        const result = await financeiroApi.contasReceber.criar({
+          ...base,
+          responsavelId: pessoaId,
+          pagadorId: responsavelId,
+          contaVinculadaOrigemId: null,
+          ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
+          ...(temMultiplos && valoresOk && { valoresPorPagador: responsaveisValores })
+        });
+        notify('success', 'Lançamento criado', base.descricao);
+        return result.id;
+      };
+    }
+
+    const launchFn = buildLaunchFn(false);
+    const launchFnForcado = buildLaunchFn(true);
+
+    setSaving(true);
+    try {
+      const duplicates = await (tipo === 'pagar'
+        ? checkContaPagarDuplicate(base.descricao, base.dataVencimento, pessoaId, valor)
+        : checkContaReceberDuplicate(base.descricao, base.dataVencimento, pessoaId, valor));
+
+      if (duplicates) {
+        setPendingLaunch({
+          fn: launchFn,
+          retryFn: launchFnForcado,
+          items: duplicates,
+          onSuccess: () => resetFormForAnother()
+        });
+        return;
+      }
+    } finally {
+      setSaving(false);
+    }
+
+    await performLaunch(launchFn, launchFnForcado, () => resetFormForAnother());
+  }
+
   function handleTipoChange(nextTipo: QuickLaunchTipo) {
     setTipo(nextTipo);
     setPessoaId('');
@@ -709,19 +808,20 @@ export function QuickLaunchModal({
 
             <div className="mb-6 grid grid-cols-3 gap-2 rounded-xl bg-surface-container p-1">
               {[
-                { label: 'Conta a pagar', value: 'pagar' as const },
-                { label: 'Conta a receber', value: 'receber' as const },
-                { label: 'Transferência', value: 'transferencia' as const }
+                { label: 'Vou pagar', sublabel: 'Despesa', value: 'pagar' as const, icon: 'payments' },
+                { label: 'Vou receber', sublabel: 'Receita', value: 'receber' as const, icon: 'account_balance_wallet' },
+                { label: 'Transferir', sublabel: 'Entre contas', value: 'transferencia' as const, icon: 'swap_horiz' }
               ].map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => handleTipoChange(option.value)}
-                  className={`h-11 rounded-lg text-sm font-bold transition-colors ${
+                  className={`flex flex-col items-center justify-center gap-0.5 h-14 rounded-lg text-sm font-bold transition-colors ${
                     tipo === option.value ? 'bg-primary/20 text-primary' : 'text-on-surface-variant hover:bg-primary/10 hover:text-primary'
                   }`}
                 >
-                  {option.label}
+                  <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>{option.icon}</span>
+                  <span className="text-xs">{option.label}</span>
                 </button>
               ))}
             </div>
@@ -1141,6 +1241,18 @@ export function QuickLaunchModal({
               <Button type="button" variant="secondary" size="lg" onClick={requestClose}>
                 Cancelar
               </Button>
+              {!isReembolso && tipo !== 'transferencia' && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="lg"
+                  disabled={!podeSalvar || saving}
+                  loading={saving}
+                  onClick={() => void handleSaveAndLaunchAnother()}
+                >
+                  Salvar e lançar outro
+                </Button>
+              )}
               <Button type="button" size="lg" disabled={!podeSalvar || saving} loading={saving} onClick={() => void handleSubmit()}>
                 {isReembolso ? 'Lançar reembolso' : tipo === 'transferencia' ? 'Transferir' : 'Lançar'}
               </Button>

@@ -110,3 +110,11 @@
 - Sem mudança de DTO, esquema OpenAPI ou payload HTTP; a mudança de elegibilidade foi refletida na ação do formulário e em testes.
 - TDD: navegação de compra/estorno e confirmação de remoção falharam antes da implementação e passaram após a alteração.
 - Validação final: 1.262 testes em 127 arquivos aprovados; cobertura 88,36% linhas, 86,45% statements, 84,06% funções e 80,88% branches. Lint sem erros (38 avisos preexistentes), TypeScript, build Vite/PWA, contratos e auditoria de produção aprovados. Não publicado.
+
+
+## 2026-09-12 — Encerramento de recorrência
+
+- Detalhe oferece Encerrar recorrência quando pausada, usando Button e ícones existentes. Encerradas não oferecem pausa/retomada/novo encerramento. Listagem e exportações mostram Encerrada.
+- Cliente HTTP e contratos gerados sincronizados com o backend. Campo encerrada opcional na fronteira da UI para compatibilidade entre versões.
+- Validação: 1.264 testes em 127 arquivos aprovados; linhas 88,36%, statements 86,44%, funções 84,07%, branches 80,91%. TypeScript, build Vite/PWA e contratos aprovados. Lint sem erros (38 avisos existentes). Audit-ci oficial com configuração de produção aprovado, metadata total zero, confirmado por npm audit --omit=dev; auditoria incluindo ferramentas de desenvolvimento aponta 12 vulnerabilidades preexistentes.
+- Não publicado. A pausa de contas EM_FATURA foi mantida sem cancelamento, conforme regra literal de cancelar FUTURO; pergunta específica ao usuário segue pendente.

@@ -2347,6 +2347,7 @@ export interface RecorrenciaListItemResponse {
   valorLiquido?: number;
   pessoaNome?: string | null;
   responsavelNome?: string | null;
+  encerrada?: boolean;
 }
 
 export interface RecorrenciaListResponse {
@@ -2383,6 +2384,7 @@ export interface RecorrenciaResponse {
   ativa?: boolean;
   permiteEdicaoOcorrenciaIndividual?: boolean;
   observacao?: string | null;
+  encerrada?: boolean;
 }
 
 export interface ReembolsoContaResumo {
