@@ -376,7 +376,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
             <h1 className="text-2xl md:text-3xl font-black font-headline text-white !mb-0">{pageTitle}</h1>
             <div
               ref={(el) => { if (el !== null) setHeaderActionsSlot(el); }}
-              className="flex items-center gap-3"
+              className="flex flex-wrap items-center gap-3"
             />
           </div>
         </header>

@@ -343,7 +343,7 @@ export function OrcamentoPage() {
             ? `Comparativo dos últimos 6 meses até ${formatCompetencia(competencia)}.`
             : `Metas por categoria de despesa em ${formatCompetencia(competencia)}.`}
         </p>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {orcamento && (
             <div className="flex gap-1.5">
               <button

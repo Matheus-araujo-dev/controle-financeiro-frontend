@@ -79,7 +79,7 @@ export function MovimentacoesWorkspacePage({ initialTab }: { initialTab: Movimen
         {/* Slot where child pages portal their action buttons */}
         <div
           ref={(el) => { if (el !== null) setActionsSlot(el); }}
-          className="flex items-center gap-3"
+          className="flex flex-wrap items-center gap-3"
         />
       </div>
 
