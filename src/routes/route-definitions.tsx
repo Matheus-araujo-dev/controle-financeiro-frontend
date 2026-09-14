@@ -1,4 +1,4 @@
-import type { RouteObject } from 'react-router-dom';
+﻿import type { RouteObject } from 'react-router-dom';
 import { lazyWithRetry as lazy } from './lazy-with-retry';
 import {
   cartoesModuleConfig,
@@ -25,6 +25,9 @@ const RecurrenceDetailPage = lazy(() => import('../features/financeiro/Recurrenc
 const MovimentacaoDetailPage = lazy(() => import('../features/financeiro/MovimentacaoDetailPage'));
 const AgendaPage = lazy(() => import('../features/agenda/AgendaPage'));
 const ImportarFaturaPage = lazy(() => import('../features/financeiro/ImportarFaturaPage').then((m) => ({ default: m.ImportarFaturaPage })));
+const PessoaResumoFinanceiroPage = lazy(() => import('../features/cadastros/PessoaResumoFinanceiroPage').then((m) => ({ default: m.PessoaResumoFinanceiroPage })));
+const ConciliacaoListPage = lazy(() => import('../features/conciliacao/ConciliacaoListPage'));
+const ConciliacaoDetailPage = lazy(() => import('../features/conciliacao/ConciliacaoDetailPage'));
 
 export const placeholderRouteObjects: RouteObject[] = [];
 
@@ -133,8 +136,14 @@ export const supportRegistryRouteObjects: RouteObject[] = [
     handle: {
       title: 'Detalhe de conta gerencial'
     }
-  }
-];
+  },
+  {
+    path: 'pessoas/:id/resumo-financeiro',
+    element: <PessoaResumoFinanceiroPage />,
+    handle: {
+      title: 'Resumo financeiro'
+    }
+  }];
 
 export const comprasPlanejadasRouteObjects: RouteObject[] = [
   {
@@ -279,5 +288,18 @@ export const financialRouteObjects: RouteObject[] = [
     handle: {
       title: 'Agenda financeira'
     }
-  }
-];
+  },
+  {
+    path: 'conciliacoes',
+    element: <ConciliacaoListPage />,
+    handle: {
+      title: 'Conciliacao bancaria'
+    }
+  },
+  {
+    path: 'conciliacoes/:id',
+    element: <ConciliacaoDetailPage />,
+    handle: {
+      title: 'Detalhe de conciliacao'
+    }
+  }];
