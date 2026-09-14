@@ -644,7 +644,7 @@ export function FinancialAccountListPage({
   const fetchPageTyped = config.list as (f: typeof filters) => Promise<{ items: FinancialRecord[]; totalItems: number; totalPages: number }>;
 
   const actionButtons = (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <div className="flex gap-2">
         <ExportButton
           fetchPage={fetchPageTyped}
