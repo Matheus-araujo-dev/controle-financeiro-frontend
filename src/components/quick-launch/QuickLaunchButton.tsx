@@ -1237,7 +1237,7 @@ export function QuickLaunchModal({
               </div>
             ) : null}
 
-            <div className="mt-7 flex justify-end gap-3">
+            <div className="mt-7 flex flex-wrap justify-end gap-3">
               <Button type="button" variant="secondary" size="lg" onClick={requestClose}>
                 Cancelar
               </Button>
