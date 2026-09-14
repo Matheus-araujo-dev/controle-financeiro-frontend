@@ -335,7 +335,7 @@ describe('MovimentacoesPage', () => {
 
     expect(await screen.findByText('Salário')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
 
     await waitFor(() => expect(openPrintReport).toHaveBeenCalledOnce());
 
@@ -492,7 +492,7 @@ describe('MovimentacoesPage', () => {
     await screen.findByText('Teste');
 
     const prevCallCount = vi.mocked(openPrintReport).mock.calls.length;
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() =>
       expect(vi.mocked(openPrintReport).mock.calls.length).toBeGreaterThan(prevCallCount)
     );
