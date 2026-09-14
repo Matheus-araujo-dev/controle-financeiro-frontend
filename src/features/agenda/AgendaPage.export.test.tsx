@@ -83,7 +83,7 @@ describe('AgendaPage — export', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList);
     await renderPage();
     expect(await screen.findByText('Aluguel')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
     await waitFor(() => expect(vi.mocked(printReportShared.openInWindow)).toHaveBeenCalled());
     const html: string = vi.mocked(printReportShared.openInWindow).mock.calls[0][0];
     expect(html).not.toContain('A4 portrait');
@@ -93,7 +93,7 @@ describe('AgendaPage — export', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: true } as MediaQueryList);
     await renderPage();
     expect(await screen.findByText('Aluguel')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
     await waitFor(() => expect(vi.mocked(printReportShared.openInWindow)).toHaveBeenCalled());
     const html: string = vi.mocked(printReportShared.openInWindow).mock.calls[0][0];
     expect(html).toContain('A4 portrait');
