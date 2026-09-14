@@ -1770,6 +1770,12 @@ export interface ImportacaoFaturaItemConfirmar {
   chaveImportacao?: string | null;
   /** @format uuid */
   contaGerencialId?: string | null;
+  /** @format date */
+  dataVencimentoFatura?: string | null;
+  /** @format int32 */
+  numeroParcela?: number;
+  /** @format int32 */
+  quantidadeParcelas?: number;
 }
 
 export interface ImportacaoFaturaItemPreview {
@@ -1780,6 +1786,12 @@ export interface ImportacaoFaturaItemPreview {
   valor?: number;
   jaImportado?: boolean;
   chaveImportacao?: string | null;
+  /** @format date */
+  dataVencimentoFatura?: string | null;
+  /** @format int32 */
+  numeroParcela?: number;
+  /** @format int32 */
+  quantidadeParcelas?: number;
 }
 
 export interface ImportacaoFaturaPreviewResponse {
