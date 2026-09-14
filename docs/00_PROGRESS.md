@@ -125,7 +125,7 @@
 - Vencimento da fatura, número/total de parcelas e estornos preservados na confirmação. Só a parcela do documento é criada.
 - Pagamentos e saldo anterior entram apenas na conferência; divergência no total bloqueia a prévia do layout mensal.
 - Compras iguais recebem chaves independentes e estáveis na reimportação.
-- Amostra real: 136 itens, total líquido R$ 20.221,26; arquivo pessoal não versionado.
+- Amostra real conferida integralmente; arquivo pessoal não versionado.
 - Testes sintéticos cobrem linhas partidas, sinal negativo separado, câmbio, compras iguais e total divergente; API cobre confirmação/reimportação e Swagger; frontend cobre envio dos metadados sem agente.
 - Validação local: 15 testes do modal; suíte completa e cobertura de linhas 88,44%; lint sem erros; TypeScript, build e auditoria npm aprovados. Contratos gerados a partir do Swagger de DEV com metadados de importação.
 - Promoção: primeiro PR para develop; main somente após CI verde.
