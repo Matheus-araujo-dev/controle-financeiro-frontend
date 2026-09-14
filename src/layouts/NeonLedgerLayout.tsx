@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { PageHeaderActionsSlotContext } from '../components/layout/PageHeaderActionsSlot';
 import { Link, Outlet, useLocation, useMatches, useNavigate } from 'react-router-dom';
@@ -365,18 +365,18 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
 
       <main
         id="main-content"
-        className="pt-24 pb-28 lg:pb-12 px-4 md:px-8 min-h-screen transition-all duration-200 max-lg:!ml-0"
+        className="pt-24 pb-28 lg:pb-12 px-4 md:px-8 min-h-screen transition-all duration-200 max-lg:!ml-0 safe-px"
         style={{ marginLeft: `${sidebarWidth}px` }}
       >
         <header className="mb-6">
           <p className="text-[11px] text-on-surface-variant uppercase tracking-widest font-medium">
             Inteligência financeira
           </p>
-          <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
+          <div className="flex flex-col gap-3 mt-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <h1 className="text-2xl md:text-3xl font-black font-headline text-white !mb-0">{pageTitle}</h1>
             <div
               ref={(el) => { if (el !== null) setHeaderActionsSlot(el); }}
-              className="flex flex-wrap items-center gap-3"
+              className="flex flex-wrap items-center gap-2 min-w-0"
             />
           </div>
         </header>
@@ -506,7 +506,7 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
         document.body
       )}
 
-      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-5 pt-2 lg:hidden bg-[#0e0e0e]/80 backdrop-blur-xl rounded-t-3xl border-t border-outline-variant/15 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-5 pt-2 lg:hidden bg-[#0e0e0e]/80 backdrop-blur-xl rounded-t-3xl border-t border-outline-variant/15 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] safe-pb safe-px">
         {[
           { to: '/dashboard', icon: 'grid_view', label: 'Home' },
           { to: '/contas-pagar', icon: 'south_west', label: 'Pagar' },

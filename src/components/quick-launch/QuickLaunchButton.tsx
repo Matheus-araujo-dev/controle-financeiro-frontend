@@ -1,4 +1,4 @@
-import { createPortal } from 'react-dom';
+﻿import { createPortal } from 'react-dom';
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { DateInput } from '../forms/DateInput';
@@ -795,7 +795,7 @@ export function QuickLaunchModal({
           aria-labelledby={titleId}
           className="relative flex max-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-surface-container-low shadow-2xl"
         >
-          <div className="overflow-y-auto p-7">
+          <div className="overflow-y-auto overflow-x-hidden p-5 sm:p-7">
             <div className="mb-6 flex items-center gap-3">
               <div className="grid h-12 w-12 place-items-center rounded-xl border border-white/5 bg-surface-container text-primary shadow">
                 <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>

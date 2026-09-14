@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Button } from '../ui/Button';
 import { exportListing, fetchAllRows, type ExportColumn, type PageQuery, type PagedLike } from '../../shared/export/exportListing';
 
@@ -68,7 +68,7 @@ export function ExportButton<T, F extends PageQuery>({
       disabled={loading || disabled}
       icon={<DownloadIcon className={loading ? 'animate-pulse' : ''} />}
     >
-      {loading ? 'Exportando...' : label}
+      <span className="hidden sm:inline">{loading ? 'Exportando...' : label}</span>
     </Button>
   );
 }
