@@ -65,6 +65,9 @@ export interface ConfirmarImportacaoPayload {
     descricao: string;
     valor: number;
     chaveImportacao: string;
+    dataVencimentoFatura?: string | null;
+    numeroParcela?: number;
+    quantidadeParcelas?: number;
     contaGerencialId?: string;
   }>;
   formaPagamentoId?: string;
