@@ -116,6 +116,19 @@ export interface AlterarPapelMembroRequest {
   papel?: string | null;
 }
 
+export interface AnexoResponse {
+  /** @format uuid */
+  id?: string;
+  nomeArquivo?: string | null;
+  mimeType?: string | null;
+  /** @format int64 */
+  tamanhoBytes?: number;
+  origem?: string | null;
+  /** @format date-time */
+  criadoEmUtc?: string;
+  urlConteudo?: string | null;
+}
+
 export interface ApiErrorResponse {
   code?: string | null;
   message?: string | null;
@@ -547,6 +560,50 @@ export interface CompraPlanejadaResumoResponse {
   contaPagarGeradaId?: string | null;
   /** @format date-time */
   convertidaEmContaPagarEmUtc?: string | null;
+}
+
+export interface ConciliacaoDetalheResponse {
+  /** @format uuid */
+  id?: string;
+  nomeArquivo?: string | null;
+  formato?: string | null;
+  /** @format uuid */
+  contaBancariaId?: string;
+  /** @format date */
+  dataInicio?: string;
+  /** @format date */
+  dataFim?: string;
+  /** @format int32 */
+  totalItens?: number;
+  /** @format int32 */
+  itensConciliados?: number;
+  status?: string | null;
+  itens?: ItemConciliacaoResponse[] | null;
+}
+
+export interface ConciliacaoResumoResponse {
+  /** @format uuid */
+  id?: string;
+  nomeArquivo?: string | null;
+  formato?: string | null;
+  /** @format uuid */
+  contaBancariaId?: string;
+  /** @format date */
+  dataInicio?: string;
+  /** @format date */
+  dataFim?: string;
+  /** @format int32 */
+  totalItens?: number;
+  /** @format int32 */
+  itensConciliados?: number;
+  status?: string | null;
+  /** @format date-time */
+  criadoEmUtc?: string;
+}
+
+export interface ConciliarItemRequest {
+  /** @format uuid */
+  movimentacaoId?: string | null;
 }
 
 export interface ConfiguracaoNotificacaoResponse {
@@ -1919,6 +1976,24 @@ export interface InvestimentoResumoResponse {
   createdAtUtc?: string;
 }
 
+export interface ItemConciliacaoResponse {
+  /** @format uuid */
+  id?: string;
+  /** @format date */
+  data?: string;
+  descricao?: string | null;
+  /** @format double */
+  valor?: number;
+  documento?: string | null;
+  status?: string | null;
+  /** @format uuid */
+  movimentacaoVinculadaId?: string | null;
+  /** @format uuid */
+  sugestaoMovimentacaoId?: string | null;
+  /** @format double */
+  scoreSugestao?: number | null;
+}
+
 export interface ItemImportadoWhatsappResponse {
   /** @format uuid */
   id?: string;
@@ -2130,6 +2205,18 @@ export interface PessoaChavePixResponse {
   chave?: string | null;
 }
 
+export interface PessoaContaResumoResponse {
+  /** @format uuid */
+  id?: string;
+  tipo?: string | null;
+  descricao?: string | null;
+  /** @format date */
+  dataVencimento?: string;
+  /** @format double */
+  valor?: number;
+  status?: string | null;
+}
+
 export interface PessoaDetalheResponse {
   /** @format uuid */
   id?: string;
@@ -2178,6 +2265,31 @@ export interface PessoaListSummaryResponse {
   fisicas?: number;
   /** @format int32 */
   juridicas?: number;
+}
+
+export interface PessoaResumoFinanceiroResponse {
+  /** @format uuid */
+  pessoaId?: string;
+  nome?: string | null;
+  /** @format double */
+  totalAPagarPendente?: number;
+  /** @format double */
+  totalPago?: number;
+  /** @format double */
+  totalAPagarVencido?: number;
+  /** @format int32 */
+  quantidadeContasPagar?: number;
+  /** @format double */
+  totalAReceberPendente?: number;
+  /** @format double */
+  totalRecebido?: number;
+  /** @format double */
+  totalAReceberVencido?: number;
+  /** @format int32 */
+  quantidadeContasReceber?: number;
+  /** @format double */
+  reembolsoPendente?: number;
+  contasRecentes?: PessoaContaResumoResponse[] | null;
 }
 
 export interface PessoaResumoResponse {
