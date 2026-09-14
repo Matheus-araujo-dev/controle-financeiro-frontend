@@ -350,4 +350,22 @@ describe('ImportarFaturaModal', () => {
 
     expect(await screen.findByText('Supermercado Extra')).toBeInTheDocument();
   });
+  it('importa Bradesco sem agente e preserva vencimento e parcela', async () => {
+    vi.mocked(financeiroApi.faturas.importar.preview).mockResolvedValue({
+      itens: [{ ...mockPreviewNovos[0], dataVencimentoFatura: '2026-09-20', numeroParcela: 4, quantidadeParcelas: 6 }],
+      valorTotal: 150, totalItens: 1, avisoFormato: 'Bradesco conferido'
+    });
+    vi.mocked(financeiroApi.faturas.importar.confirmar).mockResolvedValue({ contasCriadas: 1, contasDuplicadas: 0 });
+    renderModal({ initialCartaoId: 'c1' });
+    await waitFor(() => expect(cadastrosApi.cartoes.listar).toHaveBeenCalled());
+    await userEvent.click(screen.getByRole('combobox', { name: 'Recebedor padrão' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Mercado Extra' }));
+    await uploadFile(new File(['%PDF'], 'bradesco.pdf', { type: 'application/pdf' }));
+    await screen.findByText('Supermercado Extra');
+    expect(agenteApi.categorizar).not.toHaveBeenCalled();
+    await userEvent.click(await screen.findByRole('button', { name: /Importar/i }));
+    await waitFor(() => expect(financeiroApi.faturas.importar.confirmar).toHaveBeenCalledWith(expect.objectContaining({
+      itens: [expect.objectContaining({ dataVencimentoFatura: '2026-09-20', numeroParcela: 4, quantidadeParcelas: 6 })]
+    })));
+  });
 });
