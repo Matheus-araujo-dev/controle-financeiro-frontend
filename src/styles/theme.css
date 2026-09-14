@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @import "tailwindcss";
 
@@ -104,11 +104,28 @@
   background: var(--color-surface);
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--color-surface);
   color: var(--color-on-surface);
+}
+
+/* ── Safe-area insets (notch, bordas curvas, status bar) ──────────────── */
+
+@supports (padding: env(safe-area-inset-left)) {
+  .safe-px {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  .safe-pb {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
 }
 
 /* ── Scrollbar personalizada ───────────────────────────────────────────── */

@@ -1,11 +1,11 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+﻿import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const baseClass =
-  'inline-flex items-center justify-center gap-2 rounded-xl font-semibold whitespace-nowrap transition-colors active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 no-underline';
+  'inline-flex items-center justify-center gap-2 rounded-xl font-semibold whitespace-nowrap min-w-0 max-w-full transition-colors active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 no-underline';
 
 // Important (`!`) garante que o Button prevaleça sobre o reset de âncora do AntD,
 // que é "unlayered" e venceria as utilities do Tailwind v4 (@layer) em elementos <a>.
@@ -44,7 +44,7 @@ export function Button(props: ButtonElementProps | LinkElementProps) {
   const content = (
     <>
       {loading ? <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent" /> : icon}
-      {children}
+      {children && <span className="truncate">{children}</span>}
       {iconRight}
     </>
   );

@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from 'react';
+﻿import { useDeferredValue, useMemo, useState } from 'react';
 import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -644,7 +644,7 @@ export function FinancialAccountListPage({
   const fetchPageTyped = config.list as (f: typeof filters) => Promise<{ items: FinancialRecord[]; totalItems: number; totalPages: number }>;
 
   const actionButtons = (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2 min-w-0">
       <div className="flex gap-2">
         <ExportButton
           fetchPage={fetchPageTyped}
