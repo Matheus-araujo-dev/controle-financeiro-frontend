@@ -119,7 +119,6 @@
 - Validação: 1.264 testes em 127 arquivos aprovados; linhas 88,36%, statements 86,44%, funções 84,07%, branches 80,91%. TypeScript, build Vite/PWA e contratos aprovados. Lint sem erros (38 avisos existentes). Audit-ci oficial com configuração de produção aprovado, metadata total zero, confirmado por npm audit --omit=dev; auditoria incluindo ferramentas de desenvolvimento aponta 12 vulnerabilidades preexistentes.
 - Não publicado. A pausa de contas EM_FATURA foi mantida sem cancelamento, conforme regra literal de cancelar FUTURO; pergunta específica ao usuário segue pendente.
 
-
 ## 2026-09-13 — Importação de PDF Bradesco
 
 - Leitura determinística do PDF mensal com texto embutido, sem IA, e suporte ao layout anterior do aplicativo.
