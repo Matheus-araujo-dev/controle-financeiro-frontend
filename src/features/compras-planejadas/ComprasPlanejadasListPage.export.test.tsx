@@ -84,7 +84,7 @@ describe('ComprasPlanejadasListPage — export', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList);
     await renderPage();
     expect(await screen.findByText('Notebook')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
@@ -96,7 +96,7 @@ describe('ComprasPlanejadasListPage — export', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: true } as MediaQueryList);
     await renderPage();
     expect(await screen.findByText('Notebook')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
