@@ -110,6 +110,9 @@ describe('FinancialAccountFormPage recurrence fixes', () => {
 
     await waitFor(() => expect(screen.getByDisplayValue('04/04/2026')).toBeInTheDocument());
 
+    // A data de liquidação aparece após o carregamento assíncrono da forma de pagamento.
+    await waitFor(() => expect(screen.getAllByDisplayValue('20/04/2026')).toHaveLength(2));
+
     const dataEmissaoWrapper = screen.getByDisplayValue('04/04/2026').closest('div');
     const dataVencimentoWrapper = screen.getAllByDisplayValue('20/04/2026').at(0)?.closest('div');
     const dataLiquidacaoWrapper = screen.getAllByDisplayValue('20/04/2026').at(1)?.closest('div');

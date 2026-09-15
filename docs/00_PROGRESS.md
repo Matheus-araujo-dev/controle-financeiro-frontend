@@ -119,6 +119,31 @@
 - Validação: 1.264 testes em 127 arquivos aprovados; linhas 88,36%, statements 86,44%, funções 84,07%, branches 80,91%. TypeScript, build Vite/PWA e contratos aprovados. Lint sem erros (38 avisos existentes). Audit-ci oficial com configuração de produção aprovado, metadata total zero, confirmado por npm audit --omit=dev; auditoria incluindo ferramentas de desenvolvimento aponta 12 vulnerabilidades preexistentes.
 - Não publicado. A pausa de contas EM_FATURA foi mantida sem cancelamento, conforme regra literal de cancelar FUTURO; pergunta específica ao usuário segue pendente.
 
+
+## 2026-09-14 — Revisão DE–PARA da fatura (em implementação)
+
+Worktree isolado `.local-runtime/conciliacao-frontend`, branch `codex/conciliacao-fatura-20260914`, base 98b8224 do Claude.
+
+- Grade `ConciliacaoFaturaGrid` usa AppDataTable, ComboBox, Button e NeonBadge existentes.
+- Seleção de vínculos em lote, diferença visível, aceite explícito do valor da fatura, erro por linha, repetição somente de linhas não concluídas e proteção de sugestões concorrentes.
+- Cliente HTTP e tipos da conciliação de fatura implementados.
+- Três testes de interação, TypeScript e lint dos novos arquivos passaram.
+- Ainda não conectada à rota/tela de fatura: falta completar criação de itens ausentes, memória, rascunhos e grade de reembolsos antes de disponibilizar o fluxo completo.
+- Antes da entrega: alinhar contrato da tela bancária do Claude, gerar tipos pelo OpenAPI, ampliar testes, coverage, revisão visual e gates DEV/main. Nenhuma publicação nesta fase.
+
+
+## 2026-09-15 — Grade de conciliação e reembolsos (em andamento)
+
+- Rota /faturas/:id/conciliar acessível por Conciliar PDF no detalhe da fatura. Reabertura de sessões e salvamento de rascunhos com controle de versão.
+- Grade permite vincular, criar ou ignorar por linha e confirmar em lote com retorno individual. Campos incluem descrição, responsável, recebedor, pagamento, rateios, recorrência, observações e aprendizado por campo.
+- Reembolsos editáveis na grade: múltiplos pagadores, valor, parcelamento, vencimento, forma de pagamento, descrição, rateios de receita e observação. Preenchimento em lote aplica campos aos selecionados.
+- Prévia por linha consulta o cálculo do backend automaticamente; não cria contas. Componente RateiosCell separado para reutilização.
+- Testes de prévia, página e grade passaram. Typecheck, lint sem erros e verificação de contratos passaram; suíte completa/cobertura em execução. Warnings preexistentes permanecem.
+- Pendentes: revisão visual, compatibilidade do fluxo bancário da base, ampliação dos testes e gates de publicação. Não publicado.
+
+- Checkpoint 15/09: backend 884 testes completos + 2 testes HTTP OFX/CSV aprovados, 3 ignorados no SQLite; cobertura consolidada 80,5% de linhas. Frontend 1.373 testes completos aprovados, 87,69% linhas e 80,13% branches; mais 2 testes do adaptador bancário aprovados. Tipos e lint sem erros.
+- Incompatibilidade bancária corrigida no frontend: lista real, datas, status EmRevisao, sugestão plana e contagens por item; limite de 50 sessões explicitado.
+- Remotos atualizados: frontend develop avançou 30 commits; necessária integração da base e repetição dos gates antes de publicar. Checkpoint local não representa entrega final.
 ## 2026-09-13 — Importação de PDF Bradesco
 
 - Leitura determinística do PDF mensal com texto embutido, sem IA, e suporte ao layout anterior do aplicativo.
@@ -129,3 +154,5 @@
 - Testes sintéticos cobrem linhas partidas, sinal negativo separado, câmbio, compras iguais e total divergente; API cobre confirmação/reimportação e Swagger; frontend cobre envio dos metadados sem agente.
 - Validação local: 15 testes do modal; suíte completa e cobertura de linhas 88,44%; lint sem erros; TypeScript, build e auditoria npm aprovados. Contratos gerados a partir do Swagger de DEV com metadados de importação.
 - Promoção: primeiro PR para develop; main somente após CI verde.
+
+- Validação integrada concluída: backend 886 aprovados, 3 ignorados, cobertura 80,5%, Release e modelo EF aprovados. Frontend 1.375 aprovados, linhas 87,64%, branches 80,12%, lint/build aprovados. Procedimento de promoção e reversão em CONCILIACAO_FATURA_20260915.md. Publicação ainda pendente.
