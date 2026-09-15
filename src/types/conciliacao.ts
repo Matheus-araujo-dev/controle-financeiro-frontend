@@ -10,17 +10,12 @@ export type ConciliacaoResumo = {
   periodoFim: string;
   totalItens: number;
   itensConciliados: number;
-  itensIgnorados: number;
-  itensPendentes: number;
   status: StatusConciliacao;
   dataCriacao: string;
 };
 
 export type SugestaoConciliacao = {
   movimentacaoId: string;
-  descricao: string;
-  valor: number;
-  data: string;
   score: number;
 };
 
@@ -48,7 +43,6 @@ export type ConciliacaoDetalhe = {
   itensIgnorados: number;
   itensPendentes: number;
   status: StatusConciliacao;
-  dataCriacao: string;
   itens: ItemConciliacao[];
 };
 

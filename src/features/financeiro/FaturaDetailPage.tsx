@@ -302,6 +302,9 @@ export function FaturaDetailPage() {
               Reabrir fatura
             </Button>
           )}
+          <Link to={`/faturas/${id}/conciliar`}>
+            <Button type="button" variant="secondary" size="sm">Conciliar PDF</Button>
+          </Link>
           <Link to="/faturas">
             <Button type="button" variant="secondary" size="sm">
               <span className="material-symbols-outlined text-base">arrow_back</span>

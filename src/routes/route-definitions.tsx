@@ -15,6 +15,7 @@ const ComprasPlanejadasListPage = lazy(() => import('../features/compras-planeja
 const NovaCompraPlanejadaPage = lazy(() => import('../features/compras-planejadas/NovaCompraPlanejadaPage').then((m) => ({ default: m.NovaCompraPlanejadaPage })));
 const RealizarCompraPlanejadaPage = lazy(() => import('../features/compras-planejadas/RealizarCompraPlanejadaPage').then((m) => ({ default: m.RealizarCompraPlanejadaPage })));
 const FinancialAccountFormPage = lazy(() => import('../features/financeiro/FinancialAccountFormPage').then((m) => ({ default: m.FinancialAccountFormPage })));
+const ConciliacaoFaturaPage = lazy(() => import('../features/conciliacao/ConciliacaoFaturaPage').then(m => ({ default: m.ConciliacaoFaturaPage })));
 const FaturaDetailPage = lazy(() => import('../features/financeiro/FaturaDetailPage').then((m) => ({ default: m.FaturaDetailPage })));
 const FaturasPage = lazy(() => import('../features/financeiro/FaturasPage').then((m) => ({ default: m.FaturasPage })));
 const MovimentacoesWorkspacePage = lazy(() => import('../features/financeiro/MovimentacoesWorkspacePage').then((m) => ({ default: m.MovimentacoesWorkspacePage })));
@@ -246,6 +247,11 @@ export const financialRouteObjects: RouteObject[] = [
     handle: {
       title: 'Detalhe de fatura'
     }
+  },
+  {
+    path: 'faturas/:id/conciliar',
+    element: <ConciliacaoFaturaPage />,
+    handle: { title: 'Conciliar fatura' }
   },
   {
     path: 'faturas/importar',

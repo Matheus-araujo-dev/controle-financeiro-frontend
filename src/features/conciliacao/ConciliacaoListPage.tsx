@@ -99,6 +99,7 @@ export default function ConciliacaoListPage() {
         </Button>
       </div>
 
+      <p className="text-sm text-on-surface-variant">Últimas 50 conciliações bancárias.</p>
       <AppDataTable<ConciliacaoResumo>
         columns={columns}
         dataSource={data?.items ?? []}
