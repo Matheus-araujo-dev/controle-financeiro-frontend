@@ -408,6 +408,17 @@ export interface CancelarContaReceberRequest {
   pausarRecorrenciaRelacionada?: boolean | null;
 }
 
+export interface CandidatoConciliacaoResponse {
+  /** @format uuid */
+  contaId?: string;
+  /** @format double */
+  diferenca?: number;
+  /** @format int32 */
+  pontos?: number;
+  motivo?: string | null;
+  correspondenciaClara?: boolean;
+}
+
 export interface CartaoDetalheResponse {
   /** @format uuid */
   id?: string;
@@ -581,6 +592,17 @@ export interface ConciliacaoDetalheResponse {
   itens?: ItemConciliacaoResponse[] | null;
 }
 
+export interface ConciliacaoFaturaResponse {
+  /** @format uuid */
+  id?: string;
+  /** @format uuid */
+  faturaId?: string;
+  nomeArquivo?: string | null;
+  status?: string | null;
+  itens?: ItemFaturaConciliacaoResponse[] | null;
+  contasSistema?: ContaConciliacaoResponse[] | null;
+}
+
 export interface ConciliacaoResumoResponse {
   /** @format uuid */
   id?: string;
@@ -715,6 +737,31 @@ export interface ContaBancariaResumoResponse {
   ativo?: boolean;
   icone?: string | null;
   cor?: string | null;
+}
+
+export interface ContaConciliacaoResponse {
+  /** @format uuid */
+  id?: string;
+  /** @format date */
+  dataCompra?: string;
+  descricao?: string | null;
+  /** @format double */
+  valor?: number;
+  /** @format int32 */
+  numeroParcela?: number;
+  /** @format int32 */
+  quantidadeParcelas?: number;
+  /** @format uuid */
+  responsavelCompraId?: string | null;
+  /** @format uuid */
+  recebedorId?: string;
+  /** @format uuid */
+  formaPagamentoId?: string;
+  /** @format uuid */
+  regraRecorrenciaId?: string | null;
+  /** @format uuid */
+  grupoReembolsoId?: string | null;
+  rateios?: RateioConciliacaoResponse[] | null;
 }
 
 export interface ContaGerencialDetalheResponse {
@@ -1269,6 +1316,22 @@ export interface CriarInvestimentoRequest {
   taxaAnual?: number | null;
   /** @format uuid */
   contaBancariaVinculadaId?: string;
+}
+
+export interface CriarItemFaturaRequest {
+  descricao?: string | null;
+  /** @format uuid */
+  recebedorId?: string;
+  /** @format uuid */
+  responsavelCompraId?: string | null;
+  /** @format uuid */
+  formaPagamentoId?: string;
+  rateios?: RateioRequest[] | null;
+  recorrencia?: RecorrenciaConfigRequest;
+  reembolso?: ReembolsoFaturaConfig;
+  observacao?: string | null;
+  aprender?: boolean;
+  camposParaAprender?: string[] | null;
 }
 
 export interface CriarPessoaRequest {
@@ -1994,6 +2057,30 @@ export interface ItemConciliacaoResponse {
   scoreSugestao?: number | null;
 }
 
+export interface ItemFaturaConciliacaoResponse {
+  /** @format uuid */
+  id?: string;
+  /** @format date */
+  data?: string;
+  descricaoOriginal?: string | null;
+  /** @format double */
+  valor?: number;
+  /** @format int32 */
+  numeroParcela?: number;
+  /** @format int32 */
+  quantidadeParcelas?: number;
+  status?: string | null;
+  /** @format uuid */
+  contaPagarVinculadaId?: string | null;
+  /** @format double */
+  valorAnteriorSistema?: number | null;
+  candidatos?: CandidatoConciliacaoResponse[] | null;
+  preferencias?: PreferenciasFaturaResponse;
+  rascunho?: any;
+  /** @format date-time */
+  atualizadoEmUtc?: string;
+}
+
 export interface ItemImportadoWhatsappResponse {
   /** @format uuid */
   id?: string;
@@ -2370,6 +2457,43 @@ export interface PredicaoClassificacaoImportacaoWhatsappResponse {
   confiancaHistorico?: number;
 }
 
+export interface PreferenciasFaturaResponse {
+  descricao?: string | null;
+  /** @format uuid */
+  responsavelCompraId?: string | null;
+  /** @format uuid */
+  recebedorId?: string | null;
+  rateios?: RateioMemoriaResponse[] | null;
+  ehRecorrente?: boolean | null;
+  gerarReembolso?: boolean | null;
+  reembolsoPagadoresIds?: string[] | null;
+}
+
+export interface PreviaReembolsoFaturaRequest {
+  /** @format uuid */
+  contaPagarId?: string | null;
+  parcelarIgual?: boolean;
+  /** @format double */
+  valorTotal?: number;
+  pagadoresIds?: string[] | null;
+  /** @format date */
+  dataVencimento?: string;
+}
+
+export interface PreviaReembolsoFaturaResponse {
+  /** @format uuid */
+  pagadorId?: string;
+  pagadorNome?: string | null;
+  /** @format int32 */
+  numeroParcela?: number;
+  /** @format int32 */
+  quantidadeParcelas?: number;
+  /** @format double */
+  valor?: number;
+  /** @format date */
+  dataVencimento?: string;
+}
+
 export interface ProblemDetails {
   type?: string | null;
   title?: string | null;
@@ -2385,6 +2509,31 @@ export interface PushSubscriptionResponse {
   id?: string;
   endpoint?: string | null;
   ativo?: boolean;
+}
+
+export interface RascunhoFaturaRequest {
+  dados?: any;
+  /** @format date-time */
+  atualizadoEmUtc?: string;
+}
+
+export interface RascunhoFaturaResponse {
+  /** @format date-time */
+  atualizadoEmUtc?: string;
+}
+
+export interface RateioConciliacaoResponse {
+  /** @format uuid */
+  contaGerencialId?: string;
+  /** @format double */
+  valor?: number;
+}
+
+export interface RateioMemoriaResponse {
+  /** @format uuid */
+  contaGerencialId?: string;
+  /** @format double */
+  proporcao?: number;
 }
 
 export interface RateioRequest {
@@ -2528,6 +2677,20 @@ export interface ReembolsoContaResumo {
   descricao?: string | null;
 }
 
+export interface ReembolsoFaturaConfig {
+  parcelarIgual?: boolean;
+  /** @format double */
+  valorTotal?: number;
+  pagadoresIds?: string[] | null;
+  /** @format uuid */
+  formaPagamentoId?: string;
+  /** @format date */
+  dataVencimento?: string;
+  descricao?: string | null;
+  observacao?: string | null;
+  rateios?: RateioRequest[] | null;
+}
+
 export interface RegistrarPushSubscriptionRequest {
   endpoint?: string | null;
   p256dh?: string | null;
@@ -2541,6 +2704,15 @@ export interface RenomearFamiliaRequest {
 export interface RetirarDinheiroRequest {
   /** @format double */
   valor?: number;
+}
+
+export interface RevisaoFaturaResumoResponse {
+  /** @format uuid */
+  id?: string;
+  nomeArquivo?: string | null;
+  status?: string | null;
+  /** @format date-time */
+  criadoEmUtc?: string;
 }
 
 export interface RevisarItemImportadoWhatsappRequest {
@@ -2630,6 +2802,17 @@ export interface UsuarioAutenticadoResponse {
 
 export interface VapidPublicKeyResponse {
   publicKey?: string | null;
+}
+
+export interface VincularItemFaturaRequest {
+  /** @format uuid */
+  contaPagarId?: string;
+  /** @format double */
+  valorEsperadoSistema?: number;
+  usarValorFatura?: boolean;
+  aprender?: boolean;
+  camposParaAprender?: string[] | null;
+  reembolso?: ReembolsoFaturaConfig;
 }
 
 export interface WhatsappAlertasRequest {

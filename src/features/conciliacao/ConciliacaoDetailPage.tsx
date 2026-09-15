@@ -1,7 +1,7 @@
 ﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { Tag } from 'antd';
-import { ArrowLeftOutlined, CheckOutlined, StopOutlined, LinkOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, StopOutlined, LinkOutlined } from '@ant-design/icons';
 import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { PageState } from '../../components/states/PageState';
 import { Button } from '../../components/ui/Button';
@@ -115,7 +115,7 @@ export default function ConciliacaoDetailPage() {
           <div className="flex items-center gap-2">
             {scoreBadge(record.sugestao.score)}
             <span className="text-xs text-on-surface-variant truncate max-w-[120px]">
-              {record.sugestao.descricao}
+              Movimentação sugerida
             </span>
           </div>
         );
