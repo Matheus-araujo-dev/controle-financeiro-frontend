@@ -27,13 +27,13 @@ export function ConciliacaoFaturaLote({ ids, options, disabled, onApply }: { ids
   }
   return <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface-container-low p-3">
     <span className="text-sm">Preencher em lote:</span>
-    <ComboBox compact aria-label="Campo para preencher em lote" value={campo} disabled={disabled} onChange={v => { setCampo(v as Campo); setValor(''); }} options={[
+    <div className="w-full md:w-64"><ComboBox compact aria-label="Campo para preencher em lote" value={campo} disabled={disabled} onChange={v => { setCampo(v as Campo); setValor(''); }} options={[
       { value: 'responsavelCompraId', label: 'Responsável' }, { value: 'recebedorId', label: 'Recebedor' }, { value: 'formaPagamentoId', label: 'Pagamento da compra' },
       { value: 'categoria', label: 'Substituir rateio de despesa' }, { value: 'pagador', label: 'Pagador do reembolso' }, { value: 'receita', label: 'Substituir rateio de receita' },
       { value: 'formaReembolso', label: 'Pagamento do reembolso' }, { value: 'vencimentoReembolso', label: 'Vencimento do reembolso' }, { value: 'gerarReembolso', label: 'Gerar reembolso' }
-    ]} />
-    {campo === 'vencimentoReembolso' ? <DateInput compact ariaLabel="Valor em lote" value={valor} disabled={disabled} onChange={setValor} />
-      : <ComboBox compact aria-label="Valor em lote" value={valor} disabled={disabled} options={choices} onChange={setValor} />}
+    ]} /></div>
+    <div className="w-full md:w-64">{campo === 'vencimentoReembolso' ? <DateInput compact ariaLabel="Valor em lote" value={valor} disabled={disabled} onChange={setValor} />
+      : <ComboBox compact aria-label="Valor em lote" value={valor} disabled={disabled} options={choices} onChange={setValor} />}</div>
     <Button size="sm" disabled={disabled || !valor || ids.length === 0} onClick={aplicar}>Aplicar aos {ids.length} selecionados</Button>
   </div>;
 }

@@ -154,3 +154,5 @@ Worktree isolado `.local-runtime/conciliacao-frontend`, branch `codex/conciliaca
 - Testes sintéticos cobrem linhas partidas, sinal negativo separado, câmbio, compras iguais e total divergente; API cobre confirmação/reimportação e Swagger; frontend cobre envio dos metadados sem agente.
 - Validação local: 15 testes do modal; suíte completa e cobertura de linhas 88,44%; lint sem erros; TypeScript, build e auditoria npm aprovados. Contratos gerados a partir do Swagger de DEV com metadados de importação.
 - Promoção: primeiro PR para develop; main somente após CI verde.
+
+- Validação integrada concluída: backend 886 aprovados, 3 ignorados, cobertura 80,5%, Release e modelo EF aprovados. Frontend 1.375 aprovados, linhas 87,64%, branches 80,12%, lint/build aprovados. Procedimento de promoção e reversão em CONCILIACAO_FATURA_20260915.md. Publicação ainda pendente.
