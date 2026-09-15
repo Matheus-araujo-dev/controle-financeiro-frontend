@@ -173,7 +173,7 @@ describe('FinancialAccountListPage — export column lambdas (real richExport/pr
     );
 
     expect(await screen.findByText('Aluguel')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
     const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -199,7 +199,7 @@ describe('FinancialAccountListPage — export column lambdas (real richExport/pr
 
     expect(await screen.findByText('Aluguel')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
   }, 25000);
 });

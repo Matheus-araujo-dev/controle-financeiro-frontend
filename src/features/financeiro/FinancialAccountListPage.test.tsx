@@ -359,7 +359,7 @@ describe('FinancialAccountListPage', () => {
 
     expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
 
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
 
     await waitFor(() => expect(openPrintReport).toHaveBeenCalledOnce());
 
@@ -657,7 +657,7 @@ describe('FinancialAccountListPage', () => {
     );
 
     const prevCallCount = (openPrintReport as ReturnType<typeof vi.fn>).mock.calls.length;
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() =>
       expect((openPrintReport as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(prevCallCount)
     );
@@ -770,7 +770,7 @@ describe('FinancialAccountListPage', () => {
     );
 
     const prevCallCount = (openPrintReport as ReturnType<typeof vi.fn>).mock.calls.length;
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() =>
       expect((openPrintReport as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(prevCallCount)
     );

@@ -72,7 +72,7 @@ describe('ImportacoesWhatsappPage — export (XLSX + PDF desktop only)', () => {
   it('PDF export opens landscape HTML (no mobile routing for this page)', async () => {
     await renderPage();
     expect(await screen.findByText('+5511999999999')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const html: string = (window.open as ReturnType<typeof vi.fn>).mock.results

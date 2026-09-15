@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Button } from '../ui/Button';
 import { exportListing, fetchAllRows, type ExportColumn, type PageQuery, type PagedLike } from '../../shared/export/exportListing';
 
@@ -18,13 +18,30 @@ interface ExportButtonProps<T, F extends PageQuery> {
   opensWindow?: boolean;
 }
 
-function DownloadIcon({ className = '' }: { className?: string }) {
+function SpreadsheetIcon({ className = '' }: { className?: string }) {
   return (
     <svg viewBox="0 0 20 20" aria-hidden className={`h-4 w-4 ${className}`} fill="none">
-      <path d="M10 3v8m0 0 3-3m-3 3L7 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M4 13.5V15a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M7 6h6M7 10h6M7 14h6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M10 6v8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
   );
+}
+
+function PdfIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden className={`h-4 w-4 ${className}`} fill="none">
+      <path d="M5 2h7l4 4v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M12 2v4h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="10" y="14.5" textAnchor="middle" fill="currentColor" fontSize="5" fontWeight="700" fontFamily="sans-serif">PDF</text>
+    </svg>
+  );
+}
+
+function resolveIcon(label: string, format: string, loading: boolean) {
+  const cls = loading ? 'animate-pulse' : '';
+  const isPdf = label.toUpperCase() === 'PDF' || format === 'pdf';
+  return isPdf ? <PdfIcon className={cls} /> : <SpreadsheetIcon className={cls} />;
 }
 
 export function ExportButton<T, F extends PageQuery>({
@@ -66,9 +83,9 @@ export function ExportButton<T, F extends PageQuery>({
       variant="primary"
       onClick={handleExport}
       disabled={loading || disabled}
-      icon={<DownloadIcon className={loading ? 'animate-pulse' : ''} />}
-    >
-      {loading ? 'Exportando...' : label}
-    </Button>
+      icon={resolveIcon(label, format, loading)}
+      title={loading ? 'Exportando...' : label}
+      aria-label={loading ? 'Exportando...' : `Exportar ${label}`}
+    />
   );
 }

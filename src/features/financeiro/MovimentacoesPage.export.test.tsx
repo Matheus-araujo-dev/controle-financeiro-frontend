@@ -124,7 +124,7 @@ describe('MovimentacoesPage — export column lambdas (real richExport/printRepo
     renderPage();
     expect(await screen.findByText('Salário')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
   }, 25000);
 
@@ -138,7 +138,7 @@ describe('MovimentacoesPage — export column lambdas (real richExport/printRepo
     renderPage();
     expect(await screen.findByText('Conta a pagar')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /^PDF$/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     await waitFor(() => expect(window.open).toHaveBeenCalled());
   }, 25000);
 

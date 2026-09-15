@@ -144,3 +144,13 @@ Worktree isolado `.local-runtime/conciliacao-frontend`, branch `codex/conciliaca
 - Checkpoint 15/09: backend 884 testes completos + 2 testes HTTP OFX/CSV aprovados, 3 ignorados no SQLite; cobertura consolidada 80,5% de linhas. Frontend 1.373 testes completos aprovados, 87,69% linhas e 80,13% branches; mais 2 testes do adaptador bancário aprovados. Tipos e lint sem erros.
 - Incompatibilidade bancária corrigida no frontend: lista real, datas, status EmRevisao, sugestão plana e contagens por item; limite de 50 sessões explicitado.
 - Remotos atualizados: frontend develop avançou 30 commits; necessária integração da base e repetição dos gates antes de publicar. Checkpoint local não representa entrega final.
+## 2026-09-13 — Importação de PDF Bradesco
+
+- Leitura determinística do PDF mensal com texto embutido, sem IA, e suporte ao layout anterior do aplicativo.
+- Vencimento da fatura, número/total de parcelas e estornos preservados na confirmação. Só a parcela do documento é criada.
+- Pagamentos e saldo anterior entram apenas na conferência; divergência no total bloqueia a prévia do layout mensal.
+- Compras iguais recebem chaves independentes e estáveis na reimportação.
+- Amostra real conferida integralmente; arquivo pessoal não versionado.
+- Testes sintéticos cobrem linhas partidas, sinal negativo separado, câmbio, compras iguais e total divergente; API cobre confirmação/reimportação e Swagger; frontend cobre envio dos metadados sem agente.
+- Validação local: 15 testes do modal; suíte completa e cobertura de linhas 88,44%; lint sem erros; TypeScript, build e auditoria npm aprovados. Contratos gerados a partir do Swagger de DEV com metadados de importação.
+- Promoção: primeiro PR para develop; main somente após CI verde.
