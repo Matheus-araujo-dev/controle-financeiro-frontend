@@ -156,3 +156,11 @@ Worktree isolado `.local-runtime/conciliacao-frontend`, branch `codex/conciliaca
 - Promoção: primeiro PR para develop; main somente após CI verde.
 
 - Validação integrada concluída: backend 886 aprovados, 3 ignorados, cobertura 80,5%, Release e modelo EF aprovados. Frontend 1.375 aprovados, linhas 87,64%, branches 80,12%, lint/build aprovados. Procedimento de promoção e reversão em CONCILIACAO_FATURA_20260915.md. Publicação ainda pendente.
+
+## 2026-09-16 — Clareza no anexo da conciliação
+
+- Removido o título repetido da página: o cabeçalho do layout permanece como título único.
+- Substituído o input de arquivo sem destaque por painel com botão padrão “Anexar PDF da fatura”, limite de tamanho, instrução de revisão, estado de leitura e nome do arquivo anexado.
+- Botão de retorno usa o componente Link do design system, sem botão dentro de link.
+- TDD: teste de interação falhou antes da correção e passou depois. Quality gate completo aprovado; cobertura 87,71% linhas e 80,13% branches.
+- Prévia local com dados fictícios verificada em 1440 e 390 px: sem overflow e seletor real abre ao clicar. Publicação via DEV antes de main.
