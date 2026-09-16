@@ -10,7 +10,7 @@ vi.mock('../../services/http/conciliacao-fatura-api', () => ({ conciliacaoFatura
   obter: vi.fn().mockResolvedValue({ id: 's', faturaId: 'f', nomeArquivo: 'fatura.pdf', status: 'EmRevisao',
     itens: [{ id: 'i', data: '2026-09-01', descricaoOriginal: 'LOJA', valor: 100, numeroParcela: 1, quantidadeParcelas: 1,
       status: 'Pendente', contaPagarVinculadaId: null, valorAnteriorSistema: null, candidatos: [], atualizadoEmUtc: '2026-09-14T00:00:00Z' }], contasSistema: [] }),
-  criar: vi.fn(), vincular: vi.fn(), salvarRascunho: vi.fn().mockResolvedValue({ atualizadoEmUtc: '2026-09-15T00:00:00Z' })
+  iniciar: vi.fn(), criar: vi.fn(), vincular: vi.fn(), salvarRascunho: vi.fn().mockResolvedValue({ atualizadoEmUtc: '2026-09-15T00:00:00Z' })
 } }));
 vi.mock('../../services/http/financeiro-api', () => ({ financeiroApi: { faturas: { obterPorId: vi.fn().mockResolvedValue({ dataVencimento: '2026-09-20', cartaoNome: 'Meu cartão' }) } } }));
 vi.mock('../financeiro/module-config', () => {
@@ -32,4 +32,23 @@ it('retoma a revisão e salva a edição sem criar conta', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
   expect(conciliacaoFaturaApi.criar).not.toHaveBeenCalled();
   expect(conciliacaoFaturaApi.salvarRascunho).toHaveBeenCalledWith('f', 's', 'i', expect.objectContaining({ descricao: 'Compra editada' }), '2026-09-14T00:00:00Z');
+});
+
+
+it('oferece botão visível para anexar PDF sem duplicar o título do layout', async () => {
+  vi.mocked(conciliacaoFaturaApi.iniciar).mockResolvedValue(await conciliacaoFaturaApi.obter('f', 's'));
+  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <MemoryRouter initialEntries={['/faturas/f/conciliar']}><Routes><Route path="/faturas/:id/conciliar" element={<ConciliacaoFaturaPage />} /></Routes></MemoryRouter>
+  </QueryClientProvider>);
+  const button = await screen.findByRole('button', { name: 'Anexar PDF da fatura' });
+  expect(button).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Conciliar fatura' })).not.toBeInTheDocument();
+  const input = screen.getByLabelText('PDF da fatura');
+  const clicked = vi.spyOn(input, 'click');
+  await userEvent.click(button);
+  expect(clicked).toHaveBeenCalled();
+  const file = new File(['pdf'], 'cartao.pdf', { type: 'application/pdf' });
+  await userEvent.upload(input, file);
+  expect(conciliacaoFaturaApi.iniciar).toHaveBeenCalledWith('f', file);
+  expect(await screen.findByText('Arquivo anexado: fatura.pdf')).toBeVisible();
 });

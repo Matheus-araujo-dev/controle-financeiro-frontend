@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { Checkbox } from 'antd';
@@ -17,6 +17,8 @@ import { criarRascunho, montarCriacao, montarReembolso, type RascunhoLancamento 
 
 export function ConciliacaoFaturaPage() {
   const { id } = useParams();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const queryClient = useQueryClient();
   const [session, setSession] = useState<ConciliacaoFatura>();
   const [rows, setRows] = useState<Record<string, RascunhoLancamento>>({});
@@ -44,10 +46,10 @@ export function ConciliacaoFaturaPage() {
     finally { setBusy(false); }
   }
   async function importar(file: File) {
-    setBusy(true); setError('');
+    setBusy(true); setUploading(true); setError('');
     try { carregar(await conciliacaoFaturaApi.iniciar(id!, file)); await queryClient.invalidateQueries({ queryKey: ['conciliacao-fatura-options', id] }); }
     catch (e) { setError(getApiErrorMessage(e)); }
-    finally { setBusy(false); }
+    finally { setBusy(false); setUploading(false); }
   }
   function update(itemId: string, patch: Partial<RascunhoLancamento>) { setRows(current => ({ ...current, [itemId]: { ...current[itemId], ...patch } })); setMessage('Alterações ainda não salvas.'); }
   async function salvar() {
@@ -73,11 +75,26 @@ export function ConciliacaoFaturaPage() {
   if (loadError || !data || !id) return <PageState state="error" title="Não foi possível carregar a fatura" subtitle={getApiErrorMessage(loadError)} />;
   const semVinculo = session?.contasSistema.filter(c => !session.itens.some(i => i.contaPagarVinculadaId === c.id)) ?? [];
   return <div className="space-y-5">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="font-headline text-2xl font-bold">Conciliar fatura</h1><p className="text-on-surface-variant">{data.fatura.cartaoNome}</p></div>
-      <Link to={`/faturas/${id}`}><Button variant="secondary">Voltar à fatura</Button></Link></div>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <p className="text-on-surface-variant">{data.fatura.cartaoNome}</p>
+      <Button to={`/faturas/${id}`} variant="secondary">Voltar à fatura</Button>
+    </div>
+    <section aria-label="Anexar fatura" className="rounded-2xl border border-outline-variant/20 bg-surface-container-low p-5 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 space-y-2">
+          <h2 className="text-lg font-semibold">Compare o PDF com os lançamentos da fatura</h2>
+          <p className="text-sm text-on-surface-variant">Anexe o PDF baixado do banco para revisar os vínculos antes de confirmar os lançamentos.</p>
+          <p className="text-xs text-on-surface-variant">Arquivo PDF de até 5 MB.</p>
+          {session && <p className="break-all text-sm text-primary">Arquivo anexado: {session.nomeArquivo}</p>}
+        </div>
+        <input ref={fileInput} hidden aria-label="PDF da fatura" type="file" accept=".pdf,application/pdf" disabled={busy}
+          onChange={e => { const file = e.target.files?.[0]; if (file) void importar(file); e.target.value = ''; }} />
+        <Button type="button" disabled={busy} loading={uploading} className="shrink-0"
+          icon={<span aria-hidden="true" className="material-symbols-outlined text-xl">upload_file</span>}
+          onClick={() => fileInput.current?.click()}>{uploading ? 'Lendo PDF...' : 'Anexar PDF da fatura'}</Button>
+      </div>
+    </section>
     <div className="flex flex-wrap items-center gap-3">
-      <label className="text-sm">PDF do cartão <input aria-label="PDF da fatura" type="file" accept=".pdf,application/pdf" disabled={busy}
-        onChange={e => { const file = e.target.files?.[0]; if (file) void importar(file); e.target.value = ''; }} /></label>
       {!session && data.revisoes.map(r => <Button key={r.id} variant="secondary" disabled={busy} onClick={() => void abrir(r.id)}>Retomar {r.nomeArquivo}</Button>)}
       {session && <><Button variant="secondary" disabled={busy} onClick={() => void salvar()}>Salvar rascunho</Button>
         <Checkbox checked={mostrarReembolsos} disabled={busy} onChange={e => setMostrarReembolsos(e.target.checked)}>Editar reembolsos em lote</Checkbox></>}
