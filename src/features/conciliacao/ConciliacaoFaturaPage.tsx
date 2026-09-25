@@ -84,14 +84,16 @@ export function ConciliacaoFaturaPage() {
         <div className="min-w-0 space-y-2">
           <h2 className="text-lg font-semibold">Compare o PDF com os lançamentos da fatura</h2>
           <p className="text-sm text-on-surface-variant">Anexe o PDF baixado do banco para revisar os vínculos antes de confirmar os lançamentos.</p>
-          <p className="text-xs text-on-surface-variant">Arquivo PDF de até 5 MB.</p>
+          <p className="text-xs text-on-surface-variant">PDF de até 128 MB e 20 páginas. Imagens são lidas por OCR.</p>
+          <p className="text-xs text-on-surface-variant">Extratos abertos usam o vencimento desta fatura ({data.fatura.dataVencimento.split('-').reverse().join('/')}). Confira datas, valores e descrições antes de confirmar.</p>
+          {uploading && <p role="status" className="text-sm text-on-surface-variant">Enviando e reconhecendo os lançamentos. PDFs com imagens podem levar alguns minutos.</p>}
           {session && <p className="break-all text-sm text-primary">Arquivo anexado: {session.nomeArquivo}</p>}
         </div>
         <input ref={fileInput} hidden aria-label="PDF da fatura" type="file" accept=".pdf,application/pdf" disabled={busy}
           onChange={e => { const file = e.target.files?.[0]; if (file) void importar(file); e.target.value = ''; }} />
         <Button type="button" disabled={busy} loading={uploading} className="shrink-0"
           icon={<span aria-hidden="true" className="material-symbols-outlined text-xl">upload_file</span>}
-          onClick={() => fileInput.current?.click()}>{uploading ? 'Lendo PDF...' : 'Anexar PDF da fatura'}</Button>
+          onClick={() => fileInput.current?.click()}>{uploading ? 'Enviando e lendo PDF...' : 'Anexar PDF da fatura'}</Button>
       </div>
     </section>
     <div className="flex flex-wrap items-center gap-3">
