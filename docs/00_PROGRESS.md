@@ -164,3 +164,15 @@ Worktree isolado `.local-runtime/conciliacao-frontend`, branch `codex/conciliaca
 - Botão de retorno usa o componente Link do design system, sem botão dentro de link.
 - TDD: teste de interação falhou antes da correção e passou depois. Quality gate completo aprovado; cobertura 87,71% linhas e 80,13% branches.
 - Prévia local com dados fictícios verificada em 1440 e 390 px: sem overflow e seletor real abre ao clicar. Publicação via DEV antes de main.
+
+
+## 2026-09-25 — Extrato aberto Bradesco por OCR
+
+- Suporte a PDF em imagens, limite de 128 MB e erros de upload em português.
+- Amostra real reconhecida localmente: 80 itens, R$ 16.358,45; pagamentos/saldo excluídos das compras.
+- Detalhes, dependências, testes e rollback em BRADESCO_OCR_IMAGEM_20260925.md. Gates e publicação em andamento.
+
+## 2026-09-25 - Faturas multibanco
+
+Campo opcional de senha, aviso persistido e total impresso na revisao. Contratos gerados e testes de fluxo atualizados. Ver FATURAS_MULTIBANCO_20260925.md.
+
