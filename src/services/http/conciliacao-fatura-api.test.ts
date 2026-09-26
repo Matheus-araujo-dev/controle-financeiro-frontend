@@ -29,3 +29,10 @@ it('traduz bloqueio de tamanho do servidor', async () => {
   vi.mocked(apiClient.post).mockRejectedValueOnce({ isAxiosError: true, response: { status: 413 } });
   await expect(conciliacaoFaturaApi.iniciar('f', new File(['pdf'], 'extrato.pdf'))).rejects.toThrow(/128 MB/);
 });
+
+it('envia senha apenas no corpo do upload', async () => {
+  await conciliacaoFaturaApi.iniciar('f', new File(['pdf'], 'protegido.pdf'), 'senha-teste');
+  const [url, body] = vi.mocked(apiClient.post).mock.calls[0];
+  expect(url).toBe('/faturas/f/conciliacoes');
+  expect((body as FormData).get('senha')).toBe('senha-teste');
+});

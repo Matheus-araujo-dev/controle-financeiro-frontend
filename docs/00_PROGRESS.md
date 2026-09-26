@@ -171,3 +171,8 @@ Worktree isolado `.local-runtime/conciliacao-frontend`, branch `codex/conciliaca
 - Suporte a PDF em imagens, limite de 128 MB e erros de upload em português.
 - Amostra real reconhecida localmente: 80 itens, R$ 16.358,45; pagamentos/saldo excluídos das compras.
 - Detalhes, dependências, testes e rollback em BRADESCO_OCR_IMAGEM_20260925.md. Gates e publicação em andamento.
+
+## 2026-09-25 - Faturas multibanco
+
+Campo opcional de senha, aviso persistido e total impresso na revisao. Contratos gerados e testes de fluxo atualizados. Ver FATURAS_MULTIBANCO_20260925.md.
+

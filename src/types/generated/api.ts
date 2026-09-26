@@ -601,6 +601,9 @@ export interface ConciliacaoFaturaResponse {
   status?: string | null;
   itens?: ItemFaturaConciliacaoResponse[] | null;
   contasSistema?: ContaConciliacaoResponse[] | null;
+  avisoLeitura?: string | null;
+  /** @format double */
+  totalDocumento?: number | null;
 }
 
 export interface ConciliacaoResumoResponse {

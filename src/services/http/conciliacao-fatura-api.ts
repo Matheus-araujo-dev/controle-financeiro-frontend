@@ -16,12 +16,13 @@ export const conciliacaoFaturaApi = {
   },
   salvarRascunho: async (faturaId: string, id: string, itemId: string, dados: unknown, atualizadoEmUtc: string) =>
     (await apiClient.put<{ atualizadoEmUtc: string }>(`/faturas/${faturaId}/conciliacoes/${id}/itens/${itemId}/rascunho`, { dados, atualizadoEmUtc })).data,
-  iniciar: async (faturaId: string, arquivo: File) => {
+  iniciar: async (faturaId: string, arquivo: File, senha?: string) => {
     if (!arquivo.name.toLowerCase().endsWith('.pdf')) throw new Error('Selecione um arquivo PDF.');
     if (arquivo.size === 0) throw new Error('O arquivo PDF está vazio.');
     if (arquivo.size > 128 * 1024 * 1024) throw new Error('O PDF deve ter até 128 MB.');
     const form = new FormData();
     form.append('arquivo', arquivo);
+    if (senha) form.append('senha', senha);
     try {
       return (await apiClient.post<ConciliacaoFatura>(`/faturas/${faturaId}/conciliacoes`, form, { timeout: 240000 })).data;
     } catch (error) {

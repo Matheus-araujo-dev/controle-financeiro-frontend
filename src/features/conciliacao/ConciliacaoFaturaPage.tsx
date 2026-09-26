@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import { Checkbox } from 'antd';
+import { Checkbox, Input } from 'antd';
 import { Button } from '../../components/ui/Button';
 import { PageState } from '../../components/states/PageState';
 import { conciliacaoFaturaApi } from '../../services/http/conciliacao-fatura-api';
@@ -18,6 +18,7 @@ import { criarRascunho, montarCriacao, montarReembolso, type RascunhoLancamento 
 export function ConciliacaoFaturaPage() {
   const { id } = useParams();
   const fileInput = useRef<HTMLInputElement>(null);
+  const [senha, setSenha] = useState('');
   const [uploading, setUploading] = useState(false);
   const queryClient = useQueryClient();
   const [session, setSession] = useState<ConciliacaoFatura>();
@@ -47,7 +48,7 @@ export function ConciliacaoFaturaPage() {
   }
   async function importar(file: File) {
     setBusy(true); setUploading(true); setError('');
-    try { carregar(await conciliacaoFaturaApi.iniciar(id!, file)); await queryClient.invalidateQueries({ queryKey: ['conciliacao-fatura-options', id] }); }
+    try { carregar(await (senha ? conciliacaoFaturaApi.iniciar(id!, file, senha) : conciliacaoFaturaApi.iniciar(id!, file))); setSenha(''); await queryClient.invalidateQueries({ queryKey: ['conciliacao-fatura-options', id] }); }
     catch (e) { setError(getApiErrorMessage(e)); }
     finally { setBusy(false); setUploading(false); }
   }
@@ -86,6 +87,12 @@ export function ConciliacaoFaturaPage() {
           <p className="text-sm text-on-surface-variant">Anexe o PDF baixado do banco para revisar os vínculos antes de confirmar os lançamentos.</p>
           <p className="text-xs text-on-surface-variant">PDF de até 128 MB e 20 páginas. Imagens são lidas por OCR.</p>
           <p className="text-xs text-on-surface-variant">Extratos abertos usam o vencimento desta fatura ({data.fatura.dataVencimento.split('-').reverse().join('/')}). Confira datas, valores e descrições antes de confirmar.</p>
+          <div className="max-w-xs space-y-1">
+            <label htmlFor="senha-pdf" className="text-sm">Senha do PDF (se houver)</label>
+            <Input.Password id="senha-pdf" value={senha} maxLength={128} disabled={busy} autoComplete="off"
+              onChange={e => setSenha(e.target.value)} placeholder="Preencha antes de anexar" />
+            <p className="text-xs text-on-surface-variant">Usada apenas para abrir o arquivo. Não é salva.</p>
+          </div>
           {uploading && <p role="status" className="text-sm text-on-surface-variant">Enviando e reconhecendo os lançamentos. PDFs com imagens podem levar alguns minutos.</p>}
           {session && <p className="break-all text-sm text-primary">Arquivo anexado: {session.nomeArquivo}</p>}
         </div>
@@ -104,7 +111,9 @@ export function ConciliacaoFaturaPage() {
     {error && <p role="alert" className="text-error">{error}</p>}
     {message && <p role="status" className="text-sm text-on-surface-variant">{message}</p>}
     {session && <>
+      {session.avisoLeitura && <p role="status" className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4 text-sm">{session.avisoLeitura}</p>}
       <div className="flex flex-wrap gap-5 text-sm"><span>Lançamentos do PDF: {formatCurrencyBRL(session.itens.reduce((s, i) => s + i.valor, 0))}</span>
+        {session.totalDocumento != null && <span>Total impresso no PDF: {formatCurrencyBRL(session.totalDocumento)}</span>}
         <span>Contas da fatura: {formatCurrencyBRL(session.contasSistema.reduce((s, c) => s + c.valor, 0))}</span>
         <span>Pendentes: {session.itens.filter(i => i.status === 'Pendente').length}</span></div>
       <ConciliacaoFaturaGrid key={session.id} session={session} disabled={busy} onBusyChange={setBusy}
