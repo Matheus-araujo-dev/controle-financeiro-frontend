@@ -16,7 +16,7 @@ export type ItemFaturaConciliacao = Omit<ApiContract<Api.ItemFaturaConciliacaoRe
   preferencias?: PreferenciasFatura | null; rascunho?: unknown;
   candidatos: ApiContract<Api.CandidatoConciliacaoResponse>[];
 };
-export type ConciliacaoFatura = Omit<ApiContract<Api.ConciliacaoFaturaResponse>, 'itens' | 'contasSistema'> & {
+export type ConciliacaoFatura = Omit<ApiContract<Api.ConciliacaoFaturaResponse, 'avisoLeitura' | 'totalDocumento', 'avisoLeitura' | 'totalDocumento'>, 'itens' | 'contasSistema'> & {
   itens: ItemFaturaConciliacao[]; contasSistema: ContaConciliacao[];
 };
 export type CriarItemFatura = Omit<ApiContract<Api.CriarItemFaturaRequest, 'responsavelCompraId' | 'observacao'>,

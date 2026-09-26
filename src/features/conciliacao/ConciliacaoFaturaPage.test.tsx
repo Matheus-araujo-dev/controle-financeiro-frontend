@@ -7,7 +7,7 @@ import { conciliacaoFaturaApi } from '../../services/http/conciliacao-fatura-api
 
 vi.mock('../../services/http/conciliacao-fatura-api', () => ({ conciliacaoFaturaApi: {
   listar: vi.fn().mockResolvedValue([{ id: 's', nomeArquivo: 'fatura.pdf', status: 'EmRevisao' }]),
-  obter: vi.fn().mockResolvedValue({ id: 's', faturaId: 'f', nomeArquivo: 'fatura.pdf', status: 'EmRevisao',
+  obter: vi.fn().mockResolvedValue({ id: 's', faturaId: 'f', nomeArquivo: 'fatura.pdf', status: 'EmRevisao', avisoLeitura: 'Diferença de R$ 0,01. Revise.', totalDocumento: 99.99,
     itens: [{ id: 'i', data: '2026-09-01', descricaoOriginal: 'LOJA', valor: 100, numeroParcela: 1, quantidadeParcelas: 1,
       status: 'Pendente', contaPagarVinculadaId: null, valorAnteriorSistema: null, candidatos: [], atualizadoEmUtc: '2026-09-14T00:00:00Z' }], contasSistema: [] }),
   iniciar: vi.fn(), criar: vi.fn(), vincular: vi.fn(), salvarRascunho: vi.fn().mockResolvedValue({ atualizadoEmUtc: '2026-09-15T00:00:00Z' })
@@ -51,4 +51,19 @@ it('oferece botão visível para anexar PDF sem duplicar o título do layout', a
   await userEvent.upload(input, file);
   expect(conciliacaoFaturaApi.iniciar).toHaveBeenCalledWith('f', file);
   expect(await screen.findByText('Arquivo anexado: fatura.pdf')).toBeVisible();
+});
+
+it('envia a senha, limpa após sucesso e mostra aviso persistido', async () => {
+  vi.mocked(conciliacaoFaturaApi.iniciar).mockResolvedValue(await conciliacaoFaturaApi.obter('f', 's'));
+  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <MemoryRouter initialEntries={['/faturas/f/conciliar']}><Routes><Route path="/faturas/:id/conciliar" element={<ConciliacaoFaturaPage />} /></Routes></MemoryRouter>
+  </QueryClientProvider>);
+  const password = await screen.findByLabelText('Senha do PDF (se houver)');
+  await userEvent.type(password, 'senha-teste');
+  const file = new File(['pdf'], 'protegido.pdf', { type: 'application/pdf' });
+  await userEvent.upload(screen.getByLabelText('PDF da fatura'), file);
+  expect(conciliacaoFaturaApi.iniciar).toHaveBeenCalledWith('f', file, 'senha-teste');
+  expect(await screen.findByText('Diferença de R$ 0,01. Revise.')).toBeVisible();
+  expect(password).toHaveValue('');
+  expect(screen.getByText(/Total impresso no PDF:/)).toHaveTextContent('99,99');
 });
