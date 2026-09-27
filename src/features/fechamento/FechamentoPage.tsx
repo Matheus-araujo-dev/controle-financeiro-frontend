@@ -2,7 +2,6 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DateInput } from '../../components/forms/DateInput';
-import { PageState } from '../../components/states/PageState';
 import { dashboardApi } from '../../services/http/dashboard-api';
 import { orcamentosApi } from '../../services/http/orcamentos-api';
 import { useMonthClosingChecklist } from './useMonthClosingChecklist';
@@ -72,7 +71,7 @@ function ScoreRing({ score }: { score: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-2xl font-bold text-on-surface">{score}%</span>
-        <span className="text-[10px] text-on-surface-variant">concluído</span>
+        <span className="text-[10px] text-on-surface-variant">verificado</span>
       </div>
     </div>
   );
@@ -101,7 +100,7 @@ export function FechamentoPage() {
 
   const isLoading = loadingResumo || loadingCG || loadingOrc;
 
-  const { items, score } = useMonthClosingChecklist({
+  const { items, score, readyToClose, blockingCount } = useMonthClosingChecklist({
     resumo,
     contasGerenciais,
     orcamento,
@@ -169,7 +168,12 @@ export function FechamentoPage() {
               )}
             </div>
             <p className="text-[11px] text-on-surface-variant">
-              {score === 100 ? 'Mês pronto para fechar!' : 'Revise os itens pendentes'}
+              {readyToClose
+                ? 'Checklist sem bloqueios'
+                : `${blockingCount} bloqueio(s) exigem revisão`}
+            </p>
+            <p className="text-[10px] leading-relaxed text-on-surface-variant/70">
+              Este indicador mede a cobertura das verificações disponíveis e não fecha o mês automaticamente.
             </p>
           </div>
         </div>

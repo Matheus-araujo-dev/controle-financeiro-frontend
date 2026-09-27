@@ -23,3 +23,9 @@ O backlog completo e a análise de negócio estão nos documentos `docs/38_ANALI
 - cobertura de 85,51% statements, 80,17% branches, 82,07% functions e 87,63% lines;
 - 6 testes Playwright aprovados em desktop e mobile;
 - lint sem erros, contratos, auditoria, typecheck, build e checagem PWA aprovados.
+
+## Onda 2 em desenvolvimento
+
+- **NEG-02, proteção imediata:** o checklist não declara mais 100% com base em dados agregados; qualquer conta pendente é bloqueio e a tela diferencia cobertura verificada de fechamento real.
+- **NEG-02, próxima etapa:** persistir fechamento e reabertura no backend com responsável, justificativa, snapshot e auditoria.
+- **NEG-07:** incorporar qualidade de conciliação, categorização e responsabilidade ao relatório calculado pelo backend.

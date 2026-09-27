@@ -48,7 +48,7 @@ describe('useMonthClosingChecklist', () => {
     expect(result.current.score).toBe(0);
   });
 
-  it('returns all OK when no issues', () => {
+  it('does not claim 100% when categorization cannot be proven from aggregated data', () => {
     const { result } = renderHook(() =>
       useMonthClosingChecklist({
         resumo: makeResumo(),
@@ -58,8 +58,12 @@ describe('useMonthClosingChecklist', () => {
         mesReferencia: '2026-09',
       })
     );
-    expect(result.current.score).toBe(100);
-    expect(result.current.items.every(i => i.status === 'ok')).toBe(true);
+    expect(result.current.score).toBeLessThan(100);
+    expect(result.current.readyToClose).toBe(false);
+    expect(result.current.items.find(i => i.id === 'categorias')).toMatchObject({
+      status: 'warning',
+      blocking: true,
+    });
   });
 
   it('marks vencidas as error when there are overdue items', () => {
@@ -78,7 +82,7 @@ describe('useMonthClosingChecklist', () => {
     );
     const vencidas = result.current.items.find(i => i.id === 'vencidas');
     expect(vencidas?.status).toBe('error');
-    expect(vencidas?.actionRoute).toBe('/contas-pagar?status=VENCIDA');
+    expect(vencidas?.actionRoute).toBe('/agenda?status=VENCIDA');
   });
 
   it('marks orcamento as warning when categories are over budget', () => {
@@ -143,7 +147,8 @@ describe('useMonthClosingChecklist', () => {
         mesReferencia: '2026-09',
       })
     );
-    expect(result.current.score).toBe(80);
+    expect(result.current.score).toBe(60);
+    expect(result.current.readyToClose).toBe(false);
   });
 
   it('returns 5 checklist items', () => {
@@ -157,5 +162,28 @@ describe('useMonthClosingChecklist', () => {
       })
     );
     expect(result.current.items).toHaveLength(5);
+  });
+
+  it('treats any pending account as a blocker regardless of quantity', () => {
+    const { result } = renderHook(() =>
+      useMonthClosingChecklist({
+        resumo: makeResumo({
+          contasAVencer: [
+            { id: 'p1', tipoLancamento: 'ContaReceber', descricao: 'Reembolso', valor: 50, dataVencimento: '2026-09-20', statusCodigo: 'PENDENTE', statusNome: 'Pendente', pessoaNome: '' },
+          ],
+        }),
+        contasGerenciais: makeCG(),
+        orcamento: makeOrcamento(),
+        isLoading: false,
+        mesReferencia: '2026-09',
+      })
+    );
+
+    expect(result.current.items.find(i => i.id === 'pendentes')).toMatchObject({
+      status: 'warning',
+      blocking: true,
+      actionRoute: '/agenda?status=PENDENTE',
+    });
+    expect(result.current.readyToClose).toBe(false);
   });
 });
