@@ -22,6 +22,8 @@ const AlertasConfigPage = lazy(() => import('../features/alertas/AlertasConfigPa
 const FechamentoPage = lazy(() => import('../features/fechamento/FechamentoPage').then(m => ({ default: m.FechamentoPage })));
 const SimuladorCompraPage = lazy(() => import('../features/simulador/SimuladorCompraPage').then(m => ({ default: m.SimuladorCompraPage })));
 
+const PendingCenterPage = lazy(() => import('../features/pendencias/PendingCenterPage').then(m => ({ default: m.PendingCenterPage })));
+
 export const appRoutes: RouteObject[] = [
   {
     path: '/',
@@ -52,6 +54,11 @@ export const appRoutes: RouteObject[] = [
         handle: {
           title: 'Orçamento'
         }
+      },
+      {
+        path: 'pendencias',
+        element: <PendingCenterPage />,
+        handle: { title: 'Pendências financeiras' }
       },
       {
         path: 'fechamento',

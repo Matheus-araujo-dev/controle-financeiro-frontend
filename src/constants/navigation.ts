@@ -20,6 +20,7 @@ export const navigationStructure: NavGroup[] = [
       { key: '/orcamento', label: 'Orçamento' },
       { key: '/relatorios', label: 'Relatórios' },
       { key: '/agenda', label: 'Agenda' },
+      ...(import.meta.env.VITE_PRODUCT_PENDING_ENABLED !== 'false' ? [{ key: '/pendencias', label: 'Pendências' }] : []),
       { key: '/fechamento', label: 'Fechamento' }
     ]
   },
