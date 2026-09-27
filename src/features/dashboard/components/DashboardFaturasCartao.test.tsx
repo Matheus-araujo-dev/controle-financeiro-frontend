@@ -31,12 +31,12 @@ function makeFatura(overrides: Partial<FaturaResumo> = {}): FaturaResumo {
   };
 }
 
-function renderComponent() {
+function renderComponent(competencia = '2026-07') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <DashboardFaturasCartao />
+        <DashboardFaturasCartao competencia={competencia} />
       </MemoryRouter>
     </QueryClientProvider>
   );
@@ -45,6 +45,13 @@ function renderComponent() {
 describe('DashboardFaturasCartao', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('limits open invoices to the selected dashboard month', async () => {
+    financeiroApiMock.faturas.listar.mockResolvedValue({ items: [], page: 1, pageSize: 50, totalItems: 0, totalPages: 1 });
+    renderComponent('2027-03');
+    await screen.findByText(/Nenhuma fatura em aberto/);
+    expect(financeiroApiMock.faturas.listar).toHaveBeenCalledWith(expect.objectContaining({ competencia: '2027-03' }));
   });
 
   it('shows loading state', () => {

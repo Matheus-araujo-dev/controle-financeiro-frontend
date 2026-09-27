@@ -11,8 +11,8 @@ self.addEventListener('push', event => {
   event.waitUntil(
     self.registration.showNotification(payload.title ?? 'Alerta financeiro', {
       body: payload.body ?? '',
-      icon: '/logo192.png',
-      badge: '/logo192.png',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
       tag: payload.tag ?? 'alerta',
       data: { url: payload.url ?? '/' }
     })
