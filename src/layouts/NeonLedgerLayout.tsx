@@ -24,6 +24,7 @@ const navIcons: Record<string, string> = {
   '/contas-pagar': 'arrow_upward',
   '/contas-receber': 'arrow_downward',
   '/agenda': 'calendar_month',
+  '/pendencias': 'task_alt',
   '/recorrencias': 'sync',
   '/movimentacoes': 'swap_horiz',
   '/faturas': 'credit_card',
@@ -535,14 +536,3 @@ export function NeonLedgerLayout({ children }: NeonLedgerLayoutProps) {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
