@@ -1,61 +1,25 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { dashboardApi } from '../../services/http/dashboard-api';
-import { orcamentosApi } from '../../services/http/orcamentos-api';
+import { fechamentosApi } from '../../services/http/fechamentos-api';
 import { FechamentoPage } from './FechamentoPage';
 
-vi.mock('../../services/http/dashboard-api', () => ({
-  dashboardApi: {
-    obterResumo: vi.fn(),
-    obterResumoContasGerenciais: vi.fn(),
-  },
-}));
+vi.mock('../../services/http/fechamentos-api', () => ({ fechamentosApi: { obter: vi.fn(), fechar: vi.fn(), reabrir: vi.fn() } }));
+const base = { competencia: '2026-09', status: 'Aberto', prontoParaFechar: false, quantidadeBloqueios: 2, totalReceitas: 1000, totalDespesas: 500, saldo: 500, totalPendente: 100, totalVencido: 0, quantidadeLancamentos: 3, quantidadeSemCategoria: 0, quantidadeSemResponsavel: 0, quantidadeConciliacoesPendentes: 0, itens: [{ id: 'pendentes', titulo: 'Lançamentos pendentes', descricao: '2 registro(s) exigem revisão.', status: 'Pendente', bloqueante: true, quantidade: 2, valor: 100, rotaAcao: '/agenda?status=PENDENTE' }] } as const;
+function renderPage() { const client = new QueryClient({ defaultOptions: { queries: { retry: false } } }); return render(<QueryClientProvider client={client}><MemoryRouter><FechamentoPage /></MemoryRouter></QueryClientProvider>); }
 
-vi.mock('../../services/http/orcamentos-api', () => ({
-  orcamentosApi: { obterPorCompetencia: vi.fn() },
-}));
+it('uses the authoritative server checklist and blocks closing while there are pending items', async () => {
+  vi.mocked(fechamentosApi.obter).mockResolvedValue(base as never); renderPage();
+  expect(await screen.findByText('2 bloqueio(s)')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Fechar mês' })).toBeDisabled();
+  expect(screen.getByText('3 lançamento(s) avaliados pelo servidor.')).toBeInTheDocument();
+});
 
-function renderPage() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <FechamentoPage />
-      </MemoryRouter>
-    </QueryClientProvider>
-  );
-}
-
-it('explains that coverage is not a persisted closing and exposes categorization blocker', async () => {
-  vi.mocked(dashboardApi.obterResumo).mockResolvedValue({
-    saldoAtual: 1000,
-    totalAPagar: 0,
-    totalAReceber: 0,
-    saldoProjetado: 1000,
-    contasVencidas: [],
-    contasAVencer: [],
-    movimentacoesRecentes: [],
-  } as never);
-  vi.mocked(dashboardApi.obterResumoContasGerenciais).mockResolvedValue({
-    totalReceitas: 1000,
-    totalDespesas: 500,
-    saldo: 500,
-    itens: [],
-  } as never);
-  vi.mocked(orcamentosApi.obterPorCompetencia).mockResolvedValue({
-    competencia: '2026-09',
-    totalMeta: 1000,
-    totalRealizado: 500,
-    percentualConsumido: 50,
-    possuiEstouro: false,
-    itens: [{ contaGerencialId: 'cg1', contaGerencialDescricao: 'Casa', valorMeta: 1000, valorRealizado: 500, estourado: false }],
-  } as never);
-
-  renderPage();
-
-  expect(await screen.findByText('1 bloqueio(s) exigem revisão')).toBeInTheDocument();
-  expect(screen.getByText('Categorização')).toBeInTheDocument();
-  expect(screen.getByText(/não fecha o mês automaticamente/i)).toBeInTheDocument();
-  expect(screen.queryByText('Mês pronto para fechar!')).not.toBeInTheDocument();
+it('requires a reason before reopening a closed month', async () => {
+  vi.mocked(fechamentosApi.obter).mockResolvedValue({ ...base, status: 'Fechado', prontoParaFechar: true, quantidadeBloqueios: 0, fechadoEmUtc: '2026-10-01T12:00:00Z' } as never); renderPage();
+  await userEvent.click(await screen.findByRole('button', { name: 'Reabrir mês' }));
+  expect(screen.getByRole('button', { name: 'Confirmar reabertura' })).toBeDisabled();
+  await userEvent.type(screen.getByLabelText('Justificativa da reabertura'), 'Correção necessária');
+  expect(screen.getByRole('button', { name: 'Confirmar reabertura' })).toBeEnabled();
 });

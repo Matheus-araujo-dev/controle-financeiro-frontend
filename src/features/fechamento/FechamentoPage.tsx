@@ -1,183 +1,41 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DateInput } from '../../components/forms/DateInput';
-import { dashboardApi } from '../../services/http/dashboard-api';
-import { orcamentosApi } from '../../services/http/orcamentos-api';
-import { useMonthClosingChecklist } from './useMonthClosingChecklist';
-import type { ChecklistItem } from './useMonthClosingChecklist';
+import { fechamentosApi } from '../../services/http/fechamentos-api';
+import type { FechamentoMensalItem } from '../../types/fechamento';
 
-function getCurrentMonth() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
+function getCurrentMonth() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; }
+const money = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-const statusConfig: Record<string, { icon: string; color: string; bg: string }> = {
-  ok: { icon: 'check_circle', color: 'text-primary', bg: 'bg-primary/10' },
-  warning: { icon: 'warning', color: 'text-warning', bg: 'bg-warning/10' },
-  error: { icon: 'error', color: 'text-error', bg: 'bg-error/10' },
-  loading: { icon: 'hourglass_empty', color: 'text-on-surface-variant', bg: 'bg-surface-container' },
-};
-
-function ChecklistRow({ item }: { item: ChecklistItem }) {
-  const config = statusConfig[item.status];
-  return (
-    <div className="flex items-start gap-4 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
-      <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${config.bg} shrink-0`}>
-        <span
-          className={`material-symbols-outlined ${config.color}`}
-          style={{ fontVariationSettings: item.status === 'ok' ? "'FILL' 1" : undefined }}
-        >
-          {config.icon}
-        </span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h4 className="text-sm font-bold text-on-surface">{item.title}</h4>
-        </div>
-        <p className="text-xs text-on-surface-variant mt-0.5">{item.description}</p>
-        {item.detail && (
-          <p className="text-[11px] text-on-surface-variant/70 mt-1">{item.detail}</p>
-        )}
-      </div>
-      {item.actionLabel && item.actionRoute && (
-        <Link
-          to={item.actionRoute}
-          className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
-        >
-          {item.actionLabel}
-          <span className="material-symbols-outlined text-xs">arrow_forward</span>
-        </Link>
-      )}
-    </div>
-  );
-}
-
-function ScoreRing({ score }: { score: number }) {
-  const radius = 54;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-  const color = score >= 80 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
-
-  return (
-    <div className="relative w-32 h-32">
-      <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-        <circle cx="60" cy="60" r={radius} fill="none" stroke="currentColor" strokeWidth="8" className="text-white/5" />
-        <circle
-          cx="60" cy="60" r={radius} fill="none" stroke={color} strokeWidth="8"
-          strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset}
-          className="transition-all duration-1000 ease-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-on-surface">{score}%</span>
-        <span className="text-[10px] text-on-surface-variant">verificado</span>
-      </div>
-    </div>
-  );
+function ChecklistRow({ item }: { item: FechamentoMensalItem }) {
+  const ok = item.quantidade === 0;
+  return <div className="flex items-start gap-4 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+    <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${ok ? 'bg-primary/10' : 'bg-error/10'} shrink-0`}><span className={`material-symbols-outlined ${ok ? 'text-primary' : 'text-error'}`}>{ok ? 'check_circle' : 'error'}</span></div>
+    <div className="flex-1 min-w-0"><h4 className="text-sm font-bold text-on-surface">{item.titulo}</h4><p className="text-xs text-on-surface-variant mt-0.5">{item.descricao}</p>{item.valor != null && item.valor > 0 && <p className="text-[11px] text-on-surface-variant/70 mt-1">{money(item.valor)}</p>}</div>
+    {!ok && <Link to={item.rotaAcao} className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10">Revisar</Link>}
+  </div>;
 }
 
 export function FechamentoPage() {
-  const [mesReferencia, setMesReferencia] = useState(getCurrentMonth());
+  const [competencia, setCompetencia] = useState(getCurrentMonth());
+  const [reabrindo, setReabrindo] = useState(false);
+  const [justificativa, setJustificativa] = useState('');
+  const queryClient = useQueryClient();
+  const queryKey = ['fechamento-mensal', competencia];
+  const { data, isLoading } = useQuery({ queryKey, queryFn: () => fechamentosApi.obter(competencia) });
+  const fechar = useMutation({ mutationFn: () => fechamentosApi.fechar(competencia), onSuccess: value => queryClient.setQueryData(queryKey, value) });
+  const reabrir = useMutation({ mutationFn: () => fechamentosApi.reabrir(competencia, justificativa), onSuccess: value => { queryClient.setQueryData(queryKey, value); setReabrindo(false); setJustificativa(''); } });
 
-  const { data: resumo, isFetching: loadingResumo } = useQuery({
-    queryKey: ['fechamento', 'resumo', mesReferencia],
-    queryFn: () => dashboardApi.obterResumo({ mesReferencia }),
-    staleTime: 30_000,
-  });
-
-  const { data: contasGerenciais, isFetching: loadingCG } = useQuery({
-    queryKey: ['fechamento', 'contas-gerenciais', mesReferencia],
-    queryFn: () => dashboardApi.obterResumoContasGerenciais({ mesReferencia }),
-    staleTime: 30_000,
-  });
-
-  const { data: orcamento, isFetching: loadingOrc } = useQuery({
-    queryKey: ['fechamento', 'orcamento', mesReferencia],
-    queryFn: () => orcamentosApi.obterPorCompetencia(mesReferencia),
-    staleTime: 30_000,
-  });
-
-  const isLoading = loadingResumo || loadingCG || loadingOrc;
-
-  const { items, score, readyToClose, blockingCount } = useMonthClosingChecklist({
-    resumo,
-    contasGerenciais,
-    orcamento,
-    isLoading: isLoading && !resumo,
-    mesReferencia,
-  });
-
-  const okCount = items.filter(i => i.status === 'ok').length;
-  const warningCount = items.filter(i => i.status === 'warning').length;
-  const errorCount = items.filter(i => i.status === 'error').length;
-
-  return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-headline font-bold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-              fact_check
-            </span>
-            Fechamento do mês
-          </h1>
-          <p className="text-xs text-on-surface-variant mt-1">
-            Revise os itens abaixo antes de considerar o mês encerrado
-          </p>
-        </div>
-        <div className="w-[200px]">
-          <DateInput
-            compact
-            mode="month"
-            ariaLabel="Mês de referência"
-            value={mesReferencia}
-            onChange={(v) => setMesReferencia(v || getCurrentMonth())}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8">
-        <div className="space-y-3">
-          {items.map((item) => (
-            <ChecklistRow key={item.id} item={item} />
-          ))}
-        </div>
-
-        <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-surface-container-low border border-white/6 lg:w-[220px] self-start">
-          <ScoreRing score={score} />
-          <div className="text-center space-y-1">
-            <div className="flex items-center justify-center gap-3 text-xs">
-              {okCount > 0 && (
-                <span className="flex items-center gap-1 text-primary">
-                  <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                  {okCount}
-                </span>
-              )}
-              {warningCount > 0 && (
-                <span className="flex items-center gap-1 text-warning">
-                  <span className="material-symbols-outlined text-xs">warning</span>
-                  {warningCount}
-                </span>
-              )}
-              {errorCount > 0 && (
-                <span className="flex items-center gap-1 text-error">
-                  <span className="material-symbols-outlined text-xs">error</span>
-                  {errorCount}
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-on-surface-variant">
-              {readyToClose
-                ? 'Checklist sem bloqueios'
-                : `${blockingCount} bloqueio(s) exigem revisão`}
-            </p>
-            <p className="text-[10px] leading-relaxed text-on-surface-variant/70">
-              Este indicador mede a cobertura das verificações disponíveis e não fecha o mês automaticamente.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="text-xl font-headline font-bold text-on-surface flex items-center gap-2"><span className="material-symbols-outlined text-primary">fact_check</span>Fechamento do mês</h1><p className="text-xs text-on-surface-variant mt-1">Valide as pendências e registre o encerramento auditável da competência.</p></div><div className="w-[200px]"><DateInput compact mode="month" ariaLabel="Mês de referência" value={competencia} onChange={v => setCompetencia(v || getCurrentMonth())} /></div></div>
+    {isLoading && <p className="text-sm text-on-surface-variant">Verificando a competência...</p>}
+    {data && <><div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="rounded-xl bg-surface-container-low p-4"><p className="text-xs text-on-surface-variant">Receitas</p><strong className="text-primary">{money(data.totalReceitas)}</strong></div>
+      <div className="rounded-xl bg-surface-container-low p-4"><p className="text-xs text-on-surface-variant">Despesas</p><strong>{money(data.totalDespesas)}</strong></div>
+      <div className="rounded-xl bg-surface-container-low p-4"><p className="text-xs text-on-surface-variant">Saldo</p><strong>{money(data.saldo)}</strong></div>
+      <div className="rounded-xl bg-surface-container-low p-4"><p className="text-xs text-on-surface-variant">Status</p><strong>{data.status}</strong></div>
+    </div><div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-8"><div className="space-y-3">{data.itens.map(item => <ChecklistRow key={item.id} item={item} />)}</div><aside className="p-6 rounded-2xl bg-surface-container-low border border-white/6 self-start space-y-4"><div><p className="text-sm font-bold">{data.prontoParaFechar ? 'Sem bloqueios' : `${data.quantidadeBloqueios} bloqueio(s)`}</p><p className="text-xs text-on-surface-variant mt-1">{data.quantidadeLancamentos} lançamento(s) avaliados pelo servidor.</p></div>{data.status === 'Fechado' ? <><p className="text-xs text-on-surface-variant">Fechado em {data.fechadoEmUtc ? new Date(data.fechadoEmUtc).toLocaleString('pt-BR') : '-'}</p><button type="button" onClick={() => setReabrindo(true)} className="w-full rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/5">Reabrir mês</button></> : <button type="button" disabled={!data.prontoParaFechar || fechar.isPending} onClick={() => fechar.mutate()} className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-bold text-on-primary disabled:opacity-40">{fechar.isPending ? 'Fechando...' : 'Fechar mês'}</button>}</aside></div></>}
+    {reabrindo && <div role="dialog" aria-modal="true" aria-label="Reabrir mês" className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"><div className="w-full max-w-md rounded-2xl bg-surface-container p-6 space-y-4"><div><h2 className="font-bold text-on-surface">Reabrir mês</h2><p className="text-xs text-on-surface-variant mt-1">Informe por que o fechamento precisa ser alterado.</p></div><textarea aria-label="Justificativa da reabertura" maxLength={500} value={justificativa} onChange={e => setJustificativa(e.target.value)} className="w-full min-h-28 rounded-lg bg-surface-container-high p-3 text-sm" /><div className="flex justify-end gap-2"><button type="button" onClick={() => setReabrindo(false)} className="px-4 py-2 text-sm">Cancelar</button><button type="button" disabled={!justificativa.trim() || reabrir.isPending} onClick={() => reabrir.mutate()} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-on-primary disabled:opacity-40">Confirmar reabertura</button></div></div></div>}
+  </div>;
 }

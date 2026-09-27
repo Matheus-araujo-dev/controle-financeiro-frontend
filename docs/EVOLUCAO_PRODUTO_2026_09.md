@@ -26,6 +26,7 @@ O backlog completo e a análise de negócio estão nos documentos `docs/38_ANALI
 
 ## Onda 2 em desenvolvimento
 
-- **NEG-02, proteção imediata:** o checklist não declara mais 100% com base em dados agregados; qualquer conta pendente é bloqueio e a tela diferencia cobertura verificada de fechamento real.
-- **NEG-02, próxima etapa:** persistir fechamento e reabertura no backend com responsável, justificativa, snapshot e auditoria.
-- **NEG-07:** incorporar qualidade de conciliação, categorização e responsabilidade ao relatório calculado pelo backend.
+- **NEG-02:** a tela usa o diagnóstico oficial do backend, mostra receitas, despesas, saldo e bloqueios e permite fechar ou reabrir a competência.
+- **NEG-02, auditoria:** a reabertura exige justificativa; o servidor registra responsáveis, datas e o snapshot financeiro de cada fechamento.
+- **NEG-07:** pendências, vencimentos, ausência de categoria, ausência de responsável e conciliações em revisão fazem parte do relatório calculado pelo backend.
+- **Status:** implementação integrada e validada nos testes focados; quality gates completos e publicação ainda pendentes.

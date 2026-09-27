@@ -1804,6 +1804,55 @@ export interface FaturaResumoResponse {
   quantidadeItens?: number;
 }
 
+export interface FechamentoMensalItemResponse {
+  id?: string | null;
+  titulo?: string | null;
+  descricao?: string | null;
+  status?: string | null;
+  bloqueante?: boolean;
+  /** @format int32 */
+  quantidade?: number;
+  /** @format double */
+  valor?: number | null;
+  rotaAcao?: string | null;
+}
+
+export interface FechamentoMensalResponse {
+  competencia?: string | null;
+  status?: string | null;
+  prontoParaFechar?: boolean;
+  /** @format int32 */
+  quantidadeBloqueios?: number;
+  /** @format double */
+  totalReceitas?: number;
+  /** @format double */
+  totalDespesas?: number;
+  /** @format double */
+  saldo?: number;
+  /** @format double */
+  totalPendente?: number;
+  /** @format double */
+  totalVencido?: number;
+  /** @format int32 */
+  quantidadeLancamentos?: number;
+  /** @format int32 */
+  quantidadeSemCategoria?: number;
+  /** @format int32 */
+  quantidadeSemResponsavel?: number;
+  /** @format int32 */
+  quantidadeConciliacoesPendentes?: number;
+  /** @format uuid */
+  fechadoPorUsuarioId?: string | null;
+  /** @format date-time */
+  fechadoEmUtc?: string | null;
+  /** @format uuid */
+  reabertoPorUsuarioId?: string | null;
+  /** @format date-time */
+  reabertoEmUtc?: string | null;
+  justificativaReabertura?: string | null;
+  itens?: FechamentoMensalItemResponse[] | null;
+}
+
 export interface FormaPagamentoDetalheResponse {
   /** @format uuid */
   id?: string;
@@ -2557,6 +2606,10 @@ export interface RateioResponse {
   valor?: number;
   /** @format double */
   percentual?: number | null;
+}
+
+export interface ReabrirFechamentoMensalRequest {
+  justificativa?: string | null;
 }
 
 export interface RealizarCompraPlanejadaRequest {
