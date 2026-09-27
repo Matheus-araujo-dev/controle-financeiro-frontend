@@ -13,6 +13,7 @@ export type ChecklistItem = {
   detail?: string;
   actionLabel?: string;
   actionRoute?: string;
+  blocking?: boolean;
 };
 
 interface UseMonthClosingChecklistParams {
@@ -28,8 +29,7 @@ export function useMonthClosingChecklist({
   contasGerenciais,
   orcamento,
   isLoading,
-  mesReferencia,
-}: UseMonthClosingChecklistParams): { items: ChecklistItem[]; score: number } {
+}: UseMonthClosingChecklistParams): { items: ChecklistItem[]; score: number; readyToClose: boolean; blockingCount: number } {
   return useMemo(() => {
     if (isLoading) {
       const loadingItem = (id: string, title: string): ChecklistItem => ({
@@ -44,6 +44,8 @@ export function useMonthClosingChecklist({
           loadingItem('categorias', 'Categorização'),
         ],
         score: 0,
+        readyToClose: false,
+        blockingCount: 0,
       };
     }
 
@@ -58,9 +60,10 @@ export function useMonthClosingChecklist({
         ? 'Nenhuma conta vencida neste período'
         : `${vencidas.length} conta(s) vencida(s) totalizando R$ ${totalVencidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       status: vencidas.length === 0 ? 'ok' : 'error',
+      blocking: vencidas.length > 0,
       detail: vencidas.length > 0 ? `${vencidas.filter(v => v.tipoLancamento === 'ContaPagar').length} a pagar, ${vencidas.filter(v => v.tipoLancamento === 'ContaReceber').length} a receber` : undefined,
       actionLabel: vencidas.length > 0 ? 'Ver vencidas' : undefined,
-      actionRoute: vencidas.length > 0 ? '/contas-pagar?status=VENCIDA' : undefined,
+      actionRoute: vencidas.length > 0 ? '/agenda?status=VENCIDA' : undefined,
     });
 
     const categoriasEstouradas = (orcamento?.itens ?? []).filter(i => i.estourado);
@@ -104,26 +107,31 @@ export function useMonthClosingChecklist({
       description: pendentes.length === 0
         ? 'Nenhuma conta pendente no período'
         : `${pendentes.length} conta(s) a vencer totalizando R$ ${totalPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      status: pendentes.length === 0 ? 'ok' : pendentes.length > 10 ? 'warning' : 'ok',
+      status: pendentes.length === 0 ? 'ok' : 'warning',
+      blocking: pendentes.length > 0,
       detail: pendentes.length > 0 ? `${pendentes.filter(p => p.tipoLancamento === 'ContaPagar').length} a pagar, ${pendentes.filter(p => p.tipoLancamento === 'ContaReceber').length} a receber` : undefined,
+      actionLabel: pendentes.length > 0 ? 'Ver pendentes' : undefined,
+      actionRoute: pendentes.length > 0 ? '/agenda?status=PENDENTE' : undefined,
     });
 
     const categorias = contasGerenciais?.itens ?? [];
-    const semCategoria = categorias.filter(c => !c.contaGerencialId);
     items.push({
       id: 'categorias',
       title: 'Categorização',
-      description: semCategoria.length === 0
-        ? `Todas as ${categorias.length} categorias atribuídas corretamente`
-        : `${semCategoria.length} lançamento(s) sem conta gerencial`,
-      status: semCategoria.length === 0 ? 'ok' : 'warning',
-      actionLabel: 'Ver categorias',
-      actionRoute: '/relatorios?tab=contas-gerenciais',
+      description: 'A visão agrupada não comprova que todos os lançamentos foram categorizados',
+      status: 'warning',
+      blocking: true,
+      detail: categorias.length > 0
+        ? `${categorias.length} conta(s) gerencial(is) aparecem no resumo; valide os lançamentos de origem`
+        : 'Não há dados detalhados suficientes para validar este item',
+      actionLabel: 'Revisar lançamentos',
+      actionRoute: '/movimentacoes',
     });
 
     const okCount = items.filter(i => i.status === 'ok').length;
     const score = items.length > 0 ? Math.round((okCount / items.length) * 100) : 0;
+    const blockingCount = items.filter(i => i.blocking).length;
 
-    return { items, score };
-  }, [resumo, contasGerenciais, orcamento, isLoading, mesReferencia]);
+    return { items, score, readyToClose: blockingCount === 0 && score === 100, blockingCount };
+  }, [resumo, contasGerenciais, orcamento, isLoading]);
 }
