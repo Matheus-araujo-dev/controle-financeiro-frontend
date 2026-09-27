@@ -83,10 +83,12 @@ describe('simular', () => {
     expect(result.parcelado.comprometimentoAposCompra).toBe(((5000 + 100) / 8000) * 100);
   });
 
-  it('handles zero receita gracefully', () => {
+  it('does not recommend a purchase when income data is unavailable', () => {
     const result = simular({ ...baseInput, receitaMensal: 0 });
     expect(result.aVista.percentualRenda).toBe(0);
     expect(result.parcelado.comprometimentoAposCompra).toBe(0);
+    expect(result.recomendacao).toBe('nenhuma');
+    expect(result.alertas).toContain('Dados de receita insuficientes para recomendar a compra.');
   });
 
   it('handles zero disponivel for mesesParaRecuperar', () => {

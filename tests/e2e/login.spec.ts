@@ -1,26 +1,14 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Login', () => {
-  test('deve exibir formulário de login', async ({ page }) => {
+test.describe('Login local', () => {
+  test('exibe o formulário vigente e abre o dashboard', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByLabel('Email')).toBeVisible();
-    await expect(page.getByLabel('Senha')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible();
-  });
-
-  test('deve mostrar erro para credenciais inválidas', async ({ page }) => {
-    await page.goto('/login');
-    await page.getByLabel('Email').fill('invalido@teste.com');
-    await page.getByLabel('Senha').fill('senha123');
+    await expect(page.getByLabel('Usuário técnico')).toBeVisible();
+    await expect(page.getByLabel('Nome de exibição')).toBeVisible();
+    await page.getByLabel('Usuário técnico').fill('e2e');
+    await page.getByLabel('Nome de exibição').fill('Validação E2E');
     await page.getByRole('button', { name: 'Entrar' }).click();
-    await expect(page.getByText('Usuário ou senha inválidos')).toBeVisible();
-  });
-
-  test('deve redirecionar para dashboard após login bem-sucedido', async ({ page }) => {
-    await page.goto('/login');
-    await page.getByLabel('Email').fill('admin@empresa.com');
-    await page.getByLabel('Senha').fill('admin123');
-    await page.getByRole('button', { name: 'Entrar' }).click();
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByRole('heading', { name: 'Dashboard', level: 1 })).toBeVisible();
   });
 });

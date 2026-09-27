@@ -1,23 +1,20 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Dashboard', () => {
+test.describe('Dashboard responsivo', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.getByLabel('Email').fill('admin@empresa.com');
-    await page.getByLabel('Senha').fill('admin123');
+    await page.getByLabel('Usuário técnico').fill('e2e');
+    await page.getByLabel('Nome de exibição').fill('Validação E2E');
     await page.getByRole('button', { name: 'Entrar' }).click();
-    await page.waitForURL(/\/dashboard/);
+    await page.waitForURL(/\/dashboard$/);
   });
 
-  test('deve exibir cards de resumo financeiro', async ({ page }) => {
-    await expect(page.getByText('Receitas')).toBeVisible();
-    await expect(page.getByText('Despesas')).toBeVisible();
-    await expect(page.getByText('Saldo')).toBeVisible();
-  });
-
-  test('deve filtrar despesas por período', async ({ page }) => {
-    await page.getByLabel('Período').click();
-    await page.getByRole('option', { name: 'Este Mês' }).click();
-    await expect(page.getByText('Receitas')).toBeVisible();
+  test('mantém os controles principais acessíveis e sem rolagem horizontal', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Dashboard', level: 1 })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Lançamento rápido' })).toBeVisible();
+    const hasHorizontalOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth
+    );
+    expect(hasHorizontalOverflow).toBe(false);
   });
 });

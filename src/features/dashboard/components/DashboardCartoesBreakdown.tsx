@@ -5,13 +5,11 @@ import { formatCurrencyBRL } from '../../../shared/currency';
 import { financeiroApi } from '../../../services/http/financeiro-api';
 import { cadastrosApi } from '../../../services/http/cadastros-api';
 
-function getCurrentMonthCompetencia() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+interface DashboardCartoesBreakdownProps {
+  competencia: string;
 }
 
-export function DashboardCartoesBreakdown() {
-  const competencia = getCurrentMonthCompetencia();
+export function DashboardCartoesBreakdown({ competencia }: DashboardCartoesBreakdownProps) {
 
   const { data: faturasData, isPending: loadingFaturas } = useQuery({
     queryKey: ['faturas', 'cartoes-breakdown', competencia],
@@ -33,10 +31,9 @@ export function DashboardCartoesBreakdown() {
     return map;
   }, [cartoesData]);
 
-  const faturas = faturasData?.items ?? [];
   const grouped = useMemo(() => {
     const map = new Map<string, { cartaoId: string; cartaoNome: string; valor: number; faturas: number }>();
-    for (const f of faturas) {
+    for (const f of faturasData?.items ?? []) {
       const existing = map.get(f.cartaoId);
       if (existing) {
         existing.valor += f.valorTotal;
@@ -46,7 +43,7 @@ export function DashboardCartoesBreakdown() {
       }
     }
     return [...map.values()].sort((a, b) => b.valor - a.valor);
-  }, [faturas]);
+  }, [faturasData]);
 
   const totalFaturas = grouped.reduce((s, g) => s + g.valor, 0);
 
