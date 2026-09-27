@@ -23,3 +23,10 @@ O backlog completo e a análise de negócio estão nos documentos `docs/38_ANALI
 - cobertura de 85,51% statements, 80,17% branches, 82,07% functions e 87,63% lines;
 - 6 testes Playwright aprovados em desktop e mobile;
 - lint sem erros, contratos, auditoria, typecheck, build e checagem PWA aprovados.
+
+## Onda 2 em desenvolvimento
+
+- **NEG-02:** a tela usa o diagnóstico oficial do backend, mostra receitas, despesas, saldo e bloqueios e permite fechar ou reabrir a competência.
+- **NEG-02, auditoria:** a reabertura exige justificativa; o servidor registra responsáveis, datas e o snapshot financeiro de cada fechamento.
+- **NEG-07:** pendências, vencimentos, ausência de categoria, ausência de responsável e conciliações em revisão fazem parte do relatório calculado pelo backend.
+- **Status:** implementação integrada e validada nos testes focados; quality gates completos e publicação ainda pendentes.
