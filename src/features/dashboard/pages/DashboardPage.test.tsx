@@ -4,6 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { DashboardPage } from './DashboardPage';
 import { dashboardApi } from '../../../services/http/dashboard-api';
+import { orcamentosApi } from '../../../services/http/orcamentos-api';
 import { selectMonthInDateInput } from '../../../test/date-input';
 
 function createTestQueryClient() {
@@ -13,7 +14,13 @@ function createTestQueryClient() {
 vi.mock('../../../services/http/dashboard-api', () => ({
   dashboardApi: {
     obterResumo: vi.fn(),
-    obterFluxoCaixa: vi.fn()
+    obterFluxoCaixa: vi.fn(),
+    obterResumoContasGerenciais: vi.fn().mockResolvedValue({
+      totalReceitas: 0,
+      totalDespesas: 0,
+      saldo: 0,
+      itens: []
+    })
   }
 }));
 
@@ -201,6 +208,10 @@ describe('DashboardPage', () => {
       expect(dashboardApi.obterFluxoCaixa).toHaveBeenLastCalledWith({
         mesReferencia: '2026-05'
       })
+    );
+
+    await waitFor(() =>
+      expect(orcamentosApi.obterPorCompetencia).toHaveBeenLastCalledWith('2026-05')
     );
   });
 });

@@ -5,11 +5,21 @@ import { financeiroApi } from '../../../services/http/financeiro-api';
 import { formatCurrencyBRL } from '../../../shared/currency';
 import { formatDateBR, formatMonthYearBR } from '../../../shared/date';
 
-export function DashboardFaturasCartao() {
+interface DashboardFaturasCartaoProps {
+  competencia: string;
+}
+
+export function DashboardFaturasCartao({ competencia }: DashboardFaturasCartaoProps) {
   const { data, isPending } = useQuery({
-    queryKey: ['faturas', 'abertas-dashboard'],
+    queryKey: ['faturas', 'abertas-dashboard', competencia],
     queryFn: async () => {
-      const response = await financeiroApi.faturas.listar({ page: 1, pageSize: 50, search: '', statusCodigo: 'ABERTA' });
+      const response = await financeiroApi.faturas.listar({
+        page: 1,
+        pageSize: 50,
+        search: '',
+        statusCodigo: 'ABERTA',
+        competencia,
+      });
       return [...response.items].sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento));
     },
     staleTime: 5 * 60_000
@@ -58,7 +68,7 @@ export function DashboardFaturasCartao() {
           ))}
           {faturas.length > visiveis.length ? (
             <p className="text-[11px] text-on-surface-variant text-center m-0">
-              +{faturas.length - visiveis.length} fatura(s) prevista(s) nas próximas competências
+              +{faturas.length - visiveis.length} fatura(s) na competência selecionada
             </p>
           ) : null}
         </div>

@@ -70,6 +70,10 @@ export function simular(input: SimulationInput): SimulationResult {
 
   const alertas: string[] = [];
 
+  if (receitaMensal <= 0) {
+    alertas.push('Dados de receita insuficientes para recomendar a compra.');
+  }
+
   if (aVista.impactoMensal > saldoAtual) {
     alertas.push('O valor à vista supera o saldo atual.');
   }
@@ -87,7 +91,9 @@ export function simular(input: SimulationInput): SimulationResult {
   }
 
   let recomendacao: 'a_vista' | 'parcelado' | 'nenhuma' = 'nenhuma';
-  if (valor <= saldoAtual && aVista.comprometimentoAposCompra <= 70) {
+  if (receitaMensal <= 0) {
+    recomendacao = 'nenhuma';
+  } else if (valor <= saldoAtual && aVista.comprometimentoAposCompra <= 70) {
     recomendacao = 'a_vista';
   } else if (parcelado.comprometimentoAposCompra <= 70) {
     recomendacao = 'parcelado';

@@ -36,12 +36,12 @@ function makeFatura(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderComponent() {
+function renderComponent(competencia = '2026-07') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <DashboardCartoesBreakdown />
+        <DashboardCartoesBreakdown competencia={competencia} />
       </MemoryRouter>
     </QueryClientProvider>
   );
@@ -51,6 +51,13 @@ describe('DashboardCartoesBreakdown', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cadastrosApiMock.cartoes.listar.mockResolvedValue({ items: [], page: 1, pageSize: 100, totalItems: 0, totalPages: 1 });
+  });
+
+  it('loads invoices for the selected dashboard month', async () => {
+    financeiroApiMock.faturas.listar.mockResolvedValue({ items: [], page: 1, pageSize: 50, totalItems: 0, totalPages: 1 });
+    renderComponent('2027-02');
+    await screen.findByText('Nenhuma fatura no mês.');
+    expect(financeiroApiMock.faturas.listar).toHaveBeenCalledWith(expect.objectContaining({ competencia: '2027-02' }));
   });
 
   it('shows loading state', () => {
