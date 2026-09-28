@@ -8,6 +8,12 @@ vi.mock('./api-client', () => ({
 }));
 
 describe('dashboardApi', () => {
+  it('consulta anomalias no mês selecionado', async () => {
+    const data = { mesReferencia: '2027-04', completo: true, itens: [] };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data });
+    expect(await dashboardApi.obterAnomalias('2027-04')).toBe(data);
+    expect(apiClient.get).toHaveBeenCalledWith('/dashboard/anomalias', { params: { mesReferencia: '2027-04' } });
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });
