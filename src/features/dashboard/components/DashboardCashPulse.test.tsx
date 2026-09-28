@@ -137,3 +137,9 @@ describe('DashboardCashPulse', () => {
     expect(todayIndicator).toBeInTheDocument();
   });
 });
+
+it('não declara saúde quando não há dados do fluxo', () => {
+  render(<DashboardCashPulse items={[]} />);
+  expect(screen.queryByText('Saudável')).not.toBeInTheDocument();
+  expect(screen.getByText('Sem dados')).toBeInTheDocument();
+});

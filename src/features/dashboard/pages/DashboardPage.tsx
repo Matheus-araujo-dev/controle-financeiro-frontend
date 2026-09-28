@@ -1,10 +1,11 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '../../../components/ui/Button';
 import { MultiSelectFilter } from '../../../components/layout';
 import { DashboardKpiGrid } from '../components/DashboardKpiGrid';
 import { DashboardFaturasCartao } from '../components/DashboardFaturasCartao';
+import { DashboardCashHealth } from '../components/DashboardCashHealth';
 import { DashboardCashPulse } from '../components/DashboardCashPulse';
 import { DashboardOperationalAgenda } from '../components/DashboardOperationalAgenda';
 import { DashboardPendingActions } from '../components/DashboardPendingActions';
@@ -54,10 +55,15 @@ export function DashboardPage() {
   const { data: cashFlow } = useQuery({
     queryKey: ['dashboard', 'fluxo-caixa', referenceMonth, contaBancariaIds],
     queryFn: () => dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth, contaBancariaIds }),
-    staleTime: 30_000,
-    placeholderData: (prev) => prev
+    staleTime: 30_000
   });
 
+  // A saúde consolidada considera todas as contas; a seleção bancária continua no gráfico.
+  const cashHealth = useQuery({
+    queryKey: ['dashboard', 'fluxo-caixa', referenceMonth, undefined],
+    queryFn: () => dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth }),
+    staleTime: 30_000
+  });
   const { data: orcamentoData } = useQuery({
     queryKey: ['orcamento', 'dashboard', referenceMonth],
     queryFn: () => orcamentosApi.obterPorCompetencia(referenceMonth),
@@ -188,6 +194,8 @@ export function DashboardPage() {
             <span className="text-xs font-bold uppercase tracking-wider">Resolver agora →</span>
           </Link>
         )}
+
+        <DashboardCashHealth data={cashHealth.data} referenceMonth={referenceMonth} loading={cashHealth.isFetching} error={cashHealth.isError} onRetry={() => void cashHealth.refetch()} />
 
         <DashboardKpiGrid
           saldoAtual={summary?.saldoAtual ?? 0}
