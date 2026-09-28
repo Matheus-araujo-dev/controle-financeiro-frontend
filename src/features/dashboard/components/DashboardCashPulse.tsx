@@ -44,7 +44,7 @@ export const DashboardCashPulse: React.FC<DashboardCashPulseProps> = ({ items })
           <p className="text-xs text-on-surface-variant">Saldo projetado dia a dia</p>
         </div>
         <NeonBadge variant={diasCriticos > 0 ? 'error' : 'primary'} size="sm">
-          {diasCriticos > 0 ? `${diasCriticos} dias críticos` : 'Saudável'}
+          {safeItems.length === 0 ? 'Sem dados' : diasCriticos > 0 ? `${diasCriticos} dias críticos` : 'Saudável'}
         </NeonBadge>
       </div>
 
