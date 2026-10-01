@@ -13,6 +13,8 @@ import { formatCurrencyBRL } from '../../shared/currency';
 import { formatDateBR } from '../../shared/date';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
+import { anexosApi } from '../../services/http/anexos-api';
+import { PlannedPurchasePhotos } from './PlannedPurchasePhotos';
 import { applyServerValidationErrors } from '../../services/forms/applyServerValidationErrors';
 import type { ApiErrorResponse } from '../../types/api';
 import type { CompraPlanejadaPayload } from '../../types/compras-planejadas';
@@ -60,6 +62,8 @@ export function NovaCompraPlanejadaPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string>();
   const [submitError, setSubmitError] = useState<string>();
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [createdId, setCreatedId] = useState<string>();
   const [contaGerencialOptions, setContaGerencialOptions] = useState<SelectOption[]>([]);
   const [responsavelOptions, setResponsavelOptions] = useState<SelectOption[]>([]);
   const [contaGerencialModalOpen, setContaGerencialModalOpen] = useState(false);
@@ -70,7 +74,7 @@ export function NovaCompraPlanejadaPage() {
     handleSubmit,
     setError,
     setValue,
-    formState: { errors, isSubmitting, isValid }
+    formState: { errors, isSubmitting }
   } = useForm<CompraPlanejadaPayload>({
     resolver: zodResolver(compraPlanejadaSchema),
     defaultValues,
@@ -167,15 +171,29 @@ export function NovaCompraPlanejadaPage() {
 
   async function onSubmit(values: CompraPlanejadaPayload) {
     setSubmitError(undefined);
+    let savedId = createdId;
     try {
-      await comprasPlanejadasApi.criar({
-        ...values,
-        descricao: values.descricao.trim(),
-        link: values.link.trim(),
-        observacao: values.observacao.trim()
-      });
+      if (!savedId) {
+        const saved = await comprasPlanejadasApi.criar({
+          ...values,
+          dataDesejada: values.dataDesejada?.trim() || null,
+          descricao: values.descricao.trim(),
+          link: values.link.trim(),
+          observacao: values.observacao.trim()
+        });
+        savedId = saved.id;
+        setCreatedId(saved.id);
+      }
+      for (const photo of photos) {
+        await anexosApi.enviar('compras-planejadas', savedId, photo);
+        setPhotos(pending => pending.filter(file => file !== photo));
+      }
       navigate('/compras-planejadas');
     } catch (err) {
+      if (savedId) {
+        setSubmitError('Compra salva, mas não foi possível enviar todas as fotos. Tente reenviar as fotos pendentes; a compra não será cadastrada novamente.');
+        return;
+      }
       const apiError = err as AxiosError<ApiErrorResponse>;
       const validationErrors = apiError.response?.data?.errors;
       if (validationErrors) {
@@ -185,6 +203,7 @@ export function NovaCompraPlanejadaPage() {
             message
           })
         );
+        setSubmitError('Revise os campos destacados e tente novamente. Não foi possível salvar a compra.');
         return;
       }
       setSubmitError(err instanceof Error ? err.message : 'Falha ao salvar a compra planejada.');
@@ -206,8 +225,10 @@ export function NovaCompraPlanejadaPage() {
   return (
     <>
       <div className="compra-planejada-form-page space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-24">
-          <div className="lg:col-span-7 space-y-8">
+        <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-24">
+          <div className="lg:col-span-7 min-w-0 space-y-8">
+          <fieldset disabled={isSubmitting || !!createdId} className="min-w-0 space-y-8">
+            <p className="text-sm text-on-surface-variant">Campos com * são obrigatórios.</p>
             <FormSection className="relative overflow-hidden" icon={<span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_bag</span>}>
               <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                 <span className="material-symbols-outlined text-8xl" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_bag</span>
@@ -223,6 +244,7 @@ export function NovaCompraPlanejadaPage() {
                         <input
                           {...field}
                           aria-label="Título da Compra"
+                          aria-required="true"
                           className={fieldClassName}
                           placeholder="Ex: Upgrade MacBook Pro M3"
                           type="text"
@@ -260,6 +282,7 @@ export function NovaCompraPlanejadaPage() {
                       render={({ field }) => (
                         <CurrencyInput
                           aria-label="Valor Estimado (R$)"
+                          aria-required="true"
                           className={`${fieldClassName} text-primary font-headline font-bold text-xl`}
                           placeholder="R$ 0,00"
                           value={field.value}
@@ -276,10 +299,11 @@ export function NovaCompraPlanejadaPage() {
                       control={control}
                       name="dataDesejada"
                       render={({ field }) => (
-                        <DateInput ariaLabel="Data Desejada" value={field.value} onChange={field.onChange} />
+                        <DateInput ariaLabel="Data Desejada" value={field.value ?? ''} onChange={field.onChange} disabled={isSubmitting || !!createdId} />
                       )}
                     />
                     {errors.dataDesejada && <p className="text-error text-xs ml-1 font-bold">{errors.dataDesejada.message}</p>}
+                    <p className="text-xs text-on-surface-variant">Data desejada é opcional.</p>
                   </div>
                 </div>
               </div>
@@ -449,6 +473,8 @@ export function NovaCompraPlanejadaPage() {
                 </div>
               </div>
             </FormSection>
+          </fieldset>
+            <PlannedPurchasePhotos files={photos} onChange={setPhotos} disabled={isSubmitting} />
           </div>
 
           <div className="lg:col-span-5 space-y-8">
@@ -479,7 +505,7 @@ export function NovaCompraPlanejadaPage() {
               </div>
 
               {submitError && (
-                <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-2xl flex items-center gap-3 text-error">
+                <div role="alert" className="mb-6 p-4 bg-error/10 border border-error/20 rounded-2xl flex items-center gap-3 text-error">
                   <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
                   <p className="text-xs font-bold">{submitError}</p>
                 </div>
@@ -488,17 +514,18 @@ export function NovaCompraPlanejadaPage() {
               <div className="flex flex-col gap-3">
                 <button
                   type="submit"
-                  disabled={!isValid || isSubmitting}
+                  disabled={isSubmitting}
                   className="w-full bg-primary/15 hover:bg-primary/25 text-primary border border-primary/40 font-black py-4 rounded-2xl active:scale-95 transition-all shadow-[0_0_20px_rgba(63,255,139,0.15)] uppercase tracking-tighter text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Salvando...' : 'Confirmar Planejamento'}
+                  {isSubmitting ? 'Salvando...' : createdId ? (photos.length ? 'Reenviar fotos pendentes' : 'Concluir') : 'Confirmar Planejamento'}
                 </button>
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => navigate('/compras-planejadas')}
                   className="w-full bg-surface-container text-on-surface-variant font-bold py-3 rounded-2xl hover:text-white transition-all text-xs uppercase tracking-widest"
                 >
-                  Cancelar e Voltar
+                  {createdId ? 'Voltar para compras (compra já salva)' : 'Cancelar e Voltar'}
                 </button>
               </div>
             </FormSection>

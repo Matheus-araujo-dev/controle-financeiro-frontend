@@ -5,8 +5,10 @@ import { NovaCompraPlanejadaPage } from './NovaCompraPlanejadaPage';
 import { cadastrosApi } from '../../services/http/cadastros-api';
 import { comprasPlanejadasApi } from '../../services/http/compras-planejadas-api';
 import { selectDateInDateInput } from '../../test/date-input';
+import { anexosApi } from '../../services/http/anexos-api';
 
 const navigateMock = vi.fn();
+vi.mock('../../services/http/anexos-api', () => ({ anexosApi: { enviar: vi.fn() } }));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -50,6 +52,7 @@ describe('NovaCompraPlanejadaPage', () => {
   beforeEach(() => {
     navigateMock.mockReset();
     vi.clearAllMocks();
+    vi.mocked(anexosApi.enviar).mockReset().mockResolvedValue({ id: 'photo-1' } as never);
     tomorrow.setDate(new Date().getDate() + 1);
 
     vi.mocked(cadastrosApi.contasGerenciais.listar).mockResolvedValue({
@@ -110,6 +113,66 @@ describe('NovaCompraPlanejadaPage', () => {
       createdAtUtc: '2026-04-17T12:00:00Z',
       updatedAtUtc: '2026-04-17T12:00:00Z'
     });
+  });
+
+  async function fillRequired() {
+    await screen.findByText('Classificação Técnica');
+    fireEvent.change(screen.getByLabelText('Título da Compra'), { target: { value: 'Mouse novo' } });
+    fireEvent.change(screen.getByLabelText('Valor Estimado (R$)'), { target: { value: '200' } });
+    await userEvent.click(screen.getByLabelText('Conta Gerencial'));
+    await userEvent.click(screen.getByRole('button', { name: 'DES.10.01 - Tecnologia' }));
+    await userEvent.click(screen.getByLabelText('Responsável'));
+    await userEvent.click(screen.getByRole('button', { name: 'Michelle' }));
+  }
+
+  it('salva sem data desejada enviando null', async () => {
+    renderPage(); await fillRequired();
+    expect(screen.getByText('Data desejada é opcional.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar Planejamento' }));
+    await waitFor(() => expect(comprasPlanejadasApi.criar).toHaveBeenCalledWith(expect.objectContaining({ dataDesejada: null })));
+    expect(navigateMock).toHaveBeenCalledWith('/compras-planejadas');
+  });
+
+  it('solicita campos obrigatórios ao confirmar em vez de bloquear silenciosamente', async () => {
+    renderPage(); await screen.findByText('Classificação Técnica');
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar Planejamento' }));
+    expect(await screen.findByText('Título é obrigatório.')).toBeInTheDocument();
+    expect(screen.getByText('Responsável é obrigatório.')).toBeInTheDocument();
+    expect(comprasPlanejadasApi.criar).not.toHaveBeenCalled();
+  });
+
+  it('envia fotos após salvar e navega somente ao concluir', async () => {
+    renderPage(); await fillRequired();
+    const photo = new File(['photo'], 'mouse.png', { type: 'image/png' });
+    await userEvent.upload(screen.getByLabelText('Fotos do produto'), photo);
+    expect(anexosApi.enviar).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar Planejamento' }));
+    await waitFor(() => expect(anexosApi.enviar).toHaveBeenCalledWith('compras-planejadas', 'cp-1', photo));
+    expect(navigateMock).toHaveBeenCalledWith('/compras-planejadas');
+  });
+
+  it('repete só fotos pendentes sem criar outra compra quando upload falha', async () => {
+    vi.mocked(anexosApi.enviar).mockResolvedValueOnce({ id: 'first' } as never).mockRejectedValueOnce(new Error('Falha de rede'));
+    renderPage(); await fillRequired();
+    const first = new File(['a'], 'frente.png', { type: 'image/png' });
+    const second = new File(['b'], 'verso.png', { type: 'image/png' });
+    await userEvent.upload(screen.getByLabelText('Fotos do produto'), [first, second]);
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar Planejamento' }));
+    expect(await screen.findByText(/Compra salva, mas não foi possível enviar todas as fotos/)).toBeInTheDocument();
+    expect(navigateMock).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Reenviar fotos pendentes' }));
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/compras-planejadas'));
+    expect(comprasPlanejadasApi.criar).toHaveBeenCalledTimes(1);
+    expect(anexosApi.enviar).toHaveBeenCalledTimes(3);
+    expect(anexosApi.enviar).toHaveBeenLastCalledWith('compras-planejadas', 'cp-1', second);
+  });
+
+  it('mostra erro da API no campo JSON correspondente e um aviso visível', async () => {
+    vi.mocked(comprasPlanejadasApi.criar).mockRejectedValueOnce({ response: { data: { errors: { '$.dataDesejada': ['Data inválida.'], request: ['Invalid request'] } } } });
+    renderPage(); await fillRequired();
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar Planejamento' }));
+    expect(await screen.findByText('Data inválida.')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(/Revise os campos/);
   });
 
   it('renders the dedicated planning form sections', async () => {
