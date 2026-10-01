@@ -1,6 +1,11 @@
 import { applyServerValidationErrors } from './applyServerValidationErrors';
 
 describe('applyServerValidationErrors', () => {
+  it('normaliza caminhos JSON de erros de conversão', () => {
+    const setter = vi.fn();
+    applyServerValidationErrors({ '$.dataDesejada': ['Data inválida.'] }, setter);
+    expect(setter).toHaveBeenCalledWith('dataDesejada', 'Data inválida.');
+  });
   it('maps the first message of each field to the form setter', () => {
     const setFieldError = vi.fn();
 

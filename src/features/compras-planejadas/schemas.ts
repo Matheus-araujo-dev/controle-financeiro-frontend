@@ -7,7 +7,9 @@ export const compraPlanejadaSchema = z.object({
   titulo: requiredText('Título'),
   descricao: z.string().trim(),
   valorEstimado: z.number().positive('Valor estimado deve ser maior que zero.'),
-  dataDesejada: z.string().trim(),
+  dataDesejada: z.string().trim().nullable().refine(value => !value || z.iso.date().safeParse(value).success, {
+    message: 'Informe uma data válida ou deixe em branco.'
+  }),
   prioridade: z.enum(['Baixa', 'Media', 'Alta']),
   status: z.enum(['Planejada', 'Comprada', 'Cancelada']),
   parcelavel: z.boolean(),

@@ -32,9 +32,11 @@ async function put<T>(url: string, payload: unknown) {
 export const comprasPlanejadasApi = {
   listar: (params: CompraPlanejadaFilters) => getPaged<CompraPlanejadaResumo, CompraPlanejadaListSummary>('/compras-planejadas', params),
   obterPorId: (id: string) => getById<CompraPlanejadaDetalhe>(`/compras-planejadas/${id}`),
-  criar: (payload: CompraPlanejadaPayload) => post<CompraPlanejadaDetalhe>('/compras-planejadas', payload),
+  criar: (payload: CompraPlanejadaPayload) => post<CompraPlanejadaDetalhe>('/compras-planejadas', {
+    ...payload, dataDesejada: payload.dataDesejada?.trim() || null
+  }),
   atualizar: (id: string, payload: CompraPlanejadaPayload) =>
-    put<CompraPlanejadaDetalhe>(`/compras-planejadas/${id}`, payload),
+    put<CompraPlanejadaDetalhe>(`/compras-planejadas/${id}`, { ...payload, dataDesejada: payload.dataDesejada?.trim() || null }),
   realizar: (id: string, payload: RealizarCompraPlanejadaPayload) =>
     post<CompraPlanejadaDetalhe>(`/compras-planejadas/${id}/realizar`, payload)
 };
