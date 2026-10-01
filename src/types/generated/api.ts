@@ -1415,6 +1415,37 @@ export interface CurrentUserResponse {
   authMode?: string | null;
 }
 
+export interface DashboardAnomaliaEvidencia {
+  /** @format uuid */
+  contaPagarId?: string;
+  /** @format date */
+  data?: string;
+  /** @format double */
+  valor?: number;
+}
+
+export interface DashboardAnomaliaItem {
+  id?: string | null;
+  tipo?: string | null;
+  descricao?: string | null;
+  regra?: string | null;
+  /** @format double */
+  valorAtual?: number;
+  /** @format double */
+  valorBase?: number | null;
+  evidencias?: DashboardAnomaliaEvidencia[] | null;
+}
+
+export interface DashboardAnomaliasResponse {
+  mesReferencia?: string | null;
+  /** @format date */
+  historicoInicial?: string;
+  completo?: boolean;
+  /** @format int32 */
+  contasAnalisadas?: number;
+  itens?: DashboardAnomaliaItem[] | null;
+}
+
 export interface DashboardCentralPrevisaoItemResponse {
   tipoReferencia?: string | null;
   /** @format uuid */
