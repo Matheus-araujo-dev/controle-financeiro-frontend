@@ -6,6 +6,7 @@ import { MultiSelectFilter } from '../../../components/layout';
 import { DashboardKpiGrid } from '../components/DashboardKpiGrid';
 import { DashboardFaturasCartao } from '../components/DashboardFaturasCartao';
 import { DashboardCashHealth } from '../components/DashboardCashHealth';
+import { DashboardAnomalies } from '../components/DashboardAnomalies';
 import { DashboardCashPulse } from '../components/DashboardCashPulse';
 import { DashboardOperationalAgenda } from '../components/DashboardOperationalAgenda';
 import { DashboardPendingActions } from '../components/DashboardPendingActions';
@@ -62,6 +63,11 @@ export function DashboardPage() {
   const cashHealth = useQuery({
     queryKey: ['dashboard', 'fluxo-caixa', referenceMonth, undefined],
     queryFn: () => dashboardApi.obterFluxoCaixa({ mesReferencia: referenceMonth }),
+    staleTime: 30_000
+  });
+  const anomalies = useQuery({
+    queryKey: ['dashboard', 'anomalias', referenceMonth],
+    queryFn: () => dashboardApi.obterAnomalias(referenceMonth),
     staleTime: 30_000
   });
   const { data: orcamentoData } = useQuery({
@@ -196,6 +202,7 @@ export function DashboardPage() {
         )}
 
         <DashboardCashHealth data={cashHealth.data} referenceMonth={referenceMonth} loading={cashHealth.isFetching} error={cashHealth.isError} onRetry={() => void cashHealth.refetch()} />
+        <DashboardAnomalies data={anomalies.data} referenceMonth={referenceMonth} loading={anomalies.isFetching} error={anomalies.isError} onRetry={() => void anomalies.refetch()} />
 
         <DashboardKpiGrid
           saldoAtual={summary?.saldoAtual ?? 0}

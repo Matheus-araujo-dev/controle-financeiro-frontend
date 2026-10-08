@@ -1,6 +1,14 @@
 import type * as Api from './generated/api';
 import type { ApiContract } from './api-contract';
 
+export type DashboardAnomaliaEvidencia = ApiContract<Api.DashboardAnomaliaEvidencia>;
+export type DashboardAnomaliaItem = Omit<ApiContract<Api.DashboardAnomaliaItem, 'valorBase'>, 'evidencias'> & {
+  evidencias: DashboardAnomaliaEvidencia[];
+};
+export type DashboardAnomalias = Omit<ApiContract<Api.DashboardAnomaliasResponse>, 'itens'> & {
+  itens: DashboardAnomaliaItem[];
+};
+
 import type { NaturezaMovimentacao, TipoMovimentacao } from './financeiro';
 export type DashboardTipoLancamento = 'ContaPagar' | 'ContaReceber';
 export type DashboardContaGerencialTipo = Api.ContaGerencialTipo;

@@ -10,6 +10,15 @@ vi.mock('./api-client', () => ({
 }));
 
 describe('comprasPlanejadasApi', () => {
+  it('normaliza data vazia como null ao criar e atualizar', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { id: '1' } });
+    vi.mocked(apiClient.put).mockResolvedValue({ data: { id: '1' } });
+    const payload = { dataDesejada: '' } as Parameters<typeof comprasPlanejadasApi.criar>[0];
+    await comprasPlanejadasApi.criar(payload);
+    await comprasPlanejadasApi.atualizar('1', payload);
+    expect(apiClient.post).toHaveBeenCalledWith('/compras-planejadas', { dataDesejada: null });
+    expect(apiClient.put).toHaveBeenCalledWith('/compras-planejadas/1', { dataDesejada: null });
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });

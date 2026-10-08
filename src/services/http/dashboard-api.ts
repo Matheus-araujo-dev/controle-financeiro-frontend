@@ -1,4 +1,5 @@
 import type {
+  DashboardAnomalias,
   DashboardCentralPrevisaoItens,
   DashboardCentralPrevisaoItensFilters,
   DashboardCentralPrevisaoResumo,
@@ -21,6 +22,10 @@ import type {
 import { apiClient } from './api-client';
 
 export const dashboardApi = {
+  async obterAnomalias(mesReferencia: string) {
+    const response = await apiClient.get<DashboardAnomalias>('/dashboard/anomalias', { params: { mesReferencia } });
+    return response.data;
+  },
   async obterResumo(params: DashboardResumoFilters = {}) {
     const response = await apiClient.get<DashboardResumo>('/dashboard/resumo', { params });
     return response.data;

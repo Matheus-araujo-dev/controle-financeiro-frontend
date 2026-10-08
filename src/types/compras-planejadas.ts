@@ -21,7 +21,7 @@ export type CompraPlanejadaResumo = Omit<ApiContract<Api.CompraPlanejadaResumoRe
 
 export type CompraPlanejadaDetalhe = CompraPlanejadaResumo & ApiContract<Pick<Api.CompraPlanejadaDetalheResponse, 'descricao' | 'observacao' | 'createdAtUtc' | 'updatedAtUtc'>, 'descricao' | 'observacao'>;
 
-export type CompraPlanejadaPayload = Omit<ApiContract<Api.CriarCompraPlanejadaRequest, 'quantidadeParcelasDesejada'>, 'prioridade' | 'status'> & {
+export type CompraPlanejadaPayload = Omit<ApiContract<Api.CriarCompraPlanejadaRequest, 'quantidadeParcelasDesejada' | 'dataDesejada'>, 'prioridade' | 'status'> & {
   prioridade: CompraPlanejadaPrioridade;
   status: CompraPlanejadaStatus;
 };

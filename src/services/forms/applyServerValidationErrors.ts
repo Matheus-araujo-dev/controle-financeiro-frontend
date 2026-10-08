@@ -5,6 +5,7 @@ export function applyServerValidationErrors(
   setFieldError: FieldErrorSetter
 ) {
   Object.entries(errors).forEach(([field, messages]) => {
+    field = field.replace(/^\$\./, '');
     const firstMessage = messages[0];
     const normalizedField = field.length > 0
       ? `${field.charAt(0).toLowerCase()}${field.slice(1)}`
