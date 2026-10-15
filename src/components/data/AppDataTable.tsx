@@ -1,3 +1,5 @@
+import './table-layout.css';
+import { resolveColumnLayout, tableMinimumWidth, type ColumnLayout } from './table-layout';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '../ui/Button';
@@ -37,6 +39,7 @@ export type AppDataColumn<T extends object> = {
   dataIndex?: DataIndexKey | DataIndexPath;
   key?: string;
   width?: number | string;
+  layout?: ColumnLayout;
   align?: 'left' | 'center' | 'right';
   fixed?: 'left' | 'right';
   sorter?: boolean | ((left: T, right: T) => number);
@@ -59,6 +62,7 @@ export type TableColumnsType<T extends object> = AppDataColumn<T>[];
 
 type AppDataTableProps<T extends object> = {
   columns: TableColumnsType<T>;
+  ariaLabel?: string;
   dataSource: T[];
   rowKey: keyof T | ((record: T) => string);
   pagination?: false | TablePaginationConfig;
@@ -68,6 +72,7 @@ type AppDataTableProps<T extends object> = {
   onRetry?: () => void;
   onTableChange?: AppTableChange<T>;
   onRowClick?: (record: T) => void;
+  rowClassName?: (record: T) => string;
   size?: 'small' | 'middle' | 'large';
   groupBy?: (record: T) => string;
   renderGroupHeader?: (groupKey: string, items: T[]) => ReactNode;
@@ -120,8 +125,9 @@ function isCompactViewport() {
     : false;
 }
 
-function useCompactTableLayout() {
+function useCompactTableLayout(element: HTMLDivElement | null) {
   const [compact, setCompact] = useState(isCompactViewport);
+  const [narrowContainer, setNarrowContainer] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -136,7 +142,16 @@ function useCompactTableLayout() {
     return () => mediaQuery.removeEventListener?.('change', handleChange);
   }, []);
 
-  return compact;
+  useEffect(() => {
+    if (!element || typeof ResizeObserver === 'undefined') return undefined;
+    const updateWidth = (width: number) => setNarrowContainer(width > 0 && width < 768);
+    updateWidth(element.getBoundingClientRect().width);
+    const observer = new ResizeObserver(entries => updateWidth(entries[0]?.contentRect.width ?? 0));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [element]);
+
+  return compact || narrowContainer;
 }
 
 function getColumnKey<T extends object>(column: AppDataColumn<T>) {
@@ -366,6 +381,7 @@ function PaginationControls({
 
 export function AppDataTable<T extends object>({
   columns,
+  ariaLabel,
   dataSource,
   rowKey,
   pagination = false,
@@ -375,11 +391,13 @@ export function AppDataTable<T extends object>({
   onRetry,
   onTableChange,
   onRowClick,
+  rowClassName,
   groupBy,
   renderGroupHeader,
 }: AppDataTableProps<T>) {
   const flatColumns = useMemo(() => getFlatColumns(columns), [columns]);
-  const compactLayout = useCompactTableLayout();
+  const [tableElement, setTableElement] = useState<HTMLDivElement | null>(null);
+  const compactLayout = useCompactTableLayout(tableElement);
   const [sortState, setSortState] = useState<{ columnKey?: string; order?: SortOrder }>({});
 
   const groups = useMemo(() => {
@@ -457,7 +475,7 @@ export function AppDataTable<T extends object>({
   }
 
   return (
-    <div className="listing-table overflow-hidden rounded-3xl border border-white/5 bg-surface-container-low">
+    <div ref={setTableElement} aria-label={ariaLabel} className="listing-table overflow-hidden rounded-3xl border border-white/5 bg-surface-container-low">
       {compactLayout ? (() => {
         const actionCols = flatColumns.filter((col) => isActionColumn(col));
         const dateCol = flatColumns.find((col) => col.mobileRole === 'date');
@@ -473,7 +491,7 @@ export function AppDataTable<T extends object>({
                 // Fallback: layout genérico por campo
                 const dataCols = flatColumns.filter((col) => !isActionColumn(col));
                 return (
-                  <article key={getRowKey(rowKey, record)} className="rounded-2xl border border-white/5 bg-surface-container p-4">
+                  <article key={getRowKey(rowKey, record)} className={`rounded-2xl border border-white/5 bg-surface-container p-4 ${rowClassName?.(record) ?? ''}`}>
                     <div className="space-y-3">
                       {dataCols.map((col) => (
                         <div key={getColumnKey(col)} className="grid gap-1">
@@ -503,7 +521,7 @@ export function AppDataTable<T extends object>({
                 <article
                   key={getRowKey(rowKey, record)}
                   onClick={onRowClick ? () => onRowClick(record) : undefined}
-                  className={`overflow-hidden rounded-2xl border border-white/5 bg-surface-container px-3 py-3 transition-colors hover:bg-surface-container-high ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`overflow-hidden rounded-2xl border border-white/5 bg-surface-container px-3 py-3 transition-colors hover:bg-surface-container-high ${onRowClick ? 'cursor-pointer' : ''} ${rowClassName?.(record) ?? ''}`}
                 >
                   <div className="flex items-start gap-2">
                     {/* Bloco de data à esquerda */}
@@ -545,8 +563,8 @@ export function AppDataTable<T extends object>({
 
                   {/* Faixa de detalhes + ações na mesma linha */}
                   {(detailCols.length > 0 || actionCols.length > 0) ? (
-                    <div className="mt-2 flex items-center gap-2 border-t border-white/5 pt-2">
-                      <div className="flex flex-1 flex-wrap gap-x-3 gap-y-0.5">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-white/5 pt-2">
+                      <div className="flex min-w-[160px] flex-1 flex-wrap gap-x-3 gap-y-0.5">
                         {detailCols.map((col) => (
                           <span key={getColumnKey(col)} className="flex items-center gap-1 text-xs text-on-surface-variant">
                             <span className="text-[9px] font-black uppercase tracking-widest">{col.title}:</span>
@@ -593,7 +611,8 @@ export function AppDataTable<T extends object>({
         );
       })() : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse" role="table">
+          <table aria-label={ariaLabel} className="w-full border-collapse" style={{ tableLayout: 'fixed', minWidth: tableMinimumWidth(flatColumns) }} role="table">
+            <colgroup>{flatColumns.map(column => <col key={getColumnKey(column)} style={{ width: resolveColumnLayout(column).width }} />)}</colgroup>
             <thead className="bg-surface-container">
               <tr>
                 {flatColumns.map((column) => {
@@ -605,6 +624,7 @@ export function AppDataTable<T extends object>({
                     <th
                       key={columnKey}
                       scope="col"
+                      data-layout={resolveColumnLayout(column).role}
                       style={width ? { width } : undefined}
                       onClick={sortable ? () => handleSort(column) : undefined}
                       className={`whitespace-nowrap border-b border-white/5 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-on-surface-variant ${
@@ -656,11 +676,12 @@ export function AppDataTable<T extends object>({
                       <tr
                         key={getRowKey(rowKey, record)}
                         onClick={onRowClick ? () => onRowClick(record) : undefined}
-                        className={`group border-b border-white/5 last:border-b-0 transition-colors hover:bg-primary/5 ${onRowClick ? 'cursor-pointer' : ''}`}
+                        className={`group border-b border-white/5 last:border-b-0 transition-colors hover:bg-primary/5 ${onRowClick ? 'cursor-pointer' : ''} ${rowClassName?.(record) ?? ''}`}
                       >
                         {flatColumns.map((column) => (
                           <td
                             key={getColumnKey(column)}
+                            data-layout={resolveColumnLayout(column).role}
                             className={`whitespace-nowrap px-4 py-4 text-sm text-on-surface ${alignClass[column.align ?? 'left']} ${
                               column.fixed === 'right' ? 'sticky right-0 z-10 bg-transparent' : ''
                             } ${column.className ?? ''}`}
@@ -675,11 +696,12 @@ export function AppDataTable<T extends object>({
                     <tr
                       key={getRowKey(rowKey, record)}
                       onClick={onRowClick ? () => onRowClick(record) : undefined}
-                      className={`group border-b border-white/5 last:border-b-0 transition-colors hover:bg-primary/5 ${onRowClick ? 'cursor-pointer' : ''}`}
+                      className={`group border-b border-white/5 last:border-b-0 transition-colors hover:bg-primary/5 ${onRowClick ? 'cursor-pointer' : ''} ${rowClassName?.(record) ?? ''}`}
                     >
                       {flatColumns.map((column) => (
                         <td
                           key={getColumnKey(column)}
+                          data-layout={resolveColumnLayout(column).role}
                           className={`whitespace-nowrap px-4 py-4 text-sm text-on-surface ${alignClass[column.align ?? 'left']} ${
                             column.fixed === 'right' ? 'sticky right-0 z-10 bg-transparent' : ''
                           } ${column.className ?? ''}`}

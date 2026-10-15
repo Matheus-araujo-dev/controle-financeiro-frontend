@@ -76,7 +76,7 @@ export const DashboardTransactionList: React.FC<DashboardTransactionListProps> =
 
   return (
     <div className="overflow-hidden flex flex-col bg-surface-container-low rounded-2xl border border-white/6">
-      <div className="px-6 py-4 flex justify-between items-center border-b border-outline-variant/10">
+      <div className="px-6 py-4 flex flex-wrap gap-2 justify-between items-center border-b border-outline-variant/10">
         <h3 className="text-lg font-headline font-bold">Lançamentos Recentes</h3>
         <div className="flex gap-2">
           <div className="relative group">
@@ -92,12 +92,14 @@ export const DashboardTransactionList: React.FC<DashboardTransactionListProps> =
         </div>
       </div>
 
+      <div className="max-h-[480px] overflow-auto">
       <AppDataTable
         rowKey={(record) => `${record.dataMovimentacao}-${record.observacaoResumida ?? ''}-${record.valor}`}
         columns={columns}
         dataSource={movimentacoes}
         pagination={false}
       />
+      </div>
 
       <div className="p-4 border-t border-outline-variant/5 flex justify-center">
         <Button

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { orcamentosApi } from '../../../services/http/orcamentos-api';
@@ -178,6 +178,19 @@ describe('OrcamentoPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /Ver comparativo/i }));
     // After toggle shows multi-period text
     expect(screen.getByText(/Comparativo dos últimos 6 meses/)).toBeInTheDocument();
+  });
+
+  it('renders every month, average and maximum through the shared comparison table', async () => {
+    vi.mocked(orcamentosApi.obterPorCompetencia).mockResolvedValue({ ...baseData, itens: [makeItem()] });
+    renderPage();
+    await screen.findByRole('progressbar', { name: 'Consumo do orçamento de Alimentação' });
+    await userEvent.click(screen.getByRole('button', { name: /Ver comparativo/i }));
+    const table = await screen.findByRole('table', { name: 'Comparativo de orçamento' });
+    const row = within(table).getByText('Alimentação').closest('tr')!;
+    expect(within(row).getAllByRole('cell')).toHaveLength(9);
+    expect(within(row).getAllByText(/500,00/)).toHaveLength(8);
+    expect(within(table).getByText('Média')).toBeInTheDocument();
+    expect(within(table).getByText('Máx')).toBeInTheDocument();
   });
 
   it('shows handleSalvarMeta error when API throws', async () => {

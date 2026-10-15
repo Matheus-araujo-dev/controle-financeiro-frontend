@@ -1,4 +1,4 @@
-﻿import { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useReportUrlState } from './use-report-url-state';
 import { useReportData } from './use-report-data';
 import { useReportSearch } from './use-report-search';
@@ -386,19 +386,17 @@ export function RelatoriosPage() {
             <MetricCard label="Movimentações recentes" value={data.resumo?.movimentacoesRecentes.length ?? 0} />
           </div>
 
-          <ReportTable headers={['Descrição', 'Pessoa', 'Vencimento', 'Status', 'Valor']} emptyText="Nenhuma conta vencida no período">
-            {data.resumo?.contasVencidas.length
-              ? data.resumo.contasVencidas.map((item) => (
-                  <tr key={item.id} className="hover:bg-primary/5">
-                    <td className="px-5 py-4 font-bold">{item.descricao}</td>
-                    <td className="px-5 py-4 text-on-surface-variant">{item.pessoaNome}</td>
-                    <td className="px-5 py-4 text-error">{formatDateBR(item.dataVencimento)}</td>
-                    <td className="px-5 py-4">{item.statusNome}</td>
-                    <td className="px-5 py-4 font-bold text-error">{formatCurrencyBRL(item.valor)}</td>
-                  </tr>
-                ))
-              : null}
-          </ReportTable>
+          <ReportTable headers={['Descrição', 'Pessoa', 'Vencimento', 'Status', 'Valor']} emptyText="Nenhuma conta vencida no período" rows={data.resumo?.contasVencidas.length
+                  ? data.resumo.contasVencidas.map((item, rowIndex) => (({
+                      id: String(rowIndex), className: "hover:bg-primary/5", cells: [
+                          <span key="cell0" className="font-bold">{item.descricao}</span>,
+                          <span key="cell1" className="text-on-surface-variant">{item.pessoaNome}</span>,
+                          <span key="cell2" className="text-error">{formatDateBR(item.dataVencimento)}</span>,
+                          <span key="cell3">{item.statusNome}</span>,
+                          <span key="cell4" className="font-bold text-error">{formatCurrencyBRL(item.valor)}</span>
+                      ]
+                  })))
+                  : null}/>
         </div>
       ) : null}
 
@@ -527,22 +525,20 @@ export function RelatoriosPage() {
             </div>
           </div>
 
-          <ReportTable headers={['Data', 'Saldo inicial', 'Entradas', 'Saídas', 'Saldo final', 'Risco']} emptyText="Nenhuma projeção de fluxo encontrada">
-            {fluxoItens.length
-              ? fluxoItens.map((item) => (
-                  <tr key={item.data} className={item.riscoSaldoNegativo ? 'bg-error/5 hover:bg-error/10' : 'hover:bg-primary/5'}>
-                    <td className="px-5 py-4 font-bold">{formatDateBR(item.data)}</td>
-                    <td className="px-5 py-4">{formatCurrencyBRL(item.saldoInicial)}</td>
-                    <td className="px-5 py-4 text-primary">{formatCurrencyBRL(item.entradasPrevistas)}</td>
-                    <td className="px-5 py-4 text-error">{formatCurrencyBRL(item.saidasPrevistas)}</td>
-                    <td className="px-5 py-4 font-bold">{formatCurrencyBRL(item.saldoFinalPrevisto)}</td>
-                    <td className={`px-5 py-4 font-bold ${item.riscoSaldoNegativo ? 'text-error' : 'text-primary'}`}>
-                      {item.riscoSaldoNegativo ? 'Saldo negativo' : 'Normal'}
-                    </td>
-                  </tr>
-                ))
-              : null}
-          </ReportTable>
+          <ReportTable headers={['Data', 'Saldo inicial', 'Entradas', 'Saídas', 'Saldo final', 'Risco']} emptyText="Nenhuma projeção de fluxo encontrada" rows={fluxoItens.length
+                  ? fluxoItens.map((item, rowIndex) => (({
+                      id: String(rowIndex), className: item.riscoSaldoNegativo ? 'bg-error/5 hover:bg-error/10' : 'hover:bg-primary/5', cells: [
+                          <span key="cell0" className="font-bold">{formatDateBR(item.data)}</span>,
+                          <span key="cell1">{formatCurrencyBRL(item.saldoInicial)}</span>,
+                          <span key="cell2" className="text-primary">{formatCurrencyBRL(item.entradasPrevistas)}</span>,
+                          <span key="cell3" className="text-error">{formatCurrencyBRL(item.saidasPrevistas)}</span>,
+                          <span key="cell4" className="font-bold">{formatCurrencyBRL(item.saldoFinalPrevisto)}</span>,
+                          <span key="cell5" className={`font-bold ${item.riscoSaldoNegativo ? 'text-error' : 'text-primary'}`}>
+                                          {item.riscoSaldoNegativo ? 'Saldo negativo' : 'Normal'}
+                                        </span>
+                      ]
+                  })))
+                  : null}/>
         </div>
       ) : null}
 
@@ -557,22 +553,20 @@ export function RelatoriosPage() {
             <FilterCombo label="Status" value={previsaoStatus} onChange={setPrevisaoStatus} options={statusPrevisaoOptions} ariaLabel="Status da previsão" />
           </div>
 
-          <ReportTable headers={['Data', 'Origem', 'Status', 'Tipo', 'Itens', 'Valor']} emptyText="Nenhuma previsão encontrada">
-            {previsoes.length
-              ? previsoes.map((item) => (
-                  <tr key={`${item.data}-${item.origem}-${item.status}-${item.tipoMovimentacao}`} className="hover:bg-primary/5">
-                    <td className="px-5 py-4 font-bold">{formatDateBR(item.data)}</td>
-                    <td className="px-5 py-4">{origemLabels[item.origem]}</td>
-                    <td className="px-5 py-4">{statusLabels[item.status]}</td>
-                    <td className={`px-5 py-4 font-bold ${item.tipoMovimentacao === 'Entrada' ? 'text-primary' : 'text-error'}`}>
-                      {item.tipoMovimentacao}
-                    </td>
-                    <td className="px-5 py-4">{item.quantidadeItens}</td>
-                    <td className="px-5 py-4 font-bold">{formatCurrencyBRL(item.valorTotal)}</td>
-                  </tr>
-                ))
-              : null}
-          </ReportTable>
+          <ReportTable headers={['Data', 'Origem', 'Status', 'Tipo', 'Itens', 'Valor']} emptyText="Nenhuma previsão encontrada" rows={previsoes.length
+                  ? previsoes.map((item, rowIndex) => (({
+                      id: String(rowIndex), className: "hover:bg-primary/5", cells: [
+                          <span key="cell0" className="font-bold">{formatDateBR(item.data)}</span>,
+                          <span key="cell1">{origemLabels[item.origem]}</span>,
+                          <span key="cell2">{statusLabels[item.status]}</span>,
+                          <span key="cell3" className={`font-bold ${item.tipoMovimentacao === 'Entrada' ? 'text-primary' : 'text-error'}`}>
+                                          {item.tipoMovimentacao}
+                                        </span>,
+                          <span key="cell4">{item.quantidadeItens}</span>,
+                          <span key="cell5" className="font-bold">{formatCurrencyBRL(item.valorTotal)}</span>
+                      ]
+                  })))
+                  : null}/>
         </div>
       ) : null}
 
@@ -607,25 +601,20 @@ export function RelatoriosPage() {
             </div>
           </div>
 
-          <ReportTable
-            headers={['Tipo', 'Descrição', 'Pessoa', 'Vencimento', 'Dias em atraso', 'Faixa', 'Status', 'Valor']}
-            emptyText="Nenhum título vencido no período"
-          >
-            {inadimplenciaRows.length
-              ? inadimplenciaRows.map((item) => (
-                  <tr key={`${item.tipo}-${item.id}`} className="hover:bg-primary/5">
-                    <td className="px-5 py-4 font-bold">{item.tipo}</td>
-                    <td className="px-5 py-4 font-bold">{item.descricao}</td>
-                    <td className="px-5 py-4 text-on-surface-variant">{item.pessoa}</td>
-                    <td className="px-5 py-4 text-error">{formatDateBR(item.vencimento)}</td>
-                    <td className="px-5 py-4">{item.dias}</td>
-                    <td className="px-5 py-4">{agingBucket(item.dias)}</td>
-                    <td className="px-5 py-4">{item.status}</td>
-                    <td className="px-5 py-4 font-bold text-error">{formatCurrencyBRL(item.valor)}</td>
-                  </tr>
-                ))
-              : null}
-          </ReportTable>
+          <ReportTable headers={['Tipo', 'Descrição', 'Pessoa', 'Vencimento', 'Dias em atraso', 'Faixa', 'Status', 'Valor']} emptyText="Nenhum título vencido no período" rows={inadimplenciaRows.length
+                  ? inadimplenciaRows.map((item, rowIndex) => (({
+                      id: String(rowIndex), className: "hover:bg-primary/5", cells: [
+                          <span key="cell0" className="font-bold">{item.tipo}</span>,
+                          <span key="cell1" className="font-bold">{item.descricao}</span>,
+                          <span key="cell2" className="text-on-surface-variant">{item.pessoa}</span>,
+                          <span key="cell3" className="text-error">{formatDateBR(item.vencimento)}</span>,
+                          <span key="cell4">{item.dias}</span>,
+                          <span key="cell5">{agingBucket(item.dias)}</span>,
+                          <span key="cell6">{item.status}</span>,
+                          <span key="cell7" className="font-bold text-error">{formatCurrencyBRL(item.valor)}</span>
+                      ]
+                  })))
+                  : null}/>
         </div>
       ) : null}
 
@@ -648,21 +637,19 @@ export function RelatoriosPage() {
             </div>
           </div>
 
-          <ReportTable headers={['Cartão', 'Competência', 'Fechamento', 'Vencimento', 'Status', 'Itens', 'Valor']} emptyText="Nenhuma fatura encontrada">
-            {faturasFiltradas.length
-              ? faturasFiltradas.map((item) => (
-                  <tr key={item.id} className="hover:bg-primary/5">
-                    <td className="px-5 py-4 font-bold">{item.cartaoNome}</td>
-                    <td className="px-5 py-4">{item.competencia}</td>
-                    <td className="px-5 py-4">{formatDateBR(item.dataFechamento)}</td>
-                    <td className="px-5 py-4">{formatDateBR(item.dataVencimento)}</td>
-                    <td className="px-5 py-4">{item.statusNome}</td>
-                    <td className="px-5 py-4">{item.quantidadeItens}</td>
-                    <td className="px-5 py-4 font-bold">{formatCurrencyBRL(item.valorTotal)}</td>
-                  </tr>
-                ))
-              : null}
-          </ReportTable>
+          <ReportTable headers={['Cartão', 'Competência', 'Fechamento', 'Vencimento', 'Status', 'Itens', 'Valor']} emptyText="Nenhuma fatura encontrada" rows={faturasFiltradas.length
+                  ? faturasFiltradas.map((item, rowIndex) => (({
+                      id: String(rowIndex), className: "hover:bg-primary/5", cells: [
+                          <span key="cell0" className="font-bold">{item.cartaoNome}</span>,
+                          <span key="cell1">{item.competencia}</span>,
+                          <span key="cell2">{formatDateBR(item.dataFechamento)}</span>,
+                          <span key="cell3">{formatDateBR(item.dataVencimento)}</span>,
+                          <span key="cell4">{item.statusNome}</span>,
+                          <span key="cell5">{item.quantidadeItens}</span>,
+                          <span key="cell6" className="font-bold">{formatCurrencyBRL(item.valorTotal)}</span>
+                      ]
+                  })))
+                  : null}/>
         </div>
       ) : null}
 
@@ -786,44 +773,38 @@ export function RelatoriosPage() {
             </div>
           </div>
 
-          <ReportTable
-            headers={['Tipo', 'Descrição', 'Parcela', 'Pessoa', 'Responsável', 'Emissão', 'Vencimento', 'Liquidação', 'Forma', 'Valor', 'Status']}
-            emptyText="Nenhum lançamento encontrado no período"
-          >
-            {lancamentosRows.length
-              ? lancamentosRows.map((item) => {
-                  const statusClass =
-                    item.statusCodigo === 'LIQUIDADA'
-                      ? 'text-primary'
-                      : item.statusCodigo === 'VENCIDA'
-                      ? 'text-error'
-                      : item.statusCodigo === 'CANCELADA'
-                      ? 'text-on-surface-variant'
-                      : item.statusCodigo === 'PARCIAL'
-                      ? 'text-tertiary'
-                      : 'text-on-surface';
-                  return (
-                    <tr key={`${item.tipo}-${item.id}`} className="hover:bg-primary/5">
-                      <td className={`px-5 py-4 font-bold text-xs ${item.tipo === 'Pagar' ? 'text-error' : 'text-primary'}`}>{item.tipo}</td>
-                      <td className="px-5 py-4 font-bold">{item.descricao}</td>
-                      <td className="px-5 py-4 text-on-surface-variant text-sm">
-                        {item.grupoParcelamentoId && item.quantidadeParcelas > 1 ? `${item.quantidadeParcelas}x` : '-'}
-                      </td>
-                      <td className="px-5 py-4 text-on-surface-variant">{item.pessoa}</td>
-                      <td className="px-5 py-4 text-on-surface-variant">{item.responsavelNome ?? '-'}</td>
-                      <td className="px-5 py-4">{formatDateBR(item.dataEmissao)}</td>
-                      <td className="px-5 py-4">{formatDateBR(item.dataVencimento)}</td>
-                      <td className="px-5 py-4">{item.dataLiquidacao ? formatDateBR(item.dataLiquidacao) : '-'}</td>
-                      <td className="px-5 py-4 text-on-surface-variant">{item.formaPagamentoNome}</td>
-                      <td className={`px-5 py-4 font-bold ${item.tipo === 'Pagar' ? 'text-error' : 'text-primary'}`}>
-                        {formatCurrencyBRL(item.valorLiquido)}
-                      </td>
-                      <td className={`px-5 py-4 font-bold ${statusClass}`}>{item.statusNome}</td>
-                    </tr>
-                  );
-                })
-              : null}
-          </ReportTable>
+          <ReportTable headers={['Tipo', 'Descrição', 'Parcela', 'Pessoa', 'Responsável', 'Emissão', 'Vencimento', 'Liquidação', 'Forma', 'Valor', 'Status']} emptyText="Nenhum lançamento encontrado no período" rows={lancamentosRows.length
+                  ? lancamentosRows.map((item, rowIndex) => {
+                      const statusClass = item.statusCodigo === 'LIQUIDADA'
+                          ? 'text-primary'
+                          : item.statusCodigo === 'VENCIDA'
+                              ? 'text-error'
+                              : item.statusCodigo === 'CANCELADA'
+                                  ? 'text-on-surface-variant'
+                                  : item.statusCodigo === 'PARCIAL'
+                                      ? 'text-tertiary'
+                                      : 'text-on-surface';
+                      return (({
+                          id: String(rowIndex), className: "hover:bg-primary/5", cells: [
+                              <span key="cell0" className={`font-bold text-xs ${item.tipo === 'Pagar' ? 'text-error' : 'text-primary'}`}>{item.tipo}</span>,
+                              <span key="cell1" className="font-bold">{item.descricao}</span>,
+                              <span key="cell2" className="text-on-surface-variant text-sm">
+                                            {item.grupoParcelamentoId && item.quantidadeParcelas > 1 ? `${item.quantidadeParcelas}x` : '-'}
+                                          </span>,
+                              <span key="cell3" className="text-on-surface-variant">{item.pessoa}</span>,
+                              <span key="cell4" className="text-on-surface-variant">{item.responsavelNome ?? '-'}</span>,
+                              <span key="cell5">{formatDateBR(item.dataEmissao)}</span>,
+                              <span key="cell6">{formatDateBR(item.dataVencimento)}</span>,
+                              <span key="cell7">{item.dataLiquidacao ? formatDateBR(item.dataLiquidacao) : '-'}</span>,
+                              <span key="cell8" className="text-on-surface-variant">{item.formaPagamentoNome}</span>,
+                              <span key="cell9" className={`font-bold ${item.tipo === 'Pagar' ? 'text-error' : 'text-primary'}`}>
+                                            {formatCurrencyBRL(item.valorLiquido)}
+                                          </span>,
+                              <span key="cell10" className={`font-bold ${statusClass}`}>{item.statusNome}</span>
+                          ]
+                      }));
+                  })
+                  : null}/>
         </div>
       ) : null}
 
@@ -847,24 +828,21 @@ export function RelatoriosPage() {
             </div>
           </div>
 
-          <ReportTable headers={['Tipo', 'Descrição', 'Pessoa', 'Responsável', 'Valor', 'Início', 'Fim', 'Dia', 'Situação']} emptyText="Nenhuma recorrência encontrada">
-            {recorrenciasFiltradas.length
-              ? recorrenciasFiltradas.map((item) => (
-                  <tr key={item.id} className="hover:bg-primary/5">
-                    <td className="px-5 py-4 font-bold">{getRecorrenciaTipoLabel(item.contaOrigemTipo)}</td>
-                    <td className="px-5 py-4 font-bold">{item.descricao}</td>
-                    <td className="px-5 py-4 text-on-surface-variant">{item.pessoaNome}</td>
-                    <td className="px-5 py-4 text-on-surface-variant">{item.responsavelNome ?? '-'}</td>
-                    <td className="px-5 py-4 font-bold">{formatCurrencyBRL(item.valorLiquido)}</td>
-                    <td className="px-5 py-4">{formatDateBR(item.dataInicio)}</td>
-                    <td className="px-5 py-4">{item.dataFim ? formatDateBR(item.dataFim) : '-'}</td>
-                    <td className="px-5 py-4">{item.diaOrdemMensal}</td>
-                    <td className={`px-5 py-4 font-bold ${item.ativa ? 'text-primary' : 'text-on-surface-variant'}`}>{item.ativa ? 'Ativa' : 'Pausada'}</td>
-                  </tr>
-                ))
-              : null}
-
-          </ReportTable>
+          <ReportTable headers={['Tipo', 'Descrição', 'Pessoa', 'Responsável', 'Valor', 'Início', 'Fim', 'Dia', 'Situação']} emptyText="Nenhuma recorrência encontrada" rows={recorrenciasFiltradas.length
+                  ? recorrenciasFiltradas.map((item, rowIndex) => (({
+                      id: String(rowIndex), className: "hover:bg-primary/5", cells: [
+                          <span key="cell0" className="font-bold">{getRecorrenciaTipoLabel(item.contaOrigemTipo)}</span>,
+                          <span key="cell1" className="font-bold">{item.descricao}</span>,
+                          <span key="cell2" className="text-on-surface-variant">{item.pessoaNome}</span>,
+                          <span key="cell3" className="text-on-surface-variant">{item.responsavelNome ?? '-'}</span>,
+                          <span key="cell4" className="font-bold">{formatCurrencyBRL(item.valorLiquido)}</span>,
+                          <span key="cell5">{formatDateBR(item.dataInicio)}</span>,
+                          <span key="cell6">{item.dataFim ? formatDateBR(item.dataFim) : '-'}</span>,
+                          <span key="cell7">{item.diaOrdemMensal}</span>,
+                          <span key="cell8" className={`font-bold ${item.ativa ? 'text-primary' : 'text-on-surface-variant'}`}>{item.ativa ? 'Ativa' : 'Pausada'}</span>
+                      ]
+                  })))
+                  : null}/>
         </div>
       ) : null}
 
@@ -898,26 +876,21 @@ export function RelatoriosPage() {
             </div>
           </div>
 
-          <ReportTable
-            headers={['Título', 'Responsável', 'Conta gerencial', 'Prioridade', 'Status', 'Data desejada', 'Parcelas', 'Valor', 'Link']}
-            emptyText="Nenhuma compra planejada encontrada"
-          >
-            {compras.length
-              ? compras.map((item) => (
-                  <tr key={item.id} className="hover:bg-primary/5">
-                    <td className="px-5 py-4 font-bold">{item.titulo}</td>
-                    <td className="px-5 py-4 text-on-surface-variant">{item.responsavelNome}</td>
-                    <td className="px-5 py-4 text-on-surface-variant">{item.contaGerencialDescricao}</td>
-                    <td className="px-5 py-4">{item.prioridade === 'Media' ? 'Média' : item.prioridade}</td>
-                    <td className="px-5 py-4">{item.status}</td>
-                    <td className="px-5 py-4">{item.dataDesejada ? formatDateBR(item.dataDesejada) : '-'}</td>
-                    <td className="px-5 py-4">{item.parcelavel ? `${item.quantidadeParcelasDesejada ?? 1}x` : 'Única'}</td>
-                    <td className="px-5 py-4 font-bold">{formatCurrencyBRL(item.valorEstimado)}</td>
-                    <td className="max-w-[220px] truncate px-5 py-4 text-on-surface-variant">{item.link ?? '-'}</td>
-                  </tr>
-                ))
-              : null}
-          </ReportTable>
+          <ReportTable headers={['Título', 'Responsável', 'Conta gerencial', 'Prioridade', 'Status', 'Data desejada', 'Parcelas', 'Valor', 'Link']} emptyText="Nenhuma compra planejada encontrada" rows={compras.length
+                  ? compras.map((item, rowIndex) => (({
+                      id: String(rowIndex), className: "hover:bg-primary/5", cells: [
+                          <span key="cell0" className="font-bold">{item.titulo}</span>,
+                          <span key="cell1" className="text-on-surface-variant">{item.responsavelNome}</span>,
+                          <span key="cell2" className="text-on-surface-variant">{item.contaGerencialDescricao}</span>,
+                          <span key="cell3">{item.prioridade === 'Media' ? 'Média' : item.prioridade}</span>,
+                          <span key="cell4">{item.status}</span>,
+                          <span key="cell5">{item.dataDesejada ? formatDateBR(item.dataDesejada) : '-'}</span>,
+                          <span key="cell6">{item.parcelavel ? `${item.quantidadeParcelasDesejada ?? 1}x` : 'Única'}</span>,
+                          <span key="cell7" className="font-bold">{formatCurrencyBRL(item.valorEstimado)}</span>,
+                          <span key="cell8" className="max-w-[220px] truncate text-on-surface-variant">{item.link ?? '-'}</span>
+                      ]
+                  })))
+                  : null}/>
         </div>
       ) : null}
 
@@ -971,32 +944,26 @@ export function RelatoriosPage() {
               </div>
 
               {/* Tabela comparativa completa */}
-              <ReportTable headers={['Mês', 'Receitas', 'Var. rec.', 'Despesas', 'Var. desp.', 'Saldo']} emptyText="">
-                {(data.comparativo?.itens ?? []).map((item) => (
-                  <tr key={item.competencia} className="hover:bg-primary/5">
-                    <td className="px-5 py-4 font-bold text-on-surface">{item.competenciaLabel}</td>
-                    <td className="px-5 py-4 text-primary font-bold">{formatCurrencyBRL(item.receitas)}</td>
-                    <td className="px-5 py-4 text-xs">
-                      {item.variacaoReceitas !== null ? (
-                        <span className={item.variacaoReceitas >= 0 ? 'text-primary' : 'text-error'}>
-                          {item.variacaoReceitas >= 0 ? '+' : ''}{item.variacaoReceitas.toFixed(1)}%
-                        </span>
-                      ) : '—'}
-                    </td>
-                    <td className="px-5 py-4 text-error font-bold">{formatCurrencyBRL(item.despesas)}</td>
-                    <td className="px-5 py-4 text-xs">
-                      {item.variacaoDespesas !== null ? (
-                        <span className={item.variacaoDespesas <= 0 ? 'text-primary' : 'text-error'}>
-                          {item.variacaoDespesas >= 0 ? '+' : ''}{item.variacaoDespesas.toFixed(1)}%
-                        </span>
-                      ) : '—'}
-                    </td>
-                    <td className={`px-5 py-4 font-extrabold ${item.saldo >= 0 ? 'text-primary' : 'text-error'}`}>
-                      {formatCurrencyBRL(item.saldo)}
-                    </td>
-                  </tr>
-                ))}
-              </ReportTable>
+              <ReportTable headers={['Mês', 'Receitas', 'Var. rec.', 'Despesas', 'Var. desp.', 'Saldo']} emptyText="" rows={(data.comparativo?.itens ?? []).map((item, rowIndex) => (({
+                      id: String(rowIndex), className: "hover:bg-primary/5", cells: [
+                          <span key="cell0" className="font-bold text-on-surface">{item.competenciaLabel}</span>,
+                          <span key="cell1" className="text-primary font-bold">{formatCurrencyBRL(item.receitas)}</span>,
+                          <span key="cell2" className="text-xs">
+                                                  {item.variacaoReceitas !== null ? (<span className={item.variacaoReceitas >= 0 ? 'text-primary' : 'text-error'}>
+                                                      {item.variacaoReceitas >= 0 ? '+' : ''}{item.variacaoReceitas.toFixed(1)}%
+                                                    </span>) : '—'}
+                                                </span>,
+                          <span key="cell3" className="text-error font-bold">{formatCurrencyBRL(item.despesas)}</span>,
+                          <span key="cell4" className="text-xs">
+                                                  {item.variacaoDespesas !== null ? (<span className={item.variacaoDespesas <= 0 ? 'text-primary' : 'text-error'}>
+                                                      {item.variacaoDespesas >= 0 ? '+' : ''}{item.variacaoDespesas.toFixed(1)}%
+                                                    </span>) : '—'}
+                                                </span>,
+                          <span key="cell5" className={`font-extrabold ${item.saldo >= 0 ? 'text-primary' : 'text-error'}`}>
+                                                  {formatCurrencyBRL(item.saldo)}
+                                                </span>
+                      ]
+                  })))}/>
 
               {/* Gráfico: Receitas / Despesas / Saldo */}
               <div className="rounded-2xl border border-white/5 bg-surface-container-low p-5 space-y-3">

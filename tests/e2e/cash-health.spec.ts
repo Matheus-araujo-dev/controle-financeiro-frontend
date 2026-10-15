@@ -5,7 +5,19 @@ test('explica risco do mês e permite consultar a composição diária',async({p
   await page.goto('/login');await page.getByLabel('Usuário técnico').fill('e2e');await page.getByLabel('Nome de exibição').fill('Validação E2E');await page.getByRole('button',{name:'Entrar'}).click();
   const health=page.getByRole('region',{name:'Saúde e previsão de caixa'});
   await expect(health.getByText(/Primeiro saldo negativo:/)).toBeVisible();
-  await health.getByText('Ver composição diária').click();await expect(health.getByRole('table')).toBeVisible();
+  await health.getByText('Ver composição diária').click();
+  if ((page.viewportSize()?.width ?? 1280) <= 1023) {
+    const day = health.locator('.listing-table article').first();
+    await expect(day).toBeVisible();
+    await expect(day).toContainText('Saldo inicial');
+    await expect(day).toContainText('Entradas');
+    await expect(day).toContainText('Saídas');
+    await expect(day).toContainText('Saldo final');
+    await expect(day).toContainText(/-\s?R\$\s?100,00/);
+  } else {
+    await expect(health.getByRole('table')).toBeVisible();
+    await expect(health.getByRole('table').locator('tbody tr')).toHaveCount(days);
+  }
   expect(await page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth)).toBe(false);
   await health.getByRole('link',{name:'Consultar contas a pagar'}).click();await expect(page).toHaveURL(new RegExp(`contas-pagar\\?dataInicial=${month}-01&dataFinal=${month}-${days}`));
 });

@@ -1,0 +1,22 @@
+/* Padrão compartilhado por todas as listagens. O contêiner, não o monitor, define a escala. */
+.listing-table { width: 100%; min-width: 0; max-width: 100%; container-type: inline-size; }
+.listing-table th { font-size: clamp(12px, .65cqi, 14px); letter-spacing: .025em; padding: 10px 12px; }
+.listing-table td { font-size: clamp(16px, .95cqi, 20px); padding: clamp(8px, .45cqi, 12px) 12px; }
+.listing-table td .text-sm { font-size: inherit; }
+.listing-table .text-xs { font-size: 13px; }
+.listing-table .text-\[10px\], .listing-table .text-\[9px\] { font-size: 12px; }
+.listing-table td[data-layout="text"], .listing-table td[data-layout="compact"] { white-space: normal; overflow-wrap: anywhere; }
+.listing-table th button { min-width: 0; gap: 4px; }
+.listing-table th button > span:first-child { white-space: normal; overflow-wrap: anywhere; }
+.listing-table th button > span[aria-hidden] { flex-shrink: 0; }
+.listing-table td[data-layout="text"] > div > .flex { flex-wrap: wrap; }
+.listing-table article .text-sm { font-size: 16px; }
+.listing-table article { min-width: 0; overflow-wrap: anywhere; }
+.list-summary-cards { container-type: inline-size; gap: 12px; }
+.list-summary-cards article { padding: 12px 16px; }
+.list-summary-cards article > p:first-of-type { font-size: 12px; letter-spacing: .04em; }
+.list-summary-cards article > p:nth-of-type(2) { margin-top: 6px; font-size: clamp(22px, 1.3cqi, 28px); }
+@media (max-width: 767px) {
+ .list-summary-cards article { padding: 10px 12px; }
+ .list-summary-cards article > p:nth-of-type(2) { margin-top: 4px; }
+}
