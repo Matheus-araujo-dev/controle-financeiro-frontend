@@ -12,12 +12,12 @@
   .financial-account-list .listing-table { width: 100%; max-width: 100%; }
   .financial-account-list .listing-table table {
     /* Espaço técnico limitado; o restante acompanha descrição e pessoas. */
-    --date-width: clamp(108px, 8cqi, 144px);
-    --method-width: clamp(120px, 10cqi, 200px);
-    --amount-width: clamp(132px, 10cqi, 180px);
-    --details-width: calc(var(--date-width) + var(--method-width) + var(--amount-width) + 264px);
+    --date-width: clamp(132px, 8cqi, 156px);
+    --method-width: clamp(140px, 10cqi, 200px);
+    --amount-width: clamp(148px, 10cqi, 184px);
+    --details-width: calc(var(--date-width) + var(--method-width) + var(--amount-width) + 312px);
     table-layout: fixed;
-    min-width: 1060px;
+    min-width: 1160px;
   }
   .financial-account-list .listing-table th { padding: 10px 12px; font-size: clamp(12px, .65cqi, 14px); letter-spacing: .025em; }
   .financial-account-list .listing-table td { padding: clamp(8px, .45cqi, 12px) 12px; font-size: var(--financial-body-size); }
@@ -28,10 +28,10 @@
   .financial-account-list .listing-table :is(th, td):nth-child(3) { width: calc((100% - var(--details-width)) * .28); }
   .financial-account-list .listing-table :is(th, td):nth-child(4) { width: var(--date-width); }
   .financial-account-list .listing-table :is(th, td):nth-child(5) { width: var(--method-width); }
-  .financial-account-list .listing-table :is(th, td):nth-child(6) { width: 64px; }
+  .financial-account-list .listing-table :is(th, td):nth-child(6) { width: 96px; }
   .financial-account-list .listing-table :is(th, td):nth-child(7) { width: var(--amount-width); }
-  .financial-account-list .listing-table :is(th, td):nth-child(8) { width: 104px; }
-  .financial-account-list .listing-table :is(th, td):nth-child(9) { width: 96px; }
+  .financial-account-list .listing-table :is(th, td):nth-child(8) { width: 112px; }
+  .financial-account-list .listing-table :is(th, td):nth-child(9) { width: 104px; }
   .financial-account-list .listing-table td:nth-child(-n+3),
   .financial-account-list .listing-table td:nth-child(5) { white-space: normal; overflow-wrap: anywhere; }
   .financial-account-list .listing-table td:first-child > div > div { flex-wrap: wrap; }
