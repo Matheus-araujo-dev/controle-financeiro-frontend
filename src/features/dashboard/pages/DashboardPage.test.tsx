@@ -177,7 +177,7 @@ describe('DashboardPage', () => {
     expect(await screen.findByText('R$1.500,00')).toBeInTheDocument();
     expect(screen.getAllByText('R$200,00').length).toBeGreaterThan(0);
     // 1 vencida + 1 conta a pagar a vencer
-    expect(screen.getByText('2 faturas pendentes')).toBeInTheDocument();
+    expect(screen.getByText('2 contas pendentes')).toBeInTheDocument();
   });
 
   it('renders the error state when the summary request fails', async () => {

@@ -1,4 +1,5 @@
-﻿import { useDeferredValue, useMemo, useState } from 'react';
+import './financial-list-layout.css';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -674,7 +675,7 @@ export function FinancialAccountListPage({
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="financial-account-list space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {isInWorkspace
         ? actionsSlot ? createPortal(actionButtons, actionsSlot) : null
         : (
@@ -699,7 +700,7 @@ export function FinancialAccountListPage({
       </div>
 
       <FilterCard onClear={isModified ? clearFilters : undefined}>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <FilterField label="Status">
             <MultiSelectFilter
               ariaLabel="Status"
@@ -833,7 +834,7 @@ export function FinancialAccountListPage({
             </FilterInputWrapper>
           </FilterField>
 
-          <div className="md:col-span-2 lg:col-span-3">
+          <div className="col-span-full">
             <FilterField label="Busca">
               <FilterInputWrapper icon={<SearchOutlined />}>
                 <input

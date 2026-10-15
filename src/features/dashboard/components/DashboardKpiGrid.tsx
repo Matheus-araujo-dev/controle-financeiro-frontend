@@ -33,7 +33,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
   return (
     <div className="totalizador-card p-4 sm:p-6 min-h-[110px] sm:min-h-[148px] flex flex-col group">
       <div className="flex justify-between items-start">
-        <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">
+        <span className="text-xs uppercase tracking-wide text-on-surface-variant font-bold">
           {label}
         </span>
         <span
@@ -58,7 +58,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
         )}
 
         {supportText && !trend && (
-          <p className="text-[11px] text-on-surface-variant mt-1 font-medium italic">
+          <p className="text-[13px] text-on-surface-variant mt-1 font-medium">
             {supportText}
           </p>
         )}
@@ -104,7 +104,7 @@ export const DashboardKpiGrid: React.FC<DashboardKpiGridProps> = ({
         value={totalAPagar}
         icon="payments"
         color="error"
-        supportText={`${numContasPendentes} faturas pendentes`}
+        supportText={`${numContasPendentes} contas pendentes`}
       />
       <KpiCard
         label="A Receber"
