@@ -1,5 +1,5 @@
 /* Escopo restrito às contas a pagar/receber. Remover este import restaura a densidade anterior. */
-.financial-account-list { max-width: 1560px; }
+.financial-account-list { width: 100%; min-width: 0; }
 .financial-account-list > section { gap: 12px; }
 .financial-account-list > section article { padding: 12px 16px; }
 .financial-account-list > section article > p:first-of-type { font-size: 12px; letter-spacing: .04em; }
@@ -8,7 +8,7 @@
 .financial-account-list .listing-table .text-xs { font-size: 13px; }
 .financial-account-list .listing-table .text-\[10px\] { font-size: 12px; }
 @media (min-width: 1024px) {
-  /* Concentra as colunas em monitores largos, sem esconder conteúdo ou ações. */
+  /* Mantém a largura disponível, sem esconder conteúdo ou ações. */
   .financial-account-list .listing-table { width: 100%; max-width: 100%; }
   .financial-account-list .listing-table th { padding: 10px 12px; font-size: 12px; letter-spacing: .025em; }
   .financial-account-list .listing-table td { padding: 8px 12px; font-size: 16px; }
