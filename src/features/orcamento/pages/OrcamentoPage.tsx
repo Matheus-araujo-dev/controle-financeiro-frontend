@@ -1,3 +1,4 @@
+import { AppDataTable } from '../../../components/data/AppDataTable';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
 import { formCompactFieldClass } from '../../../components/forms/FormPrimitives';
@@ -182,52 +183,33 @@ function MultiPeriodoView({ competencias }: { competencias: string[] }) {
   if (loading) return <PageState state="loading" title="Carregando comparativo" />;
   if (allCategories.length === 0) return <PageState state="empty" title="Sem dados no período" subtitle="Ajuste o mês de referência." />;
 
-  return (
-    <div className="overflow-x-auto rounded-2xl border border-white/5">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-white/10 bg-surface-container">
-            <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Categoria</th>
-            {competencias.map((c) => (
-              <th key={c} className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap">
-                {new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' }).format(
-                  new Date(Number(c.split('-')[0]), Number(c.split('-')[1]) - 1, 1)
-                )}
-              </th>
-            ))}
-            <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Média</th>
-            <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Máx</th>
-          </tr>
-        </thead>
-        <tbody>
-          {allCategories.map(({ id, desc }) => {
-            const values = datasets.map((d) => d.itens.find((i) => i.contaGerencialId === id)?.valorRealizado ?? 0);
-            const avg = values.reduce((s, v) => s + v, 0) / (values.length || 1);
-            const max = Math.max(...values);
-            return (
-              <tr key={id} className="border-b border-white/5 hover:bg-primary/5">
-                <td className="px-4 py-3 font-semibold text-on-surface max-w-[180px] truncate">{desc}</td>
-                {competencias.map((c, idx) => {
-                  const val = datasets[idx]?.itens.find((i) => i.contaGerencialId === id)?.valorRealizado ?? 0;
-                  const meta = datasets[idx]?.itens.find((i) => i.contaGerencialId === id)?.valorMeta ?? null;
-                  const pct = meta ? (val / meta) * 100 : null;
-                  return (
-                    <td key={c} className="px-4 py-3 text-right">
-                      <span className={pct !== null && pct > 100 ? 'text-error font-bold' : 'text-on-surface'}>
-                        {formatCurrencyBRL(val)}
-                      </span>
-                    </td>
-                  );
-                })}
-                <td className="px-4 py-3 text-right font-bold text-primary">{formatCurrencyBRL(avg)}</td>
-                <td className="px-4 py-3 text-right font-bold text-on-surface-variant">{formatCurrencyBRL(max)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
+  const rows = allCategories.map(({ id, desc }) => {
+    const values = datasets.map(d => d.itens.find(i => i.contaGerencialId === id)?.valorRealizado ?? 0);
+    return {
+      id, desc,
+      months: competencias.map((_, index) => {
+        const item = datasets[index]?.itens.find(i => i.contaGerencialId === id);
+        return { value: item?.valorRealizado ?? 0, overBudget: !!item?.valorMeta && (item.valorRealizado / item.valorMeta) > 1 };
+      }),
+      average: values.reduce((sum, value) => sum + value, 0) / (values.length || 1),
+      maximum: Math.max(...values)
+    };
+  });
+  return <AppDataTable
+    ariaLabel="Comparativo de orçamento"
+    rowKey="id"
+    dataSource={rows}
+    columns={[
+      { key: 'categoria', title: 'Categoria', mobileRole: 'title', sorter: false, render: (_value, row) => <span className="font-semibold">{row.desc}</span> },
+      ...competencias.map((competencia, index) => ({
+        key: competencia, title: new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' }).format(new Date(Number(competencia.split('-')[0]), Number(competencia.split('-')[1]) - 1, 1)),
+        layout: 'money' as const, align: 'right' as const, sorter: false,
+        render: (_value: unknown, row: typeof rows[number]) => <span className={row.months[index].overBudget ? 'text-error font-bold' : 'text-on-surface'}>{formatCurrencyBRL(row.months[index].value)}</span>
+      })),
+      { key: 'average', title: 'Média', layout: 'money', align: 'right', sorter: false, render: (_value, row) => <span className="font-bold text-primary">{formatCurrencyBRL(row.average)}</span> },
+      { key: 'maximum', title: 'Máx', layout: 'money', align: 'right', sorter: false, render: (_value, row) => <span className="font-bold text-on-surface-variant">{formatCurrencyBRL(row.maximum)}</span> }
+    ]}
+  />;
 }
 
 export function OrcamentoPage() {

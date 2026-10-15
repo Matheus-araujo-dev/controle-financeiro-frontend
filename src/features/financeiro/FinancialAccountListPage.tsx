@@ -1,4 +1,3 @@
-import './financial-list-layout.css';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { usePersistedFilters } from '../../hooks/usePersistedFilters';
 import { useNavigate, useSearchParams } from 'react-router-dom';
