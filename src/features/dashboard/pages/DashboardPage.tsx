@@ -201,9 +201,6 @@ export function DashboardPage() {
           </Link>
         )}
 
-        <DashboardCashHealth data={cashHealth.data} referenceMonth={referenceMonth} loading={cashHealth.isFetching} error={cashHealth.isError} onRetry={() => void cashHealth.refetch()} />
-        <DashboardAnomalies data={anomalies.data} referenceMonth={referenceMonth} loading={anomalies.isFetching} error={anomalies.isError} onRetry={() => void anomalies.refetch()} />
-
         <DashboardKpiGrid
           saldoAtual={summary?.saldoAtual ?? 0}
           totalAPagar={summary?.totalAPagar ?? 0}
@@ -211,15 +208,6 @@ export function DashboardPage() {
           saldoProjetado={summary?.saldoProjetado ?? 0}
           numContasPendentes={totalContasVencidias + totalContasAPagarAVencer}
         />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <DashboardCashPulse items={cashFlow?.itens ?? []} />
-          <DashboardOperationalAgenda items={summary?.contasAVencer ?? []} referenceMonth={referenceMonth} />
-          <DashboardPendingActions
-            vencidas={summary?.contasVencidas ?? []}
-            aVencer={summary?.contasAVencer ?? []}
-          />
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <DashboardFaturasCartao competencia={referenceMonth} />
@@ -234,6 +222,18 @@ export function DashboardPage() {
               }}
             />
           </div>
+        </div>
+
+        <DashboardCashHealth data={cashHealth.data} referenceMonth={referenceMonth} loading={cashHealth.isFetching} error={cashHealth.isError} onRetry={() => void cashHealth.refetch()} />
+        <DashboardAnomalies data={anomalies.data} referenceMonth={referenceMonth} loading={anomalies.isFetching} error={anomalies.isError} onRetry={() => void anomalies.refetch()} />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <DashboardCashPulse items={cashFlow?.itens ?? []} />
+          <DashboardOperationalAgenda items={summary?.contasAVencer ?? []} referenceMonth={referenceMonth} />
+          <DashboardPendingActions
+            vencidas={summary?.contasVencidas ?? []}
+            aVencer={summary?.contasAVencer ?? []}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
