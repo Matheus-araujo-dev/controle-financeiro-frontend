@@ -28,6 +28,11 @@ export interface WhatsappAlertasResponse {
   receberLimiteResponsavel: boolean;
 }
 
+export interface WhatsappBridgeQrResponse {
+  status: 'disconnected' | 'qr' | 'connected' | 'error';
+  qr: string | null;
+}
+
 export interface AgenteInsight {
   tipo: 'ALERTA' | 'POSITIVO' | 'DICA' | 'INFO';
   mensagem: string;
@@ -77,6 +82,11 @@ export const agenteApi = {
 
   salvarAlertasWhatsapp: async (request: WhatsappAlertasResponse): Promise<WhatsappAlertasResponse> => {
     const { data } = await apiClient.put<WhatsappAlertasResponse>('/perfil/whatsapp/alertas', request);
+    return data;
+  },
+
+  obterQrWhatsapp: async (): Promise<WhatsappBridgeQrResponse> => {
+    const { data } = await apiClient.get<WhatsappBridgeQrResponse>('/perfil/whatsapp/qr');
     return data;
   },
 

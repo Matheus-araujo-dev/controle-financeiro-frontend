@@ -1,13 +1,126 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, Card, Divider, Form, Input, InputNumber, Popconfirm, Spin, Switch, Tag, Typography } from 'antd';
-import { MobileOutlined, CheckCircleOutlined, DisconnectOutlined, BellOutlined, WhatsAppOutlined } from '@ant-design/icons';
+import { MobileOutlined, CheckCircleOutlined, DisconnectOutlined, BellOutlined, WhatsAppOutlined, QrcodeOutlined, ReloadOutlined } from '@ant-design/icons';
 import { agenteApi, type WhatsappAlertasResponse, type WhatsappStatusResponse } from '../../services/http/agente-api';
 import { getApiErrorMessage } from '../../services/http/api-error';
 import { notify } from '../../store/notification-store';
 import { Button } from '../../components/ui/Button';
 
 const { Title, Text, Paragraph } = Typography;
+
+function WhatsappQrSection() {
+  const { data, isLoading, refetch, isFetching } = useQuery({
+    queryKey: ['whatsapp', 'qr'],
+    queryFn: () => agenteApi.obterQrWhatsapp(),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === 'qr') return 5_000;
+      if (status === 'disconnected') return 10_000;
+      return false;
+    },
+    staleTime: 3_000,
+  });
+
+  if (isLoading) {
+    return (
+      <Card className="bg-surface-container border-outline-variant">
+        <div className="flex justify-center py-8">
+          <Spin size="large" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (data?.status === 'connected') {
+    return (
+      <Card className="bg-surface-container border-outline-variant" size="small">
+        <div className="flex items-center gap-2">
+          <CheckCircleOutlined className="text-primary text-xl" />
+          <div>
+            <Text className="text-on-surface font-medium">WhatsApp Bridge conectado</Text>
+            <div>
+              <Text className="text-xs text-on-surface-variant">
+                O bot está online e pronto para receber mensagens.
+              </Text>
+            </div>
+          </div>
+          <Tag color="success" className="ml-auto">Online</Tag>
+        </div>
+      </Card>
+    );
+  }
+
+  if (data?.status === 'error') {
+    return (
+      <Alert
+        type="warning"
+        showIcon
+        message="Bridge indisponível"
+        description="Não foi possível conectar ao WhatsApp Bridge. Verifique se o serviço está rodando no Railway."
+        action={
+          <Button size="sm" onClick={() => refetch()} loading={isFetching} icon={<ReloadOutlined />}>
+            Tentar novamente
+          </Button>
+        }
+      />
+    );
+  }
+
+  return (
+    <Card className="bg-surface-container border-outline-variant">
+      <div className="text-center space-y-4">
+        <div className="flex items-center justify-center gap-2">
+          <QrcodeOutlined className="text-primary text-2xl" />
+          <Title level={5} className="!mb-0 !text-on-surface">
+            Parear WhatsApp
+          </Title>
+        </div>
+
+        <Paragraph className="text-on-surface-variant !mb-0">
+          Escaneie o QR code abaixo com o WhatsApp do celular para conectar o bot.
+        </Paragraph>
+
+        {data?.qr ? (
+          <div className="flex justify-center">
+            <img
+              src={data.qr}
+              alt="QR Code do WhatsApp"
+              className="rounded-lg border border-outline-variant"
+              style={{ width: 300, height: 300 }}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2 py-4">
+            <Spin />
+            <Text className="text-on-surface-variant text-sm">
+              Aguardando QR code do bridge...
+            </Text>
+          </div>
+        )}
+
+        <div className="flex justify-center">
+          <Button size="sm" onClick={() => refetch()} loading={isFetching} icon={<ReloadOutlined />}>
+            Atualizar QR
+          </Button>
+        </div>
+
+        <Alert
+          type="info"
+          showIcon
+          message="Como parear"
+          description={
+            <ol className="list-decimal list-inside text-sm space-y-1 mt-1">
+              <li>Abra o WhatsApp no celular.</li>
+              <li>Toque em <strong>Configurações → Aparelhos conectados → Conectar aparelho</strong>.</li>
+              <li>Aponte a câmera para o QR code acima.</li>
+            </ol>
+          }
+        />
+      </div>
+    </Card>
+  );
+}
 
 export function WhatsappVinculoPage() {
   const queryClient = useQueryClient();
@@ -101,6 +214,11 @@ export function WhatsappVinculoPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* ── Conexão do Bridge ─────────────────────────────────────── */}
+      <WhatsappQrSection />
+
+      <Divider className="border-outline-variant" />
+
       {/* ── Vínculo ───────────────────────────────────────────────── */}
       <p className="text-sm text-on-surface-variant">
         Registre seu número de WhatsApp para usar o assistente financeiro diretamente no app. Mensagens enviadas para o
