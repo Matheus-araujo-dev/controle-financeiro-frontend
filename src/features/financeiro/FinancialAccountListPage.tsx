@@ -372,6 +372,7 @@ export function FinancialAccountListPage({
     },
     {
       title: config.personLabel,
+      dataIndex: isPagar ? 'recebedorNome' : 'pagadorNome',
       key: 'pessoa',
       mobileRole: 'subtitle',
       render: (_value, record) => (
@@ -380,6 +381,7 @@ export function FinancialAccountListPage({
     },
     {
       title: 'Responsável',
+      dataIndex: 'responsavelNome',
       key: 'responsavel',
       mobileRole: 'subtitle',
       render: (_value, record) => (
@@ -406,6 +408,7 @@ export function FinancialAccountListPage({
     },
     {
       title: 'Parcela',
+      dataIndex: 'numeroParcela',
       key: 'parcela',
       align: 'center',
       render: (_value, record) =>

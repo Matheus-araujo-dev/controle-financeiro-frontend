@@ -280,33 +280,66 @@ describe('SummarySidebar', () => {
     await waitFor(() => expect(cancelar).toHaveBeenCalledWith({ cancelarPlanejamentoRelacionado: true }));
   });
 
-  it('opens ParcelasCancelDialog for non-origin parcela', async () => {
+  it('opens ParcelasCancelDialog for intermediate parcela', async () => {
     renderSidebar({
       id: 'c1',
       detailStatus: 'PENDENTE',
       faturaLocked: false,
       grupoParcelamentoId: 'grp-1',
       numeroParcela: 3,
+      watchedValues: { valorOriginal: 100, quantidadeParcelas: 5 },
     });
     await userEvent.click(screen.getByRole('button', { name: /Cancelar Título/i }));
     expect(screen.getByText(/Cancelar parcela/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Nao, apenas esta/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Sim, cancelar futuras/i })).toBeInTheDocument();
+    expect(screen.getByText(/parcela 3 de 5/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Apenas esta parcela/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Cancelar em cascata/i })).toBeInTheDocument();
   });
 
-  it('calls cancelar with cancelarParcelasFuturas=false from ParcelasCancelDialog', async () => {
+  it.each([1, 2])('asks cascade choice for parcela %i', async (numeroParcela) => {
     const cancelar = vi.fn().mockResolvedValue(undefined);
     renderSidebar({
       id: 'c1',
       detailStatus: 'PENDENTE',
       faturaLocked: false,
       grupoParcelamentoId: 'grp-1',
-      numeroParcela: 2,
+      numeroParcela,
+      watchedValues: { valorOriginal: 100, quantidadeParcelas: 5 },
       cancelar,
     });
     await userEvent.click(screen.getByRole('button', { name: /Cancelar Título/i }));
-    await userEvent.click(screen.getByRole('button', { name: /Nao, apenas esta/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Apenas esta parcela/i }));
     await waitFor(() => expect(cancelar).toHaveBeenCalledWith({ cancelarParcelasFuturas: false }));
+  });
+
+  it('calls cancelar with cancelarParcelasFuturas=true when cascading', async () => {
+    const cancelar = vi.fn().mockResolvedValue(undefined);
+    renderSidebar({
+      id: 'c1',
+      detailStatus: 'PENDENTE',
+      faturaLocked: false,
+      grupoParcelamentoId: 'grp-1',
+      numeroParcela: 1,
+      watchedValues: { valorOriginal: 100, quantidadeParcelas: 5 },
+      cancelar,
+    });
+    await userEvent.click(screen.getByRole('button', { name: /Cancelar Título/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Cancelar em cascata/i }));
+    await waitFor(() => expect(cancelar).toHaveBeenCalledWith({ cancelarParcelasFuturas: true }));
+  });
+
+  it('uses simple confirmation for the last parcela', async () => {
+    renderSidebar({
+      id: 'c1',
+      detailStatus: 'PENDENTE',
+      faturaLocked: false,
+      grupoParcelamentoId: 'grp-1',
+      numeroParcela: 5,
+      watchedValues: { valorOriginal: 100, quantidadeParcelas: 5 },
+    });
+    await userEvent.click(screen.getByRole('button', { name: /Cancelar Título/i }));
+    expect(screen.queryByText(/Cancelar parcela/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Confirmar Cancelamento/i)).toBeInTheDocument();
   });
 
   it('opens ContaVinculadaCancelDialog when contaVinculada is set and cancel clicked', async () => {

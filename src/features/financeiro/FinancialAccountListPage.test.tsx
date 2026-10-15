@@ -758,6 +758,33 @@ describe('FinancialAccountListPage', () => {
     );
   }, 40000);
 
+  it.each([
+    ['/contas-pagar', 'Recebedor', 'recebedorNome'],
+    ['/contas-receber', 'Pagador', 'pagadorNome'],
+    ['/contas-pagar', 'Responsável', 'responsavelNome'],
+    ['/contas-receber', 'Responsável', 'responsavelNome'],
+    ['/contas-pagar', 'Parcela', 'numeroParcela']
+  ])('em %s ordena a coluna %s pelo campo %s da API', async (routeBase, columnTitle, expectedSortBy) => {
+    const { config, list } = createConfig();
+    const personLabel = routeBase === '/contas-receber' ? 'Pagador' : 'Recebedor';
+    render(
+      <MemoryRouter>
+        <FinancialAccountListPage config={{ ...config, routeBase, personLabel }} />
+      </MemoryRouter>,
+      { wrapper: TestWrapper }
+    );
+
+    expect((await screen.findAllByText('Aluguel')).length).toBeGreaterThan(0);
+
+    await userEvent.click(within(screen.getByRole('table')).getByRole('button', { name: columnTitle }));
+
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sortBy: expectedSortBy, sortDirection: 'Asc' })
+      )
+    );
+  }, 25000);
+
   it('covers buildExportFilters search branch: type search then export PDF', async () => {
     const { config, list } = createConfig();
     render(<MemoryRouter><FinancialAccountListPage config={config} /></MemoryRouter>, { wrapper: TestWrapper });
