@@ -12,7 +12,7 @@ ListSummaryCards também recebe o estilo comum dos totalizadores. Removido finan
 
 ## Inventário e migração
 
-19 arquivos consumidores do AppDataTable cobrem cadastros, movimentos, contas, faturas, importação de fatura, recorrências, compras planejadas, conciliação, WhatsApp, relatórios, orçamento e dashboard.
+21 arquivos consumidores do AppDataTable cobrem cadastros, movimentos, contas, faturas, importação de fatura, recorrências, compras planejadas, conciliação, WhatsApp, relatórios, orçamento e dashboard, incluindo Planos e Investimentos.
 
 Foram migradas três implementações próprias: ReportTable (nove tabelas de relatórios), comparativo de orçamento e composição diária do caixa. ReportTable permanece como adaptador dos dados de relatório, sem markup ou estilo de tabela próprio. Apenas AppDataTable declara a tag table em src/**/*.tsx de produção. Um teste de arquitetura verifica essa regra.
 
@@ -29,3 +29,8 @@ Quality gate local passou: auditoria, lint, build, 153 arquivos/1467 testes. Cob
 Mudança isolada na PR desta branch. Após integrar, reverter o commit de merge da implementação com git revert -m 1 <SHA do merge>, em branch a partir da versão vigente, passar pelos gates e publicar novamente. Se houver squash, reverter o SHA do squash sem -m. Isso restaura o padrão anterior, inclusive o CSS específico financeiro e as tabelas próprias anteriores, sem migrations ou alteração de dados. Não restaurar a main inteira e não usar force-push. Confirmar atualização dos assets na sessão/PWA após o deploy.
 
 Painéis estreitos: ResizeObserver no componente comum alterna para cards quando a largura efetiva fica abaixo de 768 px, mesmo em desktop. O breakpoint de viewport mobile existente continua sendo respeitado. Teste TDD falhou antes da mudança e passou cobrindo estreitamento, expansão e limpeza do observer.
+
+
+Listagens antes em cards próprios: Planos e Investimentos migrados para AppDataTable, preservando todos os campos, progresso, estados e botões existentes. Ações podem quebrar linha nos cards mobile. Os 56 testes dessas duas áreas passaram. O resumo do gate acima corresponde à fase comum inicial; a fase completa tem nova regressão e CI antes da publicação.
+
+A implantação completa tem duas integrações: a base compartilhada (merge e601913d7057a2571435197b93d82eab1c9f100b, PR436) e o complemento de Planos/Investimentos (PR subsequente). Para rollback integral, reverter primeiro o merge do complemento e depois e601913 com git revert -m 1, em branch da versão vigente, antes dos gates develop/main. Reverter apenas o complemento conserva a base compartilhada. Não restaurar o deployment inteiro se houver alterações posteriores que devam permanecer.

@@ -1,3 +1,4 @@
+import { AppDataTable } from '../../components/data/AppDataTable';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../components/ui/Button';
@@ -334,74 +335,15 @@ function EncerrarModal({ inv, onClose, onSaved }: { inv: InvestimentoResumo; onC
   );
 }
 
-// ── Card de investimento ──────────────────────────────────────────────────────
+// ── Ações do investimento ──────────────────────────────────────────────────────
 
-function InvCard({ inv, onEditar, onAtualizarValor, onEncerrar }: {
+function InvestimentoActions({ inv, onEditar, onAtualizarValor, onEncerrar }: {
   inv: InvestimentoResumo;
   onEditar: () => void;
   onAtualizarValor: () => void;
   onEncerrar: () => void;
 }) {
-  const positivo = inv.rendimento >= 0;
-  const icone = tipoIcones[inv.tipo];
-
-  return (
-    <div className={`flex flex-col gap-4 rounded-3xl border p-5 transition-all ${inv.encerrado ? 'border-white/5 bg-surface-container opacity-60' : 'border-white/5 bg-surface-container-low hover:border-primary/20'}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>{icone}</span>
-            <h3 className="font-headline text-base font-extrabold text-on-surface truncate">{inv.nome}</h3>
-          </div>
-          {inv.emissor && <p className="mt-0.5 text-xs text-on-surface-variant">{inv.emissor}</p>}
-          <p className="mt-1 text-xs text-on-surface-variant">{inv.contaBancariaNome}</p>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="rounded-full bg-surface-container px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{inv.tipoLabel}</span>
-          {inv.encerrado && <span className="rounded-full bg-error/15 px-2.5 py-1 text-[10px] font-bold text-error">Encerrado</span>}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-2xl border border-white/5 bg-surface-container p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Aplicado</p>
-          <p className="mt-1 font-headline text-sm font-extrabold text-on-surface">{formatCurrencyBRL(inv.valorInvestido)}</p>
-        </div>
-        <div className="rounded-2xl border border-white/5 bg-surface-container p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Atual</p>
-          <p className="mt-1 font-headline text-sm font-extrabold text-primary">{formatCurrencyBRL(inv.valorAtual)}</p>
-        </div>
-        <div className="rounded-2xl border border-white/5 bg-surface-container p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Rendimento</p>
-          <p className={`mt-1 font-headline text-sm font-extrabold ${positivo ? 'text-primary' : 'text-error'}`}>
-            {formatPercent(inv.rendimentoPercent)}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 text-xs text-on-surface-variant">
-        <span className="inline-flex items-center gap-1">
-          <span className="material-symbols-outlined text-sm">event</span>
-          {formatDate(inv.dataAplicacao)}
-        </span>
-        {inv.dataVencimento && (
-          <span className="inline-flex items-center gap-1">
-            <span className="material-symbols-outlined text-sm">event_available</span>
-            {formatDate(inv.dataVencimento)}
-          </span>
-        )}
-        {inv.taxaAnual && (
-          <span className="inline-flex items-center gap-1">
-            <span className="material-symbols-outlined text-sm">percent</span>
-            {inv.taxaAnual.toFixed(2)}% a.a.
-          </span>
-        )}
-        <span className="inline-flex items-center gap-1">
-          <span className="material-symbols-outlined text-sm">water_drop</span>
-          {inv.liquidezLabel}
-        </span>
-      </div>
-
+  return <div className="max-w-[240px]">
       {!inv.encerrado && (
         <div className="flex flex-wrap gap-2">
           <button
@@ -430,8 +372,7 @@ function InvCard({ inv, onEditar, onAtualizarValor, onEncerrar }: {
           </button>
         </div>
       )}
-    </div>
-  );
+  </div>;
 }
 
 // ── Banner de indicadores BCB ─────────────────────────────────────────────────
@@ -704,17 +645,31 @@ export function InvestimentosPage() {
             onAction={() => setModalOpen(true)}
           />
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {investimentos.map((inv) => (
-              <InvCard
-                key={inv.id}
-                inv={inv}
-                onEditar={() => setEditando(inv)}
-                onAtualizarValor={() => setAtualizandoValor(inv)}
-                onEncerrar={() => setEncerrando(inv)}
-              />
-            ))}
-          </div>
+          <AppDataTable<InvestimentoResumo>
+            ariaLabel="Investimentos"
+            rowKey="id"
+            dataSource={investimentos}
+            rowClassName={inv => inv.encerrado ? 'opacity-60' : ''}
+            columns={[
+              { key: 'nome', title: 'Investimento', mobileRole: 'title', sorter: false, render: (_value, inv) => <div>
+                <h3 className="font-bold"><span className="material-symbols-outlined text-primary">{tipoIcones[inv.tipo]}</span> {inv.nome}</h3>
+                {inv.emissor && <p className="text-xs text-on-surface-variant">{inv.emissor}</p>}
+                <p className="text-xs text-on-surface-variant">{inv.contaBancariaNome}</p>
+              </div> },
+              { key: 'tipo', dataIndex: 'tipoLabel', title: 'Tipo', mobileRole: 'subtitle', sorter: false },
+              { key: 'dataAplicacao', title: 'Aplicação', dataIndex: 'dataAplicacao', mobileRole: 'date', sorter: false, render: value => formatDate(String(value)) },
+              { key: 'valorInvestido', title: 'Aplicado', align: 'right', sorter: false, render: (_value, inv) => formatCurrencyBRL(inv.valorInvestido) },
+              { key: 'valorAtual', title: 'Atual', align: 'right', mobileRole: 'value', sorter: false, render: (_value, inv) => <span className="font-bold text-primary">{formatCurrencyBRL(inv.valorAtual)}</span> },
+              { key: 'rendimento', title: 'Rendimento', layout: 'number', width: 144, align: 'right', sorter: false, render: (_value, inv) => <span className={inv.rendimento >= 0 ? 'text-primary font-bold' : 'text-error font-bold'}>{formatPercent(inv.rendimentoPercent)}</span> },
+              { key: 'detalhes', title: 'Condições', sorter: false, render: (_value, inv) => <div>
+                {inv.dataVencimento && <p>{formatDate(inv.dataVencimento)}</p>}
+                {inv.taxaAnual ? <p>{inv.taxaAnual.toFixed(2)}% a.a.</p> : null}
+                <span>{inv.liquidezLabel}</span>
+              </div> },
+              { key: 'status', title: 'Status', mobileRole: 'status', sorter: false, render: (_value, inv) => inv.encerrado ? <span className="text-error">Encerrado</span> : <span className="text-primary">Ativo</span> },
+              { key: 'actions', title: 'Ações', width: 248, sorter: false, render: (_value, inv) => <InvestimentoActions inv={inv} onEditar={() => setEditando(inv)} onAtualizarValor={() => setAtualizandoValor(inv)} onEncerrar={() => setEncerrando(inv)} /> }
+            ]}
+          />
         )}
       </ListPageShell>
     </>
