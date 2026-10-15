@@ -1,3 +1,4 @@
+import './table-layout.css';
 import type { ReactNode } from 'react';
 import { SummaryCard } from '../layout';
 
@@ -31,7 +32,7 @@ export function ListSummaryCards({ items, columns = 4 }: { items: SummaryCardIte
   const gridClass = colsClass[columns] ?? colsClass[4];
 
   return (
-    <section className={`grid gap-4 ${gridClass}`}>
+    <section className={`list-summary-cards grid gap-4 ${gridClass}`}>
       {items.map((item) => (
         <SummaryCard
           key={item.key}

@@ -394,3 +394,25 @@ describe('AppDataTable', () => {
     expect(onClick).toHaveBeenCalledWith({ id: '1', name: 'Item A' });
   });
 });
+
+it('switches a shared table to cards when its panel narrows and restores the table when it widens', async () => {
+  let resize: (entries: { contentRect: { width: number } }[]) => void = () => {};
+  const disconnect = vi.fn();
+  const originalObserver = globalThis.ResizeObserver;
+  Object.defineProperty(globalThis, 'ResizeObserver', { value: class {
+    constructor(callback: typeof resize) { resize = callback; }
+    observe = vi.fn();
+    disconnect = disconnect;
+  } });
+  const view = render(<AppDataTable columns={columns} dataSource={[{ id: '1', name: 'Painel' }]} rowKey="id" />);
+  expect(screen.getByRole('table')).toBeInTheDocument();
+  const { act } = await import('@testing-library/react');
+  act(() => resize([{ contentRect: { width: 500 } }]));
+  expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  expect(screen.getByText('Painel')).toBeVisible();
+  act(() => resize([{ contentRect: { width: 1200 } }]));
+  expect(screen.getByRole('table')).toBeInTheDocument();
+  view.unmount();
+  expect(disconnect).toHaveBeenCalled();
+  Object.defineProperty(globalThis, 'ResizeObserver', { value: originalObserver });
+});

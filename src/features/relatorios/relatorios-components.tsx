@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { MultiSelectFilter } from '../../components/layout/MultiSelectFilter';
-import { PageState } from '../../components/states/PageState';
+import { AppDataTable } from '../../components/data/AppDataTable';
 import type { AlertItem } from './relatorios-helpers';
 
 export function FilterInput({
@@ -93,38 +93,21 @@ export function AlertCard({ alerta }: { alerta: AlertItem }) {
   );
 }
 
-export function ReportTable({
-  headers,
-  children,
-  emptyText
-}: {
+export function ReportTable({ headers, rows, emptyText }: {
   headers: string[];
-  children?: ReactNode;
+  rows?: { id: string; cells: ReactNode[]; className?: string }[] | null;
   emptyText: string;
 }) {
-  const isEmpty = !children;
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-white/5 bg-surface-container-low">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[820px] border-collapse text-left">
-          <thead className="bg-surface-container text-[11px] font-bold tracking-widest text-on-surface-variant">
-            <tr>
-              {headers.map((header) => (
-                <th key={header} className="px-5 py-4">
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          {!isEmpty ? <tbody className="divide-y divide-white/5 text-sm text-on-surface">{children}</tbody> : null}
-        </table>
-      </div>
-      {isEmpty ? (
-        <div className="p-8">
-          <PageState state="empty" title={emptyText} subtitle="Ajuste os filtros ou registre novos lançamentos para alimentar este relatório." />
-        </div>
-      ) : null}
-    </div>
-  );
+  return <AppDataTable<{ id: string; cells: ReactNode[]; className?: string }>
+    rowKey="id"
+    dataSource={rows ?? []}
+    emptyMessage={emptyText}
+    rowClassName={row => row.className ?? ''}
+    columns={headers.map((title, index) => ({
+      title,
+      key: title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s/g, ''),
+      sorter: false,
+      render: (_value, row) => row.cells[index]
+    }))}
+  />;
 }

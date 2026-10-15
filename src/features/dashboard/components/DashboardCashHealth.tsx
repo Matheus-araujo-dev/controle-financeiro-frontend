@@ -1,3 +1,4 @@
+import { AppDataTable } from '../../../components/data/AppDataTable';
 import { Link } from 'react-router-dom';
 import type { DashboardFluxoCaixa } from '../../../types/dashboard';
 import { formatCurrencyBRL } from '../../../shared/currency';
@@ -20,8 +21,19 @@ export function DashboardCashHealth({ data, referenceMonth, loading, error, onRe
       </dl>
       <p className="text-sm">Saldo inicial de {formatCurrencyBRL(health.initial)}, mais entradas e menos saídas. A data negativa é a primeira da série do mês, podendo estar no passado. Projeções ainda não materializadas seguem as regras do mês selecionado.</p>
       <details><summary className="cursor-pointer underline py-2">Ver composição diária</summary>
-        <div className="max-h-80 overflow-auto"><table aria-label="Composição diária do caixa" className="w-full text-sm text-right"><thead><tr>{['Data', 'Saldo inicial', 'Entradas', 'Saídas', 'Saldo final'].map(label => <th key={label} className="p-2 whitespace-nowrap">{label}</th>)}</tr></thead>
-          <tbody>{data!.itens.map(day => <tr key={day.data} className={day.riscoSaldoNegativo ? 'text-error' : ''}><th className="p-2 whitespace-nowrap">{formatDateBR(day.data)}</th>{[day.saldoInicial, day.entradasPrevistas, day.saidasPrevistas, day.saldoFinalPrevisto].map((value, index) => <td className="p-2 whitespace-nowrap" key={index}>{formatCurrencyBRL(value)}</td>)}</tr>)}</tbody></table></div>
+        <div className="max-h-80 overflow-auto"><AppDataTable
+          ariaLabel="Composição diária do caixa"
+          rowKey="data"
+          dataSource={data!.itens}
+          rowClassName={day => day.riscoSaldoNegativo ? 'text-error' : ''}
+          columns={[
+            { key: 'data', dataIndex: 'data', title: 'Data', align: 'right', sorter: false, render: (value, day) => <span className={day.riscoSaldoNegativo ? 'text-error' : ''}>{formatDateBR(String(value))}</span> },
+            ...(['saldoInicial', 'entradasPrevistas', 'saidasPrevistas', 'saldoFinalPrevisto'] as const).map((key, index) => ({
+              key, dataIndex: key, title: ['Saldo inicial', 'Entradas', 'Saídas', 'Saldo final'][index], layout: 'money' as const, align: 'right' as const, sorter: false,
+              render: (value: number, day: DashboardFluxoCaixa['itens'][number]) => <span className={day.riscoSaldoNegativo ? 'text-error' : ''}>{formatCurrencyBRL(value)}</span>
+            }))
+          ]}
+        /></div>
       </details>
       <div className="flex flex-wrap gap-4 text-sm underline">
         <Link to={`/contas-pagar?dataInicial=${health.start}&dataFinal=${health.end}`}>Consultar contas a pagar</Link>
