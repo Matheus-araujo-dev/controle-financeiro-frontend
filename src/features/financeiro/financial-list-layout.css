@@ -8,14 +8,33 @@
 .financial-account-list .listing-table .text-xs { font-size: 13px; }
 .financial-account-list .listing-table .text-\[10px\] { font-size: 12px; }
 @media (min-width: 1024px) {
-  /* Mantém a largura disponível, sem esconder conteúdo ou ações. */
+  .financial-account-list { container-type: inline-size; --financial-body-size: clamp(16px, .95cqi, 20px); }
   .financial-account-list .listing-table { width: 100%; max-width: 100%; }
-  .financial-account-list .listing-table th { padding: 10px 12px; font-size: 12px; letter-spacing: .025em; }
-  .financial-account-list .listing-table td { padding: 8px 12px; font-size: 16px; }
-  .financial-account-list .listing-table td:nth-child(-n+3) { white-space: normal; overflow-wrap: anywhere; }
-  .financial-account-list .listing-table td:first-child { min-width: 220px; max-width: 320px; }
-  .financial-account-list .listing-table td:nth-child(2),
-  .financial-account-list .listing-table td:nth-child(3) { min-width: 120px; max-width: 180px; }
+  .financial-account-list .listing-table table {
+    /* Espaço técnico limitado; o restante acompanha descrição e pessoas. */
+    --date-width: clamp(108px, 8cqi, 144px);
+    --method-width: clamp(120px, 10cqi, 200px);
+    --amount-width: clamp(132px, 10cqi, 180px);
+    --details-width: calc(var(--date-width) + var(--method-width) + var(--amount-width) + 264px);
+    table-layout: fixed;
+    min-width: 1060px;
+  }
+  .financial-account-list .listing-table th { padding: 10px 12px; font-size: clamp(12px, .65cqi, 14px); letter-spacing: .025em; }
+  .financial-account-list .listing-table td { padding: clamp(8px, .45cqi, 12px) 12px; font-size: var(--financial-body-size); }
+  .financial-account-list .listing-table .text-sm { font-size: var(--financial-body-size); }
+  .financial-account-list > section article > p:nth-of-type(2) { font-size: clamp(22px, 1.3cqi, 28px); }
+  .financial-account-list .listing-table :is(th, td):nth-child(1) { width: calc((100% - var(--details-width)) * .44); }
+  .financial-account-list .listing-table :is(th, td):nth-child(2),
+  .financial-account-list .listing-table :is(th, td):nth-child(3) { width: calc((100% - var(--details-width)) * .28); }
+  .financial-account-list .listing-table :is(th, td):nth-child(4) { width: var(--date-width); }
+  .financial-account-list .listing-table :is(th, td):nth-child(5) { width: var(--method-width); }
+  .financial-account-list .listing-table :is(th, td):nth-child(6) { width: 64px; }
+  .financial-account-list .listing-table :is(th, td):nth-child(7) { width: var(--amount-width); }
+  .financial-account-list .listing-table :is(th, td):nth-child(8) { width: 104px; }
+  .financial-account-list .listing-table :is(th, td):nth-child(9) { width: 96px; }
+  .financial-account-list .listing-table td:nth-child(-n+3),
+  .financial-account-list .listing-table td:nth-child(5) { white-space: normal; overflow-wrap: anywhere; }
+  .financial-account-list .listing-table td:first-child > div > div { flex-wrap: wrap; }
 }
 @media (max-width: 767px) {
   .financial-account-list > section article { padding: 10px 12px; }
