@@ -175,7 +175,7 @@ export type LiquidacaoPayload = {
 
 export type CancelarContaPagarPayload = ApiContract<Api.CancelarContaPagarRequest, 'cancelarPlanejamentoRelacionado' | 'pausarRecorrenciaRelacionada' | 'cancelarParcelasFuturas', 'cancelarPlanejamentoRelacionado' | 'pausarRecorrenciaRelacionada' | 'cancelarParcelasFuturas'>;
 
-export type CancelarContaReceberPayload = ApiContract<Api.CancelarContaReceberRequest, 'pausarRecorrenciaRelacionada', 'pausarRecorrenciaRelacionada'>;
+export type CancelarContaReceberPayload = ApiContract<Api.CancelarContaReceberRequest, 'pausarRecorrenciaRelacionada' | 'cancelarParcelasFuturas', 'pausarRecorrenciaRelacionada' | 'cancelarParcelasFuturas'>;
 
 export type GerarOcorrenciasPayload = {
   ateData: string;
