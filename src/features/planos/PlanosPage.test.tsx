@@ -109,10 +109,11 @@ describe('PlanosPage', () => {
     expect(screen.getByText('Novo plano de poupança')).toBeInTheDocument();
   });
 
-  it('renders active plan card (getStatusBadge active, podeOperar buttons)', async () => {
+  it('renders the shared plan list with progress and operational actions)', async () => {
     vi.mocked(planosApi.listar).mockResolvedValue(pagedResponse([basePlano]));
     renderPage();
     expect(await screen.findByText('Reserva Emergência')).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Planos de poupança' })).toBeVisible();
     expect(screen.getByText('Ativo')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Adiantar parcela/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Retirar/i })).toBeInTheDocument();

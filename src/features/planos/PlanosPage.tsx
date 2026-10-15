@@ -1,3 +1,4 @@
+import { AppDataTable } from '../../components/data/AppDataTable';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../components/ui/Button';
@@ -318,9 +319,9 @@ function RetiradaModal({ plano, onClose, onSaved }: RetiradaModalProps) {
   );
 }
 
-// ── Card de plano ─────────────────────────────────────────────────────────────
+// ── Ações do plano ─────────────────────────────────────────────────────────────
 
-interface PlanoCardProps {
+interface PlanoActionsProps {
   plano: PlanoResumo;
   onEditar: () => void;
   onAdiantar: () => void;
@@ -335,61 +336,10 @@ function getStatusBadge(plano: PlanoResumo) {
   return { label: 'Ativo', cls: 'bg-warning/15 text-warning' };
 }
 
-function PlanoCard({ plano, onEditar, onAdiantar, onRetirar, onCancelar, loading }: PlanoCardProps) {
-  const pct = plano.numParcelas > 0 ? (plano.parcelasPagas / plano.numParcelas) * 100 : 0;
-  const status = getStatusBadge(plano);
+function PlanoActions({ plano, onEditar, onAdiantar, onRetirar, onCancelar, loading }: PlanoActionsProps) {
   const podeOperar = !plano.cancelado && !plano.concluido;
-
   return (
-    <div className={`flex flex-col gap-4 rounded-3xl border p-5 transition-all ${plano.cancelado ? 'border-white/5 bg-surface-container opacity-60' : 'border-white/5 bg-surface-container-low hover:border-primary/20'}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>savings</span>
-            <h3 className="font-headline text-base font-extrabold text-on-surface truncate">{plano.nome}</h3>
-          </div>
-          {plano.descricao && <p className="mt-0.5 text-xs text-on-surface-variant truncate">{plano.descricao}</p>}
-          <p className="mt-1 text-xs text-on-surface-variant">{plano.contaBancariaNome}</p>
-          {plano.formaPagamentoId && plano.recebedorId && plano.contaGerencialId && (
-            <div className="mt-1 inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/8 px-2 py-0.5">
-              <span className="material-symbols-outlined text-[11px] text-primary">receipt_long</span>
-              <span className="text-[10px] font-bold text-primary">Gera conta a pagar</span>
-            </div>
-          )}
-        </div>
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider ${status.cls}`}>{status.label}</span>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-2xl border border-white/5 bg-surface-container p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Acumulado</p>
-          <p className="mt-1 font-headline text-sm font-extrabold text-primary">{formatCurrencyBRL(plano.totalAcumulado)}</p>
-        </div>
-        <div className="rounded-2xl border border-white/5 bg-surface-container p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Meta</p>
-          <p className="mt-1 font-headline text-sm font-extrabold text-on-surface">{formatCurrencyBRL(plano.valorTotal)}</p>
-        </div>
-        <div className="rounded-2xl border border-white/5 bg-surface-container p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Parcelas</p>
-          <p className="mt-1 font-headline text-sm font-extrabold text-on-surface">{plano.parcelasPagas}/{plano.numParcelas}</p>
-        </div>
-      </div>
-
-      <div>
-        <div className="mb-1 flex justify-between text-xs">
-          <span className="text-on-surface-variant">Progresso</span>
-          <span className="font-bold text-primary">{pct.toFixed(0)}%</span>
-        </div>
-        <div className="h-2 overflow-hidden rounded-full bg-white/5">
-          <div
-            className={`h-full transition-all ${plano.concluido ? 'bg-primary' : pct >= 80 ? 'bg-warning' : 'bg-primary/60'}`}
-            style={{ width: `${Math.min(pct, 100)}%` }}
-          />
-        </div>
-        <p className="mt-1 text-xs text-on-surface-variant">{formatCurrencyBRL(plano.valorMensal)}/mês</p>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
+      <div className="flex max-w-[240px] flex-wrap gap-2">
         {podeOperar && !plano.concluido && (
           <button
             type="button"
@@ -434,7 +384,6 @@ function PlanoCard({ plano, onEditar, onAdiantar, onRetirar, onCancelar, loading
           </button>
         )}
       </div>
-    </div>
   );
 }
 
@@ -559,21 +508,36 @@ export function PlanosPage() {
             onAction={() => setModalOpen(true)}
           />
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {planos.map((plano) => (
-              <PlanoCard
-                key={plano.id}
+          <AppDataTable<PlanoResumo>
+            ariaLabel="Planos de poupança"
+            rowKey="id"
+            dataSource={planos}
+            rowClassName={plano => plano.cancelado ? 'opacity-60' : ''}
+            columns={[
+              { key: 'nome', title: 'Plano', mobileRole: 'title', sorter: false, render: (_value, plano) => <div>
+                <h3 className="font-bold">{plano.nome}</h3>
+                {plano.descricao && <p className="text-xs text-on-surface-variant">{plano.descricao}</p>}
+                {plano.formaPagamentoId && plano.recebedorId && plano.contaGerencialId && <span className="text-xs text-primary">Gera conta a pagar</span>}
+              </div> },
+              { key: 'contaBancariaNome', dataIndex: 'contaBancariaNome', title: 'Conta', mobileRole: 'subtitle', sorter: false },
+              { key: 'totalAcumulado', title: 'Acumulado', layout: 'money', align: 'right', mobileRole: 'value', sorter: false, render: (_value, plano) => <span className="font-bold text-primary">{formatCurrencyBRL(plano.totalAcumulado)}</span> },
+              { key: 'valorTotal', title: 'Meta', layout: 'money', align: 'right', sorter: false, render: (_value, plano) => formatCurrencyBRL(plano.valorTotal) },
+              { key: 'progresso', title: 'Progresso', width: 160, sorter: false, render: (_value, plano) => {
+                const pct = plano.numParcelas > 0 ? (plano.parcelasPagas / plano.numParcelas) * 100 : 0;
+                return <div><span>{plano.parcelasPagas}/{plano.numParcelas}</span> · <span>{pct.toFixed(0)}%</span><div className="mt-1 h-2 overflow-hidden rounded-full bg-white/5"><div className={plano.concluido ? 'h-full bg-primary' : pct >= 80 ? 'h-full bg-warning' : 'h-full bg-primary/60'} style={{ width: `${Math.min(pct, 100)}%` }} /></div></div>;
+              } },
+              { key: 'valorMensal', title: 'Por mês', align: 'right', sorter: false, render: (_value, plano) => formatCurrencyBRL(plano.valorMensal) },
+              { key: 'status', title: 'Status', mobileRole: 'status', sorter: false, render: (_value, plano) => { const status = getStatusBadge(plano); return <span className={`rounded-full px-2 py-1 text-xs font-bold ${status.cls}`}>{status.label}</span>; } },
+              { key: 'actions', title: 'Ações', width: 248, sorter: false, render: (_value, plano) => <PlanoActions
                 plano={plano}
                 loading={adiantarMutation.isPending || cancelarMutation.isPending}
                 onEditar={() => setEditando(plano)}
                 onAdiantar={() => adiantarMutation.mutate(plano.id)}
                 onRetirar={() => setRetirando(plano)}
-                onCancelar={() => {
-                  if (confirm(`Cancelar o plano "${plano.nome}"?`)) cancelarMutation.mutate(plano.id);
-                }}
-              />
-            ))}
-          </div>
+                onCancelar={() => { if (confirm(`Cancelar o plano "${plano.nome}"?`)) cancelarMutation.mutate(plano.id); }}
+              /> }
+            ]}
+          />
         )}
       </ListPageShell>
     </>

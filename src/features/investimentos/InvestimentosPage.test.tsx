@@ -110,10 +110,11 @@ describe('InvestimentosPage', () => {
     expect(await screen.findByText('Nenhum investimento encontrado')).toBeInTheDocument();
   });
 
-  it('renders investimento card with all data', async () => {
+  it('renders the shared investment list with all data', async () => {
     investimentosApiMock.listar.mockResolvedValue(pagedResponse);
     renderPage();
     expect(await screen.findByText('Tesouro SELIC 2027')).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Investimentos' })).toBeVisible();
     expect(screen.getByText('Tesouro Nacional')).toBeInTheDocument();
     // taxaAnual is shown
     expect(screen.getByText(/11\.75%/)).toBeInTheDocument();

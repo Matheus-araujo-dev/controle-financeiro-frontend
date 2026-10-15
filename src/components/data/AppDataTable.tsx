@@ -563,8 +563,8 @@ export function AppDataTable<T extends object>({
 
                   {/* Faixa de detalhes + ações na mesma linha */}
                   {(detailCols.length > 0 || actionCols.length > 0) ? (
-                    <div className="mt-2 flex items-center gap-2 border-t border-white/5 pt-2">
-                      <div className="flex flex-1 flex-wrap gap-x-3 gap-y-0.5">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-white/5 pt-2">
+                      <div className="flex min-w-[160px] flex-1 flex-wrap gap-x-3 gap-y-0.5">
                         {detailCols.map((col) => (
                           <span key={getColumnKey(col)} className="flex items-center gap-1 text-xs text-on-surface-variant">
                             <span className="text-[9px] font-black uppercase tracking-widest">{col.title}:</span>
