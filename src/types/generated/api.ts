@@ -406,6 +406,7 @@ export interface CancelarContaPagarRequest {
 
 export interface CancelarContaReceberRequest {
   pausarRecorrenciaRelacionada?: boolean | null;
+  cancelarParcelasFuturas?: boolean | null;
 }
 
 export interface CartaoDetalheResponse {

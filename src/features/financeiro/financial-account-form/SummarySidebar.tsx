@@ -100,11 +100,15 @@ function RecorrenciaCancelDialog({
 
 function ParcelasCancelDialog({
   open,
+  numeroParcela,
+  totalParcelas,
   onClose,
   onCancelarApenas,
   onCancelarFuturas
 }: {
   open: boolean;
+  numeroParcela?: number;
+  totalParcelas: number;
   onClose: () => void;
   onCancelarApenas: () => void;
   onCancelarFuturas: () => void;
@@ -121,7 +125,7 @@ function ParcelasCancelDialog({
           <div>
             <h3 className="font-headline text-lg font-bold text-on-surface">Cancelar parcela</h3>
             <p className="mt-1 text-sm text-on-surface-variant">
-              Este titulo faz parte de um parcelamento. Deseja cancelar tambem as parcelas futuras pendentes?
+              Este titulo faz parte de um parcelamento{numeroParcela && totalParcelas > 1 ? ` (parcela ${numeroParcela} de ${totalParcelas})` : ''}. Deseja cancelar apenas este registro ou cancelar em cascata as parcelas seguintes ainda pendentes?
             </p>
           </div>
         </div>
@@ -130,10 +134,10 @@ function ParcelasCancelDialog({
             Voltar
           </Button>
           <Button type="button" variant="secondary" onClick={onCancelarApenas}>
-            Nao, apenas esta
+            Apenas esta parcela
           </Button>
           <Button type="button" variant="danger" onClick={onCancelarFuturas}>
-            Sim, cancelar futuras
+            Cancelar em cascata
           </Button>
         </div>
       </div>
@@ -442,7 +446,7 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
       setRecorrenciaConfirmOpen(true);
       return;
     }
-    if (isNonOriginParcela) {
+    if (temParcelasSeguintes) {
       setParcelasConfirmOpen(true);
       return;
     }
@@ -460,8 +464,9 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
   const valorJurosMulta = (Number(watchedValues.valorJuros) || 0) + (Number(watchedValues.valorMulta) || 0);
   const hasPlannedPurchaseOrigin = Boolean(origemCompraPlanejadaId);
   const hasRecorrenciaOrigin = Boolean(id) && Boolean(exibeRecorrencia);
-  // Não-origem de parcelamento: tem grupo mas não é a parcela 1
-  const isNonOriginParcela = Boolean(grupoParcelamentoId) && numeroParcela !== undefined && numeroParcela > 1;
+  // Parcelado com parcelas seguintes: pergunta se cancela apenas esta ou em cascata (inclusive a parcela 1)
+  const totalParcelas = Number(watchedValues.quantidadeParcelas) || 0;
+  const temParcelasSeguintes = Boolean(grupoParcelamentoId) && (totalParcelas <= 1 || (numeroParcela ?? 1) < totalParcelas);
 
   return (
     <div className="space-y-8 lg:col-span-5">
@@ -740,6 +745,8 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
       />
       <ParcelasCancelDialog
         open={parcelasConfirmOpen}
+        numeroParcela={numeroParcela}
+        totalParcelas={totalParcelas}
         onClose={() => setParcelasConfirmOpen(false)}
         onCancelarApenas={() => {
           setParcelasConfirmOpen(false);
