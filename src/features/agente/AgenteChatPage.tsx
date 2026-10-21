@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Input, Spin, Typography } from 'antd';
 import type { TextAreaRef } from 'antd/es/input/TextArea';
 import { SendOutlined, RobotOutlined, UserOutlined, ClearOutlined, FileOutlined, DownloadOutlined, PaperClipOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import Markdown from 'react-markdown';
 import { agenteApi, type AgentePerguntarResponse, type AgentFileOutputDto } from '../../services/http/agente-api';
 import { getApiErrorMessage } from '../../services/http/api-error';
 
@@ -151,10 +152,10 @@ export function AgenteChatPage() {
 
             {/* Balão */}
             <div
-              className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+              className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                 msg.papel === 'user'
-                  ? 'bg-secondary-container text-on-secondary-container rounded-tr-sm'
-                  : 'bg-surface-container text-on-surface rounded-tl-sm'
+                  ? 'bg-secondary-container text-on-secondary-container rounded-tr-sm whitespace-pre-wrap'
+                  : 'bg-surface-container text-on-surface rounded-tl-sm agent-markdown'
               }`}
             >
               {msg.nomeArquivoEnviado && (
@@ -163,7 +164,11 @@ export function AgenteChatPage() {
                   <span className="truncate">{msg.nomeArquivoEnviado}</span>
                 </div>
               )}
-              {msg.conteudo}
+              {msg.papel === 'assistant' ? (
+                <Markdown>{msg.conteudo}</Markdown>
+              ) : (
+                msg.conteudo
+              )}
               {msg.arquivos && msg.arquivos.length > 0 && (
                 <div className="mt-2 flex flex-col gap-1.5">
                   {msg.arquivos.map((arq, i) => (
