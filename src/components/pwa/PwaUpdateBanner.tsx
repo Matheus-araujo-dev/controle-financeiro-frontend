@@ -1,11 +1,18 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Button } from '../ui/Button';
 
+const UPDATE_CHECK_INTERVAL = 60 * 1000;
+
 export function PwaUpdateBanner() {
   const {
     needRefresh: [needRefresh],
     updateServiceWorker
-  } = useRegisterSW();
+  } = useRegisterSW({
+    onRegisteredSW(_url, registration) {
+      if (!registration) return;
+      setInterval(() => { void registration.update(); }, UPDATE_CHECK_INTERVAL);
+    },
+  });
 
   if (!needRefresh) return null;
 
