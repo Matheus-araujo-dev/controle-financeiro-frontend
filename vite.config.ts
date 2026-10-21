@@ -16,7 +16,7 @@ export default defineConfig(({ command, mode }) => ({
       transformIndexHtml: (html: string) => html.replace('__CONTENT_SECURITY_POLICY__', buildContentSecurityPolicy(command === 'serve', loadEnv(mode, root).VITE_API_BASE_URL)),
     },
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       devOptions: { enabled: false },
       workbox: {
         importScripts: ['/clear-api-cache.js', '/push-handler.js'],
