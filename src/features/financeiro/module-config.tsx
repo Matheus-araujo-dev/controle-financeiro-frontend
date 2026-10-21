@@ -300,7 +300,7 @@ export function resolveStatusTone(statusCodigo: StatusContaCodigo) {
 async function loadPagadorOptions() {
   const response = await cadastrosApi.pessoas.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: '',
     ativo: true,
     ehPagador: true
@@ -317,7 +317,7 @@ async function loadPagadorOptions() {
 async function loadRecebedorOptions() {
   const response = await cadastrosApi.pessoas.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: '',
     ativo: true,
     ehRecebedor: true
@@ -334,7 +334,7 @@ async function loadRecebedorOptions() {
 async function loadResponsavelOptions() {
   const response = await cadastrosApi.pessoas.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: '',
     ativo: true,
     ehResponsavel: true
@@ -346,7 +346,7 @@ async function loadResponsavelOptions() {
 async function loadFormaPagamentoOptions() {
   const response = await cadastrosApi.formasPagamento.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: '',
     ativo: true
   });
@@ -362,7 +362,7 @@ async function loadFormaPagamentoOptions() {
 async function loadContaBancariaOptions() {
   const response = await cadastrosApi.contasBancarias.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: '',
     ativo: true
   });
@@ -376,7 +376,7 @@ async function loadContaBancariaOptions() {
 async function loadCartaoOptions() {
   const response = await cadastrosApi.cartoes.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: '',
     ativo: true
   });
