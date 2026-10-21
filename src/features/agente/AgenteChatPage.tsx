@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Input, Spin, Typography } from 'antd';
 import type { TextAreaRef } from 'antd/es/input/TextArea';
-import { SendOutlined, RobotOutlined, UserOutlined, ClearOutlined, FileOutlined, DownloadOutlined } from '@ant-design/icons';
+import { SendOutlined, RobotOutlined, UserOutlined, ClearOutlined, FileOutlined, DownloadOutlined, PaperClipOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { agenteApi, type AgentePerguntarResponse, type AgentFileOutputDto } from '../../services/http/agente-api';
 import { getApiErrorMessage } from '../../services/http/api-error';
 
@@ -12,6 +12,7 @@ interface Mensagem {
   conteudo: string;
   tokensUsados?: number;
   arquivos?: AgentFileOutputDto[];
+  nomeArquivoEnviado?: string;
 }
 
 export function AgenteChatPage() {
@@ -20,8 +21,10 @@ export function AgenteChatPage() {
   const [enviando, setEnviando] = useState(false);
   const [conversaId, setConversaId] = useState<string | undefined>();
   const [erro, setErro] = useState<string | null>(null);
+  const [arquivo, setArquivo] = useState<File | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<TextAreaRef>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
@@ -31,16 +34,17 @@ export function AgenteChatPage() {
     const texto = entrada.trim();
     if (!texto || enviando) return;
 
+    const arquivoAtual = arquivo;
     setEntrada('');
+    setArquivo(null);
     setErro(null);
-    setMensagens((prev) => [...prev, { papel: 'user', conteudo: texto }]);
+    setMensagens((prev) => [...prev, { papel: 'user', conteudo: texto, nomeArquivoEnviado: arquivoAtual?.name }]);
     setEnviando(true);
 
     try {
-      const res: AgentePerguntarResponse = await agenteApi.perguntar({
-        mensagem: texto,
-        conversaId,
-      });
+      const res: AgentePerguntarResponse = arquivoAtual
+        ? await agenteApi.perguntarComArquivo(texto, arquivoAtual, conversaId)
+        : await agenteApi.perguntar({ mensagem: texto, conversaId });
       setConversaId(res.conversaId);
       setMensagens((prev) => [
         ...prev,
@@ -52,13 +56,14 @@ export function AgenteChatPage() {
       setEnviando(false);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [entrada, enviando, conversaId]);
+  }, [entrada, enviando, conversaId, arquivo]);
 
   const limpar = () => {
     setMensagens([]);
     setConversaId(undefined);
     setErro(null);
     setEntrada('');
+    setArquivo(null);
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
@@ -152,6 +157,12 @@ export function AgenteChatPage() {
                   : 'bg-surface-container text-on-surface rounded-tl-sm'
               }`}
             >
+              {msg.nomeArquivoEnviado && (
+                <div className="flex items-center gap-1.5 mb-1.5 text-xs opacity-70">
+                  <PaperClipOutlined />
+                  <span className="truncate">{msg.nomeArquivoEnviado}</span>
+                </div>
+              )}
               {msg.conteudo}
               {msg.arquivos && msg.arquivos.length > 0 && (
                 <div className="mt-2 flex flex-col gap-1.5">
@@ -204,7 +215,38 @@ export function AgenteChatPage() {
 
       {/* Área de entrada */}
       <div className="shrink-0 px-6 py-3 border-t border-outline-variant">
+        {arquivo && (
+          <div className="flex items-center gap-2 mb-2 px-3 py-1.5 rounded-lg bg-surface-container text-on-surface text-xs max-w-fit">
+            <PaperClipOutlined className="text-primary" />
+            <span className="truncate max-w-[200px]">{arquivo.name}</span>
+            <button
+              onClick={() => setArquivo(null)}
+              className="text-on-surface-variant hover:text-error transition-colors"
+            >
+              <CloseCircleOutlined />
+            </button>
+          </div>
+        )}
         <div className="flex gap-2 items-end">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/*,.pdf,.csv,.xlsx,.xls,.json,.txt"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) setArquivo(f);
+              e.target.value = '';
+            }}
+          />
+          <Button
+            type="text"
+            icon={<PaperClipOutlined />}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={enviando}
+            title="Anexar arquivo"
+            className="text-on-surface-variant hover:text-primary shrink-0"
+          />
           <Input.TextArea
             ref={inputRef}
             value={entrada}

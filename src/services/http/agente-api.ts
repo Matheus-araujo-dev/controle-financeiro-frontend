@@ -69,6 +69,18 @@ export const agenteApi = {
     return data;
   },
 
+  perguntarComArquivo: async (mensagem: string, arquivo: File, conversaId?: string): Promise<AgentePerguntarResponse> => {
+    const form = new FormData();
+    form.append('Mensagem', mensagem);
+    form.append('Arquivo', arquivo);
+    if (conversaId) form.append('ConversaId', conversaId);
+    const { data } = await apiClient.post<AgentePerguntarResponse>('/agente/perguntar-com-arquivo', form, {
+      timeout: 120_000,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+
   obterStatusWhatsapp: async (): Promise<WhatsappStatusResponse> => {
     const { data } = await apiClient.get<WhatsappStatusResponse>('/perfil/whatsapp');
     return data;
