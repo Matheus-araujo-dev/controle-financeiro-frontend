@@ -11,9 +11,11 @@ import { contasPagarModuleConfig, contasReceberModuleConfig } from '../financeir
 import type { ConciliacaoFatura } from '../../types/conciliacao-fatura';
 import { formatCurrencyBRL } from '../../shared/currency';
 import { ConciliacaoFaturaGrid } from './ConciliacaoFaturaGrid';
-import { criarCamposGrade } from './ConciliacaoFaturaCampos';
+import { criarCamposGrade, type AcoesCriacao } from './ConciliacaoFaturaCampos';
 import { ConciliacaoFaturaLote } from './ConciliacaoFaturaLote';
 import { criarRascunho, montarCriacao, montarReembolso, type RascunhoLancamento } from './conciliacao-fatura-form';
+import { QuickAddPessoaModal } from '../cadastros/quick-add/QuickAddPessoaModal';
+import { QuickAddContaGerencialModal } from '../cadastros/quick-add/QuickAddContaGerencialModal';
 
 export function ConciliacaoFaturaPage() {
   const { id } = useParams();
@@ -27,6 +29,9 @@ export function ConciliacaoFaturaPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [mostrarReembolsos, setMostrarReembolsos] = useState(false);
+  const [modalRecebedor, setModalRecebedor] = useState(false);
+  const [modalResponsavel, setModalResponsavel] = useState(false);
+  const [modalContaGerencial, setModalContaGerencial] = useState(false);
   const { data, isLoading, error: loadError } = useQuery({ queryKey: ['conciliacao-fatura-options', id], enabled: !!id, queryFn: async () => {
     const [fatura, revisoes, recebedores, responsaveis, pagadores, formas, despesas, receitas] = await Promise.all([
       financeiroApi.faturas.obterPorId(id!), conciliacaoFaturaApi.listar(id!), contasPagarModuleConfig.loadPessoaOptions(),
@@ -72,6 +77,24 @@ export function ConciliacaoFaturaPage() {
       void queryClient.invalidateQueries({ queryKey: ['faturas'] });
     } catch (e) { throw new Error(getApiErrorMessage(e), { cause: e }); }
   }
+  function handlePessoaCriada(id: string, label: string, role: 'recebedor' | 'responsavel') {
+    void queryClient.invalidateQueries({ queryKey: ['conciliacao-fatura-options'] });
+    if (!data) return;
+    const option = { label, value: id, contaGerencialDespesaId: undefined as string | undefined, contaGerencialReceitaId: undefined as string | undefined };
+    if (role === 'recebedor') data.recebedores = [...data.recebedores, option];
+    else data.responsaveis = [...data.responsaveis, option];
+  }
+  function handleContaGerencialCriada(id: string, label: string) {
+    void queryClient.invalidateQueries({ queryKey: ['conciliacao-fatura-options'] });
+    if (!data) return;
+    data.despesas = [...data.despesas, { label, value: id }];
+  }
+  const acoes: AcoesCriacao = {
+    onAddRecebedor: () => setModalRecebedor(true),
+    onAddResponsavel: () => setModalResponsavel(true),
+    onAddContaGerencial: () => setModalContaGerencial(true),
+  };
+
   if (isLoading) return <PageState state="loading" />;
   if (loadError || !data || !id) return <PageState state="error" title="Não foi possível carregar a fatura" subtitle={getApiErrorMessage(loadError)} />;
   const semVinculo = session?.contasSistema.filter(c => !session.itens.some(i => i.contaPagarVinculadaId === c.id)) ?? [];
@@ -118,7 +141,7 @@ export function ConciliacaoFaturaPage() {
         <span>Pendentes: {session.itens.filter(i => i.status === 'Pendente').length}</span></div>
       <ConciliacaoFaturaGrid key={session.id} session={session} disabled={busy} onBusyChange={setBusy}
         onEscolha={(itemId, escolha) => update(itemId, escolha)}
-        campos={criarCamposGrade(rows, data, update, mostrarReembolsos, { faturaId: id, sessionId: session.id })}
+        campos={criarCamposGrade(rows, data, update, mostrarReembolsos, { faturaId: id, sessionId: session.id }, acoes)}
         toolbar={(ids, saving) => <ConciliacaoFaturaLote ids={ids} options={data} disabled={saving || busy} onApply={(selected, transform) => {
           setRows(current => Object.fromEntries(Object.entries(current).map(([key, row]) => [key, selected.includes(key) ? transform(row) : row])));
           setMessage('Alterações ainda não salvas.');
@@ -133,5 +156,11 @@ export function ConciliacaoFaturaPage() {
         {!semVinculo.length && <p className="text-sm text-on-surface-variant">Todos os lançamentos do sistema estão vinculados.</p>}
       </section>
     </>}
+    <QuickAddPessoaModal open={modalRecebedor} onClose={() => setModalRecebedor(false)} defaultRole="recebedor"
+      onSuccess={(id, label) => handlePessoaCriada(id, label, 'recebedor')} />
+    <QuickAddPessoaModal open={modalResponsavel} onClose={() => setModalResponsavel(false)} defaultRole="responsavel"
+      onSuccess={(id, label) => handlePessoaCriada(id, label, 'responsavel')} />
+    <QuickAddContaGerencialModal open={modalContaGerencial} onClose={() => setModalContaGerencial(false)} defaultTipo="Despesa"
+      onSuccess={handleContaGerencialCriada} />
   </div>;
 }
