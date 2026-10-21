@@ -29,7 +29,10 @@ export function PwaUpdateBanner() {
       <Button
         size="sm"
         variant="primary"
-        onClick={() => void updateServiceWorker(true)}
+        onClick={() => {
+          updateServiceWorker(true).catch(() => {});
+          setTimeout(() => window.location.reload(), 2000);
+        }}
       >
         Atualizar
       </Button>
