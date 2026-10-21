@@ -3,6 +3,7 @@ import { Button, Input, Spin, Typography } from 'antd';
 import type { TextAreaRef } from 'antd/es/input/TextArea';
 import { SendOutlined, RobotOutlined, UserOutlined, ClearOutlined, FileOutlined, DownloadOutlined, PaperClipOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { agenteApi, type AgentePerguntarResponse, type AgentFileOutputDto } from '../../services/http/agente-api';
 import { getApiErrorMessage } from '../../services/http/api-error';
 
@@ -165,7 +166,7 @@ export function AgenteChatPage() {
                 </div>
               )}
               {msg.papel === 'assistant' ? (
-                <Markdown>{msg.conteudo}</Markdown>
+                <Markdown remarkPlugins={[remarkGfm]}>{msg.conteudo}</Markdown>
               ) : (
                 msg.conteudo
               )}
