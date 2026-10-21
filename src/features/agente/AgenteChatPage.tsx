@@ -193,26 +193,34 @@ export function AgenteChatPage() {
               )}
               {msg.arquivos && msg.arquivos.length > 0 && (
                 <div className="mt-2 flex flex-col gap-1.5">
-                  {msg.arquivos.map((arq, i) => (
-                    <a
-                      key={i}
-                      href={arq.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download={arq.nome}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface text-on-surface border border-outline-variant hover:border-primary transition-colors text-xs no-underline"
-                    >
-                      {arq.mimeType.startsWith('image/') ? (
-                        <img src={arq.url} alt={arq.nome} className="max-w-full max-h-48 rounded" />
-                      ) : (
-                        <>
-                          <FileOutlined className="text-primary shrink-0" />
-                          <span className="truncate flex-1">{arq.nome}</span>
-                          <DownloadOutlined className="text-on-surface-variant shrink-0" />
-                        </>
-                      )}
-                    </a>
-                  ))}
+                  {msg.arquivos.map((arq, i) =>
+                    arq.mimeType.startsWith('image/') ? (
+                      <div key={i} className="relative group">
+                        <img src={arq.url} alt={arq.nome} className="max-w-full rounded-lg" />
+                        <a
+                          href={arq.url}
+                          download={arq.nome}
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-surface/80 text-on-surface hover:bg-surface no-underline"
+                          title="Baixar imagem"
+                        >
+                          <DownloadOutlined />
+                        </a>
+                      </div>
+                    ) : (
+                      <a
+                        key={i}
+                        href={arq.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download={arq.nome}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface text-on-surface border border-outline-variant hover:border-primary transition-colors text-xs no-underline"
+                      >
+                        <FileOutlined className="text-primary shrink-0" />
+                        <span className="truncate flex-1">{arq.nome}</span>
+                        <DownloadOutlined className="text-on-surface-variant shrink-0" />
+                      </a>
+                    )
+                  )}
                 </div>
               )}
               {msg.tokensUsados !== undefined && (
