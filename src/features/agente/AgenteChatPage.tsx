@@ -5,12 +5,19 @@ import { SendOutlined, RobotOutlined, UserOutlined, ClearOutlined, FileOutlined,
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { agenteApi, type AgentePerguntarResponse, type AgentFileOutputDto } from '../../services/http/agente-api';
+import { apiClient } from '../../services/http/api-client';
 import { getApiErrorMessage } from '../../services/http/api-error';
 
 const { Text } = Typography;
 
 const STORAGE_KEY_MSGS = 'agente-chat-mensagens';
 const STORAGE_KEY_CONV = 'agente-chat-conversaId';
+
+function resolveFileUrl(url: string): string {
+  if (!url || url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  const base = (apiClient.defaults.baseURL ?? '').replace(/\/api\/v1\/?$/, '');
+  return base ? `${base}${url.startsWith('/') ? '' : '/'}${url}` : url;
+}
 
 function loadFromStorage<T>(key: string, fallback: T): T {
   try {
@@ -187,7 +194,19 @@ export function AgenteChatPage() {
                 </div>
               )}
               {msg.papel === 'assistant' ? (
-                <Markdown remarkPlugins={[remarkGfm]}>{msg.conteudo}</Markdown>
+                <Markdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    img: ({ src, alt, ...rest }) => (
+                      <img {...rest} src={resolveFileUrl(src ?? '')} alt={alt ?? ''} className="max-w-full rounded-lg" />
+                    ),
+                    a: ({ href, children, ...rest }) => (
+                      <a {...rest} href={resolveFileUrl(href ?? '')} target="_blank" rel="noopener noreferrer">
+                        {children}
+                      </a>
+                    ),
+                  }}
+                >{msg.conteudo}</Markdown>
               ) : (
                 msg.conteudo
               )}
@@ -196,9 +215,9 @@ export function AgenteChatPage() {
                   {msg.arquivos.map((arq, i) =>
                     arq.mimeType.startsWith('image/') ? (
                       <div key={i} className="relative group">
-                        <img src={arq.url} alt={arq.nome} className="max-w-full rounded-lg" />
+                        <img src={resolveFileUrl(arq.url)} alt={arq.nome} className="max-w-full rounded-lg" />
                         <a
-                          href={arq.url}
+                          href={resolveFileUrl(arq.url)}
                           download={arq.nome}
                           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-surface/80 text-on-surface hover:bg-surface no-underline"
                           title="Baixar imagem"
@@ -209,7 +228,7 @@ export function AgenteChatPage() {
                     ) : (
                       <a
                         key={i}
-                        href={arq.url}
+                        href={resolveFileUrl(arq.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         download={arq.nome}
