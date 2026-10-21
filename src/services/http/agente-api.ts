@@ -5,10 +5,18 @@ export interface AgentePerguntarRequest {
   conversaId?: string;
 }
 
+export interface AgentFileOutputDto {
+  nome: string;
+  mimeType: string;
+  url: string;
+  tamanhoBytes: number;
+}
+
 export interface AgentePerguntarResponse {
   resposta: string;
   conversaId: string;
   tokensUsados: number;
+  arquivos?: AgentFileOutputDto[];
 }
 
 export interface WhatsappStatusResponse {
@@ -57,7 +65,7 @@ export interface AgenteCategorizarResponse {
 
 export const agenteApi = {
   perguntar: async (request: AgentePerguntarRequest): Promise<AgentePerguntarResponse> => {
-    const { data } = await apiClient.post<AgentePerguntarResponse>('/agente/perguntar', request);
+    const { data } = await apiClient.post<AgentePerguntarResponse>('/agente/perguntar', request, { timeout: 120_000 });
     return data;
   },
 
@@ -103,7 +111,7 @@ export const agenteApi = {
   },
 
   categorizar: async (descricoes: string[]): Promise<AgenteCategorizarResponse> => {
-    const { data } = await apiClient.post<AgenteCategorizarResponse>('/agente/categorizar', { descricoes });
+    const { data } = await apiClient.post<AgenteCategorizarResponse>('/agente/categorizar', { descricoes }, { timeout: 30_000 });
     return data;
   },
 };

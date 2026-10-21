@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Input, Spin, Typography } from 'antd';
 import type { TextAreaRef } from 'antd/es/input/TextArea';
-import { SendOutlined, RobotOutlined, UserOutlined, ClearOutlined } from '@ant-design/icons';
-import { agenteApi, type AgentePerguntarResponse } from '../../services/http/agente-api';
+import { SendOutlined, RobotOutlined, UserOutlined, ClearOutlined, FileOutlined, DownloadOutlined } from '@ant-design/icons';
+import { agenteApi, type AgentePerguntarResponse, type AgentFileOutputDto } from '../../services/http/agente-api';
 import { getApiErrorMessage } from '../../services/http/api-error';
 
 const { Text } = Typography;
@@ -11,6 +11,7 @@ interface Mensagem {
   papel: 'user' | 'assistant';
   conteudo: string;
   tokensUsados?: number;
+  arquivos?: AgentFileOutputDto[];
 }
 
 export function AgenteChatPage() {
@@ -43,7 +44,7 @@ export function AgenteChatPage() {
       setConversaId(res.conversaId);
       setMensagens((prev) => [
         ...prev,
-        { papel: 'assistant', conteudo: res.resposta, tokensUsados: res.tokensUsados },
+        { papel: 'assistant', conteudo: res.resposta, tokensUsados: res.tokensUsados, arquivos: res.arquivos },
       ]);
     } catch (err) {
       setErro(getApiErrorMessage(err));
@@ -152,6 +153,30 @@ export function AgenteChatPage() {
               }`}
             >
               {msg.conteudo}
+              {msg.arquivos && msg.arquivos.length > 0 && (
+                <div className="mt-2 flex flex-col gap-1.5">
+                  {msg.arquivos.map((arq, i) => (
+                    <a
+                      key={i}
+                      href={arq.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download={arq.nome}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface text-on-surface border border-outline-variant hover:border-primary transition-colors text-xs no-underline"
+                    >
+                      {arq.mimeType.startsWith('image/') ? (
+                        <img src={arq.url} alt={arq.nome} className="max-w-full max-h-48 rounded" />
+                      ) : (
+                        <>
+                          <FileOutlined className="text-primary shrink-0" />
+                          <span className="truncate flex-1">{arq.nome}</span>
+                          <DownloadOutlined className="text-on-surface-variant shrink-0" />
+                        </>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              )}
               {msg.tokensUsados !== undefined && (
                 <div className="mt-1 text-xs opacity-40 text-right">{msg.tokensUsados} tokens</div>
               )}

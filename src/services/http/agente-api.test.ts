@@ -69,7 +69,7 @@ describe('agenteApi', () => {
     await expect(agenteApi.obterInsights('2026-06')).resolves.toMatchObject({ tokensUsados: 4 });
     await expect(agenteApi.categorizar(['Mercado'])).resolves.toMatchObject({ itens: [expect.objectContaining({ descricao: 'Mercado' })] });
 
-    expect(apiClient.post).toHaveBeenCalledWith('/agente/perguntar', { mensagem: 'oi', conversaId: 'conv1' });
+    expect(apiClient.post).toHaveBeenCalledWith('/agente/perguntar', { mensagem: 'oi', conversaId: 'conv1' }, { timeout: 120_000 });
     expect(apiClient.get).toHaveBeenCalledWith('/perfil/whatsapp');
     expect(apiClient.put).toHaveBeenCalledWith('/perfil/whatsapp', { telefone: '+5511999999999' });
     expect(apiClient.delete).toHaveBeenCalledWith('/perfil/whatsapp');
@@ -81,6 +81,6 @@ describe('agenteApi', () => {
       receberLimiteResponsavel: false
     });
     expect(apiClient.post).toHaveBeenCalledWith('/agente/insights', { mesReferencia: '2026-06' }, expect.objectContaining({ timeout: 60_000, validateStatus: expect.any(Function) }));
-    expect(apiClient.post).toHaveBeenCalledWith('/agente/categorizar', { descricoes: ['Mercado'] });
+    expect(apiClient.post).toHaveBeenCalledWith('/agente/categorizar', { descricoes: ['Mercado'] }, { timeout: 30_000 });
   });
 });
