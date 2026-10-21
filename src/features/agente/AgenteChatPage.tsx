@@ -9,6 +9,18 @@ import { getApiErrorMessage } from '../../services/http/api-error';
 
 const { Text } = Typography;
 
+const STORAGE_KEY_MSGS = 'agente-chat-mensagens';
+const STORAGE_KEY_CONV = 'agente-chat-conversaId';
+
+function loadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 interface Mensagem {
   papel: 'user' | 'assistant';
   conteudo: string;
@@ -18,15 +30,23 @@ interface Mensagem {
 }
 
 export function AgenteChatPage() {
-  const [mensagens, setMensagens] = useState<Mensagem[]>([]);
+  const [mensagens, setMensagens] = useState<Mensagem[]>(() => loadFromStorage(STORAGE_KEY_MSGS, []));
   const [entrada, setEntrada] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const [conversaId, setConversaId] = useState<string | undefined>();
+  const [conversaId, setConversaId] = useState<string | undefined>(() => loadFromStorage(STORAGE_KEY_CONV, undefined));
   const [erro, setErro] = useState<string | null>(null);
   const [arquivo, setArquivo] = useState<File | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<TextAreaRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_MSGS, JSON.stringify(mensagens));
+      if (conversaId) localStorage.setItem(STORAGE_KEY_CONV, JSON.stringify(conversaId));
+      else localStorage.removeItem(STORAGE_KEY_CONV);
+    } catch { /* quota exceeded — ignore */ }
+  }, [mensagens, conversaId]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
@@ -66,6 +86,7 @@ export function AgenteChatPage() {
     setErro(null);
     setEntrada('');
     setArquivo(null);
+    try { localStorage.removeItem(STORAGE_KEY_MSGS); localStorage.removeItem(STORAGE_KEY_CONV); } catch { /* ignore */ }
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
