@@ -77,17 +77,20 @@ export function ConciliacaoFaturaPage() {
       void queryClient.invalidateQueries({ queryKey: ['faturas'] });
     } catch (e) { throw new Error(getApiErrorMessage(e), { cause: e }); }
   }
-  function handlePessoaCriada(id: string, label: string, role: 'recebedor' | 'responsavel') {
-    void queryClient.invalidateQueries({ queryKey: ['conciliacao-fatura-options'] });
-    if (!data) return;
-    const option = { label, value: id, contaGerencialDespesaId: undefined as string | undefined, contaGerencialReceitaId: undefined as string | undefined };
-    if (role === 'recebedor') data.recebedores = [...data.recebedores, option];
-    else data.responsaveis = [...data.responsaveis, option];
+  function handlePessoaCriada(newId: string, label: string, role: 'recebedor' | 'responsavel') {
+    const option = { label, value: newId };
+    queryClient.setQueryData(['conciliacao-fatura-options', id], (prev: typeof data) => {
+      if (!prev) return prev;
+      return role === 'recebedor'
+        ? { ...prev, recebedores: [option, ...prev.recebedores] }
+        : { ...prev, responsaveis: [option, ...prev.responsaveis] };
+    });
   }
-  function handleContaGerencialCriada(id: string, label: string) {
-    void queryClient.invalidateQueries({ queryKey: ['conciliacao-fatura-options'] });
-    if (!data) return;
-    data.despesas = [...data.despesas, { label, value: id }];
+  function handleContaGerencialCriada(newId: string, label: string) {
+    queryClient.setQueryData(['conciliacao-fatura-options', id], (prev: typeof data) => {
+      if (!prev) return prev;
+      return { ...prev, despesas: [{ label, value: newId }, ...prev.despesas] };
+    });
   }
   const acoes: AcoesCriacao = {
     onAddRecebedor: () => setModalRecebedor(true),
