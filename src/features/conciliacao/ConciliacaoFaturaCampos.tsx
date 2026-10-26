@@ -13,23 +13,29 @@ export type OpcoesConciliacao = { recebedores: ComboBoxOption[]; responsaveis: C
 const nome = (options: ComboBoxOption[], id?: string | null) => options.find(x => x.value === id)?.label ?? 'Não informado';
 
 
+export type AcoesCriacao = {
+  onAddRecebedor?: () => void;
+  onAddResponsavel?: () => void;
+  onAddContaGerencial?: () => void;
+};
+
 export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, options: OpcoesConciliacao,
-  update: (id: string, patch: Partial<RascunhoLancamento>) => void, mostrarReembolsos: boolean, contexto?: { faturaId: string; sessionId: string }): CampoGradeFatura[] {
+  update: (id: string, patch: Partial<RascunhoLancamento>) => void, mostrarReembolsos: boolean, contexto?: { faturaId: string; sessionId: string }, acoes?: AcoesCriacao): CampoGradeFatura[] {
   const campos: CampoGradeFatura[] = [
     { titulo: 'Descrição ajustada', largura: 200, render: (item, conta, novo, locked) => novo
       ? <Input aria-label={`Descrição de ${item.descricaoOriginal}`} maxLength={200} value={rows[item.id].descricao} disabled={locked}
           onChange={e => update(item.id, { descricao: e.target.value })} /> : <span>{conta?.descricao ?? 'Escolha o lançamento'}</span> },
     { titulo: 'Responsável', render: (item, conta, novo, locked) => novo
       ? <ComboBox compact aria-label={`Responsável por ${item.descricaoOriginal}`} options={options.responsaveis} value={rows[item.id].responsavelCompraId} disabled={locked}
-          onChange={id => update(item.id, { responsavelCompraId: id })} /> : <span>{nome(options.responsaveis, conta?.responsavelCompraId)}</span> },
+          onChange={id => update(item.id, { responsavelCompraId: id })} onAddNew={acoes?.onAddResponsavel} addNewLabel="Novo responsável" /> : <span>{nome(options.responsaveis, conta?.responsavelCompraId)}</span> },
     { titulo: 'Recebedor', render: (item, conta, novo, locked) => novo
       ? <ComboBox compact aria-label={`Recebedor de ${item.descricaoOriginal}`} options={options.recebedores} value={rows[item.id].recebedorId} disabled={locked}
-          onChange={id => update(item.id, { recebedorId: id })} /> : <span>{nome(options.recebedores, conta?.recebedorId)}</span> },
+          onChange={id => update(item.id, { recebedorId: id })} onAddNew={acoes?.onAddRecebedor} addNewLabel="Novo recebedor" /> : <span>{nome(options.recebedores, conta?.recebedorId)}</span> },
     { titulo: 'Forma de pagamento', render: (item, conta, novo, locked) => novo
       ? <ComboBox compact aria-label={`Pagamento de ${item.descricaoOriginal}`} options={options.formas.filter(x => x.ehCartao)} value={rows[item.id].formaPagamentoId} disabled={locked}
           onChange={id => update(item.id, { formaPagamentoId: id })} /> : <span>{nome(options.formas, conta?.formaPagamentoId)}</span> },
     { titulo: 'Conta gerencial / rateios', largura: 240, render: (item, conta, novo, locked) => novo
-      ? <RateiosCell value={rows[item.id].rateios} total={item.valor} options={options.despesas} disabled={locked} onChange={rateios => update(item.id, { rateios })} />
+      ? <RateiosCell value={rows[item.id].rateios} total={item.valor} options={options.despesas} disabled={locked} onChange={rateios => update(item.id, { rateios })} onAddContaGerencial={acoes?.onAddContaGerencial} />
       : <div>{conta?.rateios.map(r => <p key={r.contaGerencialId}>{nome(options.despesas, r.contaGerencialId)}: {formatCurrencyBRL(r.valor)}</p>)}</div> },
     { titulo: 'Recorrência', largura: 200, render: (item, conta, novo, locked) => {
       if (!novo) return <span>{conta?.regraRecorrenciaId ? 'Recorrente' : 'Sem recorrência'}</span>;
