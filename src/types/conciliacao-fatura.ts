@@ -24,3 +24,5 @@ export type CriarItemFatura = Omit<ApiContract<Api.CriarItemFaturaRequest, 'resp
   rateios: ApiContract<Api.RateioRequest>[]; recorrencia: RecorrenciaPayload | null; reembolso: ReembolsoFatura | null;
 };
 export type RevisaoFaturaResumo = ApiContract<Api.RevisaoFaturaResumoResponse>;
+export type SugestaoItemConciliacao = { itemId: string; descricao: string | null; recebedorId: string | null; responsavelCompraId: string | null; contaGerencialId: string | null; confianca: number };
+export type SugestoesConciliacao = { sugestoes: SugestaoItemConciliacao[] };
