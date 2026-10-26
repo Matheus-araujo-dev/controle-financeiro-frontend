@@ -106,8 +106,8 @@ export function ConciliacaoFaturaGrid({ session, onConfirmar, onCriar, onIgnorar
       </div>;
     } }
   ];
-  columns.push(...campos.map((campo, index) => ({ title: campo.titulo, key: `campo-${index}`, sorter: false, width: campo.largura ?? 230,
-    render: (_: unknown, item: ItemFaturaConciliacao) => <div style={{ minWidth: campo.largura ?? 230 }}>{campo.render(item, session.contasSistema.find(x => x.id === escolhas[item.id]?.contaId),
+  columns.push(...campos.map((campo, index) => ({ title: campo.titulo, key: `campo-${index}`, sorter: false, width: campo.largura ?? 180,
+    render: (_: unknown, item: ItemFaturaConciliacao) => <div className="min-w-0">{campo.render(item, session.contasSistema.find(x => x.id === escolhas[item.id]?.contaId),
       escolhas[item.id]?.contaId === 'novo', salvando || item.status !== 'Pendente' || !!escolhas[item.id]?.concluido || escolhas[item.id]?.contaId === 'ignorar')}</div> })));
   return <div className="space-y-4">
     <p className="text-sm text-on-surface-variant">Ao vincular, a conta mantém descrição, responsável, rateios, recorrência e reembolso. Confira as diferenças antes de confirmar.</p>
