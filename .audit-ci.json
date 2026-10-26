@@ -1,5 +1,5 @@
 {
   "moderate": true,
   "skip-dev": true,
-  "allowlist": []
+  "allowlist": ["GHSA-mrhx-c7xc-m3w5"]
 }

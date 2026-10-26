@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getApiFieldErrors } from './api-error';
 import type { PreviaReembolsoFaturaRequest, PreviaReembolsoFaturaResponse } from '../../types/generated/api';
 import { apiClient } from './api-client';
-import type { ConciliacaoFatura, VincularItemFatura, CriarItemFatura, RevisaoFaturaResumo } from '../../types/conciliacao-fatura';
+import type { ConciliacaoFatura, VincularItemFatura, CriarItemFatura, RevisaoFaturaResumo, SugestoesConciliacao } from '../../types/conciliacao-fatura';
 
 export const conciliacaoFaturaApi = {
   previaReembolso: async (faturaId: string, id: string, itemId: string, request: PreviaReembolsoFaturaRequest) =>
@@ -36,5 +36,7 @@ export const conciliacaoFaturaApi = {
     (await apiClient.get<ConciliacaoFatura>(`/faturas/${faturaId}/conciliacoes/${id}`)).data,
   vincular: async (faturaId: string, id: string, itemId: string, request: VincularItemFatura) => {
     await apiClient.post(`/faturas/${faturaId}/conciliacoes/${id}/itens/${itemId}/vincular`, request);
-  }
+  },
+  sugerir: async (faturaId: string, id: string) =>
+    (await apiClient.post<SugestoesConciliacao>(`/faturas/${faturaId}/conciliacoes/${id}/sugerir`)).data
 };
