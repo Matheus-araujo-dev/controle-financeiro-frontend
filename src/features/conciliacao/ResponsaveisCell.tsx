@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { InputNumber, Select } from 'antd';
+import { InputNumber } from 'antd';
 import { ComboBox, type ComboBoxOption } from '../../components/forms/ComboBox';
 import { formatCurrencyBRL } from '../../shared/currency';
 
