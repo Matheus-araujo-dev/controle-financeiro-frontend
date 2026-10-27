@@ -6,6 +6,7 @@ const rateioSchema = z.object({ contaGerencialId: z.string(), valor: z.number().
 const rascunhoSchema = z.object({
   vinculo: z.string().optional(), selecionado: z.boolean().optional(), usarValor: z.boolean().optional(),
   descricao: z.string(), recebedorId: z.string(), responsavelCompraId: z.string(), formaPagamentoId: z.string(),
+  responsaveisAdicionaisIds: z.array(z.string()), responsaveisValores: z.array(z.number()),
   rateios: z.array(rateioSchema), observacao: z.string(), aprender: z.boolean(), camposParaAprender: z.array(z.string()),
   ehRecorrente: z.boolean(), recorrenciaTipoDia: z.enum(['DiaFixo', 'DiaUtil']), recorrenciaDia: z.number(),
   recorrenciaInicio: z.string(), recorrenciaFim: z.string(), permiteEdicao: z.boolean(), recorrenciaObservacao: z.string(),
@@ -32,7 +33,8 @@ export function criarRascunho(item: ItemFaturaConciliacao, vencimento: string, f
   const p = item.preferencias;
   return {
     descricao: p?.descricao ?? item.descricaoOriginal, recebedorId: p?.recebedorId ?? '', responsavelCompraId: p?.responsavelCompraId ?? '',
-    formaPagamentoId, rateios: ratearValor(item.valor, p?.rateios ?? []), observacao: '', aprender: true, camposParaAprender: [...camposMemoria],
+    formaPagamentoId, responsaveisAdicionaisIds: [], responsaveisValores: [],
+    rateios: ratearValor(item.valor, p?.rateios ?? []), observacao: '', aprender: true, camposParaAprender: [...camposMemoria],
     ehRecorrente: !!p?.ehRecorrente && item.quantidadeParcelas === 1 && item.valor > 0, recorrenciaTipoDia: 'DiaFixo',
     recorrenciaDia: Number(item.data.slice(8, 10)), recorrenciaInicio: item.data, recorrenciaFim: '', permiteEdicao: true, recorrenciaObservacao: '',
     gerarReembolso: !!p?.gerarReembolso && item.valor > 0,
@@ -62,7 +64,9 @@ export function montarCriacao(item: ItemFaturaConciliacao, draft: RascunhoLancam
   validarRateios(draft.rateios, item.valor);
   if (draft.ehRecorrente && (item.quantidadeParcelas !== 1 || item.valor <= 0)) throw new Error('Recorrência não pode ser combinada com parcelamento ou estorno.');
   return { descricao: draft.descricao.trim(), recebedorId: draft.recebedorId, responsavelCompraId: draft.responsavelCompraId,
-    formaPagamentoId: draft.formaPagamentoId, rateios: draft.rateios, observacao: draft.observacao || null,
+    formaPagamentoId: draft.formaPagamentoId, responsaveisAdicionaisIds: draft.responsaveisAdicionaisIds.length ? draft.responsaveisAdicionaisIds : undefined,
+    valoresPorResponsavel: draft.responsaveisValores.length ? draft.responsaveisValores : undefined,
+    rateios: draft.rateios, observacao: draft.observacao || null,
     aprender: draft.aprender, camposParaAprender: draft.camposParaAprender,
     recorrencia: draft.ehRecorrente ? { tipoPeriodicidade: 'Mensal', tipoDia: draft.recorrenciaTipoDia, diaOrdemMensal: draft.recorrenciaDia,
       dataInicio: draft.recorrenciaInicio || item.data, dataFim: draft.recorrenciaFim || null,

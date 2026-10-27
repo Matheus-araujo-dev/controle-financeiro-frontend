@@ -3,6 +3,7 @@ import { Checkbox, Input, InputNumber, Select } from 'antd';
 import { ComboBox, type ComboBoxOption } from '../../components/forms/ComboBox';
 import { DateInput } from '../../components/forms/DateInput';
 import { RateiosCell } from './RateiosCell';
+import { ResponsaveisCell } from './ResponsaveisCell';
 import { formatCurrencyBRL } from '../../shared/currency';
 import type { CampoGradeFatura } from './ConciliacaoFaturaGrid';
 import type { RascunhoLancamento } from './conciliacao-fatura-form';
@@ -21,27 +22,28 @@ export type AcoesCriacao = {
 
 export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, options: OpcoesConciliacao,
   update: (id: string, patch: Partial<RascunhoLancamento>) => void, mostrarReembolsos: boolean, contexto?: { faturaId: string; sessionId: string }, acoes?: AcoesCriacao): CampoGradeFatura[] {
+  const refund = (id: string, patch: Partial<RascunhoLancamento['reembolso']>) => update(id, { reembolso: { ...rows[id].reembolso, ...patch } });
+  const bloqueado = (id: string, grupo: string | null | undefined, locked: boolean) => locked || !!grupo || !rows[id].gerarReembolso;
   const campos: CampoGradeFatura[] = [
     { titulo: 'Descrição ajustada', largura: 200, render: (item, conta, novo, locked) => novo
       ? <Input aria-label={`Descrição de ${item.descricaoOriginal}`} maxLength={200} value={rows[item.id].descricao} disabled={locked}
           onChange={e => update(item.id, { descricao: e.target.value })} /> : <span>{conta?.descricao ?? 'Escolha o lançamento'}</span> },
-    { titulo: 'Responsável', render: (item, conta, novo, locked) => novo
-      ? <ComboBox compact aria-label={`Responsável por ${item.descricaoOriginal}`} options={options.responsaveis} value={rows[item.id].responsavelCompraId} disabled={locked}
-          onChange={id => update(item.id, { responsavelCompraId: id })} onAddNew={acoes?.onAddResponsavel} addNewLabel="Novo responsável" /> : <span>{nome(options.responsaveis, conta?.responsavelCompraId)}</span> },
+    { titulo: 'Responsáveis', largura: 220, render: (item, conta, novo, locked) => novo
+      ? <ResponsaveisCell responsavelId={rows[item.id].responsavelCompraId} adicionaisIds={rows[item.id].responsaveisAdicionaisIds}
+          valores={rows[item.id].responsaveisValores} total={item.valor} options={options.responsaveis} disabled={locked}
+          onChange={patch => update(item.id, patch)} onAddNew={acoes?.onAddResponsavel} />
+      : <span>{nome(options.responsaveis, conta?.responsavelCompraId)}</span> },
     { titulo: 'Recebedor', render: (item, conta, novo, locked) => novo
       ? <ComboBox compact aria-label={`Recebedor de ${item.descricaoOriginal}`} options={options.recebedores} value={rows[item.id].recebedorId} disabled={locked}
           onChange={id => update(item.id, { recebedorId: id })} onAddNew={acoes?.onAddRecebedor} addNewLabel="Novo recebedor" /> : <span>{nome(options.recebedores, conta?.recebedorId)}</span> },
-    { titulo: 'Forma de pagamento', render: (item, conta, novo, locked) => novo
-      ? <ComboBox compact aria-label={`Pagamento de ${item.descricaoOriginal}`} options={options.formas.filter(x => x.ehCartao)} value={rows[item.id].formaPagamentoId} disabled={locked}
-          onChange={id => update(item.id, { formaPagamentoId: id })} /> : <span>{nome(options.formas, conta?.formaPagamentoId)}</span> },
     { titulo: 'Conta gerencial / rateios', largura: 240, render: (item, conta, novo, locked) => novo
       ? <RateiosCell value={rows[item.id].rateios} total={item.valor} options={options.despesas} disabled={locked} onChange={rateios => update(item.id, { rateios })} onAddContaGerencial={acoes?.onAddContaGerencial} />
       : <div>{conta?.rateios.map(r => <p key={r.contaGerencialId}>{nome(options.despesas, r.contaGerencialId)}: {formatCurrencyBRL(r.valor)}</p>)}</div> },
     { titulo: 'Recorrência', largura: 200, render: (item, conta, novo, locked) => {
       if (!novo) return <span>{conta?.regraRecorrenciaId ? 'Recorrente' : 'Sem recorrência'}</span>;
       const r = rows[item.id];
-      return <div className="space-y-2"><Checkbox disabled={locked || item.quantidadeParcelas > 1 || item.valor < 0} checked={r.ehRecorrente}
-        onChange={e => update(item.id, { ehRecorrente: e.target.checked })}>Recorrente</Checkbox>
+      return <div className="space-y-2"><div className="flex items-center"><Checkbox disabled={locked || item.quantidadeParcelas > 1 || item.valor < 0} checked={r.ehRecorrente}
+        onChange={e => update(item.id, { ehRecorrente: e.target.checked })}>Recorrente</Checkbox></div>
         {r.ehRecorrente && <>
           <ComboBox compact aria-label="Tipo de dia da recorrência" value={r.recorrenciaTipoDia} disabled={locked} options={[{ value: 'DiaFixo', label: 'Dia fixo' }, { value: 'DiaUtil', label: 'Dia útil' }]}
             onChange={v => update(item.id, { recorrenciaTipoDia: v as 'DiaFixo' | 'DiaUtil' })} />
@@ -50,6 +52,22 @@ export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, optio
           <DateInput compact ariaLabel="Fim da recorrência" value={r.recorrenciaFim} disabled={locked} onChange={v => update(item.id, { recorrenciaFim: v })} />
           <Checkbox checked={r.permiteEdicao} disabled={locked} onChange={e => update(item.id, { permiteEdicao: e.target.checked })}>Permitir edição individual</Checkbox>
           <Input aria-label="Observação da recorrência" value={r.recorrenciaObservacao} disabled={locked} onChange={e => update(item.id, { recorrenciaObservacao: e.target.value })} />
+        </>}
+      </div>;
+    } },
+    { titulo: 'Reembolso', largura: 240, render: (item, conta, _, locked) => {
+      if (conta?.grupoReembolsoId) return <span className="text-xs">Reembolso já gerado</span>;
+      const r = rows[item.id];
+      return <div className="space-y-2">
+        <div className="flex items-center"><Checkbox checked={r.gerarReembolso} disabled={locked || item.valor <= 0}
+          onChange={e => update(item.id, { gerarReembolso: e.target.checked })}>Gerar reembolso</Checkbox></div>
+        {r.gerarReembolso && <>
+          <Select mode="multiple" className="w-full" size="small" aria-label={`Pagadores de ${item.descricaoOriginal}`}
+            disabled={locked} value={r.reembolso.pagadoresIds} options={options.pagadores} placeholder="Pagadores..."
+            onChange={pagadoresIds => refund(item.id, { pagadoresIds })} />
+          <InputNumber size="small" className="!w-full" aria-label="Valor do reembolso" min={0.01} precision={2} decimalSeparator=","
+            disabled={locked} value={r.reembolso.valorTotal}
+            onChange={v => { const valorTotal = Number(v ?? 0); refund(item.id, { valorTotal, rateios: ratearValor(valorTotal, r.reembolso.rateios.map(x => ({ contaGerencialId: x.contaGerencialId, proporcao: x.valor }))) }); }} />
         </>}
       </div>;
     } },
@@ -64,38 +82,31 @@ export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, optio
     </div> }
   ];
   if (!mostrarReembolsos) return campos;
-  const refund = (id: string, patch: Partial<RascunhoLancamento['reembolso']>) => update(id, { reembolso: { ...rows[id].reembolso, ...patch } });
-  const bloqueado = (id: string, grupo: string | null | undefined, locked: boolean) => locked || !!grupo || !rows[id].gerarReembolso;
   campos.push(
+    { titulo: 'Reembolso — detalhes', largura: 300, render: (item, conta, novo, locked) => {
+      const r = rows[item.id];
+      const off = bloqueado(item.id, conta?.grupoReembolsoId, locked);
+      return <div className="space-y-2">
+        <ComboBox compact aria-label="Forma do reembolso" options={options.formas} value={r.reembolso.formaPagamentoId}
+          disabled={off} onChange={formaPagamentoId => refund(item.id, { formaPagamentoId })} />
+        <DateInput compact ariaLabel="Vencimento do reembolso" value={r.reembolso.dataVencimento}
+          disabled={off || r.reembolso.parcelarIgual} onChange={dataVencimento => refund(item.id, { dataVencimento })} />
+        <div className="flex items-center"><Checkbox checked={r.reembolso.parcelarIgual} disabled={off || item.quantidadeParcelas === 1}
+          onChange={e => refund(item.id, { parcelarIgual: e.target.checked })}>Acompanhar parcelas</Checkbox></div>
+        <Input size="small" aria-label="Descrição do reembolso" maxLength={200} value={r.reembolso.descricao}
+          disabled={off} onChange={e => refund(item.id, { descricao: e.target.value })} />
+        <Input.TextArea size="small" aria-label="Observação do reembolso" maxLength={500} autoSize value={r.reembolso.observacao}
+          disabled={off} onChange={e => refund(item.id, { observacao: e.target.value })} />
+      </div>;
+    } },
+    { titulo: 'Reembolso — rateios de receita', largura: 240, render: (item, conta, _, locked) => <RateiosCell value={rows[item.id].reembolso.rateios} total={rows[item.id].reembolso.valorTotal}
+      options={options.receitas} disabled={bloqueado(item.id, conta?.grupoReembolsoId, locked)} onChange={rateios => refund(item.id, { rateios })} /> },
     { titulo: 'Prévia do reembolso', largura: 260, render: (item, conta, novo, locked) => {
       if (!contexto || locked || !rows[item.id].gerarReembolso || conta?.grupoReembolsoId || (!novo && !conta)) return '—';
       const r = rows[item.id].reembolso;
       return <PreviaReembolsoCell {...contexto} itemId={item.id} request={{ contaPagarId: conta?.id ?? null,
         parcelarIgual: r.parcelarIgual, valorTotal: r.valorTotal, pagadoresIds: r.pagadoresIds, dataVencimento: r.dataVencimento }} />;
-    } },
-    { titulo: 'Gerar reembolso', render: (item, conta, _, locked) => conta?.grupoReembolsoId ? <span>Reembolso já gerado</span>
-      : <Checkbox checked={rows[item.id].gerarReembolso} disabled={locked || item.valor <= 0} onChange={e => update(item.id, { gerarReembolso: e.target.checked })}>Gerar reembolso</Checkbox> },
-    { titulo: 'Reembolso — pagadores', largura: 220, render: (item, conta, _, locked) => <Select mode="multiple" className="w-full" aria-label={`Pagadores de ${item.descricaoOriginal}`}
-      disabled={bloqueado(item.id, conta?.grupoReembolsoId, locked)} value={rows[item.id].reembolso.pagadoresIds} options={options.pagadores}
-      onChange={pagadoresIds => refund(item.id, { pagadoresIds })} /> },
-    { titulo: 'Reembolso — valor total', render: (item, conta, _, locked) => <InputNumber aria-label={`Valor do reembolso de ${item.descricaoOriginal}`} min={0.01} precision={2} decimalSeparator=","
-      disabled={bloqueado(item.id, conta?.grupoReembolsoId, locked)} value={rows[item.id].reembolso.valorTotal}
-      onChange={v => { const valorTotal = Number(v ?? 0); refund(item.id, { valorTotal, rateios: ratearValor(valorTotal, rows[item.id].reembolso.rateios.map(r => ({ contaGerencialId: r.contaGerencialId, proporcao: r.valor }))) }); }} /> },
-    { titulo: 'Reembolso — parcelamento', render: (item, conta, novo, locked) => <div className="space-y-2">
-      <Checkbox checked={rows[item.id].reembolso.parcelarIgual} disabled={bloqueado(item.id, conta?.grupoReembolsoId, locked) || item.quantidadeParcelas === 1}
-        onChange={e => refund(item.id, { parcelarIgual: e.target.checked })}>Acompanhar parcelas cadastradas</Checkbox>
-      {novo && item.quantidadeParcelas > 1 && <p className="text-xs text-on-surface-variant">O PDF cadastra somente esta parcela.</p>}
-    </div> },
-    { titulo: 'Reembolso — pagamento', render: (item, conta, _, locked) => <ComboBox compact aria-label="Forma do reembolso" options={options.formas} value={rows[item.id].reembolso.formaPagamentoId}
-      disabled={bloqueado(item.id, conta?.grupoReembolsoId, locked)} onChange={formaPagamentoId => refund(item.id, { formaPagamentoId })} /> },
-    { titulo: 'Reembolso — vencimento', render: (item, conta, _, locked) => <DateInput compact ariaLabel="Vencimento do reembolso" value={rows[item.id].reembolso.dataVencimento}
-      disabled={bloqueado(item.id, conta?.grupoReembolsoId, locked) || rows[item.id].reembolso.parcelarIgual} onChange={dataVencimento => refund(item.id, { dataVencimento })} /> },
-    { titulo: 'Reembolso — descrição', render: (item, conta, _, locked) => <Input aria-label="Descrição do reembolso" maxLength={200} value={rows[item.id].reembolso.descricao}
-      disabled={bloqueado(item.id, conta?.grupoReembolsoId, locked)} onChange={e => refund(item.id, { descricao: e.target.value })} /> },
-    { titulo: 'Reembolso — rateios de receita', largura: 240, render: (item, conta, _, locked) => <RateiosCell value={rows[item.id].reembolso.rateios} total={rows[item.id].reembolso.valorTotal}
-      options={options.receitas} disabled={bloqueado(item.id, conta?.grupoReembolsoId, locked)} onChange={rateios => refund(item.id, { rateios })} /> },
-    { titulo: 'Reembolso — observação', render: (item, conta, _, locked) => <Input.TextArea aria-label="Observação do reembolso" maxLength={500} autoSize value={rows[item.id].reembolso.observacao}
-      disabled={bloqueado(item.id, conta?.grupoReembolsoId, locked)} onChange={e => refund(item.id, { observacao: e.target.value })} /> }
+    } }
   );
   return campos;
 }
