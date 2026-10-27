@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { Tag } from 'antd';
 import { ArrowLeftOutlined, StopOutlined, LinkOutlined } from '@ant-design/icons';
@@ -182,7 +182,7 @@ export default function ConciliacaoDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link to="/financeiro/conciliacoes">
+        <Link to="/conciliacoes">
           <Button variant="ghost" size="sm">
             <ArrowLeftOutlined /> Voltar
           </Button>
