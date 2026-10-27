@@ -81,6 +81,7 @@ export function ConciliacaoFaturaGrid({ session, onConfirmar, onCriar, onIgnorar
         <ComboBox compact aria-label={`Conta correspondente a ${item.descricaoOriginal}`} value={escolha?.contaId}
           disabled={salvando || concluiu} placeholder="Escolher conta existente"
           options={[...(onCriar ? [{ value: 'novo', label: 'Criar novo lançamento' }] : []), ...(onIgnorar ? [{ value: 'ignorar', label: 'Ignorar item' }] : []), ...session.contasSistema.filter(c => c.numeroParcela === item.numeroParcela && c.quantidadeParcelas === item.quantidadeParcelas && Math.sign(c.valor) === Math.sign(item.valor))
+            .sort((a, b) => Math.abs(b.valor) - Math.abs(a.valor))
             .map(c => ({ value: c.id, label: `${c.descricao} · ${formatCurrencyBRL(c.valor)}`, disabled: session.itens.some(other => other.id !== item.id && escolhas[other.id]?.contaId === c.id && (escolhas[other.id]?.selecionado || escolhas[other.id]?.concluido || !!other.contaPagarVinculadaId)) }))]}
           onChange={contaId => atualizar(item.id, { contaId, selecionado: true, usarValor: false, erro: undefined })} />
         {conta && <div className="flex gap-2 text-xs text-on-surface-variant">
@@ -116,7 +117,7 @@ export function ConciliacaoFaturaGrid({ session, onConfirmar, onCriar, onIgnorar
       <Button variant="ghost" size="sm" disabled={salvando} onClick={() => pendentes.forEach(item => atualizar(item.id, { selecionado: false }))}>Limpar seleção</Button>
     </div>
     {toolbar?.(selecionados.map(item => item.id), salvando)}
-    <AppDataTable<ItemFaturaConciliacao> rowKey="id" dataSource={session.itens} columns={columns} pagination={false} />
+    <AppDataTable<ItemFaturaConciliacao> rowKey="id" dataSource={session.itens} columns={columns} pagination={{ pageSize: 25, showSizeChanger: true, pageSizeOptions: ['15', '25', '50', '100'], showTotal: (total, range) => `${range[0]}-${range[1]} de ${total}` }} />
     <Button disabled={salvando || selecionados.length === 0} loading={salvando} onClick={() => void confirmar()}>
       Conciliar selecionados ({selecionados.length})
     </Button>

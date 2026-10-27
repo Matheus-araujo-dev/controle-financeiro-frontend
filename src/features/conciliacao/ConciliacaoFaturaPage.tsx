@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { Checkbox, Input } from 'antd';
@@ -65,7 +65,7 @@ export function ConciliacaoFaturaPage() {
     catch (e) { setError(getApiErrorMessage(e)); }
     finally { setBusy(false); setUploading(false); }
   }
-  function update(itemId: string, patch: Partial<RascunhoLancamento>) { setRows(current => ({ ...current, [itemId]: { ...current[itemId], ...patch } })); setDirty(true); setMessage('Alterações ainda não salvas.'); }
+  const update = useCallback((itemId: string, patch: Partial<RascunhoLancamento>) => { setRows(current => ({ ...current, [itemId]: { ...current[itemId], ...patch } })); setDirty(true); setMessage('Alterações ainda não salvas.'); }, []);
   async function salvar() {
     if (!session) return;
     setBusy(true); setError('');
@@ -129,11 +129,11 @@ export function ConciliacaoFaturaPage() {
     } catch (e) { setError(getApiErrorMessage(e)); }
     finally { setSugerindo(false); }
   }
-  const acoes: AcoesCriacao = {
+  const acoes = useMemo<AcoesCriacao>(() => ({
     onAddRecebedor: () => setModalRecebedor(true),
     onAddResponsavel: () => setModalResponsavel(true),
     onAddContaGerencial: () => setModalContaGerencial(true),
-  };
+  }), []);
 
   if (isLoading) return <PageState state="loading" />;
   if (loadError || !data || !id) return <PageState state="error" title="Não foi possível carregar a fatura" subtitle={getApiErrorMessage(loadError)} />;
@@ -173,7 +173,7 @@ export function ConciliacaoFaturaPage() {
           icon={<span aria-hidden="true" className="material-symbols-outlined text-xl">auto_awesome</span>}>
           {sugerindo ? 'Analisando com IA...' : 'Sugerir com IA'}
         </Button>
-        <Checkbox checked={mostrarReembolsos} disabled={busy} onChange={e => setMostrarReembolsos(e.target.checked)}>Editar reembolsos em lote</Checkbox></>}
+        <Checkbox checked={mostrarReembolsos} disabled={busy} onChange={e => setMostrarReembolsos(e.target.checked)}>Detalhes avançados de reembolso</Checkbox></>}
     </div>
     {error && <p role="alert" className="text-error">{error}</p>}
     {message && <p role="status" className="text-sm text-on-surface-variant">{message}</p>}
