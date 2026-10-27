@@ -38,5 +38,5 @@ export const conciliacaoFaturaApi = {
     await apiClient.post(`/faturas/${faturaId}/conciliacoes/${id}/itens/${itemId}/vincular`, request);
   },
   sugerir: async (faturaId: string, id: string) =>
-    (await apiClient.post<SugestoesConciliacao>(`/faturas/${faturaId}/conciliacoes/${id}/sugerir`)).data
+    (await apiClient.post<SugestoesConciliacao>(`/faturas/${faturaId}/conciliacoes/${id}/sugerir`, null, { timeout: 120000 })).data
 };
