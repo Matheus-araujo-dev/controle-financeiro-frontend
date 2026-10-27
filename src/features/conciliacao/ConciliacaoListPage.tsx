@@ -104,7 +104,7 @@ export default function ConciliacaoListPage() {
         columns={columns}
         dataSource={data?.items ?? []}
         rowKey="id"
-        onRowClick={(record) => navigate(`/financeiro/conciliacoes/${record.id}`)}
+        onRowClick={(record) => navigate(`/conciliacoes/${record.id}`)}
         pagination={{
           current: page,
           pageSize,

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { Checkbox, Input } from 'antd';
@@ -33,6 +33,13 @@ export function ConciliacaoFaturaPage() {
   const [modalResponsavel, setModalResponsavel] = useState(false);
   const [modalContaGerencial, setModalContaGerencial] = useState(false);
   const [sugerindo, setSugerindo] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
   const { data, isLoading, error: loadError } = useQuery({ queryKey: ['conciliacao-fatura-options', id], enabled: !!id, queryFn: async () => {
     const [fatura, revisoes, recebedores, responsaveis, pagadores, formas, despesas, receitas] = await Promise.all([
       financeiroApi.faturas.obterPorId(id!), conciliacaoFaturaApi.listar(id!), contasPagarModuleConfig.loadPessoaOptions(),
@@ -58,7 +65,7 @@ export function ConciliacaoFaturaPage() {
     catch (e) { setError(getApiErrorMessage(e)); }
     finally { setBusy(false); setUploading(false); }
   }
-  function update(itemId: string, patch: Partial<RascunhoLancamento>) { setRows(current => ({ ...current, [itemId]: { ...current[itemId], ...patch } })); setMessage('Alterações ainda não salvas.'); }
+  function update(itemId: string, patch: Partial<RascunhoLancamento>) { setRows(current => ({ ...current, [itemId]: { ...current[itemId], ...patch } })); setDirty(true); setMessage('Alterações ainda não salvas.'); }
   async function salvar() {
     if (!session) return;
     setBusy(true); setError('');
@@ -69,12 +76,14 @@ export function ConciliacaoFaturaPage() {
         setSession(current => current && ({ ...current, itens: current.itens.map(x => x.id === item.id ? { ...x, atualizadoEmUtc: result.atualizadoEmUtc, rascunho: rows[item.id] } : x) }));
       } catch (e) { failures.push(`${item.descricaoOriginal}: ${getApiErrorMessage(e)}`); }
     }
+    if (!failures.length) setDirty(false);
     setError(failures.join(' / ')); setMessage(failures.length ? 'Algumas linhas não foram salvas.' : 'Rascunho salvo. Nenhuma conta foi criada.'); setBusy(false);
   }
   async function confirmar(action: () => Promise<void>) {
     try {
       await action();
       setSession(await conciliacaoFaturaApi.obter(id!, session!.id));
+      setDirty(false);
       void queryClient.invalidateQueries({ queryKey: ['faturas'] });
     } catch (e) { throw new Error(getApiErrorMessage(e), { cause: e }); }
   }

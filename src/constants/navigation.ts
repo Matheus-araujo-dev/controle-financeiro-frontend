@@ -31,7 +31,8 @@ export const navigationStructure: NavGroup[] = [
       { key: '/movimentacoes', label: 'Movimentações', aliases: ['/contas-pagar', '/contas-receber'] },
       { key: '/recorrencias', label: 'Recorrências' },
       { key: '/faturas', label: 'Faturas' },
-      { key: '/importacoes-whatsapp', label: 'Importações WhatsApp' }
+      { key: '/importacoes-whatsapp', label: 'Importações WhatsApp' },
+      { key: '/conciliacoes', label: 'Conciliações' }
     ]
   },
   {
