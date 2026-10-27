@@ -70,9 +70,11 @@ export function ConciliacaoFaturaPage() {
     if (!session) return;
     setBusy(true); setError('');
     const failures: string[] = [];
+    const timestamps = new Map(session.itens.map(i => [i.id, i.atualizadoEmUtc ?? '']));
     for (const item of session.itens.filter(x => x.status === 'Pendente')) {
       try {
-        const result = await conciliacaoFaturaApi.salvarRascunho(id!, session.id, item.id, rows[item.id], item.atualizadoEmUtc!);
+        const result = await conciliacaoFaturaApi.salvarRascunho(id!, session.id, item.id, rows[item.id], timestamps.get(item.id)!);
+        timestamps.set(item.id, result.atualizadoEmUtc);
         setSession(current => current && ({ ...current, itens: current.itens.map(x => x.id === item.id ? { ...x, atualizadoEmUtc: result.atualizadoEmUtc, rascunho: rows[item.id] } : x) }));
       } catch (e) { failures.push(`${item.descricaoOriginal}: ${getApiErrorMessage(e)}`); }
     }
