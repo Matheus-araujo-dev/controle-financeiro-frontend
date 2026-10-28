@@ -10,7 +10,7 @@ export function PreviaReembolsoCell({ faturaId, sessionId, itemId, request }: {
 }) {
   const enabled = (request.valorTotal ?? 0) > 0 && !!request.pagadoresIds?.length && !!request.dataVencimento;
   const { data, isFetching, error } = useQuery({
-    queryKey: ['previa-reembolso-fatura', faturaId, sessionId, itemId, request], enabled, retry: false, staleTime: 0,
+    queryKey: ['previa-reembolso-fatura', faturaId, sessionId, itemId, request], enabled, retry: false, staleTime: 30_000,
     queryFn: () => conciliacaoFaturaApi.previaReembolso(faturaId, sessionId, itemId, request)
   });
   if (!enabled) return <span className="text-xs text-on-surface-variant">Informe pagadores, valor e vencimento.</span>;

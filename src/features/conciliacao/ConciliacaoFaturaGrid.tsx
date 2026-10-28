@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from 'react';
-import { AppDataTable, type TableColumnsType } from '../../components/data/AppDataTable';
 import { ComboBox } from '../../components/forms/ComboBox';
 import { NeonBadge } from '../../components/neon-ledger/NeonBadge';
 import { Button } from '../../components/ui/Button';
@@ -35,6 +34,11 @@ export function ConciliacaoFaturaGrid({ session, onConfirmar, onCriar, onIgnorar
   const pendentes = session.itens.filter(item => item.status === 'Pendente' && !escolhas[item.id]?.concluido);
   const selecionados = pendentes.filter(item => escolhas[item.id]?.selecionado);
 
+  const pageSize = 25;
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(session.itens.length / pageSize));
+  const paginados = session.itens.slice((page - 1) * pageSize, page * pageSize);
+
   async function confirmar() {
     setSalvando(true); onBusyChange?.(true);
     try {
@@ -62,53 +66,87 @@ export function ConciliacaoFaturaGrid({ session, onConfirmar, onCriar, onIgnorar
     } finally { setSalvando(false); onBusyChange?.(false); }
   }
 
-  const columns: TableColumnsType<ItemFaturaConciliacao> = [
-    { title: '', key: 'selecao', width: 48, render: (_, item) => (
-      <input type="checkbox" aria-label={`Selecionar ${item.descricaoOriginal}`} checked={escolhas[item.id]?.selecionado ?? false}
-        disabled={salvando || item.status !== 'Pendente' || escolhas[item.id]?.concluido}
-        onChange={e => atualizar(item.id, { selecionado: e.target.checked })} />
-    ) },
-    { title: 'Na fatura do cartão', key: 'original', width: 260, mobileRole: 'title', render: (_, item) => (
-      <div className="space-y-1"><strong>{item.descricaoOriginal}</strong>
-        <p className="text-xs text-on-surface-variant">{formatDateBR(item.data)} · Parcela {item.numeroParcela}/{item.quantidadeParcelas}</p>
-        <p>{formatCurrencyBRL(item.valor)}</p></div>
-    ) },
-    { title: 'No sistema', key: 'sistema', width: 350, render: (_, item) => {
-      const escolha = escolhas[item.id];
-      const conta = session.contasSistema.find(x => x.id === escolha?.contaId);
-      const concluiu = item.status !== 'Pendente' || escolha?.concluido;
-      return <div className="space-y-2">
-        <ComboBox compact aria-label={`Conta correspondente a ${item.descricaoOriginal}`} value={escolha?.contaId}
-          disabled={salvando || concluiu} placeholder="Escolher conta existente"
-          options={[...(onCriar ? [{ value: 'novo', label: 'Criar novo lançamento' }] : []), ...(onIgnorar ? [{ value: 'ignorar', label: 'Ignorar item' }] : []), ...session.contasSistema.filter(c => c.numeroParcela === item.numeroParcela && c.quantidadeParcelas === item.quantidadeParcelas && Math.sign(c.valor) === Math.sign(item.valor))
-            .map(c => ({ value: c.id, label: `${c.descricao} · ${formatCurrencyBRL(c.valor)}`, disabled: session.itens.some(other => other.id !== item.id && escolhas[other.id]?.contaId === c.id && (escolhas[other.id]?.selecionado || escolhas[other.id]?.concluido || !!other.contaPagarVinculadaId)) }))]}
-          onChange={contaId => atualizar(item.id, { contaId, selecionado: true, usarValor: false, erro: undefined })} />
-        {conta && <div className="flex gap-2 text-xs text-on-surface-variant">
-          <span>{conta.regraRecorrenciaId ? 'Recorrente' : 'Sem recorrência'}</span>
-          <span>{conta.grupoReembolsoId ? 'Reembolso já gerado' : 'Sem reembolso'}</span>
-        </div>}
-        {escolha?.erro && <p role="alert" className="text-sm text-error">{escolha.erro}</p>}
-      </div>;
-    } },
-    { title: 'Conferência', key: 'conferencia', width: 250, render: (_, item) => {
-      const escolha = escolhas[item.id];
-      if (item.status !== 'Pendente' || escolha?.concluido) return <NeonBadge variant="primary">{item.status === 'Ignorado' || escolha?.ignorado ? 'Ignorado' : 'Conciliado'}</NeonBadge>;
-      const conta = session.contasSistema.find(x => x.id === escolha?.contaId);
-      if (escolha?.contaId === 'novo') return <NeonBadge variant="warning">Novo lançamento</NeonBadge>;
-      if (escolha?.contaId === 'ignorar') return <NeonBadge variant="neutral">Será ignorado</NeonBadge>;
-      if (!conta) return <span className="text-on-surface-variant">Sem vínculo</span>;
-      const centavos = Math.round(item.valor * 100) - Math.round(conta.valor * 100);
-      return centavos === 0 ? <NeonBadge variant="neutral">Mesmo valor</NeonBadge> : <div className="space-y-2">
-        <p>Diferença: {formatCurrencyBRL(centavos / 100)}</p>
-        <label className="flex gap-2 text-sm"><input type="checkbox" disabled={salvando}
-          aria-label={`Usar valor da fatura para ${item.descricaoOriginal}`} checked={escolha?.usarValor ?? false}
-          onChange={e => atualizar(item.id, { usarValor: e.target.checked, erro: undefined })} />Usar valor da fatura</label>
-      </div>;
-    } }
-  ];
-  columns.push(...campos.map((campo, index) => ({ title: campo.titulo, key: `campo-${index}`, sorter: false, width: campo.largura ?? 180,
-    render: (_: unknown, item: ItemFaturaConciliacao) => <div className="min-w-0">{campo.render(item, session.contasSistema.find(x => x.id === escolhas[item.id]?.contaId),
-      escolhas[item.id]?.contaId === 'novo', salvando || item.status !== 'Pendente' || !!escolhas[item.id]?.concluido || escolhas[item.id]?.contaId === 'ignorar')}</div> })));
+  function renderConferencia(item: ItemFaturaConciliacao) {
+    const escolha = escolhas[item.id];
+    if (item.status !== 'Pendente' || escolha?.concluido) return <NeonBadge variant="primary">{item.status === 'Ignorado' || escolha?.ignorado ? 'Ignorado' : 'Conciliado'}</NeonBadge>;
+    const conta = session.contasSistema.find(x => x.id === escolha?.contaId);
+    if (escolha?.contaId === 'novo') return <NeonBadge variant="warning">Novo lançamento</NeonBadge>;
+    if (escolha?.contaId === 'ignorar') return <NeonBadge variant="neutral">Será ignorado</NeonBadge>;
+    if (!conta) return <span className="text-on-surface-variant text-xs">Sem vínculo</span>;
+    const centavos = Math.round(item.valor * 100) - Math.round(conta.valor * 100);
+    return centavos === 0 ? <NeonBadge variant="neutral">Mesmo valor</NeonBadge> : <div className="flex flex-wrap items-center gap-2">
+      <span className="text-sm">Dif: {formatCurrencyBRL(centavos / 100)}</span>
+      <label className="flex items-center gap-1.5 text-xs"><input type="checkbox" disabled={salvando}
+        aria-label={`Usar valor da fatura para ${item.descricaoOriginal}`} checked={escolha?.usarValor ?? false}
+        onChange={e => atualizar(item.id, { usarValor: e.target.checked, erro: undefined })} />Usar valor da fatura</label>
+    </div>;
+  }
+
+  function renderCard(item: ItemFaturaConciliacao) {
+    const escolha = escolhas[item.id];
+    const conta = session.contasSistema.find(x => x.id === escolha?.contaId);
+    const concluiu = item.status !== 'Pendente' || escolha?.concluido;
+    const novo = escolha?.contaId === 'novo';
+    const bloqueado = salvando || item.status !== 'Pendente' || !!escolha?.concluido || escolha?.contaId === 'ignorar';
+    const temDetalhes = campos.length > 0 && escolha?.contaId && escolha.contaId !== 'ignorar' && !concluiu;
+
+    return (
+      <article key={item.id} className={`rounded-2xl border transition-colors ${
+        escolha?.selecionado ? 'border-primary/30 bg-primary/5' : 'border-outline-variant/15 bg-surface-container-low'
+      } ${escolha?.erro ? 'border-error/30' : ''}`}>
+        {/* Header */}
+        <div className="flex items-start gap-3 p-4">
+          <input type="checkbox" className="mt-1.5 shrink-0" aria-label={`Selecionar ${item.descricaoOriginal}`}
+            checked={escolha?.selecionado ?? false} disabled={salvando || item.status !== 'Pendente' || concluiu}
+            onChange={e => atualizar(item.id, { selecionado: e.target.checked })} />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold leading-tight">{item.descricaoOriginal}</p>
+                <p className="text-xs text-on-surface-variant">{formatDateBR(item.data)} · Parcela {item.numeroParcela}/{item.quantidadeParcelas}</p>
+                <p className="text-sm font-semibold text-primary">{formatCurrencyBRL(item.valor)}</p>
+              </div>
+              <div className="shrink-0">{renderConferencia(item)}</div>
+            </div>
+            <div className="mt-2 flex flex-wrap items-end gap-3">
+              <div className="min-w-[240px] flex-1 max-w-md">
+                <ComboBox compact aria-label={`Conta correspondente a ${item.descricaoOriginal}`} value={escolha?.contaId}
+                  disabled={salvando || concluiu} placeholder="Escolher conta existente"
+                  options={[...(onCriar ? [{ value: 'novo', label: 'Criar novo lançamento' }] : []), ...(onIgnorar ? [{ value: 'ignorar', label: 'Ignorar item' }] : []), ...session.contasSistema.filter(c => c.numeroParcela === item.numeroParcela && c.quantidadeParcelas === item.quantidadeParcelas && Math.sign(c.valor) === Math.sign(item.valor))
+                    .sort((a, b) => Math.abs(b.valor) - Math.abs(a.valor))
+                    .map(c => ({ value: c.id, label: `${c.descricao} · ${formatCurrencyBRL(c.valor)}`, disabled: session.itens.some(other => other.id !== item.id && escolhas[other.id]?.contaId === c.id && (escolhas[other.id]?.selecionado || escolhas[other.id]?.concluido || !!other.contaPagarVinculadaId)) }))]}
+                  onChange={contaId => atualizar(item.id, { contaId, selecionado: true, usarValor: false, erro: undefined })} />
+              </div>
+              {conta && !concluiu && (
+                <div className="flex gap-3 text-xs text-on-surface-variant">
+                  <span>{conta.regraRecorrenciaId ? 'Recorrente' : 'Sem recorrência'}</span>
+                  <span>{conta.grupoReembolsoId ? 'Reembolso já gerado' : 'Sem reembolso'}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Detail fields in grid */}
+        {temDetalhes && (
+          <div className="border-t border-outline-variant/10 px-4 pb-4 pt-3">
+            <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+              {campos.map((campo, i) => (
+                <div key={i} className="min-w-0">
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{campo.titulo}</p>
+                  <div>{campo.render(item, conta, novo, bloqueado)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
+        {escolha?.erro && <div className="border-t border-error/20 px-4 py-2"><p role="alert" className="text-sm text-error">{escolha.erro}</p></div>}
+      </article>
+    );
+  }
+
   return <div className="space-y-4">
     <p className="text-sm text-on-surface-variant">Ao vincular, a conta mantém descrição, responsável, rateios, recorrência e reembolso. Confira as diferenças antes de confirmar.</p>
     <div className="flex gap-2">
@@ -116,7 +154,21 @@ export function ConciliacaoFaturaGrid({ session, onConfirmar, onCriar, onIgnorar
       <Button variant="ghost" size="sm" disabled={salvando} onClick={() => pendentes.forEach(item => atualizar(item.id, { selecionado: false }))}>Limpar seleção</Button>
     </div>
     {toolbar?.(selecionados.map(item => item.id), salvando)}
-    <AppDataTable<ItemFaturaConciliacao> rowKey="id" dataSource={session.itens} columns={columns} pagination={false} />
+    <div className="space-y-2">
+      {paginados.map(item => renderCard(item))}
+    </div>
+    {totalPages > 1 && (
+      <div className="flex items-center justify-between rounded-2xl border border-outline-variant/10 bg-surface-container-low px-4 py-3">
+        <span className="text-xs font-semibold text-on-surface-variant">
+          {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, session.itens.length)} de {session.itens.length}
+        </span>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Anterior</Button>
+          <span className="text-xs font-bold">{page} / {totalPages}</span>
+          <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Próxima</Button>
+        </div>
+      </div>
+    )}
     <Button disabled={salvando || selecionados.length === 0} loading={salvando} onClick={() => void confirmar()}>
       Conciliar selecionados ({selecionados.length})
     </Button>
