@@ -47,7 +47,7 @@ export type FormaPagamentoOption = SelectOption & {
   baixarAutomaticamente: boolean;
 };
 
-export type RateioOption = ComboBoxOption & { responsavelPadraoId?: string | null };
+export type RateioOption = ComboBoxOption & { membroPadraoId?: string | null };
 
 export type FinanceiroRateioFormValue = {
   contaGerencialId: string;
@@ -58,7 +58,7 @@ export type FinanceiroFormValues = {
   origemCompraPlanejadaId: string;
   numeroDocumento: string;
   pessoaId: string;
-  responsavelId: string;
+  membroId: string;
   dataEmissao: string;
   dataVencimento: string;
   formaPagamentoId: string;
@@ -83,8 +83,8 @@ export type FinanceiroFormValues = {
   recorrenciaPermiteEdicaoOcorrenciaIndividual: boolean;
   recorrenciaObservacao: string;
   recorrenciaGerarAteData: string;
-  responsaveisAdicionaisIds: string[];
-  responsaveisValores: number[];
+  pagadoresAdicionaisIds: string[];
+  pagadoresValores: number[];
 };
 
 export type MeioPagamento = {
@@ -137,7 +137,7 @@ export type FinanceiroModuleConfig<TSummary extends object, TDetail, TFilters> =
   removerDaFatura?: (id: string) => Promise<void>;
   toFormValues: (detail: TDetail) => FinanceiroFormValues;
   loadPessoaOptions: () => Promise<SelectOption[]>;
-  loadResponsavelOptions: () => Promise<SelectOption[]>;
+  loadMembroOptions: () => Promise<SelectOption[]>;
   loadFormaPagamentoOptions: () => Promise<FormaPagamentoOption[]>;
   loadContaBancariaOptions: () => Promise<SelectOption[]>;
   loadCartaoOptions: () => Promise<SelectOption[]>;
@@ -162,8 +162,8 @@ const defaultValues: FinanceiroFormValues = {
   origemCompraPlanejadaId: '',
   numeroDocumento: '',
   pessoaId: '',
-  responsavelId: '',
-  dataEmissao: '',
+  membroId: '',
+  dataEmissao: '',;
   dataVencimento: '',
   formaPagamentoId: '',
   cartaoId: '',
@@ -187,8 +187,8 @@ const defaultValues: FinanceiroFormValues = {
   recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
   recorrenciaObservacao: '',
   recorrenciaGerarAteData: '',
-  responsaveisAdicionaisIds: [],
-  responsaveisValores: []
+  pagadoresAdicionaisIds: [],
+  pagadoresValores: []
 };
 
 function buildContaFinanceiraSummaryItems(summary: FinanceiroResumo): SummaryCardItem[] {
@@ -331,13 +331,14 @@ async function loadRecebedorOptions() {
   }));
 }
 
-async function loadResponsavelOptions() {
+async function loadMembroOptions() {
   const response = await cadastrosApi.pessoas.listar({
     page: 1,
     pageSize: 500,
     search: '',
     ativo: true,
-    ehResponsavel: true
+    ehPagador: true,
+    ehRecebedor: true
   });
 
   return response.items.map((item) => ({ label: item.nome, value: item.id }));
@@ -396,12 +397,12 @@ async function loadRateioOptions(tipo: ContaGerencialTipo): Promise<RateioOption
     ativo: true
   });
 
-  const responsavelMap = new Map(response.items.map((i) => [i.id, i.responsavelPadraoId ?? null]));
+  const responsavelMap = new Map(response.items.map((i) => [i.id, i.membroPadraoId ?? null]));
 
   return mapContaGerencialHierarchyData(response.items).map(({ value, main, chain }) => ({
     value,
     displayText: main,
-    responsavelPadraoId: responsavelMap.get(value) ?? null,
+    membroPadraoId: responsavelMap.get(value) ?? null,
     label: chain ? (
       <>
         {main}{' '}
@@ -416,7 +417,7 @@ function buildContaPagarPayload(values: FinanceiroFormValues, opts?: { forcarPro
     origemCompraPlanejadaId: normalizeNullableId(values.origemCompraPlanejadaId),
     numeroDocumento: normalizeNullableText(values.numeroDocumento),
     dataEmissao: values.dataEmissao || new Date().toISOString().split('T')[0],
-    responsavelCompraId: values.responsavelId,
+    pagadorId: values.membroId,
     recebedorId: values.pessoaId,
     dataVencimento: values.dataVencimento,
     formaPagamentoId: values.formaPagamentoId,
@@ -437,25 +438,16 @@ function buildContaPagarPayload(values: FinanceiroFormValues, opts?: { forcarPro
     })),
     recorrencia: buildRecorrenciaPayload(values),
     forcarProximaFatura: opts?.forcarProximaFatura,
-    ...buildResponsaveisPayload(values)
-  };
-}
-
-function buildResponsaveisPayload(values: FinanceiroFormValues) {
-  const allIds = [values.responsavelId, ...values.responsaveisAdicionaisIds].filter(Boolean);
-  if (allIds.length < 2) return {};
-  return {
-    responsaveisAdicionaisIds: allIds,
-    ...(values.responsaveisValores.length === allIds.length && { valoresPorResponsavel: values.responsaveisValores })
+    ...buildPagadoresPayload(values)
   };
 }
 
 function buildPagadoresPayload(values: FinanceiroFormValues) {
-  const allIds = [values.responsavelId, ...values.responsaveisAdicionaisIds].filter(Boolean);
+  const allIds = [values.membroId, ...values.pagadoresAdicionaisIds].filter(Boolean);
   if (allIds.length < 2) return {};
   return {
     pagadoresAdicionaisIds: allIds,
-    ...(values.responsaveisValores.length === allIds.length && { valoresPorPagador: values.responsaveisValores })
+    ...(values.pagadoresValores.length === allIds.length && { valoresPorPagador: values.pagadoresValores })
   };
 }
 
@@ -463,8 +455,8 @@ function buildContaReceberPayload(values: FinanceiroFormValues): ContaReceberPay
   return {
     numeroDocumento: normalizeNullableText(values.numeroDocumento),
     dataEmissao: values.dataEmissao || new Date().toISOString().split('T')[0],
-    responsavelId: values.pessoaId || '',
-    pagadorId: values.responsavelId,
+    recebedorId: values.pessoaId || '',
+    pagadorId: values.membroId,
     dataVencimento: values.dataVencimento,
     formaPagamentoId: values.formaPagamentoId,
     cartaoId: normalizeNullableId(values.cartaoId),
@@ -503,7 +495,7 @@ function buildToFormValues(detail: {
   dataCompra: string | null;
   rateios: Array<{ contaGerencialId: string; valor: number }>;
   pessoaId: string;
-  responsavelId: string | null;
+  membroId: string | null;
   ehRecorrente: boolean;
   recorrencia: {
     tipoPeriodicidade: 'Mensal';
@@ -519,7 +511,7 @@ function buildToFormValues(detail: {
     origemCompraPlanejadaId: '',
     numeroDocumento: detail.numeroDocumento ?? '',
     pessoaId: detail.pessoaId,
-    responsavelId: detail.responsavelId ?? '',
+    membroId: detail.membroId ?? '',
     dataEmissao: detail.dataEmissao,
     dataVencimento: detail.dataVencimento,
     formaPagamentoId: '',
@@ -547,8 +539,8 @@ function buildToFormValues(detail: {
     recorrenciaPermiteEdicaoOcorrenciaIndividual: detail.recorrencia?.permiteEdicaoOcorrenciaIndividual ?? true,
     recorrenciaObservacao: detail.recorrencia?.observacao ?? '',
     recorrenciaGerarAteData: detail.recorrencia?.dataFim ?? '',
-    responsaveisAdicionaisIds: [],
-    responsaveisValores: []
+    pagadoresAdicionaisIds: [],
+    pagadoresValores: []
   };
 }
 
@@ -625,7 +617,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
       dataCompra: detail.dataCompra,
       rateios: detail.rateios,
       pessoaId: detail.recebedorId,
-      responsavelId: detail.responsavelCompraId,
+      membroId: detail.pagadorId,
       ehRecorrente: detail.ehRecorrente,
       recorrencia: detail.recorrencia
     }),
@@ -633,7 +625,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
     formaPagamentoId: detail.formaPagamentoId
   }),
   loadPessoaOptions: loadRecebedorOptions,
-  loadResponsavelOptions,
+  loadMembroOptions,
   loadFormaPagamentoOptions,
   loadContaBancariaOptions,
   loadCartaoOptions,
@@ -654,7 +646,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
         : 'Origem: compra planejada',
       valorOriginal: compraPlanejada.valorEstimado,
       quantidadeParcelas: compraPlanejada.quantidadeParcelasDesejada ?? 1,
-      responsavelId: compraPlanejada.responsavelId,
+      membroId: compraPlanejada.pagadorId,
       dataEmissao: compraPlanejada.dataDesejada ?? '',
       dataVencimento: compraPlanejada.dataDesejada ?? '',
       rateios: [
@@ -674,7 +666,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
   title: 'Contas a receber',
   singularTitle: 'Conta a receber',
   routeBase: '/contas-receber',
-  personLabel: 'Responsável',
+  personLabel: 'Recebedor',
   personRole: 'pagador',
   listDescription: '',
   formDescription: 'Cadastre receitas mantendo os contratos e a composição de rateio coerentes com o backend.',

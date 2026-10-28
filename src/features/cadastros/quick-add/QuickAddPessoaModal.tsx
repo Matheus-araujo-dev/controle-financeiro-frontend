@@ -4,7 +4,7 @@ import { formFieldClass, formLabelClass, ToggleField } from '../../../components
 import { cadastrosApi } from '../../../services/http/cadastros-api';
 import { QuickAddModal } from './QuickAddModal';
 
-type PessoaRole = 'pagador' | 'recebedor' | 'responsavel';
+type PessoaRole = 'pagador' | 'recebedor' | 'membro';
 
 type Props = {
   open: boolean;
@@ -20,9 +20,8 @@ const tipoPessoaOptions = [
 
 function defaultRoles(role?: PessoaRole) {
   return {
-    ehPagador: !role || role === 'pagador',
-    ehRecebedor: !role || role === 'recebedor',
-    ehResponsavel: !role || role === 'responsavel'
+    ehPagador: !role || role === 'pagador' || role === 'membro',
+    ehRecebedor: !role || role === 'recebedor' || role === 'membro'
   };
 }
 
@@ -32,7 +31,6 @@ export function QuickAddPessoaModal({ open, onClose, onSuccess, defaultRole }: P
   const initial = defaultRoles(defaultRole);
   const [ehPagador, setEhPagador] = useState(initial.ehPagador);
   const [ehRecebedor, setEhRecebedor] = useState(initial.ehRecebedor);
-  const [ehResponsavel, setEhResponsavel] = useState(initial.ehResponsavel);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
   const [duplicateItems, setDuplicateItems] = useState<Array<{ id: string; nome: string }>>([]);
@@ -48,7 +46,6 @@ export function QuickAddPessoaModal({ open, onClose, onSuccess, defaultRole }: P
       chavesPix: [],
       ehPagador,
       ehRecebedor,
-      ehResponsavel,
       contaGerencialDespesaId: null,
       contaGerencialReceitaId: null
     } as never);
@@ -101,7 +98,6 @@ export function QuickAddPessoaModal({ open, onClose, onSuccess, defaultRole }: P
     const reset = defaultRoles(defaultRole);
     setEhPagador(reset.ehPagador);
     setEhRecebedor(reset.ehRecebedor);
-    setEhResponsavel(reset.ehResponsavel);
     setError(undefined);
     setDuplicateItems([]);
     onClose();
@@ -139,7 +135,6 @@ export function QuickAddPessoaModal({ open, onClose, onSuccess, defaultRole }: P
         <div className="grid grid-cols-1 gap-2">
           <ToggleField checked={ehPagador} onChange={setEhPagador} label="Pagador" />
           <ToggleField checked={ehRecebedor} onChange={setEhRecebedor} label="Recebedor" />
-          <ToggleField checked={ehResponsavel} onChange={setEhResponsavel} label="Responsável" />
         </div>
       </div>
 

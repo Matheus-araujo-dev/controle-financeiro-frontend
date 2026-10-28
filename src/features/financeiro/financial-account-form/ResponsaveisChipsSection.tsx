@@ -19,12 +19,12 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
   const [quickAddOpen, setQuickAddOpen] = useState(false);
 
   const responsavelId = useWatch({ control, name: 'responsavelId' }) ?? '';
-  const responsaveisAdicionaisIds = useWatch({ control, name: 'responsaveisAdicionaisIds' }) ?? [];
+  const pagadoresAdicionaisIds = useWatch({ control, name: 'pagadoresAdicionaisIds' }) ?? [];
   const responsaveisValores = useWatch({ control, name: 'responsaveisValores' }) ?? [];
 
   const allSelected: Array<{ id: string; label: string }> = buildChipList(
     responsavelId,
-    responsaveisAdicionaisIds,
+    pagadoresAdicionaisIds,
     chipOptions
   );
 
@@ -32,7 +32,7 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
   const valorLiquido = form.valorLiquido;
 
   const available = chipOptions.filter(
-    (o) => o.value !== responsavelId && !responsaveisAdicionaisIds.includes(o.value)
+    (o) => o.value !== responsavelId && !pagadoresAdicionaisIds.includes(o.value)
   );
 
   function getValorForIndex(i: number): number {
@@ -50,11 +50,11 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
 
   function handleRemove(id: string) {
     if (id === responsavelId) {
-      const [next, ...rest] = responsaveisAdicionaisIds;
+      const [next, ...rest] = pagadoresAdicionaisIds;
       setValue('responsavelId', next ?? '', { shouldValidate: true });
-      setValue('responsaveisAdicionaisIds', rest ?? [], { shouldValidate: true });
+      setValue('pagadoresAdicionaisIds', rest ?? [], { shouldValidate: true });
     } else {
-      setValue('responsaveisAdicionaisIds', responsaveisAdicionaisIds.filter((x: string) => x !== id), { shouldValidate: true });
+      setValue('pagadoresAdicionaisIds', pagadoresAdicionaisIds.filter((x: string) => x !== id), { shouldValidate: true });
     }
     setValue('responsaveisValores', [], { shouldValidate: false });
   }
@@ -64,7 +64,7 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
       if (!responsavelId) {
         setValue('responsavelId', newId, { shouldValidate: true });
       } else {
-        setValue('responsaveisAdicionaisIds', [...responsaveisAdicionaisIds, newId], { shouldValidate: true });
+        setValue('pagadoresAdicionaisIds', [...pagadoresAdicionaisIds, newId], { shouldValidate: true });
       }
       setValue('responsaveisValores', [], { shouldValidate: false });
     });
@@ -79,7 +79,7 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
 
       {/* Hidden controllers to wire into RHF */}
       <Controller control={control} name="responsavelId" render={() => <input type="hidden" />} />
-      <Controller control={control} name="responsaveisAdicionaisIds" render={() => <input type="hidden" />} />
+      <Controller control={control} name="pagadoresAdicionaisIds" render={() => <input type="hidden" />} />
       <Controller control={control} name="responsaveisValores" render={() => <input type="hidden" />} />
 
       {/* Campo para adicionar novo responsável — auto-adiciona ao selecionar */}
@@ -91,7 +91,7 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
             if (!responsavelId) {
               setValue('responsavelId', id, { shouldValidate: true });
             } else {
-              setValue('responsaveisAdicionaisIds', [...responsaveisAdicionaisIds, id], { shouldValidate: true });
+              setValue('pagadoresAdicionaisIds', [...pagadoresAdicionaisIds, id], { shouldValidate: true });
             }
             setValue('responsaveisValores', [], { shouldValidate: false });
           }}

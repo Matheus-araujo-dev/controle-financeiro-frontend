@@ -44,7 +44,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
   const categoriaAtual = useWatch({ control, name: 'rateios.0.contaGerencialId' });
   const pessoaWatched = useWatch({ control, name: 'pessoaId' });
   const responsavelAtual = useWatch({ control, name: 'responsavelId' });
-  const responsaveisAdicionaisAtual = useWatch({ control, name: 'responsaveisAdicionaisIds' }) ?? [];
+  const responsaveisAdicionaisAtual = useWatch({ control, name: 'pagadoresAdicionaisIds' }) ?? [];
   const lastAutoFilledContaRef = useRef<string | null>(null);
   const lastAutoFilledResponsavelRef = useRef<string | null>(null);
 
@@ -69,7 +69,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
   useEffect(() => {
     if (!categoriaAtual) return;
     const option = rateioOptions.find((o) => o.value === categoriaAtual);
-    const responsavelId = option?.responsavelPadraoId;
+    const responsavelId = option?.membroPadraoId;
     if (!responsavelId) return;
     // Skip auto-fill when there are multiple responsáveis (user is managing chips manually)
     if (responsaveisAdicionaisAtual.length > 0) return;

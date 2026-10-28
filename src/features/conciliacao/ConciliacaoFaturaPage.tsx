@@ -30,7 +30,7 @@ export function ConciliacaoFaturaPage() {
   const [message, setMessage] = useState('');
   const [mostrarReembolsos, setMostrarReembolsos] = useState(false);
   const [modalRecebedor, setModalRecebedor] = useState(false);
-  const [modalResponsavel, setModalResponsavel] = useState(false);
+  const [modalPagador, setModalPagador] = useState(false);
   const [modalContaGerencial, setModalContaGerencial] = useState(false);
   const [sugerindo, setSugerindo] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -41,12 +41,12 @@ export function ConciliacaoFaturaPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [dirty]);
   const { data, isLoading, error: loadError } = useQuery({ queryKey: ['conciliacao-fatura-options', id], enabled: !!id, queryFn: async () => {
-    const [fatura, revisoes, recebedores, responsaveis, pagadores, formas, despesas, receitas] = await Promise.all([
+    const [fatura, revisoes, recebedores, pagadores, pagadores, formas, despesas, receitas] = await Promise.all([
       financeiroApi.faturas.obterPorId(id!), conciliacaoFaturaApi.listar(id!), contasPagarModuleConfig.loadPessoaOptions(),
-      contasPagarModuleConfig.loadResponsavelOptions(), contasReceberModuleConfig.loadPessoaOptions(), contasPagarModuleConfig.loadFormaPagamentoOptions(),
+      contasPagarModuleConfig.loadPagadorOptions(), contasReceberModuleConfig.loadPessoaOptions(), contasPagarModuleConfig.loadFormaPagamentoOptions(),
       contasPagarModuleConfig.loadRateioOptions(), contasReceberModuleConfig.loadRateioOptions()
     ]);
-    return { fatura, revisoes, recebedores, responsaveis, pagadores, formas, despesas, receitas };
+    return { fatura, revisoes, recebedores, pagadores, pagadores, formas, despesas, receitas };
   } });
   function carregar(review: ConciliacaoFatura) {
     const forma = review.contasSistema[0]?.formaPagamentoId ?? data?.formas.find(f => f.ehCartao)?.value ?? '';
@@ -89,13 +89,13 @@ export function ConciliacaoFaturaPage() {
       void queryClient.invalidateQueries({ queryKey: ['faturas'] });
     } catch (e) { throw new Error(getApiErrorMessage(e), { cause: e }); }
   }
-  function handlePessoaCriada(newId: string, label: string, role: 'recebedor' | 'responsavel') {
+  function handlePessoaCriada(newId: string, label: string, role: 'recebedor' | 'pagador') {
     const option = { label, value: newId };
     queryClient.setQueryData(['conciliacao-fatura-options', id], (prev: typeof data) => {
       if (!prev) return prev;
       return role === 'recebedor'
         ? { ...prev, recebedores: [option, ...prev.recebedores] }
-        : { ...prev, responsaveis: [option, ...prev.responsaveis] };
+        : { ...prev, pagadores: [option, ...prev.pagadores] };
     });
   }
   function handleContaGerencialCriada(newId: string, label: string) {
@@ -118,7 +118,7 @@ export function ConciliacaoFaturaPage() {
           const patch: Partial<RascunhoLancamento> = {};
           if (s.descricao) patch.descricao = s.descricao;
           if (s.recebedorId) patch.recebedorId = s.recebedorId;
-          if (s.responsavelCompraId) patch.responsavelCompraId = s.responsavelCompraId;
+          if (s.pagadorId) patch.pagadorId = s.pagadorId;
           if (s.contaGerencialId) patch.rateios = [{ contaGerencialId: s.contaGerencialId, valor: item.valor }];
           next[s.itemId] = { ...next[s.itemId], ...patch };
         }
@@ -131,7 +131,7 @@ export function ConciliacaoFaturaPage() {
   }
   const acoes = useMemo<AcoesCriacao>(() => ({
     onAddRecebedor: () => setModalRecebedor(true),
-    onAddResponsavel: () => setModalResponsavel(true),
+    onAddPagador: () => setModalPagador(true),
     onAddContaGerencial: () => setModalContaGerencial(true),
   }), []);
 
@@ -202,8 +202,8 @@ export function ConciliacaoFaturaPage() {
     </>}
     <QuickAddPessoaModal open={modalRecebedor} onClose={() => setModalRecebedor(false)} defaultRole="recebedor"
       onSuccess={(id, label) => handlePessoaCriada(id, label, 'recebedor')} />
-    <QuickAddPessoaModal open={modalResponsavel} onClose={() => setModalResponsavel(false)} defaultRole="responsavel"
-      onSuccess={(id, label) => handlePessoaCriada(id, label, 'responsavel')} />
+    <QuickAddPessoaModal open={modalPagador} onClose={() => setModalPagador(false)} defaultRole="pagador"
+      onSuccess={(id, label) => handlePessoaCriada(id, label, 'pagador')} />
     <QuickAddContaGerencialModal open={modalContaGerencial} onClose={() => setModalContaGerencial(false)} defaultTipo="Despesa"
       onSuccess={handleContaGerencialCriada} />
   </div>;

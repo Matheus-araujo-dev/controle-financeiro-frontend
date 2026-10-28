@@ -54,7 +54,6 @@ export const pessoaSchema = z.object({
     }),
   ehPagador: z.boolean(),
   ehRecebedor: z.boolean(),
-  ehResponsavel: z.boolean(),
   contaGerencialDespesaId: z.string(),
   contaGerencialReceitaId: z.string()
 });
@@ -109,7 +108,7 @@ export const contaGerencialSchema = z.object({
   descricao: requiredText('Descrição'),
   tipo: z.enum(['Receita', 'Despesa']),
   contaPaiId: z.string().trim(),
-  responsavelPadraoId: z.string().trim(),
+  membroPadraoId: z.string().trim(),
   contaGerencialContrariaId: z.string().trim(),
   ativo: z.boolean(),
   ehPadraoRecebimentoFaturaCartao: z.boolean()

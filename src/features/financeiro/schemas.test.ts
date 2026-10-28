@@ -4,7 +4,7 @@ const validValues = {
   origemCompraPlanejadaId: '',
   numeroDocumento: '',
   pessoaId: 'p1',
-  responsavelId: 'p2',
+  membroId: 'p2',
   dataEmissao: '2026-04-04',
   dataVencimento: '2026-04-20',
   formaPagamentoId: 'f1',
@@ -29,7 +29,7 @@ const validValues = {
   recorrenciaPermiteEdicaoOcorrenciaIndividual: true,
   recorrenciaObservacao: '',
   recorrenciaGerarAteData: '',
-  responsaveisAdicionaisIds: [],
+  pagadoresAdicionaisIds: [],
   responsaveisValores: []
 };
 

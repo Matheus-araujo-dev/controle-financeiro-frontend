@@ -285,7 +285,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
           setReembolsoData({
             tipo: isPagar ? 'receber' : 'pagar',
             pessoaId: (isPagar ? detail.recebedorId : detail.pagadorId) as string | undefined,
-            responsavelId: (isPagar ? detail.responsavelCompraId : detail.responsavelId) as string | undefined,
+            responsavelId: (isPagar ? detail.pagadorId : detail.responsavelId) as string | undefined,
             valor: (detail.valorLiquido as number) ?? 0,
             dataVencimento: (detail.dataVencimento as string) ?? undefined,
             descricao: `Reembolso: ${(detail.descricao as string) ?? ''}`,

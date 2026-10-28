@@ -119,7 +119,7 @@ function toComboOptions(options: SelectOption[], includeEmpty = false): ComboBox
 }
 
 function isOptionalSelect(fieldName: string) {
-  return ['contaPaiId', 'responsavelPadraoId', 'contaBancariaPagamentoPadraoId', 'contaGerencialDespesaId', 'contaGerencialReceitaId'].includes(fieldName);
+  return ['contaPaiId', 'membroPadraoId', 'contaBancariaPagamentoPadraoId', 'contaGerencialDespesaId', 'contaGerencialReceitaId'].includes(fieldName);
 }
 
 function sectionPlanFor(key: string) {
@@ -166,7 +166,7 @@ function sectionPlanFor(key: string) {
         title: 'Responsabilidade e Regras',
         eyebrow: 'Governança',
         icon: 'admin_panel_settings',
-        fields: ['responsavelPadraoId', 'contaGerencialContrariaId', 'ehPadraoRecebimentoFaturaCartao', 'ativo']
+        fields: ['membroPadraoId', 'contaGerencialContrariaId', 'ehPadraoRecebimentoFaturaCartao', 'ativo']
       }
     ]
   };
@@ -276,7 +276,7 @@ export function MasterDataFormPage({
   const [loadError, setLoadError] = useState<string>();
   const [submitError, setSubmitError] = useState<string>();
   const [loadedOptions, setLoadedOptions] = useState<Record<string, SelectOption[]>>({});
-  const [responsavelModalOpen, setResponsavelModalOpen] = useState(false);
+  const [membroModalOpen, setMembroModalOpen] = useState(false);
   const [contaBancariaModalOpen, setContaBancariaModalOpen] = useState(false);
   const [duplicateItems, setDuplicateItems] = useState<Array<{ id: string; nome: string }>>([]);
   const [pendingDuplicatePayload, setPendingDuplicatePayload] = useState<TPayload | null>(null);
@@ -512,7 +512,7 @@ export function MasterDataFormPage({
                   placeholder="Selecione..."
                   onChange={(value) => controlledField.onChange(value)}
                   onAddNew={
-                    (isContaGerencial && field.name === 'responsavelPadraoId') ? () => setResponsavelModalOpen(true) :
+                    (isContaGerencial && field.name === 'membroPadraoId') ? () => setMembroModalOpen(true) :
                     (config.key === 'cartoes' && field.name === 'contaBancariaPagamentoPadraoId') ? () => setContaBancariaModalOpen(true) :
                     undefined
                   }
@@ -651,7 +651,7 @@ export function MasterDataFormPage({
         open={responsavelModalOpen}
         onClose={() => setResponsavelModalOpen(false)}
         onSuccess={(newId) => {
-          void reloadFieldOptions('responsavelPadraoId').then(() => setValue('responsavelPadraoId', newId, { shouldValidate: true }));
+          void reloadFieldOptions('membroPadraoId').then(() => setValue('membroPadraoId', newId, { shouldValidate: true }));
         }}
       />
 

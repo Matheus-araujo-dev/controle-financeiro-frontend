@@ -1,5 +1,5 @@
 import { compraPlanejadaSchema } from './schemas';
-const base = { titulo: 'Mouse', descricao: '', valorEstimado: 200, dataDesejada: '', prioridade: 'Media', status: 'Planejada', parcelavel: false, quantidadeParcelasDesejada: null, contaGerencialId: 'one', responsavelId: 'two', link: '', observacao: '' };
+const base = { titulo: 'Mouse', descricao: '', valorEstimado: 200, dataDesejada: '', prioridade: 'Media', status: 'Planejada', parcelavel: false, quantidadeParcelasDesejada: null, contaGerencialId: 'one', pagadorId: 'two', link: '', observacao: '' };
 it.each(['', null])('aceita data opcional %s', dataDesejada => {
   expect(compraPlanejadaSchema.safeParse({ ...base, dataDesejada }).success).toBe(true);
 });

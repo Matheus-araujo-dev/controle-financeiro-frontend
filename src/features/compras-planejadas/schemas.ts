@@ -15,7 +15,7 @@ export const compraPlanejadaSchema = z.object({
   parcelavel: z.boolean(),
   quantidadeParcelasDesejada: z.number().nullable(),
   contaGerencialId: requiredText('Conta gerencial'),
-  responsavelId: requiredText('Responsável'),
+  pagadorId: requiredText('Pagador'),
   link: z.string().trim().refine((value) => value === '' || z.string().url().safeParse(value).success, {
     message: 'Link deve ser uma URL válida.'
   }),

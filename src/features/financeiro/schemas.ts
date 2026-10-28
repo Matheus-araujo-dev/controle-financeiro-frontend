@@ -11,7 +11,7 @@ export const financialAccountFormSchema = z
     origemCompraPlanejadaId: z.string(),
     numeroDocumento: z.string(),
     pessoaId: z.string().min(1, 'Selecione a pessoa'),
-    responsavelId: z.string().min(1, 'Selecione o responsável'),
+    membroId: z.string().min(1, 'Selecione o membro'),
     dataEmissao: z.string(),
     dataVencimento: z.string().min(1, 'Informe a data de vencimento'),
     formaPagamentoId: z.string().min(1, 'Selecione a forma de pagamento'),
@@ -36,7 +36,7 @@ export const financialAccountFormSchema = z
     recorrenciaPermiteEdicaoOcorrenciaIndividual: z.boolean(),
     recorrenciaObservacao: z.string(),
     recorrenciaGerarAteData: z.string(),
-    responsaveisAdicionaisIds: z.array(z.string()),
+    pagadoresAdicionaisIds: z.array(z.string()),
     responsaveisValores: z.array(z.number())
   })
   .superRefine((values, context) => {

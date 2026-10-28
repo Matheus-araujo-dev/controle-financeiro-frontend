@@ -3,20 +3,20 @@ import { Checkbox, Input, InputNumber, Select } from 'antd';
 import { ComboBox, type ComboBoxOption } from '../../components/forms/ComboBox';
 import { DateInput } from '../../components/forms/DateInput';
 import { RateiosCell } from './RateiosCell';
-import { ResponsaveisCell } from './ResponsaveisCell';
+import { PagadoresCell } from './PagadoresCell';
 import { formatCurrencyBRL } from '../../shared/currency';
 import type { CampoGradeFatura } from './ConciliacaoFaturaGrid';
 import type { RascunhoLancamento } from './conciliacao-fatura-form';
 import { camposMemoria, ratearValor } from './conciliacao-fatura-form';
 
-export type OpcoesConciliacao = { recebedores: ComboBoxOption[]; responsaveis: ComboBoxOption[]; pagadores: ComboBoxOption[];
+export type OpcoesConciliacao = { recebedores: ComboBoxOption[]; pagadores: ComboBoxOption[]; pagadores: ComboBoxOption[];
   formas: (ComboBoxOption & { ehCartao?: boolean })[]; despesas: ComboBoxOption[]; receitas: ComboBoxOption[] };
 const nome = (options: ComboBoxOption[], id?: string | null) => options.find(x => x.value === id)?.label ?? 'Não informado';
 
 
 export type AcoesCriacao = {
   onAddRecebedor?: () => void;
-  onAddResponsavel?: () => void;
+  onAddPagador?: () => void;
   onAddContaGerencial?: () => void;
 };
 
@@ -28,11 +28,11 @@ export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, optio
     { titulo: 'Descrição ajustada', largura: 200, render: (item, conta, novo, locked) => novo
       ? <Input className="!h-11 !rounded-xl" aria-label={`Descrição de ${item.descricaoOriginal}`} maxLength={200} value={rows[item.id].descricao} disabled={locked}
           onChange={e => update(item.id, { descricao: e.target.value })} /> : <span>{conta?.descricao ?? 'Escolha o lançamento'}</span> },
-    { titulo: 'Responsáveis', largura: 220, render: (item, conta, novo, locked) => novo
-      ? <ResponsaveisCell responsavelId={rows[item.id].responsavelCompraId} adicionaisIds={rows[item.id].responsaveisAdicionaisIds}
-          valores={rows[item.id].responsaveisValores} total={item.valor} options={options.responsaveis} disabled={locked}
-          onChange={patch => update(item.id, patch)} onAddNew={acoes?.onAddResponsavel} />
-      : <span>{nome(options.responsaveis, conta?.responsavelCompraId)}</span> },
+    { titulo: 'Pagadores', largura: 220, render: (item, conta, novo, locked) => novo
+      ? <PagadoresCell pagadorId={rows[item.id].pagadorId} adicionaisIds={rows[item.id].pagadoresAdicionaisIds}
+          valores={rows[item.id].pagadoresValores} total={item.valor} options={options.pagadores} disabled={locked}
+          onChange={patch => update(item.id, patch)} onAddNew={acoes?.onAddPagador} />
+      : <span>{nome(options.pagadores, conta?.pagadorId)}</span> },
     { titulo: 'Recebedor', render: (item, conta, novo, locked) => novo
       ? <ComboBox compact aria-label={`Recebedor de ${item.descricaoOriginal}`} options={options.recebedores} value={rows[item.id].recebedorId} disabled={locked}
           onChange={id => update(item.id, { recebedorId: id })} onAddNew={acoes?.onAddRecebedor} addNewLabel="Novo recebedor" /> : <span>{nome(options.recebedores, conta?.recebedorId)}</span> },
@@ -78,7 +78,7 @@ export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, optio
     { titulo: 'Memória', largura: 200, render: (item, _, __, locked) => <div className="space-y-2">
       <Checkbox checked={rows[item.id].aprender} disabled={locked} onChange={e => update(item.id, { aprender: e.target.checked })}>Aprender esta decisão</Checkbox>
       {rows[item.id].aprender && <Select mode="multiple" aria-label="Campos para aprender" className="w-full" disabled={locked} value={rows[item.id].camposParaAprender}
-        options={camposMemoria.map((value, i) => ({ value, label: ['Descrição', 'Responsável', 'Recebedor', 'Rateios', 'Recorrência', 'Gerar reembolso', 'Pagadores do reembolso'][i] }))}
+        options={camposMemoria.map((value, i) => ({ value, label: ['Descrição', 'Pagador', 'Recebedor', 'Rateios', 'Recorrência', 'Gerar reembolso', 'Pagadores do reembolso'][i] }))}
         onChange={camposParaAprender => update(item.id, { camposParaAprender })} />}
       {!rows[item.id].aprender && <p className="text-xs text-on-surface-variant">Somente desta vez</p>}
     </div> }
