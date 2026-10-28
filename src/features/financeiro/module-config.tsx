@@ -397,12 +397,12 @@ async function loadRateioOptions(tipo: ContaGerencialTipo): Promise<RateioOption
     ativo: true
   });
 
-  const responsavelMap = new Map(response.items.map((i) => [i.id, i.membroPadraoId ?? null]));
+  const membroMap = new Map(response.items.map((i) => [i.id, i.membroPadraoId ?? null]));
 
   return mapContaGerencialHierarchyData(response.items).map(({ value, main, chain }) => ({
     value,
     displayText: main,
-    membroPadraoId: responsavelMap.get(value) ?? null,
+    membroPadraoId: membroMap.get(value) ?? null,
     label: chain ? (
       <>
         {main}{' '}
@@ -732,15 +732,15 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
       dataLiquidacao: detail.dataLiquidacao,
       dataCompra: null,
       rateios: detail.rateios,
-      pessoaId: detail.responsavelId ?? '',
-      responsavelId: detail.pagadorId,
+      pessoaId: detail.recebedorId ?? '',
+      membroId: detail.pagadorId,
       ehRecorrente: detail.ehRecorrente,
       recorrencia: detail.recorrencia
     }),
     formaPagamentoId: detail.formaPagamentoId
   }),
   loadPessoaOptions: loadPagadorOptions,
-  loadResponsavelOptions,
+  loadMembroOptions,
   loadFormaPagamentoOptions,
   loadContaBancariaOptions,
   loadCartaoOptions,

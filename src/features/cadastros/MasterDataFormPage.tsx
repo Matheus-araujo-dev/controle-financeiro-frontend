@@ -519,7 +519,7 @@ export function MasterDataFormPage({
                   addNewLabel={
                     config.key === 'cartoes' && field.name === 'contaBancariaPagamentoPadraoId'
                       ? 'Nova conta bancária'
-                      : 'Criar responsável'
+                      : 'Criar membro'
                   }
                 />
               );
@@ -648,8 +648,8 @@ export function MasterDataFormPage({
       </div>
 
       <QuickAddPessoaModal
-        open={responsavelModalOpen}
-        onClose={() => setResponsavelModalOpen(false)}
+        open={membroModalOpen}
+        onClose={() => setMembroModalOpen(false)}
         onSuccess={(newId) => {
           void reloadFieldOptions('membroPadraoId').then(() => setValue('membroPadraoId', newId, { shouldValidate: true }));
         }}

@@ -164,7 +164,7 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
         open={quickAddOpen}
         onClose={() => setQuickAddOpen(false)}
         onSuccess={handleQuickAddSuccess}
-        defaultRole="responsavel"
+        defaultRole="membro"
       />
     </div>
   );
