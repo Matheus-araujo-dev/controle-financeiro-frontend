@@ -30,7 +30,7 @@ const validValues = {
   recorrenciaObservacao: '',
   recorrenciaGerarAteData: '',
   pagadoresAdicionaisIds: [],
-  responsaveisValores: []
+  pagadoresValores: []
 };
 
 describe('financialAccountFormSchema', () => {

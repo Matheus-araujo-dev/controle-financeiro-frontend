@@ -40,7 +40,7 @@ describe('comprasPlanejadasApi', () => {
       parcelavel: true,
       quantidadeParcelasDesejada: 10,
       contaGerencialId: 'cg-1',
-      responsavelId: 'p-1',
+      pagadorId: 'p-1',
       link: 'https://loja.exemplo.com/produto/notebook',
       observacao: 'Aguardar Black Friday'
     });
@@ -54,7 +54,7 @@ describe('comprasPlanejadasApi', () => {
       parcelavel: true,
       quantidadeParcelasDesejada: 10,
       contaGerencialId: 'cg-1',
-      responsavelId: 'p-1',
+      pagadorId: 'p-1',
       link: 'https://loja.exemplo.com/produto/notebook',
       observacao: 'Aguardar Black Friday'
     });

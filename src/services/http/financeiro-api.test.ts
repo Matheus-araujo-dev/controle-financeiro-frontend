@@ -128,7 +128,7 @@ describe('financeiroApi', () => {
     await financeiroApi.contasReceber.criar({
       numeroDocumento: '',
       dataEmissao: '2026-04-04',
-      responsavelId: 'resp-2',
+      recebedorId: 'resp-2',
       pagadorId: 'p2',
       dataVencimento: '2026-04-25',
       formaPagamentoId: 'f1',
@@ -148,7 +148,7 @@ describe('financeiroApi', () => {
     await financeiroApi.contasReceber.atualizar('1', {
       numeroDocumento: '',
       dataEmissao: '2026-04-04',
-      responsavelId: 'resp-2',
+      recebedorId: 'resp-2',
       pagadorId: 'p2',
       dataVencimento: '2026-04-25',
       formaPagamentoId: 'f1',
@@ -168,7 +168,7 @@ describe('financeiroApi', () => {
     await financeiroApi.contasReceber.alterarFuturas('1', {
       numeroDocumento: '',
       dataEmissao: '2026-04-04',
-      responsavelId: 'resp-2',
+      recebedorId: 'resp-2',
       pagadorId: 'p2',
       dataVencimento: '2026-04-25',
       formaPagamentoId: 'f1',

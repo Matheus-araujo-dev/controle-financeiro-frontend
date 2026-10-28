@@ -74,7 +74,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [errorMessage, setErrorMessage] = useState<string>();
   const [isLoadError, setIsLoadError] = useState(false);
   const [pessoaOptions, setPessoaOptions] = useState<SelectOption[]>([]);
-  const [responsavelOptions, setResponsavelOptions] = useState<SelectOption[]>([]);
+  const [membroOptions, setMembroOptions] = useState<SelectOption[]>([]);
   const [formaPagamentoOptions, setFormaPagamentoOptions] = useState<FormaPagamentoOption[]>([]);
   const [contaBancariaOptions, setContaBancariaOptions] = useState<SelectOption[]>([]);
   const [cartaoOptions, setCartaoOptions] = useState<SelectOption[]>([]);
@@ -193,14 +193,14 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     async function loadOptions() {
       const [pessoas, responsaveis, formas, contas, cartoes, rateios] = await Promise.all([
         config.loadPessoaOptions(),
-        config.loadResponsavelOptions(),
+        config.loadMembroOptions(),
         config.loadFormaPagamentoOptions(),
         config.loadContaBancariaOptions(),
         config.loadCartaoOptions(),
         config.loadRateioOptions()
       ]);
       setPessoaOptions(pessoas);
-      setResponsavelOptions(responsaveis);
+      setMembroOptions(responsaveis);
       setFormaPagamentoOptions(formas);
       setContaBancariaOptions(contas);
       setCartaoOptions(cartoes);
@@ -234,8 +234,9 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         setContaVinculada((detail as Record<string, unknown>).contaVinculada as ContaVinculadaResumo | null ?? null);
         setGrupoReembolsoId((detail as Record<string, unknown>).grupoReembolsoId as string | null ?? null);
         setGrupoReembolso((detail as Record<string, unknown>).grupoReembolso as GrupoReembolsoInfo | null ?? null);
-        setGrupoResponsaveisId((detail as Record<string, unknown>).grupoResponsaveisId as string | null ?? null);
-        setGrupoResponsaveis((detail as Record<string, unknown>).grupoResponsaveis as GrupoResponsaveisInfo | null ?? null);
+        const isPagarConfig = config.key === 'contas-pagar';
+        setGrupoResponsaveisId((detail as Record<string, unknown>)[isPagarConfig ? 'grupoPagadoresId' : 'grupoRecebedoresId'] as string | null ?? null);
+        setGrupoResponsaveis((detail as Record<string, unknown>)[isPagarConfig ? 'grupoPagadores' : 'grupoRecebedores'] as GrupoResponsaveisInfo | null ?? null);
         if ('grupoParcelamentoId' in detail) {
           setGrupoParcelamentoId((detail as Record<string, unknown>).grupoParcelamentoId as string | null);
           setNumeroParcela((detail as Record<string, unknown>).numeroParcela as number | undefined);
@@ -285,7 +286,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
           setReembolsoData({
             tipo: isPagar ? 'receber' : 'pagar',
             pessoaId: (isPagar ? detail.recebedorId : detail.pagadorId) as string | undefined,
-            responsavelId: (isPagar ? detail.pagadorId : detail.responsavelId) as string | undefined,
+            membroId: (isPagar ? detail.pagadorId : detail.recebedorId) as string | undefined,
             valor: (detail.valorLiquido as number) ?? 0,
             dataVencimento: (detail.dataVencimento as string) ?? undefined,
             descricao: `Reembolso: ${(detail.descricao as string) ?? ''}`,
@@ -518,9 +519,9 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     setPessoaOptions(options);
   }, [config]);
 
-  const reloadResponsavelOptions = useCallback(async () => {
-    const options = await config.loadResponsavelOptions();
-    setResponsavelOptions(options);
+  const reloadMembroOptions = useCallback(async () => {
+    const options = await config.loadMembroOptions();
+    setMembroOptions(options);
   }, [config]);
 
   const reloadFormaPagamentoOptions = useCallback(async () => {
@@ -596,7 +597,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     actionLoading,
     cardInvoicePreview,
     pessoaOptions,
-    responsavelOptions,
+    membroOptions,
     formaPagamentoOptions,
     contaBancariaOptions,
     cartaoOptions,
@@ -622,7 +623,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     confirmarProximaFatura,
     cancelarFaturaIndisponivel,
     reloadPessoaOptions,
-    reloadResponsavelOptions,
+    reloadMembroOptions,
     reloadFormaPagamentoOptions,
     reloadContaBancariaOptions,
     reloadCartaoOptions,

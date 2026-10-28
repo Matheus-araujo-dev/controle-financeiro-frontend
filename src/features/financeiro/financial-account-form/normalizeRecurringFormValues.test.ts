@@ -10,7 +10,7 @@ function makeValues(overrides: Partial<FinanceiroFormValues> = {}): FinanceiroFo
     dataLiquidacao: '',
     dataCompra: '',
     pessoaId: '',
-    responsavelId: '',
+    membroId: '',
     valorOriginal: 100,
     valorDesconto: 0,
     valorJuros: 0,
@@ -32,7 +32,7 @@ function makeValues(overrides: Partial<FinanceiroFormValues> = {}): FinanceiroFo
     recorrenciaGerarAteData: '',
     origemCompraPlanejadaId: '',
     pagadoresAdicionaisIds: [],
-    responsaveisValores: [],
+    pagadoresValores: [],
     ...overrides
   };
 }

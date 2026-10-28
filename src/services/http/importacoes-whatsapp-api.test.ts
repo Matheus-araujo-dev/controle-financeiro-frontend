@@ -30,7 +30,7 @@ describe('importacoesWhatsappApi', () => {
       observacao: 'Confirmado manualmente',
       descricaoAjustada: 'URBANUS BURGUER',
       contaGerencialId: 'cg1',
-      responsavelId: 'p1',
+      pagadorId: 'p1',
       dataVencimentoContaReceber: '2026-04-13',
       gerarContaReceber: true,
       marcarComoRecorrente: true
@@ -39,7 +39,7 @@ describe('importacoesWhatsappApi', () => {
       observacao: 'Arquivo invalido',
       descricaoAjustada: null,
       contaGerencialId: null,
-      responsavelId: null,
+      pagadorId: null,
       dataVencimentoContaReceber: null,
       gerarContaReceber: false,
       marcarComoRecorrente: false
@@ -65,7 +65,7 @@ describe('importacoesWhatsappApi', () => {
       observacao: 'Confirmado manualmente',
       descricaoAjustada: 'URBANUS BURGUER',
       contaGerencialId: 'cg1',
-      responsavelId: 'p1',
+      pagadorId: 'p1',
       dataVencimentoContaReceber: '2026-04-13',
       gerarContaReceber: true,
       marcarComoRecorrente: true
@@ -74,7 +74,7 @@ describe('importacoesWhatsappApi', () => {
       observacao: 'Arquivo invalido',
       descricaoAjustada: null,
       contaGerencialId: null,
-      responsavelId: null,
+      pagadorId: null,
       dataVencimentoContaReceber: null,
       gerarContaReceber: false,
       marcarComoRecorrente: false
