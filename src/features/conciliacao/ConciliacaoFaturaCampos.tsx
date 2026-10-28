@@ -26,7 +26,7 @@ export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, optio
   const bloqueado = (id: string, grupo: string | null | undefined, locked: boolean) => locked || !!grupo || !rows[id].gerarReembolso;
   const campos: CampoGradeFatura[] = [
     { titulo: 'Descrição ajustada', largura: 200, render: (item, conta, novo, locked) => novo
-      ? <Input aria-label={`Descrição de ${item.descricaoOriginal}`} maxLength={200} value={rows[item.id].descricao} disabled={locked}
+      ? <Input className="!h-11 !rounded-xl" aria-label={`Descrição de ${item.descricaoOriginal}`} maxLength={200} value={rows[item.id].descricao} disabled={locked}
           onChange={e => update(item.id, { descricao: e.target.value })} /> : <span>{conta?.descricao ?? 'Escolha o lançamento'}</span> },
     { titulo: 'Responsáveis', largura: 220, render: (item, conta, novo, locked) => novo
       ? <ResponsaveisCell responsavelId={rows[item.id].responsavelCompraId} adicionaisIds={rows[item.id].responsaveisAdicionaisIds}
@@ -42,8 +42,10 @@ export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, optio
     { titulo: 'Recorrência', largura: 200, render: (item, conta, novo, locked) => {
       if (!novo) return <span>{conta?.regraRecorrenciaId ? 'Recorrente' : 'Sem recorrência'}</span>;
       const r = rows[item.id];
-      return <div className="space-y-2"><div className="flex items-center"><Checkbox disabled={locked || item.quantidadeParcelas > 1 || item.valor < 0} checked={r.ehRecorrente}
+      const impedido = item.quantidadeParcelas > 1 || item.valor < 0;
+      return <div className="space-y-2"><div className="flex items-center"><Checkbox disabled={locked || impedido} checked={r.ehRecorrente}
         onChange={e => update(item.id, { ehRecorrente: e.target.checked })}>Recorrente</Checkbox></div>
+        {impedido && <p className="text-[11px] text-on-surface-variant">{item.quantidadeParcelas > 1 ? 'Não disponível para itens parcelados' : 'Não disponível para estornos'}</p>}
         {r.ehRecorrente && <>
           <ComboBox compact aria-label="Tipo de dia da recorrência" value={r.recorrenciaTipoDia} disabled={locked} options={[{ value: 'DiaFixo', label: 'Dia fixo' }, { value: 'DiaUtil', label: 'Dia útil' }]}
             onChange={v => update(item.id, { recorrenciaTipoDia: v as 'DiaFixo' | 'DiaUtil' })} />
@@ -51,7 +53,7 @@ export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, optio
           <DateInput compact ariaLabel="Início da recorrência" value={r.recorrenciaInicio} disabled={locked} onChange={v => update(item.id, { recorrenciaInicio: v })} />
           <DateInput compact ariaLabel="Fim da recorrência" value={r.recorrenciaFim} disabled={locked} onChange={v => update(item.id, { recorrenciaFim: v })} />
           <Checkbox checked={r.permiteEdicao} disabled={locked} onChange={e => update(item.id, { permiteEdicao: e.target.checked })}>Permitir edição individual</Checkbox>
-          <Input aria-label="Observação da recorrência" value={r.recorrenciaObservacao} disabled={locked} onChange={e => update(item.id, { recorrenciaObservacao: e.target.value })} />
+          <Input className="!h-11 !rounded-xl" aria-label="Observação da recorrência" value={r.recorrenciaObservacao} disabled={locked} onChange={e => update(item.id, { recorrenciaObservacao: e.target.value })} />
         </>}
       </div>;
     } },
@@ -93,7 +95,7 @@ export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, optio
           disabled={off || r.reembolso.parcelarIgual} onChange={dataVencimento => refund(item.id, { dataVencimento })} />
         <div className="flex items-center"><Checkbox checked={r.reembolso.parcelarIgual} disabled={off || item.quantidadeParcelas === 1}
           onChange={e => refund(item.id, { parcelarIgual: e.target.checked })}>Acompanhar parcelas</Checkbox></div>
-        <Input size="small" aria-label="Descrição do reembolso" maxLength={200} value={r.reembolso.descricao}
+        <Input className="!h-11 !rounded-xl" aria-label="Descrição do reembolso" maxLength={200} value={r.reembolso.descricao}
           disabled={off} onChange={e => refund(item.id, { descricao: e.target.value })} />
         <Input.TextArea size="small" aria-label="Observação do reembolso" maxLength={500} autoSize value={r.reembolso.observacao}
           disabled={off} onChange={e => refund(item.id, { observacao: e.target.value })} />
