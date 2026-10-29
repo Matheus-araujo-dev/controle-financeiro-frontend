@@ -23,7 +23,7 @@
                 "$ref": "#/components/schemas/AgentePerguntarRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AgentePerguntarRequest"
               }
@@ -101,6 +101,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -122,7 +125,7 @@
                 "$ref": "#/components/schemas/AgenteInsightsRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AgenteInsightsRequest"
               }
@@ -160,6 +163,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -181,7 +187,7 @@
                 "$ref": "#/components/schemas/AgenteCategorizarRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AgenteCategorizarRequest"
               }
@@ -219,6 +225,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -259,6 +268,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -278,7 +290,7 @@
                 "$ref": "#/components/schemas/SalvarConfiguracaoNotificacaoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/SalvarConfiguracaoNotificacaoRequest"
               }
@@ -333,6 +345,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -373,6 +388,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -422,6 +440,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -441,7 +462,7 @@
                 "$ref": "#/components/schemas/RegistrarPushSubscriptionRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/RegistrarPushSubscriptionRequest"
               }
@@ -516,6 +537,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -570,6 +594,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -658,6 +685,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -775,6 +805,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -829,6 +862,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -900,6 +936,198 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/api-keys": {
+      "post": {
+        "tags": [
+          "ApiKeys"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarApiKeyRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarApiKeyRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CriarApiKeyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCriadaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCriadaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCriadaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "DebugUser": []
+          },
+          {
+            "ApiKey": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "ApiKeys"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "DebugUser": []
+          },
+          {
+            "ApiKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/api-keys/{id}": {
+      "delete": {
+        "tags": [
+          "ApiKeys"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -921,7 +1149,7 @@
                 "$ref": "#/components/schemas/GoogleLoginRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/GoogleLoginRequest"
               }
@@ -1163,7 +1391,7 @@
                 "$ref": "#/components/schemas/BootstrapEchoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/BootstrapEchoRequest"
               }
@@ -1350,6 +1578,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -1369,7 +1600,7 @@
                 "$ref": "#/components/schemas/CriarCartaoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarCartaoRequest"
               }
@@ -1427,6 +1658,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -1498,6 +1732,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -1528,7 +1765,7 @@
                 "$ref": "#/components/schemas/AtualizarCartaoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarCartaoRequest"
               }
@@ -1586,6 +1823,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -1777,6 +2017,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -1796,7 +2039,7 @@
                 "$ref": "#/components/schemas/CriarCompraPlanejadaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarCompraPlanejadaRequest"
               }
@@ -1854,6 +2097,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -1925,6 +2171,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -1955,7 +2204,7 @@
                 "$ref": "#/components/schemas/AtualizarCompraPlanejadaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarCompraPlanejadaRequest"
               }
@@ -2013,6 +2262,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -2045,7 +2297,7 @@
                 "$ref": "#/components/schemas/RealizarCompraPlanejadaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/RealizarCompraPlanejadaRequest"
               }
@@ -2123,6 +2375,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -2210,6 +2465,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -2257,6 +2515,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -2328,6 +2589,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -2369,7 +2633,7 @@
                 "$ref": "#/components/schemas/ConciliarItemRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/ConciliarItemRequest"
               }
@@ -2410,6 +2674,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -2473,6 +2740,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -2550,6 +2820,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -2608,6 +2881,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -2668,6 +2944,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -2718,7 +2997,7 @@
                 "$ref": "#/components/schemas/VincularItemFaturaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/VincularItemFaturaRequest"
               }
@@ -2739,6 +3018,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -2789,7 +3071,7 @@
                 "$ref": "#/components/schemas/CriarItemFaturaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarItemFaturaRequest"
               }
@@ -2810,6 +3092,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -2860,7 +3145,7 @@
                 "$ref": "#/components/schemas/RascunhoFaturaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/RascunhoFaturaRequest"
               }
@@ -2898,6 +3183,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -2948,7 +3236,7 @@
                 "$ref": "#/components/schemas/PreviaReembolsoFaturaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/PreviaReembolsoFaturaRequest"
               }
@@ -2995,6 +3283,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -3047,6 +3338,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -3187,6 +3481,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -3206,7 +3503,7 @@
                 "$ref": "#/components/schemas/CriarContaBancariaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarContaBancariaRequest"
               }
@@ -3264,6 +3561,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -3335,6 +3635,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -3365,7 +3668,7 @@
                 "$ref": "#/components/schemas/AtualizarContaBancariaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarContaBancariaRequest"
               }
@@ -3423,6 +3726,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -3586,6 +3892,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -3605,7 +3914,7 @@
                 "$ref": "#/components/schemas/CriarContaGerencialRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarContaGerencialRequest"
               }
@@ -3663,6 +3972,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -3734,6 +4046,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -3764,7 +4079,7 @@
                 "$ref": "#/components/schemas/AtualizarContaGerencialRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarContaGerencialRequest"
               }
@@ -3822,6 +4137,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -3882,6 +4200,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -4112,6 +4433,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -4131,7 +4455,7 @@
                 "$ref": "#/components/schemas/CriarContaPagarRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarContaPagarRequest"
               }
@@ -4189,6 +4513,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -4295,6 +4622,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -4366,6 +4696,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -4396,7 +4729,7 @@
                 "$ref": "#/components/schemas/AtualizarContaPagarRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarContaPagarRequest"
               }
@@ -4474,6 +4807,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -4506,7 +4842,7 @@
                 "$ref": "#/components/schemas/AtualizarContaPagarRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarContaPagarRequest"
               }
@@ -4584,6 +4920,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -4616,7 +4955,7 @@
                 "$ref": "#/components/schemas/GerarOcorrenciasRecorrenciaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/GerarOcorrenciasRecorrenciaRequest"
               }
@@ -4694,6 +5033,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -4785,6 +5127,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -4817,7 +5162,7 @@
                 "$ref": "#/components/schemas/EncerrarRecorrenciaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/EncerrarRecorrenciaRequest"
               }
@@ -4895,6 +5240,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -4927,7 +5275,7 @@
                 "$ref": "#/components/schemas/LiquidarContaPagarRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/LiquidarContaPagarRequest"
               }
@@ -5005,6 +5353,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -5096,6 +5447,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -5128,7 +5482,7 @@
                 "$ref": "#/components/schemas/CancelarContaPagarRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CancelarContaPagarRequest"
               }
@@ -5206,6 +5560,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -5280,6 +5637,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -5352,6 +5712,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -5412,6 +5775,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -5642,6 +6008,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -5661,7 +6030,7 @@
                 "$ref": "#/components/schemas/CriarContaReceberRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarContaReceberRequest"
               }
@@ -5719,6 +6088,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -5790,6 +6162,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -5820,7 +6195,7 @@
                 "$ref": "#/components/schemas/AtualizarContaReceberRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarContaReceberRequest"
               }
@@ -5898,6 +6273,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -5930,7 +6308,7 @@
                 "$ref": "#/components/schemas/AtualizarContaReceberRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarContaReceberRequest"
               }
@@ -6008,6 +6386,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -6040,7 +6421,7 @@
                 "$ref": "#/components/schemas/GerarOcorrenciasRecorrenciaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/GerarOcorrenciasRecorrenciaRequest"
               }
@@ -6118,6 +6499,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -6209,6 +6593,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -6241,7 +6628,7 @@
                 "$ref": "#/components/schemas/EncerrarRecorrenciaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/EncerrarRecorrenciaRequest"
               }
@@ -6319,6 +6706,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -6351,7 +6741,7 @@
                 "$ref": "#/components/schemas/LiquidarContaReceberRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/LiquidarContaReceberRequest"
               }
@@ -6429,6 +6819,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -6520,6 +6913,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -6552,7 +6948,7 @@
                 "$ref": "#/components/schemas/CancelarContaReceberRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CancelarContaReceberRequest"
               }
@@ -6630,6 +7026,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -6690,6 +7089,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -6776,6 +7178,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -6889,6 +7294,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -7009,6 +7417,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -7126,6 +7537,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -7243,6 +7657,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -7360,6 +7777,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -7462,6 +7882,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -7578,6 +8001,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -7702,6 +8128,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -7769,6 +8198,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -7818,6 +8250,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -7837,7 +8272,7 @@
                 "$ref": "#/components/schemas/CriarWorkspaceRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarWorkspaceRequest"
               }
@@ -7895,6 +8330,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -7955,6 +8393,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -7974,7 +8415,7 @@
                 "$ref": "#/components/schemas/RenomearFamiliaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/RenomearFamiliaRequest"
               }
@@ -8032,6 +8473,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -8103,6 +8547,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -8124,7 +8571,7 @@
                 "$ref": "#/components/schemas/CriarConviteFamiliaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarConviteFamiliaRequest"
               }
@@ -8182,6 +8629,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -8236,6 +8686,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -8365,6 +8818,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -8419,6 +8875,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -8451,7 +8910,7 @@
                 "$ref": "#/components/schemas/AlterarPapelMembroRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AlterarPapelMembroRequest"
               }
@@ -8492,6 +8951,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -8546,6 +9008,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -8726,6 +9191,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -8797,6 +9265,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -8929,6 +9400,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -8961,7 +9435,7 @@
                 "$ref": "#/components/schemas/PagarFaturaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/PagarFaturaRequest"
               }
@@ -9039,6 +9513,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -9130,6 +9607,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -9221,6 +9701,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -9312,6 +9795,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -9419,6 +9905,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -9440,7 +9929,7 @@
                 "$ref": "#/components/schemas/ConfirmarImportacaoFaturaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/ConfirmarImportacaoFaturaRequest"
               }
@@ -9515,6 +10004,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -9585,6 +10077,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -9655,6 +10150,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -9686,7 +10184,7 @@
                 "$ref": "#/components/schemas/ReabrirFechamentoMensalRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/ReabrirFechamentoMensalRequest"
               }
@@ -9744,6 +10242,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -9877,6 +10378,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -9896,7 +10400,7 @@
                 "$ref": "#/components/schemas/CriarFormaPagamentoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarFormaPagamentoRequest"
               }
@@ -9954,6 +10458,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -10025,6 +10532,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -10055,7 +10565,7 @@
                 "$ref": "#/components/schemas/AtualizarFormaPagamentoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarFormaPagamentoRequest"
               }
@@ -10113,6 +10623,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -10291,6 +10804,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -10362,6 +10878,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -10383,7 +10902,7 @@
                 "$ref": "#/components/schemas/ReceberImportacaoWhatsappWebhookRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/ReceberImportacaoWhatsappWebhookRequest"
               }
@@ -10521,6 +11040,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -10553,7 +11075,7 @@
                 "$ref": "#/components/schemas/AprovarImportacaoWhatsappRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AprovarImportacaoWhatsappRequest"
               }
@@ -10631,6 +11153,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -10663,7 +11188,7 @@
                 "$ref": "#/components/schemas/AprovarImportacaoWhatsappRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AprovarImportacaoWhatsappRequest"
               }
@@ -10741,6 +11266,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -10832,6 +11360,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -10864,7 +11395,7 @@
                 "$ref": "#/components/schemas/RevisarItemImportadoWhatsappRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/RevisarItemImportadoWhatsappRequest"
               }
@@ -10942,6 +11473,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -10974,7 +11508,7 @@
                 "$ref": "#/components/schemas/RevisarItemImportadoWhatsappRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/RevisarItemImportadoWhatsappRequest"
               }
@@ -11052,6 +11586,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -11139,6 +11676,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -11158,7 +11698,7 @@
                 "$ref": "#/components/schemas/CriarInvestimentoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarInvestimentoRequest"
               }
@@ -11216,6 +11756,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -11287,6 +11830,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -11317,7 +11863,7 @@
                 "$ref": "#/components/schemas/AtualizarInvestimentoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarInvestimentoRequest"
               }
@@ -11395,6 +11941,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -11435,6 +11984,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -11467,7 +12019,7 @@
                 "$ref": "#/components/schemas/AtualizarValorAtualRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarValorAtualRequest"
               }
@@ -11545,6 +12097,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -11577,7 +12132,7 @@
                 "$ref": "#/components/schemas/EncerrarInvestimentoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/EncerrarInvestimentoRequest"
               }
@@ -11655,6 +12210,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -11816,6 +12374,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -11887,6 +12448,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -11956,6 +12520,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -11977,7 +12544,7 @@
                 "$ref": "#/components/schemas/UpsertMetaOrcamentoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/UpsertMetaOrcamentoRequest"
               }
@@ -12035,6 +12602,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -12089,6 +12659,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -12129,6 +12702,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -12148,7 +12724,7 @@
                 "$ref": "#/components/schemas/WhatsappRegistrarRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/WhatsappRegistrarRequest"
               }
@@ -12203,6 +12779,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -12224,6 +12803,52 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/perfil/whatsapp/qr": {
+      "get": {
+        "tags": [
+          "PerfilWhatsapp"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhatsappBridgeQrResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhatsappBridgeQrResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhatsappBridgeQrResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -12264,6 +12889,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -12283,7 +12911,7 @@
                 "$ref": "#/components/schemas/WhatsappAlertasRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/WhatsappAlertasRequest"
               }
@@ -12338,6 +12966,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -12499,6 +13130,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -12518,7 +13152,7 @@
                 "$ref": "#/components/schemas/CriarPessoaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarPessoaRequest"
               }
@@ -12576,6 +13210,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -12647,6 +13284,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -12677,7 +13317,7 @@
                 "$ref": "#/components/schemas/AtualizarPessoaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarPessoaRequest"
               }
@@ -12755,6 +13395,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -12826,6 +13469,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -12897,6 +13543,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -12968,6 +13617,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -13055,6 +13707,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -13074,7 +13729,7 @@
                 "$ref": "#/components/schemas/CriarPlanoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarPlanoRequest"
               }
@@ -13132,6 +13787,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -13203,6 +13861,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -13233,7 +13894,7 @@
                 "$ref": "#/components/schemas/AtualizarPlanoRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/AtualizarPlanoRequest"
               }
@@ -13311,6 +13972,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -13400,6 +14064,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -13491,6 +14158,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -13523,7 +14193,7 @@
                 "$ref": "#/components/schemas/RetirarDinheiroRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/RetirarDinheiroRequest"
               }
@@ -13601,6 +14271,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -13661,6 +14334,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -13786,6 +14462,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -13857,6 +14536,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -13928,6 +14610,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -13999,6 +14684,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -14090,6 +14778,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -14130,6 +14821,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -14151,7 +14845,7 @@
                 "$ref": "#/components/schemas/CriarReembolsoContaPagarRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarReembolsoContaPagarRequest"
               }
@@ -14209,6 +14903,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -14266,6 +14963,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -14363,6 +15063,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -14382,7 +15085,7 @@
                 "$ref": "#/components/schemas/CriarTransferenciaRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CriarTransferenciaRequest"
               }
@@ -14440,6 +15143,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -14511,6 +15217,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       },
@@ -14600,6 +15309,9 @@
           },
           {
             "DebugUser": []
+          },
+          {
+            "ApiKey": []
           }
         ]
       }
@@ -14621,7 +15333,7 @@
                 "$ref": "#/components/schemas/WhatsappMensagemInboundRequest"
               }
             },
-            "application/*\u002Bjson": {
+            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/WhatsappMensagemInboundRequest"
               }
@@ -14650,6 +15362,545 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/agente/perguntar-com-arquivo": {
+      "post": {
+        "tags": [
+          "Agente"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mensagem": {
+                    "type": "string"
+                  },
+                  "conversaId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "arquivo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "mensagem": {
+                  "style": "form"
+                },
+                "conversaId": {
+                  "style": "form"
+                },
+                "arquivo": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentePerguntarResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentePerguntarResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentePerguntarResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "DebugUser": []
+          },
+          {
+            "ApiKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agente/perguntar-stream": {
+      "post": {
+        "tags": [
+          "Agente"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentePerguntarRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentePerguntarRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentePerguntarRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "DebugUser": []
+          },
+          {
+            "ApiKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agente/perguntar-stream-com-arquivo": {
+      "post": {
+        "tags": [
+          "Agente"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mensagem": {
+                    "type": "string"
+                  },
+                  "conversaId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "arquivo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "mensagem": {
+                  "style": "form"
+                },
+                "conversaId": {
+                  "style": "form"
+                },
+                "arquivo": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "DebugUser": []
+          },
+          {
+            "ApiKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agente/conversas": {
+      "get": {
+        "tags": [
+          "Agente"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversaResumoResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversaResumoResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversaResumoResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "DebugUser": []
+          },
+          {
+            "ApiKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agente/conversas/{id}": {
+      "get": {
+        "tags": [
+          "Agente"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversaDetalheResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversaDetalheResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversaDetalheResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "DebugUser": []
+          },
+          {
+            "ApiKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agente/arquivos/{fileId}/{nomeArquivo}": {
+      "get": {
+        "tags": [
+          "Agente"
+        ],
+        "parameters": [
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nomeArquivo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/faturas/{faturaId}/conciliacoes/{id}/sugerir": {
+      "post": {
+        "tags": [
+          "ConciliacoesFatura"
+        ],
+        "parameters": [
+          {
+            "name": "faturaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SugestoesConciliacaoResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SugestoesConciliacaoResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SugestoesConciliacaoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "DebugUser": []
+          },
+          {
+            "ApiKey": []
+          }
+        ]
       }
     }
   },
@@ -14764,6 +16015,28 @@
         },
         "additionalProperties": false
       },
+      "AgentFileOutputDto": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "mimeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "tamanhoBytes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
       "AgentePerguntarResponse": {
         "type": "object",
         "properties": {
@@ -14778,6 +16051,13 @@
           "tokensUsados": {
             "type": "integer",
             "format": "int32"
+          },
+          "arquivos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentFileOutputDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -14868,6 +16148,88 @@
           "traceId": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ApiKeyCriadaResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "keyPrefix": {
+            "type": "string",
+            "nullable": true
+          },
+          "key": {
+            "type": "string",
+            "nullable": true
+          },
+          "familiaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "papel": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiraEmUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "criadoEmUtc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ApiKeyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "keyPrefix": {
+            "type": "string",
+            "nullable": true
+          },
+          "familiaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "papel": {
+            "type": "string",
+            "nullable": true
+          },
+          "ativo": {
+            "type": "boolean"
+          },
+          "expiraEmUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "ultimoUsoEmUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "criadoEmUtc": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -17459,6 +18821,21 @@
         },
         "additionalProperties": false
       },
+      "CriarApiKeyRequest": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiraEmUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CriarCartaoRequest": {
         "type": "object",
         "properties": {
@@ -18004,6 +19381,22 @@
             "type": "array",
             "items": {
               "type": "string"
+            },
+            "nullable": true
+          },
+          "responsaveisAdicionaisIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
+          "valoresPorResponsavel": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
             },
             "nullable": true
           }
@@ -22168,6 +23561,20 @@
         },
         "additionalProperties": false
       },
+      "WhatsappBridgeQrResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "qr": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "WhatsappMensagemInboundRequest": {
         "type": "object",
         "properties": {
@@ -22260,6 +23667,18 @@
               "type": "string"
             },
             "nullable": true
+          },
+          "midiaBase64": {
+            "type": "string",
+            "nullable": true
+          },
+          "mimeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "nomeArquivo": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -22281,6 +23700,131 @@
           }
         },
         "additionalProperties": false
+      },
+      "ConversaDetalheResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "criadaEmUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mensagens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversaMensagemResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConversaMensagemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "papel": {
+            "type": "string",
+            "nullable": true
+          },
+          "conteudo": {
+            "type": "string",
+            "nullable": true
+          },
+          "criadaEmUtc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConversaResumoResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "criadaEmUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ultimaMensagemUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "ultimaMensagemResumo": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalMensagens": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SugestaoItemConciliacaoResponse": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "recebedorId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "responsavelCompraId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "contaGerencialId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "confianca": {
+            "type": "number",
+            "format": "double"
+          },
+          "contaPagarId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "justificativa": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SugestoesConciliacaoResponse": {
+        "type": "object",
+        "properties": {
+          "sugestoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SugestaoItemConciliacaoResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       }
     },
     "securitySchemes": {
@@ -22289,6 +23833,12 @@
         "description": "Use um token Bearer quando a API estiver configurada em modo JwtBearer/Auth0.",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      },
+      "ApiKey": {
+        "type": "apiKey",
+        "description": "API Key para agentes de serviço (WhatsApp, automações).",
+        "name": "X-Api-Key",
+        "in": "header"
       }
     }
   }

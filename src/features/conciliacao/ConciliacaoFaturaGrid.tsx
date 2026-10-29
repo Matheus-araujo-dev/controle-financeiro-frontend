@@ -19,7 +19,8 @@ export function ConciliacaoFaturaGrid({ session, onConfirmar, onCriar, onIgnorar
   const [escolhas, setEscolhas] = useState<Record<string, Escolha>>(() => Object.fromEntries(session.itens.map(item => {
     const clara = item.candidatos.find(x => x.correspondenciaClara && session.itens.filter(other => other.candidatos.some(c => c.contaId === x.contaId && c.correspondenciaClara)).length === 1);
     const saved = item.rascunho && typeof item.rascunho === 'object' ? item.rascunho as Record<string, unknown> : {};
-    const novo = !!onCriar && item.candidatos.length === 0;
+    const novo = !!onCriar && item.candidatos.length === 0 && !session.contasSistema.some(c =>
+      c.numeroParcela === item.numeroParcela && c.quantidadeParcelas === item.quantidadeParcelas && Math.sign(c.valor) === Math.sign(item.valor));
     const contaId = item.contaPagarVinculadaId ?? (typeof saved.vinculo === 'string' ? saved.vinculo : clara?.contaId ?? (novo ? 'novo' : ''));
     return [item.id, { contaId, selecionado: (typeof saved.selecionado === 'boolean' ? saved.selecionado : !!clara || novo) && item.status === 'Pendente', usarValor: saved.usarValor === true }];
   })));
@@ -88,6 +89,8 @@ export function ConciliacaoFaturaGrid({ session, onConfirmar, onCriar, onIgnorar
     const concluiu = item.status !== 'Pendente' || escolha?.concluido;
     const novo = escolha?.contaId === 'novo';
     const bloqueado = salvando || item.status !== 'Pendente' || !!escolha?.concluido || escolha?.contaId === 'ignorar';
+    const analise = item.rascunho && typeof item.rascunho === 'object' && 'justificativa' in item.rascunho
+      && typeof item.rascunho.justificativa === 'string' ? item.rascunho.justificativa : null;
     const temDetalhes = campos.length > 0 && escolha?.contaId && escolha.contaId !== 'ignorar' && !concluiu;
 
     return (
@@ -108,6 +111,22 @@ export function ConciliacaoFaturaGrid({ session, onConfirmar, onCriar, onIgnorar
               </div>
               <div className="shrink-0">{renderConferencia(item)}</div>
             </div>
+            {!concluiu && analise && !item.candidatos.some(c => c.motivo.startsWith('IA:')) && <p className="mt-2 text-sm">IA: {analise}</p>}
+            {!concluiu && item.candidatos.map(candidato => {
+              const sugerida = session.contasSistema.find(c => c.id === candidato.contaId);
+              if (!sugerida) return null;
+              const disputada = session.itens.some(other => other.id !== item.id && escolhas[other.id]?.contaId === sugerida.id
+                && (escolhas[other.id]?.selecionado || other.status === 'Conciliado'));
+              return <div key={candidato.contaId} className="mt-2 rounded-lg bg-surface-container p-3 text-sm">
+                <p>{candidato.motivo}</p>
+                <p>{sugerida.descricao} · {formatCurrencyBRL(sugerida.valor)} · Diferença: {formatCurrencyBRL(candidato.diferenca)}</p>
+                <Button variant="secondary" disabled={salvando || disputada}
+                  aria-label={`Usar sugestão: ${sugerida.descricao}`}
+                  onClick={() => atualizar(item.id, { contaId: sugerida.id, selecionado: true, usarValor: false, erro: undefined })}>
+                  Usar sugestão
+                </Button>
+              </div>;
+            })}
             <div className="mt-2 flex flex-wrap items-end gap-3">
               <div className="min-w-[240px] flex-1 max-w-md">
                 <ComboBox compact aria-label={`Conta correspondente a ${item.descricaoOriginal}`} value={escolha?.contaId}

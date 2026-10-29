@@ -7,6 +7,16 @@ const item: ItemFaturaConciliacao = { id: 'i', data: '2026-09-01', descricaoOrig
     rateios: [{ contaGerencialId: 'a', proporcao: 0.5 }, { contaGerencialId: 'b', proporcao: 0.5 }], ehRecorrente: false, gerarReembolso: false, reembolsoPagadoresIds: [] } };
 
 describe('rascunho da conciliação', () => {
+  it('aplica sugestões automáticas sem ignorar memória nem confirmar vínculo ou valor', () => {
+    const draft = criarRascunho({ ...item, preferencias: null, rascunho: {
+      fonteIA: true, confianca: 0.9, descricao: 'Compra sugerida', recebedorId: 'p2',
+      contaGerencialId: 'a', contaPagarSugeridaId: 'c1', justificativa: 'Mesma parcela'
+    } }, '2026-09-20', 'cartao');
+    expect(draft.descricao).toBe('Compra sugerida');
+    expect(draft.rateios).toEqual([{ contaGerencialId: 'a', valor: 33.33 }]);
+    expect(draft.vinculo).toBeUndefined();
+    expect(draft.usarValor).not.toBe(true);
+  });
   it('aplica memória sem perder o título original e fecha os centavos dos rateios', () => {
     const draft = criarRascunho(item, '2026-09-20', 'cartao');
     expect(draft.descricao).toBe('Sistema do pilates');

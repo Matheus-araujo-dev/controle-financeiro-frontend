@@ -98,12 +98,21 @@ export interface AgentePerguntarRequest {
   conversaId?: string | null;
 }
 
+export interface AgentFileOutputDto {
+  nome?: string | null;
+  mimeType?: string | null;
+  url?: string | null;
+  /** @format int64 */
+  tamanhoBytes?: number;
+}
+
 export interface AgentePerguntarResponse {
   resposta?: string | null;
   /** @format uuid */
   conversaId?: string;
   /** @format int32 */
   tokensUsados?: number;
+  arquivos?: AgentFileOutputDto[] | null;
 }
 
 export interface AlteracaoCampoResponse {
@@ -134,6 +143,38 @@ export interface ApiErrorResponse {
   message?: string | null;
   errors?: Record<string, string[]>;
   traceId?: string | null;
+}
+
+export interface ApiKeyCriadaResponse {
+  /** @format uuid */
+  id?: string;
+  nome?: string | null;
+  keyPrefix?: string | null;
+  key?: string | null;
+  /** @format uuid */
+  familiaId?: string;
+  papel?: string | null;
+  /** @format date-time */
+  expiraEmUtc?: string | null;
+  /** @format date-time */
+  criadoEmUtc?: string;
+}
+
+export interface ApiKeyResponse {
+  /** @format uuid */
+  id?: string;
+  nome?: string | null;
+  keyPrefix?: string | null;
+  /** @format uuid */
+  familiaId?: string;
+  papel?: string | null;
+  ativo?: boolean;
+  /** @format date-time */
+  expiraEmUtc?: string | null;
+  /** @format date-time */
+  ultimoUsoEmUtc?: string | null;
+  /** @format date-time */
+  criadoEmUtc?: string;
 }
 
 export interface AprovarImportacaoWhatsappRequest {
@@ -1139,6 +1180,12 @@ export interface ConviteFamiliaResponse {
   expiraEmUtc?: string;
 }
 
+export interface CriarApiKeyRequest {
+  nome?: string | null;
+  /** @format date-time */
+  expiraEmUtc?: string | null;
+}
+
 export interface CriarCartaoRequest {
   nome?: string | null;
   bandeira?: string | null;
@@ -1336,6 +1383,8 @@ export interface CriarItemFaturaRequest {
   observacao?: string | null;
   aprender?: boolean;
   camposParaAprender?: string[] | null;
+  responsaveisAdicionaisIds?: string[] | null;
+  valoresPorResponsavel?: number[] | null;
 }
 
 export interface CriarPessoaRequest {
@@ -2919,6 +2968,11 @@ export interface WhatsappAlertasResponse {
   receberLimiteResponsavel?: boolean;
 }
 
+export interface WhatsappBridgeQrResponse {
+  status?: string | null;
+  qr?: string | null;
+}
+
 export interface WhatsappMensagemInboundRequest {
   telefone?: string | null;
   tipo?: string | null;
@@ -2949,6 +3003,9 @@ export interface WhatsappRespostaDto {
   tipo?: string | null;
   conteudo?: string | null;
   opcoes?: string[] | null;
+  midiaBase64?: string | null;
+  mimeType?: string | null;
+  nomeArquivo?: string | null;
 }
 
 export interface WorkspaceResumoResponse {
@@ -2956,4 +3013,54 @@ export interface WorkspaceResumoResponse {
   id?: string;
   nome?: string | null;
   papel?: string | null;
+}
+
+export interface ConversaDetalheResponse {
+  /** @format uuid */
+  id?: string;
+  /** @format date-time */
+  criadaEmUtc?: string;
+  mensagens?: ConversaMensagemResponse[] | null;
+}
+
+export interface ConversaMensagemResponse {
+  /** @format uuid */
+  id?: string;
+  papel?: string | null;
+  conteudo?: string | null;
+  /** @format date-time */
+  criadaEmUtc?: string;
+}
+
+export interface ConversaResumoResponse {
+  /** @format uuid */
+  id?: string;
+  /** @format date-time */
+  criadaEmUtc?: string;
+  /** @format date-time */
+  ultimaMensagemUtc?: string | null;
+  ultimaMensagemResumo?: string | null;
+  /** @format int32 */
+  totalMensagens?: number;
+}
+
+export interface SugestaoItemConciliacaoResponse {
+  /** @format uuid */
+  itemId?: string;
+  descricao?: string | null;
+  /** @format uuid */
+  recebedorId?: string | null;
+  /** @format uuid */
+  responsavelCompraId?: string | null;
+  /** @format uuid */
+  contaGerencialId?: string | null;
+  /** @format double */
+  confianca?: number;
+  /** @format uuid */
+  contaPagarId?: string | null;
+  justificativa?: string | null;
+}
+
+export interface SugestoesConciliacaoResponse {
+  sugestoes?: SugestaoItemConciliacaoResponse[] | null;
 }

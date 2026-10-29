@@ -114,8 +114,8 @@ export function ConciliacaoFaturaPage() {
         for (const s of sugestoes) {
           if (!next[s.itemId]) continue;
           const item = session.itens.find(i => i.id === s.itemId);
-          if (!item || item.status !== 'Pendente') continue;
-          const patch: Partial<RascunhoLancamento> = {};
+          if (!item || item.status !== 'Pendente' || s.confianca < 0.5) continue;
+          const patch: Partial<RascunhoLancamento> = { contaPagarSugeridaId: s.contaPagarId, justificativa: s.justificativa };
           if (s.descricao) patch.descricao = s.descricao;
           if (s.recebedorId) patch.recebedorId = s.recebedorId;
           if (s.responsavelCompraId) patch.responsavelCompraId = s.responsavelCompraId;
@@ -124,8 +124,21 @@ export function ConciliacaoFaturaPage() {
         }
         return next;
       });
+      setSession(current => current && ({ ...current, itens: current.itens.map(item => {
+        const suggestion = sugestoes.find(s => s.itemId === item.id && s.confianca >= 0.5);
+        const conta = current.contasSistema.find(c => c.id === suggestion?.contaPagarId);
+        if (!suggestion || item.status !== 'Pendente') return item;
+        const updated = { ...item, rascunho: { ...(item.rascunho && typeof item.rascunho === 'object' ? item.rascunho : {}), justificativa: suggestion.justificativa },
+          candidatos: item.candidatos.filter(c => !c.motivo.startsWith('IA:')) };
+        if (!conta) return updated;
+        return { ...updated, candidatos: [...updated.candidatos.filter(c => c.contaId !== conta.id), {
+          contaId: conta.id, diferenca: item.valor - conta.valor, pontos: 50,
+          motivo: `IA: ${suggestion.justificativa ?? 'Confira a correspondência sugerida'}`, correspondenciaClara: false
+        }] };
+      }) }));
+      setDirty(true);
       const preenchidos = sugestoes.filter(s => s.confianca > 0).length;
-      setMessage(preenchidos > 0 ? `IA sugeriu campos para ${preenchidos} item(ns). Revise antes de confirmar.` : 'A IA não encontrou sugestões para os itens pendentes.');
+      setMessage(preenchidos > 0 ? `IA sugeriu vínculos e campos para ${preenchidos} item(ns). Revise antes de confirmar.` : 'A IA não encontrou sugestões para os itens pendentes.');
     } catch (e) { setError(getApiErrorMessage(e)); }
     finally { setSugerindo(false); }
   }
@@ -156,7 +169,7 @@ export function ConciliacaoFaturaPage() {
               onChange={e => setSenha(e.target.value)} placeholder="Preencha antes de anexar" />
             <p className="text-xs text-on-surface-variant">Usada apenas para abrir o arquivo. Não é salva.</p>
           </div>
-          {uploading && <p role="status" className="text-sm text-on-surface-variant">Enviando e reconhecendo os lançamentos. PDFs com imagens podem levar alguns minutos.</p>}
+          {uploading && <p role="status" className="text-sm text-on-surface-variant">Lendo o PDF e analisando possíveis vínculos com IA. PDFs com imagens podem levar alguns minutos.</p>}
           {session && <p className="break-all text-sm text-primary">Arquivo anexado: {session.nomeArquivo}</p>}
         </div>
         <input ref={fileInput} hidden aria-label="PDF da fatura" type="file" accept=".pdf,application/pdf" disabled={busy}
@@ -168,7 +181,7 @@ export function ConciliacaoFaturaPage() {
     </section>
     <div className="flex flex-wrap items-center gap-3">
       {!session && data.revisoes.map(r => <Button key={r.id} variant="secondary" disabled={busy} onClick={() => void abrir(r.id)}>Retomar {r.nomeArquivo}</Button>)}
-      {session && <><Button variant="secondary" disabled={busy} onClick={() => void salvar()}>Salvar rascunho</Button>
+      {session && <><Button variant="secondary" disabled={busy || sugerindo} onClick={() => void salvar()}>Salvar rascunho</Button>
         <Button variant="secondary" disabled={busy || sugerindo} loading={sugerindo} onClick={() => void sugerirComIA()}
           icon={<span aria-hidden="true" className="material-symbols-outlined text-xl">auto_awesome</span>}>
           {sugerindo ? 'Analisando com IA...' : 'Sugerir com IA'}
@@ -183,7 +196,7 @@ export function ConciliacaoFaturaPage() {
         {session.totalDocumento != null && <span>Total impresso no PDF: {formatCurrencyBRL(session.totalDocumento)}</span>}
         <span>Contas da fatura: {formatCurrencyBRL(session.contasSistema.reduce((s, c) => s + c.valor, 0))}</span>
         <span>Pendentes: {session.itens.filter(i => i.status === 'Pendente').length}</span></div>
-      <ConciliacaoFaturaGrid key={session.id} session={session} disabled={busy} onBusyChange={setBusy}
+      <ConciliacaoFaturaGrid key={session.id} session={session} disabled={busy || sugerindo} onBusyChange={setBusy}
         onEscolha={(itemId, escolha) => update(itemId, escolha)}
         campos={criarCamposGrade(rows, data, update, mostrarReembolsos, { faturaId: id, sessionId: session.id }, acoes)}
         toolbar={(ids, saving) => <ConciliacaoFaturaLote ids={ids} options={data} disabled={saving || busy} onApply={(selected, transform) => {

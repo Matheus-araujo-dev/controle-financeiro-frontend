@@ -4,6 +4,7 @@ import type { CriarItemFatura, ItemFaturaConciliacao, ReembolsoFatura } from '..
 export const camposMemoria = ['descricao', 'responsavelCompraId', 'recebedorId', 'rateios', 'ehRecorrente', 'gerarReembolso', 'reembolsoPagadoresIds'];
 const rateioSchema = z.object({ contaGerencialId: z.string(), valor: z.number().finite() });
 const rascunhoSchema = z.object({
+  contaPagarSugeridaId: z.string().nullable().optional(), justificativa: z.string().nullable().optional(),
   vinculo: z.string().optional(), selecionado: z.boolean().optional(), usarValor: z.boolean().optional(),
   descricao: z.string(), recebedorId: z.string(), responsavelCompraId: z.string(), formaPagamentoId: z.string(),
   responsaveisAdicionaisIds: z.array(z.string()), responsaveisValores: z.array(z.number()),
@@ -31,10 +32,17 @@ export function criarRascunho(item: ItemFaturaConciliacao, vencimento: string, f
   const saved = rascunhoSchema.safeParse(item.rascunho);
   if (saved.success) return saved.data;
   const p = item.preferencias;
+  const result = z.object({ fonteIA: z.literal(true), confianca: z.number().min(0.5).max(1),
+    descricao: z.string().nullable().optional(), recebedorId: z.string().nullable().optional(),
+    responsavelCompraId: z.string().nullable().optional(), contaGerencialId: z.string().nullable().optional(),
+    contaPagarSugeridaId: z.string().nullable().optional(), justificativa: z.string().nullable().optional()
+  }).safeParse(item.rascunho);
+  const ia = result.success ? result.data : undefined;
   return {
-    descricao: p?.descricao ?? item.descricaoOriginal, recebedorId: p?.recebedorId ?? '', responsavelCompraId: p?.responsavelCompraId ?? '',
+    descricao: p?.descricao ?? ia?.descricao ?? item.descricaoOriginal, recebedorId: p?.recebedorId ?? ia?.recebedorId ?? '', responsavelCompraId: p?.responsavelCompraId ?? ia?.responsavelCompraId ?? '',
+    contaPagarSugeridaId: ia?.contaPagarSugeridaId, justificativa: ia?.justificativa,
     formaPagamentoId, responsaveisAdicionaisIds: [], responsaveisValores: [],
-    rateios: ratearValor(item.valor, p?.rateios ?? []), observacao: '', aprender: true, camposParaAprender: [...camposMemoria],
+    rateios: ratearValor(item.valor, p?.rateios ?? (ia?.contaGerencialId ? [{ contaGerencialId: ia.contaGerencialId, proporcao: 1 }] : [])), observacao: '', aprender: true, camposParaAprender: [...camposMemoria],
     ehRecorrente: !!p?.ehRecorrente && item.quantidadeParcelas === 1 && item.valor > 0, recorrenciaTipoDia: 'DiaFixo',
     recorrenciaDia: Number(item.data.slice(8, 10)), recorrenciaInicio: item.data, recorrenciaFim: '', permiteEdicao: true, recorrenciaObservacao: '',
     gerarReembolso: !!p?.gerarReembolso && item.valor > 0,

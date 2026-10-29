@@ -13,6 +13,18 @@ const session = {
 };
 
 describe('ConciliacaoFaturaGrid', () => {
+  it('exibe justificativa da IA e exige escolha humana antes de vincular', async () => {
+    const confirmar = vi.fn();
+    const review = { ...session, itens: [{ ...session.itens[0], candidatos: [{
+      ...session.itens[0].candidatos[0], correspondenciaClara: false, motivo: 'IA: Mesma parcela, diferença de um centavo'
+    }] }] };
+    render(<ConciliacaoFaturaGrid session={review} onConfirmar={confirmar} onCriar={vi.fn()} />);
+    expect(screen.getByText('IA: Mesma parcela, diferença de um centavo')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Conciliar selecionados (0)' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Usar sugestão: Meu tênis' }));
+    expect(screen.getByRole('checkbox', { name: 'Usar valor da fatura para LOJA' })).not.toBeChecked();
+    expect(confirmar).not.toHaveBeenCalled();
+  });
   it('exige aceite do valor antes de confirmar a diferença', async () => {
     const confirmar = vi.fn().mockResolvedValue(undefined);
     render(<ConciliacaoFaturaGrid session={session} onConfirmar={confirmar} />);

@@ -20,10 +20,10 @@ export type ConciliacaoFatura = Omit<ApiContract<Api.ConciliacaoFaturaResponse, 
   itens: ItemFaturaConciliacao[]; contasSistema: ContaConciliacao[];
 };
 export type CriarItemFatura = Omit<ApiContract<Api.CriarItemFaturaRequest, 'responsavelCompraId' | 'observacao'>,
-  'rateios' | 'recorrencia' | 'reembolso'> & {
+  'rateios' | 'recorrencia' | 'reembolso' | 'responsaveisAdicionaisIds' | 'valoresPorResponsavel'> & {
   rateios: ApiContract<Api.RateioRequest>[]; recorrencia: RecorrenciaPayload | null; reembolso: ReembolsoFatura | null;
   responsaveisAdicionaisIds?: string[]; valoresPorResponsavel?: number[];
 };
 export type RevisaoFaturaResumo = ApiContract<Api.RevisaoFaturaResumoResponse>;
-export type SugestaoItemConciliacao = { itemId: string; descricao: string | null; recebedorId: string | null; responsavelCompraId: string | null; contaGerencialId: string | null; confianca: number };
+export type SugestaoItemConciliacao = ApiContract<Api.SugestaoItemConciliacaoResponse, 'descricao' | 'recebedorId' | 'responsavelCompraId' | 'contaGerencialId' | 'contaPagarId' | 'justificativa', 'contaPagarId' | 'justificativa'>;
 export type SugestoesConciliacao = { sugestoes: SugestaoItemConciliacao[] };
