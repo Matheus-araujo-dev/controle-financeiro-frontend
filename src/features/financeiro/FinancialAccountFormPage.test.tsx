@@ -35,7 +35,7 @@ const validValues = {
   origemCompraPlanejadaId: '',
   numeroDocumento: '',
   pessoaId: 'p1',
-  responsavelId: 'p2',
+  membroId: 'p2',
   dataEmissao: '2026-04-04',
   dataVencimento: '2026-04-20',
   formaPagamentoId: 'f1',
@@ -61,7 +61,7 @@ const validValues = {
   recorrenciaGerarAteData: '2026-10-20',
   dataCompra: '2026-04-04',
   pagadoresAdicionaisIds: [],
-  responsaveisValores: []
+  pagadoresValores: []
 };
 
 function createConfig() {
@@ -97,7 +97,7 @@ function createConfig() {
       { label: 'Fornecedor', value: 'p1' },
       { label: 'Responsável', value: 'p2' }
     ]),
-    loadResponsavelOptions: vi.fn().mockResolvedValue([
+    loadMembroOptions: vi.fn().mockResolvedValue([
       { label: 'Responsável', value: 'p2' }
     ]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([
@@ -298,12 +298,12 @@ describe('FinancialAccountFormPage', () => {
     config.loadRateioOptions = vi.fn().mockResolvedValue([
       { label: 'Despesas gerais', value: 'cg1', membroPadraoId: 'p3' }
     ]);
-    config.loadResponsavelOptions = vi.fn().mockResolvedValue([
+    config.loadMembroOptions = vi.fn().mockResolvedValue([
       { label: 'Responsável', value: 'p2' },
       { label: 'Gerente', value: 'p3' }
     ]);
-    // Start with no responsavelId so auto-fill can apply
-    config.defaultValues = { ...validValues, responsavelId: '', rateios: [{ contaGerencialId: 'cg1', valor: 95 }] };
+    // Start with no membroId so auto-fill can apply
+    config.defaultValues = { ...validValues, membroId: '', rateios: [{ contaGerencialId: 'cg1', valor: 95 }] };
     renderWithRoute('/contas-pagar/novo', '/contas-pagar/novo', config);
 
     await waitFor(() => expect(config.loadRateioOptions).toHaveBeenCalled());

@@ -180,9 +180,9 @@ export interface ApiKeyResponse {
 export interface AprovarImportacaoWhatsappRequest {
   /** @format uuid */
   recebedorFaturaId?: string | null;
+  cartaoIds?: string[] | null;
   /** @format uuid */
   pagadorFaturaId?: string | null;
-  cartaoIds?: string[] | null;
 }
 
 export interface AtualizarCartaoRequest {
@@ -220,10 +220,10 @@ export interface AtualizarCompraPlanejadaRequest {
   quantidadeParcelasDesejada?: number | null;
   /** @format uuid */
   contaGerencialId?: string;
-  /** @format uuid */
-  pagadorId?: string;
   link?: string | null;
   observacao?: string | null;
+  /** @format uuid */
+  pagadorId?: string;
 }
 
 export interface AtualizarContaBancariaRequest {
@@ -249,12 +249,12 @@ export interface AtualizarContaGerencialRequest {
   tipo?: ContaGerencialTipo;
   /** @format uuid */
   contaPaiId?: string | null;
-  /** @format uuid */
-  membroPadraoId?: string | null;
   ativo?: boolean;
   ehPadraoRecebimentoFaturaCartao?: boolean;
   /** @format uuid */
   contaGerencialContrariaId?: string | null;
+  /** @format uuid */
+  membroPadraoId?: string | null;
 }
 
 export interface AtualizarContaPagarRequest {
@@ -263,8 +263,6 @@ export interface AtualizarContaPagarRequest {
   numeroDocumento?: string | null;
   /** @format date */
   dataEmissao?: string;
-  /** @format uuid */
-  pagadorId?: string | null;
   /** @format uuid */
   recebedorId?: string;
   /** @format date */
@@ -295,6 +293,8 @@ export interface AtualizarContaPagarRequest {
   /** @format date */
   dataCompra?: string | null;
   forcarProximaFatura?: boolean;
+  /** @format uuid */
+  pagadorId?: string | null;
 }
 
 export interface AtualizarContaReceberRequest {
@@ -303,8 +303,6 @@ export interface AtualizarContaReceberRequest {
   numeroDocumento?: string | null;
   /** @format date */
   dataEmissao?: string;
-  /** @format uuid */
-  recebedorId?: string | null;
   /** @format uuid */
   pagadorId?: string;
   /** @format date */
@@ -331,6 +329,8 @@ export interface AtualizarContaReceberRequest {
   observacao?: string | null;
   rateios?: RateioRequest[] | null;
   recorrencia?: RecorrenciaConfigRequest;
+  /** @format uuid */
+  recebedorId?: string | null;
 }
 
 export interface AtualizarFormaPagamentoRequest {
@@ -553,9 +553,6 @@ export interface CompraPlanejadaDetalheResponse {
   /** @format uuid */
   contaGerencialId?: string;
   contaGerencialDescricao?: string | null;
-  /** @format uuid */
-  pagadorId?: string;
-  pagadorNome?: string | null;
   link?: string | null;
   observacao?: string | null;
   /** @format uuid */
@@ -566,6 +563,9 @@ export interface CompraPlanejadaDetalheResponse {
   createdAtUtc?: string;
   /** @format date-time */
   updatedAtUtc?: string;
+  /** @format uuid */
+  pagadorId?: string;
+  pagadorNome?: string | null;
 }
 
 export interface CompraPlanejadaListResponse {
@@ -604,14 +604,14 @@ export interface CompraPlanejadaResumoResponse {
   /** @format uuid */
   contaGerencialId?: string;
   contaGerencialDescricao?: string | null;
-  /** @format uuid */
-  pagadorId?: string;
-  pagadorNome?: string | null;
   link?: string | null;
   /** @format uuid */
   contaPagarGeradaId?: string | null;
   /** @format date-time */
   convertidaEmContaPagarEmUtc?: string | null;
+  /** @format uuid */
+  pagadorId?: string;
+  pagadorNome?: string | null;
 }
 
 export interface ConciliacaoDetalheResponse {
@@ -796,8 +796,6 @@ export interface ContaConciliacaoResponse {
   /** @format int32 */
   quantidadeParcelas?: number;
   /** @format uuid */
-  pagadorId?: string | null;
-  /** @format uuid */
   recebedorId?: string;
   /** @format uuid */
   formaPagamentoId?: string;
@@ -806,6 +804,8 @@ export interface ContaConciliacaoResponse {
   /** @format uuid */
   grupoReembolsoId?: string | null;
   rateios?: RateioConciliacaoResponse[] | null;
+  /** @format uuid */
+  pagadorId?: string | null;
 }
 
 export interface ContaGerencialDetalheResponse {
@@ -817,9 +817,6 @@ export interface ContaGerencialDetalheResponse {
   /** @format uuid */
   contaPaiId?: string | null;
   contaPaiDescricao?: string | null;
-  /** @format uuid */
-  membroPadraoId?: string | null;
-  membroPadraoNome?: string | null;
   ativo?: boolean;
   aceitaLancamentos?: boolean;
   ehPadraoRecebimentoFaturaCartao?: boolean;
@@ -830,6 +827,9 @@ export interface ContaGerencialDetalheResponse {
   /** @format uuid */
   contaGerencialContrariaId?: string | null;
   contaGerencialContrariaNome?: string | null;
+  /** @format uuid */
+  membroPadraoId?: string | null;
+  membroPadraoNome?: string | null;
 }
 
 export interface ContaGerencialResumoResponse {
@@ -841,15 +841,15 @@ export interface ContaGerencialResumoResponse {
   /** @format uuid */
   contaPaiId?: string | null;
   contaPaiDescricao?: string | null;
-  /** @format uuid */
-  membroPadraoId?: string | null;
-  membroPadraoNome?: string | null;
   ativo?: boolean;
   aceitaLancamentos?: boolean;
   ehPadraoRecebimentoFaturaCartao?: boolean;
   /** @format uuid */
   contaGerencialContrariaId?: string | null;
   contaGerencialContrariaNome?: string | null;
+  /** @format uuid */
+  membroPadraoId?: string | null;
+  membroPadraoNome?: string | null;
 }
 
 export interface ContaGerencialResumoResponsePagedResult {
@@ -870,9 +870,6 @@ export interface ContaPagarDetalheResponse {
   numeroDocumento?: string | null;
   /** @format date */
   dataEmissao?: string;
-  /** @format uuid */
-  pagadorId?: string | null;
-  pagadorNome?: string | null;
   /** @format uuid */
   recebedorId?: string;
   recebedorNome?: string | null;
@@ -934,10 +931,13 @@ export interface ContaPagarDetalheResponse {
   contaVinculada?: ContaVinculadaResumo;
   /** @format uuid */
   grupoReembolsoId?: string | null;
+  grupoReembolso?: GrupoReembolsoInfo;
+  /** @format uuid */
+  pagadorId?: string | null;
+  pagadorNome?: string | null;
   /** @format uuid */
   grupoPagadoresId?: string | null;
-  grupoReembolso?: GrupoReembolsoInfo;
-  grupoPagadores?: GrupoResponsaveisInfo;
+  grupoPagadores?: GrupoPagadoresInfo;
 }
 
 export interface ContaPagarListResponse {
@@ -976,7 +976,6 @@ export interface ContaPagarResumoResponse {
   /** @format uuid */
   recebedorId?: string;
   recebedorNome?: string | null;
-  pagadorNome?: string | null;
   /** @format date */
   dataEmissao?: string;
   /** @format date */
@@ -999,6 +998,7 @@ export interface ContaPagarResumoResponse {
   /** @format uuid */
   grupoParcelamentoId?: string | null;
   ehRecorrente?: boolean;
+  pagadorNome?: string | null;
 }
 
 export interface ContaPagarResumoResponseCursorPagedResult {
@@ -1013,9 +1013,6 @@ export interface ContaReceberDetalheResponse {
   numeroDocumento?: string | null;
   /** @format date */
   dataEmissao?: string;
-  /** @format uuid */
-  recebedorId?: string | null;
-  recebedorNome?: string | null;
   /** @format uuid */
   pagadorId?: string;
   pagadorNome?: string | null;
@@ -1067,10 +1064,13 @@ export interface ContaReceberDetalheResponse {
   contaVinculada?: ContaVinculadaResumo;
   /** @format uuid */
   grupoReembolsoId?: string | null;
+  grupoReembolso?: GrupoReembolsoInfo;
+  /** @format uuid */
+  recebedorId?: string | null;
+  recebedorNome?: string | null;
   /** @format uuid */
   grupoRecebedoresId?: string | null;
-  grupoReembolso?: GrupoReembolsoInfo;
-  grupoRecebedores?: GrupoResponsaveisInfo;
+  grupoRecebedores?: GrupoPagadoresInfo;
 }
 
 export interface ContaReceberListResponse {
@@ -1109,7 +1109,6 @@ export interface ContaReceberResumoResponse {
   /** @format uuid */
   pagadorId?: string;
   pagadorNome?: string | null;
-  recebedorNome?: string | null;
   /** @format date */
   dataEmissao?: string;
   /** @format date */
@@ -1132,6 +1131,7 @@ export interface ContaReceberResumoResponse {
   /** @format uuid */
   grupoParcelamentoId?: string | null;
   ehRecorrente?: boolean;
+  recebedorNome?: string | null;
 }
 
 export interface ContaVinculadaResumo {
@@ -1220,10 +1220,10 @@ export interface CriarCompraPlanejadaRequest {
   quantidadeParcelasDesejada?: number | null;
   /** @format uuid */
   contaGerencialId?: string;
-  /** @format uuid */
-  pagadorId?: string;
   link?: string | null;
   observacao?: string | null;
+  /** @format uuid */
+  pagadorId?: string;
 }
 
 export interface CriarContaBancariaRequest {
@@ -1249,12 +1249,12 @@ export interface CriarContaGerencialRequest {
   tipo?: ContaGerencialTipo;
   /** @format uuid */
   contaPaiId?: string | null;
-  /** @format uuid */
-  membroPadraoId?: string | null;
   ativo?: boolean;
   ehPadraoRecebimentoFaturaCartao?: boolean;
   /** @format uuid */
   contaGerencialContrariaId?: string | null;
+  /** @format uuid */
+  membroPadraoId?: string | null;
 }
 
 export interface CriarContaPagarRequest {
@@ -1263,8 +1263,6 @@ export interface CriarContaPagarRequest {
   numeroDocumento?: string | null;
   /** @format date */
   dataEmissao?: string;
-  /** @format uuid */
-  pagadorId?: string | null;
   /** @format uuid */
   recebedorId?: string;
   /** @format date */
@@ -1296,6 +1294,8 @@ export interface CriarContaPagarRequest {
   forcarProximaFatura?: boolean;
   /** @format uuid */
   contaVinculadaOrigemId?: string | null;
+  /** @format uuid */
+  pagadorId?: string | null;
   pagadoresAdicionaisIds?: string[] | null;
   valoresPorPagador?: number[] | null;
 }
@@ -1304,8 +1304,6 @@ export interface CriarContaReceberRequest {
   numeroDocumento?: string | null;
   /** @format date */
   dataEmissao?: string;
-  /** @format uuid */
-  recebedorId?: string | null;
   /** @format uuid */
   pagadorId?: string;
   /** @format date */
@@ -1336,6 +1334,8 @@ export interface CriarContaReceberRequest {
   contaVinculadaOrigemId?: string | null;
   pagadoresAdicionaisIds?: string[] | null;
   valoresPorPagador?: number[] | null;
+  /** @format uuid */
+  recebedorId?: string | null;
 }
 
 export interface CriarConviteFamiliaRequest {
@@ -1373,8 +1373,6 @@ export interface CriarItemFaturaRequest {
   /** @format uuid */
   recebedorId?: string;
   /** @format uuid */
-  pagadorId?: string | null;
-  /** @format uuid */
   formaPagamentoId?: string;
   rateios?: RateioRequest[] | null;
   recorrencia?: RecorrenciaConfigRequest;
@@ -1382,8 +1380,10 @@ export interface CriarItemFaturaRequest {
   observacao?: string | null;
   aprender?: boolean;
   camposParaAprender?: string[] | null;
-  responsaveisAdicionaisIds?: string[] | null;
-  valoresPorResponsavel?: number[] | null;
+  /** @format uuid */
+  pagadorId?: string | null;
+  pagadoresAdicionaisIds?: string[] | null;
+  valoresPorPagador?: number[] | null;
 }
 
 export interface CriarPessoaRequest {
@@ -1815,7 +1815,6 @@ export interface FaturaItemResponse {
   contaPagarId?: string;
   descricao?: string | null;
   recebedorNome?: string | null;
-  pagadorNome?: string | null;
   /** @format date */
   dataCompra?: string;
   /** @format double */
@@ -1826,6 +1825,7 @@ export interface FaturaItemResponse {
   /** @format int32 */
   quantidadeParcelas?: number;
   ehEstorno?: boolean;
+  pagadorNome?: string | null;
 }
 
 export interface FaturaItensResponse {
@@ -1991,12 +1991,6 @@ export interface GoogleLoginRequest {
 export interface GrupoReembolsoInfo {
   /** @format uuid */
   grupoReembolsoId?: string;
-  contas?: ContaVinculadaResumo[] | null;
-}
-
-export interface GrupoResponsaveisInfo {
-  /** @format uuid */
-  grupoResponsaveisId?: string;
   contas?: ContaVinculadaResumo[] | null;
 }
 
@@ -2228,9 +2222,6 @@ export interface ItemImportadoWhatsappResponse {
   contaGerencialId?: string | null;
   contaGerencialDescricao?: string | null;
   /** @format uuid */
-  pagadorId?: string | null;
-  pagadorNome?: string | null;
-  /** @format uuid */
   contaReceberId?: string | null;
   statusPrevisaoCodigo?: string | null;
   statusPrevisaoNome?: string | null;
@@ -2240,6 +2231,9 @@ export interface ItemImportadoWhatsappResponse {
   /** @format date-time */
   rejeitadoEmUtc?: string | null;
   predicao?: PredicaoClassificacaoImportacaoWhatsappResponse;
+  /** @format uuid */
+  pagadorId?: string | null;
+  pagadorNome?: string | null;
 }
 
 export interface LiquidarContaPagarRequest {
@@ -2574,9 +2568,6 @@ export interface PredicaoClassificacaoImportacaoWhatsappResponse {
   /** @format uuid */
   contaGerencialId?: string | null;
   contaGerencialDescricao?: string | null;
-  /** @format uuid */
-  pagadorId?: string | null;
-  pagadorNome?: string | null;
   descricaoAjustada?: string | null;
   gerarContaReceber?: boolean;
   marcarComoRecorrente?: boolean;
@@ -2584,18 +2575,21 @@ export interface PredicaoClassificacaoImportacaoWhatsappResponse {
   quantidadeOcorrencias?: number;
   /** @format double */
   confiancaHistorico?: number;
+  /** @format uuid */
+  pagadorId?: string | null;
+  pagadorNome?: string | null;
 }
 
 export interface PreferenciasFaturaResponse {
   descricao?: string | null;
-  /** @format uuid */
-  pagadorId?: string | null;
   /** @format uuid */
   recebedorId?: string | null;
   rateios?: RateioMemoriaResponse[] | null;
   ehRecorrente?: boolean | null;
   gerarReembolso?: boolean | null;
   reembolsoPagadoresIds?: string[] | null;
+  /** @format uuid */
+  pagadorId?: string | null;
 }
 
 export interface PreviaReembolsoFaturaRequest {
@@ -2752,8 +2746,8 @@ export interface RecorrenciaListItemResponse {
   /** @format double */
   valorLiquido?: number;
   pessoaNome?: string | null;
-  pagadorNome?: string | null;
   encerrada?: boolean;
+  pagadorNome?: string | null;
 }
 
 export interface RecorrenciaListResponse {
@@ -2853,12 +2847,12 @@ export interface RevisarItemImportadoWhatsappRequest {
   descricaoAjustada?: string | null;
   /** @format uuid */
   contaGerencialId?: string | null;
-  /** @format uuid */
-  pagadorId?: string | null;
   /** @format date */
   dataVencimentoContaReceber?: string | null;
   gerarContaReceber?: boolean;
   marcarComoRecorrente?: boolean;
+  /** @format uuid */
+  pagadorId?: string | null;
 }
 
 export interface SalvarConfiguracaoNotificacaoRequest {
@@ -3047,16 +3041,22 @@ export interface SugestaoItemConciliacaoResponse {
   /** @format uuid */
   recebedorId?: string | null;
   /** @format uuid */
-  responsavelCompraId?: string | null;
-  /** @format uuid */
   contaGerencialId?: string | null;
   /** @format double */
   confianca?: number;
   /** @format uuid */
   contaPagarId?: string | null;
   justificativa?: string | null;
+  /** @format uuid */
+  pagadorId?: string | null;
 }
 
 export interface SugestoesConciliacaoResponse {
   sugestoes?: SugestaoItemConciliacaoResponse[] | null;
+}
+
+export interface GrupoPagadoresInfo {
+  /** @format uuid */
+  grupoPagadoresId?: string;
+  contas?: ContaVinculadaResumo[] | null;
 }

@@ -1,4 +1,4 @@
-﻿import { createPortal } from 'react-dom';
+import { createPortal } from 'react-dom';
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { DateInput } from '../forms/DateInput';

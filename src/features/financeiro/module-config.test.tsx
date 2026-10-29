@@ -297,7 +297,11 @@ describe('financeiro module config', () => {
     await expect(contasReceberModuleConfig.loadPessoaOptions()).resolves.toEqual([
       expect.objectContaining({ label: 'Pessoa', value: 'p1' })
     ]);
+    expect(cadastrosApi.pessoas.listar).toHaveBeenCalledWith(expect.objectContaining({ ehPagador: true, ehRecebedor: true }));
+    vi.mocked(cadastrosApi.pessoas.listar).mockClear();
+    await contasReceberModuleConfig.loadMembroOptions();
     expect(cadastrosApi.pessoas.listar).toHaveBeenCalledWith(expect.objectContaining({ ehPagador: true }));
+    expect(vi.mocked(cadastrosApi.pessoas.listar).mock.calls[0][0]).not.toHaveProperty('ehRecebedor');
 
     await expect(contasPagarModuleConfig.loadFormaPagamentoOptions()).resolves.toEqual([
       { label: 'Pix', value: 'f1', ehCartao: false, baixarAutomaticamente: true }

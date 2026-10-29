@@ -41,12 +41,12 @@ export function ConciliacaoFaturaPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [dirty]);
   const { data, isLoading, error: loadError } = useQuery({ queryKey: ['conciliacao-fatura-options', id], enabled: !!id, queryFn: async () => {
-    const [fatura, revisoes, recebedores, pagadores, pagadores, formas, despesas, receitas] = await Promise.all([
+    const [fatura, revisoes, recebedores, pagadores, formas, despesas, receitas] = await Promise.all([
       financeiroApi.faturas.obterPorId(id!), conciliacaoFaturaApi.listar(id!), contasPagarModuleConfig.loadPessoaOptions(),
-      contasPagarModuleConfig.loadPagadorOptions(), contasReceberModuleConfig.loadPessoaOptions(), contasPagarModuleConfig.loadFormaPagamentoOptions(),
+      contasReceberModuleConfig.loadMembroOptions(), contasPagarModuleConfig.loadFormaPagamentoOptions(),
       contasPagarModuleConfig.loadRateioOptions(), contasReceberModuleConfig.loadRateioOptions()
     ]);
-    return { fatura, revisoes, recebedores, pagadores, pagadores, formas, despesas, receitas };
+    return { fatura, revisoes, recebedores, pagadores, formas, despesas, receitas };
   } });
   function carregar(review: ConciliacaoFatura) {
     const forma = review.contasSistema[0]?.formaPagamentoId ?? data?.formas.find(f => f.ehCartao)?.value ?? '';

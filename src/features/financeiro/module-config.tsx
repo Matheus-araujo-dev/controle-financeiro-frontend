@@ -163,7 +163,7 @@ const defaultValues: FinanceiroFormValues = {
   numeroDocumento: '',
   pessoaId: '',
   membroId: '',
-  dataEmissao: '',;
+  dataEmissao: '',
   dataVencimento: '',
   formaPagamentoId: '',
   cartaoId: '',
@@ -739,8 +739,8 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
     }),
     formaPagamentoId: detail.formaPagamentoId
   }),
-  loadPessoaOptions: loadPagadorOptions,
-  loadMembroOptions,
+  loadPessoaOptions: loadMembroOptions,
+  loadMembroOptions: loadPagadorOptions,
   loadFormaPagamentoOptions,
   loadContaBancariaOptions,
   loadCartaoOptions,

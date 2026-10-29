@@ -792,7 +792,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Código ou descrição' },
     { name: 'tipos', label: 'Tipo', kind: 'multiselect', options: contaGerencialTipoOptions },
     { name: 'contaPai', label: 'Conta pai', kind: 'text' },
-    { name: 'responsavelPadrao', label: 'Responsável padrão', kind: 'text' },
+    { name: 'membroPadrao', label: 'Responsável padrão', kind: 'text' },
     { name: 'aceitaLancamentos', label: 'Uso', kind: 'multiselect', options: yesNoOptions },
     { name: 'ehPadraoRecebimentoFaturaCartao', label: 'Receb. fatura', kind: 'multiselect', options: yesNoOptions },
     { name: 'ativo', label: 'Status', kind: 'multiselect', options: statusOptions }

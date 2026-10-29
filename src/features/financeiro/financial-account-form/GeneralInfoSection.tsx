@@ -273,7 +273,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
         open={pessoaModalTarget !== null}
         onClose={() => setPessoaModalTarget(null)}
         onSuccess={handlePessoaSuccess}
-        defaultRole={personRole}
+        defaultRole="recebedor"
       />
       <QuickAddContaGerencialModal open={contaGerencialModalOpen} onClose={() => setContaGerencialModalOpen(false)} onSuccess={handleContaGerencialSuccess} />
     </FormSection>

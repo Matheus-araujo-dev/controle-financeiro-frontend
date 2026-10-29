@@ -12,9 +12,9 @@ type ResponsaveisChipsSectionProps = {
 };
 
 export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: ResponsaveisChipsSectionProps) {
-  const { control, errors, canEdit, membroOptions, pessoaOptions, setValue, reloadMembroOptions } = form;
+  const { control, errors, canEdit, membroOptions, setValue, reloadMembroOptions } = form;
   const isPagador = personRole === 'pagador';
-  const chipOptions = isPagador ? pessoaOptions : membroOptions;
+  const chipOptions = membroOptions;
 
   const [quickAddOpen, setQuickAddOpen] = useState(false);
 
@@ -163,7 +163,7 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
         open={quickAddOpen}
         onClose={() => setQuickAddOpen(false)}
         onSuccess={handleQuickAddSuccess}
-        defaultRole="membro"
+        defaultRole={isPagador ? 'pagador' : 'membro'}
       />
     </div>
   );

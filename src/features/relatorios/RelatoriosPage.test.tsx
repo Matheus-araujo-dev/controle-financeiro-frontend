@@ -952,7 +952,7 @@ describe('RelatoriosPage', () => {
 
     await waitFor(() => {
       expect(financeiroApi.contasPagar.listar).toHaveBeenCalledWith(
-        expect.objectContaining({ responsavelIds: ['p-1'], statusCodigo: ['VENCIDA'] })
+        expect.objectContaining({ pagadorIds: ['p-1'], statusCodigo: ['VENCIDA'] })
       );
     });
   });
@@ -1114,7 +1114,7 @@ describe('RelatoriosPage', () => {
 
     await waitFor(() => {
       expect(financeiroApi.contasPagar.listar).toHaveBeenCalledWith(
-        expect.objectContaining({ responsavelIds: ['p-1'] })
+        expect.objectContaining({ pagadorIds: ['p-1'] })
       );
     });
   });

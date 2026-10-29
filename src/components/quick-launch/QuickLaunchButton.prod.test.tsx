@@ -108,17 +108,17 @@ vi.mock('../../services/http/api-error', () => ({
 
 const pessoasResponse = {
   items: [
-    { id: 'p1', nome: 'Mercado', ehResponsavel: false, ehRecebedor: true },
-    { id: 'r1', nome: 'Responsavel', ehResponsavel: true, ehRecebedor: false }
+    { id: 'p1', nome: 'Mercado', ehPagador: false, ehRecebedor: true },
+    { id: 'r1', nome: 'Responsavel', ehPagador: true, ehRecebedor: false }
   ]
 };
 
 const recebedoresResponse = {
-  items: [{ id: 'p1', nome: 'Mercado', ehResponsavel: false, ehRecebedor: true }]
+  items: [{ id: 'p1', nome: 'Mercado', ehPagador: false, ehRecebedor: true }]
 };
 
 const responsaveisResponse = {
-  items: [{ id: 'r1', nome: 'Responsavel', ehResponsavel: true, ehRecebedor: false }]
+  items: [{ id: 'r1', nome: 'Responsavel', ehPagador: true, ehRecebedor: false }]
 };
 
 const pagadoresResponse = {
@@ -148,8 +148,8 @@ const contasBancariasResponse = {
 
 function mockSuccessfulOptions() {
   vi.mocked(cadastrosApi.pessoas.listar).mockImplementation((filters: Record<string, unknown>) => {
+    if (filters.ehPagador === true && filters.ehRecebedor === true) return Promise.resolve(responsaveisResponse as never);
     if (filters.ehRecebedor === true) return Promise.resolve(recebedoresResponse as never);
-    if (filters.ehResponsavel === true) return Promise.resolve(responsaveisResponse as never);
     if (filters.ehPagador === true) return Promise.resolve(pagadoresResponse as never);
     return Promise.resolve(pessoasResponse as never);
   });
@@ -224,7 +224,7 @@ describe('PROD-04: Intent-based labels', () => {
 
     // Receber form: shows "Responsável" and "Pagador" instead of "Recebedor"
     await waitFor(() =>
-      expect(within(dialog).getByLabelText('Responsável')).toBeInTheDocument()
+      expect(within(dialog).getByLabelText('Recebedor')).toBeInTheDocument()
     );
   });
 
@@ -294,7 +294,7 @@ describe('PROD-05: Salvar e lançar outro', () => {
           tipo: 'pagar',
           pessoaId: 'p1',
           pessoaNome: 'Mercado',
-          responsavelId: 'r1',
+          membroId: 'r1',
           valor: 100,
           dataVencimento: '2026-09-20',
           descricao: 'Reembolso test'
@@ -315,7 +315,7 @@ describe('PROD-05: Salvar e lançar outro', () => {
     await user.type(within(dialog).getByPlaceholderText(/mercado/i), 'Compra primeira');
     await user.type(within(dialog).getByLabelText('Valor'), '150');
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
-    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar pagador/i), 'r1');
     await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-pix');
     await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cd1');
 

@@ -18,7 +18,7 @@ export type GrupoReembolsoInfo = Omit<ApiContract<Api.GrupoReembolsoInfo>, 'cont
   contas: GrupoContaResumo[];
 };
 
-export type GrupoResponsaveisInfo = Omit<ApiContract<Api.GrupoResponsaveisInfo>, 'contas'> & {
+export type GrupoResponsaveisInfo = Omit<ApiContract<Api.GrupoPagadoresInfo>, 'contas'> & {
   contas: GrupoContaResumo[];
 };
 

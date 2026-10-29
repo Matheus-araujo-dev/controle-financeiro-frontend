@@ -9,7 +9,7 @@ import type { CampoGradeFatura } from './ConciliacaoFaturaGrid';
 import type { RascunhoLancamento } from './conciliacao-fatura-form';
 import { camposMemoria, ratearValor } from './conciliacao-fatura-form';
 
-export type OpcoesConciliacao = { recebedores: ComboBoxOption[]; pagadores: ComboBoxOption[]; pagadores: ComboBoxOption[];
+export type OpcoesConciliacao = { recebedores: ComboBoxOption[]; pagadores: ComboBoxOption[];
   formas: (ComboBoxOption & { ehCartao?: boolean })[]; despesas: ComboBoxOption[]; receitas: ComboBoxOption[] };
 const nome = (options: ComboBoxOption[], id?: string | null) => options.find(x => x.value === id)?.label ?? 'Não informado';
 

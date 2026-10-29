@@ -316,7 +316,7 @@ describe('ComprasPlanejadasListPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Sim' }));
     await userEvent.click(screen.getByLabelText(/Conta gerencial/i));
     await userEvent.click(await screen.findByRole('button', { name: '1.01 - Tecnologia' }));
-    await userEvent.click(screen.getByLabelText(/Respons.vel/i));
+    await userEvent.click(screen.getByLabelText(/Pagador/i));
     await userEvent.click(await screen.findByRole('button', { name: 'Michelle' }));
     await selectDateInDateInput('Data desejada de', '2026-11-01');
 
