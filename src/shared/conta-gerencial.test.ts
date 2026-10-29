@@ -119,8 +119,8 @@ describe('mapContaGerencialSelectOptionsWithData', () => {
         descricao: 'Salários',
         tipo: 'Receita',
         contaPaiId: null,
-        responsavelPadraoId: 'rp-1',
-        responsavelPadraoNome: 'Ana'
+        membroPadraoId: 'rp-1',
+        membroPadraoNome: 'Ana'
       }
     ];
     const result = mapContaGerencialSelectOptionsWithData(items);
@@ -133,8 +133,8 @@ describe('mapContaGerencialSelectOptionsWithData', () => {
         descricao: 'Salários',
         tipo: 'Receita',
         contaPaiId: null,
-        responsavelPadraoId: 'rp-1',
-        responsavelPadraoNome: 'Ana'
+        membroPadraoId: 'rp-1',
+        membroPadraoNome: 'Ana'
       }
     });
   });
@@ -143,7 +143,7 @@ describe('mapContaGerencialSelectOptionsWithData', () => {
     const items = [{ id: 'cg-2', codigo: null, descricao: 'Outros' }];
     const result = mapContaGerencialSelectOptionsWithData(items);
     expect(result[0].data.contaPaiId).toBeNull();
-    expect(result[0].data.responsavelPadraoId).toBeNull();
-    expect(result[0].data.responsavelPadraoNome).toBeNull();
+    expect(result[0].data.membroPadraoId).toBeNull();
+    expect(result[0].data.membroPadraoNome).toBeNull();
   });
 });

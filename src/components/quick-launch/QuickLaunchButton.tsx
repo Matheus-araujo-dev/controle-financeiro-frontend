@@ -44,19 +44,19 @@ function QLValorInput({ value, onChange }: { value: number; onChange: (v: number
 }
 
 type Option = { label: string; value: string };
-type ContaGerencialOption = ComboBoxOption & { responsavelPadraoId?: string | null };
+type ContaGerencialOption = ComboBoxOption & { membroPadraoId?: string | null };
 type QuickLaunchTipo = 'pagar' | 'receber' | 'transferencia';
-type QuickAddTarget = 'pessoaId' | 'responsavelId' | null;
+type QuickAddTarget = 'pessoaId' | 'membroId' | null;
 type QuickAddContaBancariaTarget = 'origem' | 'destino' | null;
 
 export type QuickLaunchInitialValues = {
   tipo: 'pagar' | 'receber';
   pessoaId?: string;
   pessoaNome?: string;
-  responsavelId?: string;
-  responsavelNome?: string;
-  responsaveisAdicionaisIds?: string[];
-  responsaveisNomes?: Record<string, string>;
+  membroId?: string;
+  membroNome?: string;
+  pagadoresAdicionaisIds?: string[];
+  membrosNomes?: Record<string, string>;
   valor?: number;
   dataVencimento?: string;
   descricao?: string;
@@ -139,7 +139,7 @@ export function QuickLaunchModal({
   useEffect(() => {
     void queryClient.invalidateQueries({ queryKey: ['ql-pessoas'] });
     void queryClient.invalidateQueries({ queryKey: ['ql-recebedores'] });
-    void queryClient.invalidateQueries({ queryKey: ['ql-responsaveis'] });
+    void queryClient.invalidateQueries({ queryKey: ['ql-membros'] });
   }, [queryClient]);
 
   const initialDate = useRef(hojeISO());
@@ -154,10 +154,10 @@ export function QuickLaunchModal({
   const [dataLiquidacao, setDataLiquidacao] = useState(hojeISO());
   const [contaBancariaLiquidacaoId, setContaBancariaLiquidacaoId] = useState('');
   const [pessoaId, setPessoaId] = useState(() => initialValues?.pessoaId ?? '');
-  const [responsavelId, setResponsavelId] = useState(() => initialValues?.responsavelId ?? '');
-  const [responsaveisAdicionaisIds, setResponsaveisAdicionaisIds] = useState<string[]>(() => initialValues?.responsaveisAdicionaisIds ?? []);
-  const [responsaveisValores, setResponsaveisValores] = useState<number[]>([]);
-  const [addingResponsavelId, setAddingResponsavelId] = useState('');
+  const [membroId, setMembroId] = useState(() => initialValues?.membroId ?? '');
+  const [pagadoresAdicionaisIds, setPagadoresAdicionaisIds] = useState<string[]>(() => initialValues?.pagadoresAdicionaisIds ?? []);
+  const [membrosValores, setMembrosValores] = useState<number[]>([]);
+  const [addingMembroId, setAddingMembroId] = useState('');
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
   const [cartaoId, setCartaoId] = useState('');
   const [contaGerencialId, setContaGerencialId] = useState('');
@@ -172,14 +172,14 @@ export function QuickLaunchModal({
   const [pendingLaunch, setPendingLaunch] = useState<{ fn: LaunchFn; retryFn: LaunchFn; items: DuplicateItemSummary[]; onSuccess: OnSuccessFn } | null>(null);
   const [pendingFaturaIndisponivel, setPendingFaturaIndisponivel] = useState<{ retryFn: LaunchFn; message: string; onSuccess: OnSuccessFn } | null>(null);
   const lastAutoFilledContaRef = useRef<string | null>(null);
-  const lastAutoFilledResponsavelRef = useRef<string | null>(null);
+  const lastAutoFilledMembroRef = useRef<string | null>(null);
 
   const isDirty =
     descricao.trim() !== '' ||
     valor !== 0 ||
     pessoaId !== '' ||
-    responsavelId !== '' ||
-    responsaveisAdicionaisIds.length > 0 ||
+    membroId !== '' ||
+    pagadoresAdicionaisIds.length > 0 ||
     formaPagamentoId !== '' ||
     contaGerencialId !== '' ||
     contaOrigemId !== '' ||
@@ -203,12 +203,12 @@ export function QuickLaunchModal({
   // Pré-populado com pessoas passadas via initialValues para evitar exibir UUID no chip
   const [extraPessoas, setExtraPessoas] = useState<Option[]>(() => {
     const seed: Option[] = [];
-    const nomes = initialValues?.responsaveisNomes ?? {};
+    const nomes = initialValues?.membrosNomes ?? {};
     if (initialValues?.pessoaId && initialValues?.pessoaNome)
       seed.push({ value: initialValues.pessoaId, label: initialValues.pessoaNome });
-    if (initialValues?.responsavelId && (initialValues?.responsavelNome ?? nomes[initialValues.responsavelId]))
-      seed.push({ value: initialValues.responsavelId, label: (initialValues.responsavelNome ?? nomes[initialValues.responsavelId])! });
-    for (const id of initialValues?.responsaveisAdicionaisIds ?? []) {
+    if (initialValues?.membroId && (initialValues?.membroNome ?? nomes[initialValues.membroId]))
+      seed.push({ value: initialValues.membroId, label: (initialValues.membroNome ?? nomes[initialValues.membroId])! });
+    for (const id of initialValues?.pagadoresAdicionaisIds ?? []) {
       const nome = nomes[id];
       if (nome) seed.push({ value: id, label: nome });
     }
@@ -227,11 +227,11 @@ export function QuickLaunchModal({
   const [quickAddContaBancariaTarget, setQuickAddContaBancariaTarget] = useState<QuickAddContaBancariaTarget>(null);
 
   // React Query: cache com staleTime alto — re-abrir o modal não refaz chamadas
-  const [pessoasResult, recebedoresResult, responsaveisResult, pagadoresResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult] = useQueries({
+  const [pessoasResult, recebedoresResult, membrosResult, pagadoresResult, formasResult, cartoesResult, despesaResult, receitaResult, contasBancariasResult] = useQueries({
     queries: [
       { queryKey: ['ql-pessoas'], queryFn: () => cadastrosApi.pessoas.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-recebedores'], queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true, ehRecebedor: true }), staleTime: STALE_5MIN },
-      { queryKey: ['ql-responsaveis'], queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true, ehResponsavel: true }), staleTime: STALE_5MIN },
+      { queryKey: ['ql-membros'], queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true, ehPagador: true, ehRecebedor: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-pagadores'], queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true, ehPagador: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-formas'], queryFn: () => cadastrosApi.formasPagamento.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
       { queryKey: ['ql-cartoes'], queryFn: () => cadastrosApi.cartoes.listar({ ...BASE_QUERY, ativo: true }), staleTime: STALE_5MIN },
@@ -256,7 +256,7 @@ export function QuickLaunchModal({
     const allItems = [
       ...(pessoasResult.data?.items ?? []),
       ...(recebedoresResult.data?.items ?? []),
-      ...(responsaveisResult.data?.items ?? []),
+      ...(membrosResult.data?.items ?? []),
       ...(pagadoresResult.data?.items ?? [])
     ];
     allItems.forEach((p) => {
@@ -268,12 +268,12 @@ export function QuickLaunchModal({
       }
     });
     return map;
-  }, [pessoasResult.data, recebedoresResult.data, responsaveisResult.data, pagadoresResult.data]);
+  }, [pessoasResult.data, recebedoresResult.data, membrosResult.data, pagadoresResult.data]);
 
-  const responsaveis = useMemo<Option[]>(() => {
-    const fromServer = responsaveisResult.data?.items.map((p) => ({ label: p.nome, value: p.id })) ?? [];
+  const membros = useMemo<Option[]>(() => {
+    const fromServer = membrosResult.data?.items.map((p) => ({ label: p.nome, value: p.id })) ?? [];
     return [...extraPessoas, ...fromServer.filter((p) => !extraPessoas.some((e) => e.value === p.value))];
-  }, [extraPessoas, responsaveisResult.data]);
+  }, [extraPessoas, membrosResult.data]);
 
   const recebedores = useMemo<Option[]>(() => {
     const fromServer = recebedoresResult.data?.items.map((p) => ({ label: p.nome, value: p.id })) ?? [];
@@ -296,7 +296,7 @@ export function QuickLaunchModal({
     const fromServer = mapContaGerencialHierarchyData(items).map(({ value, main, chain }) => ({
       value,
       displayText: main,
-      responsavelPadraoId: byId.get(value)?.responsavelPadraoId ?? null,
+      membroPadraoId: byId.get(value)?.membroPadraoId ?? null,
       label: chain ? (
         <span>
           {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
@@ -312,7 +312,7 @@ export function QuickLaunchModal({
     const fromServer = mapContaGerencialHierarchyData(items).map(({ value, main, chain }) => ({
       value,
       displayText: main,
-      responsavelPadraoId: byId.get(value)?.responsavelPadraoId ?? null,
+      membroPadraoId: byId.get(value)?.membroPadraoId ?? null,
       label: chain ? (
         <span>
           {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
@@ -341,26 +341,26 @@ export function QuickLaunchModal({
   // Mapa unificado id→nome de todas as listas de pessoas para resolução de labels nos chips
   const pessoaLabelMap = useMemo(() => {
     const map = new Map<string, string>();
-    for (const arr of [extraPessoas, pessoas, recebedores, responsaveis, pagadores]) {
+    for (const arr of [extraPessoas, pessoas, recebedores, membros, pagadores]) {
       for (const p of arr) {
         if (!map.has(p.value)) map.set(p.value, p.label);
       }
     }
     return map;
-  }, [extraPessoas, pessoas, recebedores, responsaveis, pagadores]);
+  }, [extraPessoas, pessoas, recebedores, membros, pagadores]);
 
-  // Auto-fill responsável a partir da conta gerencial selecionada
+  // Auto-fill pagador a partir da conta gerencial selecionada
   const contasGerenciais = tipo === 'pagar' ? contasDespesa : contasReceita;
   useEffect(() => {
     if (!contaGerencialId) return;
     const option = contasGerenciais.find((c) => c.value === contaGerencialId);
-    const responsavelPadraoId = option?.responsavelPadraoId;
-    if (!responsavelPadraoId) return;
-    const manuallyChanged = responsavelId && responsavelId !== lastAutoFilledResponsavelRef.current;
+    const membroPadraoId = option?.membroPadraoId;
+    if (!membroPadraoId) return;
+    const manuallyChanged = membroId && membroId !== lastAutoFilledMembroRef.current;
     if (manuallyChanged) return;
-    setResponsavelId(responsavelPadraoId);
-    lastAutoFilledResponsavelRef.current = responsavelPadraoId;
-  }, [contaGerencialId, contasGerenciais, responsavelId]);
+    setMembroId(membroPadraoId);
+    lastAutoFilledMembroRef.current = membroPadraoId;
+  }, [contaGerencialId, contasGerenciais, membroId]);
 
   const contasBancarias = useMemo<Option[]>(() => {
     const fromServer = (contasBancariasResult.data?.items ?? []).map((c) => ({ label: c.nome, value: c.id }));
@@ -447,7 +447,7 @@ export function QuickLaunchModal({
     : descricao.trim().length > 0 &&
       valor > 0 &&
       Boolean(pessoaId) &&
-      Boolean(responsavelId) &&
+      Boolean(membroId) &&
       Boolean(formaPagamentoId) &&
       Boolean(contaGerencialId) &&
       (!exigeCartao || Boolean(cartaoId)) &&
@@ -457,12 +457,12 @@ export function QuickLaunchModal({
     if (!isReembolso && gerarReembolso && onGerarReembolso && createdId) {
       let reembolsoDate = dataVencimento;
       let reembolsoParcelas = quantidadeParcelas;
-      let responsavelNome: string | undefined;
+      let membroNome: string | undefined;
       let pessoaNome: string | undefined;
 
-      // Monta mapa de nomes para todos os responsáveis do form atual
+      // Monta mapa de nomes para todos os pagadores do form atual
       const nomesMap: Record<string, string> = {};
-      for (const id of [responsavelId, ...responsaveisAdicionaisIds].filter(Boolean)) {
+      for (const id of [membroId, ...pagadoresAdicionaisIds].filter(Boolean)) {
         const nome = pessoaLabelMap.get(id);
         if (nome) nomesMap[id] = nome;
       }
@@ -474,37 +474,37 @@ export function QuickLaunchModal({
           const criada = await financeiroApi.contasPagar.obterPorId(createdId);
           reembolsoDate = criada.dataVencimento;
           reembolsoParcelas = criada.quantidadeParcelas;
-          responsavelNome = criada.responsavelCompraNome ?? undefined;
+          membroNome = criada.pagadorNome ?? undefined;
           pessoaNome = criada.recebedorNome;
-          if (criada.responsavelCompraId && criada.responsavelCompraNome)
-            nomesMap[criada.responsavelCompraId] = criada.responsavelCompraNome;
+          if (criada.pagadorId && criada.pagadorNome)
+            nomesMap[criada.pagadorId] = criada.pagadorNome;
         } catch {
           // se falhar, usa os valores atuais do form
         }
       }
 
-      // Para ContaReceber → ContaPagar: pessoaId e responsavelId precisam ser trocados
-      // porque no form ContaReceber: pessoaId→API.responsavelId e responsavelId→API.pagadorId
-      // mas no form ContaPagar: pessoaId→API.recebedorId e responsavelId→API.responsavelCompraId
-      // Logo: pagadorId (=form.responsavelId) deve virar recebedorId (=reembolso.pessoaId)
-      //       responsavelId (=form.pessoaId) deve virar responsavelCompraId (=reembolso.responsavelId)
+      // Para ContaReceber → ContaPagar: pessoaId e membroId precisam ser trocados
+      // porque no form ContaReceber: pessoaId→API.recebedorId e membroId→API.pagadorId
+      // mas no form ContaPagar: pessoaId→API.recebedorId e membroId→API.pagadorId
+      // Logo: pagadorId (=form.membroId) deve virar recebedorId (=reembolso.pessoaId)
+      //       recebedorId (=form.pessoaId) deve virar pagadorId (=reembolso.membroId)
       const isFromReceber = tipo === 'receber';
-      const reembolsoPessoaId = isFromReceber ? responsavelId : pessoaId;
-      const reembolsoResponsavelId = isFromReceber ? pessoaId : responsavelId;
-      const reembolsoPessoaNome = isFromReceber ? (pessoaLabelMap.get(responsavelId) ?? responsavelNome) : pessoaNome;
-      const reembolsoResponsavelNome = isFromReceber ? (pessoaLabelMap.get(pessoaId) ?? pessoaNome) : responsavelNome;
+      const reembolsoPessoaId = isFromReceber ? membroId : pessoaId;
+      const reembolsoMembroId = isFromReceber ? pessoaId : membroId;
+      const reembolsoPessoaNome = isFromReceber ? (pessoaLabelMap.get(membroId) ?? membroNome) : pessoaNome;
+      const reembolsoMembroNome = isFromReceber ? (pessoaLabelMap.get(pessoaId) ?? pessoaNome) : membroNome;
       const reembolsoNomesMap = isFromReceber
-        ? (reembolsoResponsavelId ? { [reembolsoResponsavelId]: pessoaLabelMap.get(reembolsoResponsavelId) ?? '' } : {})
+        ? (reembolsoMembroId ? { [reembolsoMembroId]: pessoaLabelMap.get(reembolsoMembroId) ?? '' } : {})
         : nomesMap;
 
       onGerarReembolso({
         tipo: tipo === 'pagar' ? 'receber' : 'pagar',
         pessoaId: reembolsoPessoaId,
         pessoaNome: reembolsoPessoaNome,
-        responsavelId: reembolsoResponsavelId || undefined,
-        responsavelNome: reembolsoResponsavelNome,
-        responsaveisAdicionaisIds: isFromReceber ? undefined : (responsaveisAdicionaisIds.length > 0 ? responsaveisAdicionaisIds : undefined),
-        responsaveisNomes: Object.keys(reembolsoNomesMap).length > 0 ? reembolsoNomesMap : undefined,
+        membroId: reembolsoMembroId || undefined,
+        membroNome: reembolsoMembroNome,
+        pagadoresAdicionaisIds: isFromReceber ? undefined : (pagadoresAdicionaisIds.length > 0 ? pagadoresAdicionaisIds : undefined),
+        membrosNomes: Object.keys(reembolsoNomesMap).length > 0 ? reembolsoNomesMap : undefined,
         valor,
         dataVencimento: reembolsoDate,
         descricao: `Reembolso: ${descricao.trim()}`,
@@ -574,22 +574,22 @@ export function QuickLaunchModal({
     };
 
     function buildLaunchFn(forcarProximaFatura: boolean): () => Promise<string> {
-      const allRespIds = [responsavelId, ...responsaveisAdicionaisIds].filter(Boolean);
+      const allRespIds = [membroId, ...pagadoresAdicionaisIds].filter(Boolean);
       const temMultiplos = allRespIds.length >= 2;
-      const valoresOk = responsaveisValores.length === allRespIds.length;
+      const valoresOk = membrosValores.length === allRespIds.length;
 
       if (tipo === 'pagar') {
         return async () => {
           const result = await financeiroApi.contasPagar.criar({
             ...base,
             origemCompraPlanejadaId: null,
-            responsavelCompraId: responsavelId,
+            pagadorId: membroId,
             recebedorId: pessoaId,
             dataCompra: exigeCartao ? dataVencimento : null,
             forcarProximaFatura,
             contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
-            ...(temMultiplos && { responsaveisAdicionaisIds: allRespIds }),
-            ...(temMultiplos && valoresOk && { valoresPorResponsavel: responsaveisValores })
+            ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
+            ...(temMultiplos && valoresOk && { valoresPorPagador: membrosValores })
           });
           notify('success', 'Lançamento criado', base.descricao);
           return result.id;
@@ -598,11 +598,11 @@ export function QuickLaunchModal({
       return async () => {
         const result = await financeiroApi.contasReceber.criar({
           ...base,
-          responsavelId: pessoaId,
-          pagadorId: responsavelId,
+          recebedorId: pessoaId,
+          pagadorId: membroId,
           contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
           ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
-          ...(temMultiplos && valoresOk && { valoresPorPagador: responsaveisValores })
+          ...(temMultiplos && valoresOk && { valoresPorPagador: membrosValores })
         });
         notify('success', 'Lançamento criado', base.descricao);
         return result.id;
@@ -630,7 +630,7 @@ export function QuickLaunchModal({
   }
 
   function resetFormForAnother() {
-    // Keep stable fields: tipo, pessoaId, responsavelId, formaPagamentoId, contaGerencialId, cartaoId
+    // Keep stable fields: tipo, pessoaId, membroId, formaPagamentoId, contaGerencialId, cartaoId
     // Reset transient fields: descricao, valor, dataVencimento, parcelas, liquidação
     setDescricao('');
     setValor(0);
@@ -642,7 +642,7 @@ export function QuickLaunchModal({
     setDataLiquidacao(hojeISO());
     setContaBancariaLiquidacaoId('');
     setGerarReembolso(false);
-    setResponsaveisValores([]);
+    setMembrosValores([]);
   }
 
   async function handleSaveAndLaunchAnother() {
@@ -668,22 +668,22 @@ export function QuickLaunchModal({
     };
 
     function buildLaunchFn(forcarProximaFatura: boolean): () => Promise<string> {
-      const allRespIds = [responsavelId, ...responsaveisAdicionaisIds].filter(Boolean);
+      const allRespIds = [membroId, ...pagadoresAdicionaisIds].filter(Boolean);
       const temMultiplos = allRespIds.length >= 2;
-      const valoresOk = responsaveisValores.length === allRespIds.length;
+      const valoresOk = membrosValores.length === allRespIds.length;
 
       if (tipo === 'pagar') {
         return async () => {
           const result = await financeiroApi.contasPagar.criar({
             ...base,
             origemCompraPlanejadaId: null,
-            responsavelCompraId: responsavelId,
+            pagadorId: membroId,
             recebedorId: pessoaId,
             dataCompra: exigeCartao ? dataVencimento : null,
             forcarProximaFatura,
             contaVinculadaOrigemId: null,
-            ...(temMultiplos && { responsaveisAdicionaisIds: allRespIds }),
-            ...(temMultiplos && valoresOk && { valoresPorResponsavel: responsaveisValores })
+            ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
+            ...(temMultiplos && valoresOk && { valoresPorPagador: membrosValores })
           });
           notify('success', 'Lançamento criado', base.descricao);
           return result.id;
@@ -692,11 +692,11 @@ export function QuickLaunchModal({
       return async () => {
         const result = await financeiroApi.contasReceber.criar({
           ...base,
-          responsavelId: pessoaId,
-          pagadorId: responsavelId,
+          recebedorId: pessoaId,
+          pagadorId: membroId,
           contaVinculadaOrigemId: null,
           ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
-          ...(temMultiplos && valoresOk && { valoresPorPagador: responsaveisValores })
+          ...(temMultiplos && valoresOk && { valoresPorPagador: membrosValores })
         });
         notify('success', 'Lançamento criado', base.descricao);
         return result.id;
@@ -731,10 +731,10 @@ export function QuickLaunchModal({
   function handleTipoChange(nextTipo: QuickLaunchTipo) {
     setTipo(nextTipo);
     setPessoaId('');
-    setResponsavelId('');
-    setResponsaveisAdicionaisIds([]);
-    setAddingResponsavelId('');
-    setResponsaveisValores([]);
+    setMembroId('');
+    setPagadoresAdicionaisIds([]);
+    setAddingMembroId('');
+    setMembrosValores([]);
     setContaGerencialId('');
     setCartaoId('');
     setContaOrigemId('');
@@ -746,7 +746,7 @@ export function QuickLaunchModal({
   function handlePessoaSuccess(target: QuickAddTarget, newId: string, label: string) {
     setExtraPessoas((current) => mergeOption(current, { value: newId, label }));
     if (target === 'pessoaId') setPessoaId(newId);
-    if (target === 'responsavelId') setResponsavelId(newId);
+    if (target === 'membroId') setMembroId(newId);
     setQuickAddPessoaTarget(null);
   }
 
@@ -889,47 +889,47 @@ export function QuickLaunchModal({
                   />
                 </div>
 
-                {/* Row 2: Recebedor | Conta gerencial | Responsável (só o combobox de adicionar) */}
+                {/* Row 2: Recebedor | Conta gerencial | Pagador (só o combobox de adicionar) */}
                 {(() => {
-                  const allRespIds = [responsavelId, ...responsaveisAdicionaisIds].filter(Boolean);
+                  const allRespIds = [membroId, ...pagadoresAdicionaisIds].filter(Boolean);
                   const count = allRespIds.length;
                   const totalValores = allRespIds.reduce((acc, _, i) => {
-                    return acc + (responsaveisValores.length === count ? responsaveisValores[i] : Math.round((valor / count) * 100) / 100);
+                    return acc + (membrosValores.length === count ? membrosValores[i] : Math.round((valor / count) * 100) / 100);
                   }, 0);
                   const totalFecha = count > 1 && Math.abs(totalValores - valor) < 0.02;
 
                   function getValorForIndex(i: number) {
-                    return responsaveisValores.length === count ? responsaveisValores[i] : count > 0 ? Math.round((valor / count) * 100) / 100 : 0;
+                    return membrosValores.length === count ? membrosValores[i] : count > 0 ? Math.round((valor / count) * 100) / 100 : 0;
                   }
 
                   function handleValorChange(changedIdx: number, newValor: number) {
                     const remainder = Math.max(0, valor - newValor);
                     const others = allRespIds.map((_, i) => i).filter((i) => i !== changedIdx);
                     const perOther = others.length > 0 ? Math.round((remainder / others.length) * 100) / 100 : 0;
-                    setResponsaveisValores(allRespIds.map((_, i) => (i === changedIdx ? newValor : perOther)));
+                    setMembrosValores(allRespIds.map((_, i) => (i === changedIdx ? newValor : perOther)));
                   }
 
                   function removeResp(rid: string) {
-                    if (rid === responsavelId) {
-                      const [next, ...rest] = responsaveisAdicionaisIds;
-                      setResponsavelId(next ?? '');
-                      setResponsaveisAdicionaisIds(rest ?? []);
+                    if (rid === membroId) {
+                      const [next, ...rest] = pagadoresAdicionaisIds;
+                      setMembroId(next ?? '');
+                      setPagadoresAdicionaisIds(rest ?? []);
                     } else {
-                      setResponsaveisAdicionaisIds(responsaveisAdicionaisIds.filter((x) => x !== rid));
+                      setPagadoresAdicionaisIds(pagadoresAdicionaisIds.filter((x) => x !== rid));
                     }
-                    setResponsaveisValores([]);
+                    setMembrosValores([]);
                   }
 
                   return (
                     <>
                       <div className="md:col-span-2 grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="space-y-2">
-                          <label className={formLabelClass}>{tipo === 'pagar' ? 'Recebedor' : 'Responsável'}</label>
+                          <label className={formLabelClass}>Recebedor</label>
                           <ComboBox
-                            aria-label={tipo === 'pagar' ? 'Recebedor' : 'Responsável'}
+                            aria-label="Recebedor"
                             value={pessoaId}
                             onChange={setPessoaId}
-                            options={tipo === 'pagar' ? recebedores : responsaveis}
+                            options={tipo === 'pagar' ? recebedores : membros}
                             placeholder="Selecionar pessoa..."
                             onAddNew={() => setQuickAddPessoaTarget('pessoaId')}
                             addNewLabel="Nova pessoa"
@@ -952,26 +952,24 @@ export function QuickLaunchModal({
 
                         <div className="space-y-2">
                           <label className={formLabelClass}>
-                            {tipo === 'pagar'
-                              ? `Responsáv${responsaveisAdicionaisIds.length > 0 ? 'eis' : 'el'}`
-                              : `Pagador${responsaveisAdicionaisIds.length > 0 ? 'es' : ''}`}
+                            {`Pagador${pagadoresAdicionaisIds.length > 0 ? 'es' : ''}`}
                           </label>
                           <ComboBox
-                            aria-label={tipo === 'pagar' ? 'Adicionar responsável' : 'Adicionar pagador'}
-                            value={addingResponsavelId}
+                            aria-label="Adicionar pagador"
+                            value={addingMembroId}
                             onChange={(val) => {
                               if (!val) return;
-                              if (!responsavelId) {
-                                setResponsavelId(val);
+                              if (!membroId) {
+                                setMembroId(val);
                               } else {
-                                setResponsaveisAdicionaisIds([...responsaveisAdicionaisIds, val]);
+                                setPagadoresAdicionaisIds([...pagadoresAdicionaisIds, val]);
                               }
-                              setResponsaveisValores([]);
-                              setAddingResponsavelId('');
+                              setMembrosValores([]);
+                              setAddingMembroId('');
                             }}
-                            options={(tipo === 'pagar' ? responsaveis : pagadores).filter((r) => r.value !== responsavelId && !responsaveisAdicionaisIds.includes(r.value))}
-                            placeholder={tipo === 'pagar' ? 'Adicionar responsável...' : 'Adicionar pagador...'}
-                            onAddNew={() => setQuickAddPessoaTarget('responsavelId')}
+                            options={(tipo === 'pagar' ? membros : pagadores).filter((r) => r.value !== membroId && !pagadoresAdicionaisIds.includes(r.value))}
+                            placeholder="Adicionar pagador..."
+                            onAddNew={() => setQuickAddPessoaTarget('membroId')}
                             addNewLabel="Nova pessoa"
                           />
                         </div>
@@ -981,9 +979,7 @@ export function QuickLaunchModal({
                       {count > 0 && (
                         <div className="md:col-span-2 space-y-1.5">
                           <span className={formLabelClass}>
-                            {tipo === 'pagar'
-                              ? `Responsáv${count > 1 ? 'eis' : 'el'} selecionado${count > 1 ? 's' : ''}`
-                              : `Pagador${count > 1 ? 'es' : ''} selecionado${count > 1 ? 's' : ''}`}
+                            {`Pagador${count > 1 ? 'es' : ''} selecionado${count > 1 ? 's' : ''}`}
                           </span>
                           <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                             {allRespIds.map((rid, i) => {

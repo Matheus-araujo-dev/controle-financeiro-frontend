@@ -60,7 +60,7 @@ const validValues = {
   recorrenciaObservacao: 'Contrato mensal',
   recorrenciaGerarAteData: '2026-10-20',
   dataCompra: '2026-04-04',
-  responsaveisAdicionaisIds: [],
+  pagadoresAdicionaisIds: [],
   responsaveisValores: []
 };
 
@@ -293,10 +293,10 @@ describe('FinancialAccountFormPage', () => {
     expect(screen.getByTitle('Parcela × 3x')).toBeInTheDocument();
   }, 20000);
 
-  it('auto-fills responsável from conta gerencial responsavelPadraoId', async () => {
+  it('auto-fills responsável from conta gerencial membroPadraoId', async () => {
     const config = createConfig();
     config.loadRateioOptions = vi.fn().mockResolvedValue([
-      { label: 'Despesas gerais', value: 'cg1', responsavelPadraoId: 'p3' }
+      { label: 'Despesas gerais', value: 'cg1', membroPadraoId: 'p3' }
     ]);
     config.loadResponsavelOptions = vi.fn().mockResolvedValue([
       { label: 'Responsável', value: 'p2' },

@@ -167,7 +167,7 @@ export function ConciliacaoFaturaGrid({ session, onConfirmar, onCriar, onIgnorar
   }
 
   return <div className="space-y-4">
-    <p className="text-sm text-on-surface-variant">Ao vincular, a conta mantém descrição, responsável, rateios, recorrência e reembolso. Confira as diferenças antes de confirmar.</p>
+    <p className="text-sm text-on-surface-variant">Ao vincular, a conta mantém descrição, pagador, rateios, recorrência e reembolso. Confira as diferenças antes de confirmar.</p>
     <div className="flex gap-2">
       <Button variant="secondary" size="sm" disabled={salvando} onClick={() => pendentes.forEach(item => atualizar(item.id, { selecionado: true }))}>Selecionar pendentes</Button>
       <Button variant="ghost" size="sm" disabled={salvando} onClick={() => pendentes.forEach(item => atualizar(item.id, { selecionado: false }))}>Limpar seleção</Button>

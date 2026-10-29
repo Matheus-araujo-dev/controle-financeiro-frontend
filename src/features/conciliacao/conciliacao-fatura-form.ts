@@ -1,13 +1,13 @@
 import { z } from 'zod';
 import type { CriarItemFatura, ItemFaturaConciliacao, ReembolsoFatura } from '../../types/conciliacao-fatura';
 
-export const camposMemoria = ['descricao', 'responsavelCompraId', 'recebedorId', 'rateios', 'ehRecorrente', 'gerarReembolso', 'reembolsoPagadoresIds'];
+export const camposMemoria = ['descricao', 'pagadorId', 'recebedorId', 'rateios', 'ehRecorrente', 'gerarReembolso', 'reembolsoPagadoresIds'];
 const rateioSchema = z.object({ contaGerencialId: z.string(), valor: z.number().finite() });
 const rascunhoSchema = z.object({
   contaPagarSugeridaId: z.string().nullable().optional(), justificativa: z.string().nullable().optional(),
   vinculo: z.string().optional(), selecionado: z.boolean().optional(), usarValor: z.boolean().optional(),
-  descricao: z.string(), recebedorId: z.string(), responsavelCompraId: z.string(), formaPagamentoId: z.string(),
-  responsaveisAdicionaisIds: z.array(z.string()), responsaveisValores: z.array(z.number()),
+  descricao: z.string(), recebedorId: z.string(), pagadorId: z.string(), formaPagamentoId: z.string(),
+  pagadoresAdicionaisIds: z.array(z.string()), pagadoresValores: z.array(z.number()),
   rateios: z.array(rateioSchema), observacao: z.string(), aprender: z.boolean(), camposParaAprender: z.array(z.string()),
   ehRecorrente: z.boolean(), recorrenciaTipoDia: z.enum(['DiaFixo', 'DiaUtil']), recorrenciaDia: z.number(),
   recorrenciaInicio: z.string(), recorrenciaFim: z.string(), permiteEdicao: z.boolean(), recorrenciaObservacao: z.string(),
@@ -34,14 +34,14 @@ export function criarRascunho(item: ItemFaturaConciliacao, vencimento: string, f
   const p = item.preferencias;
   const result = z.object({ fonteIA: z.literal(true), confianca: z.number().min(0.5).max(1),
     descricao: z.string().nullable().optional(), recebedorId: z.string().nullable().optional(),
-    responsavelCompraId: z.string().nullable().optional(), contaGerencialId: z.string().nullable().optional(),
+    pagadorId: z.string().nullable().optional(), contaGerencialId: z.string().nullable().optional(),
     contaPagarSugeridaId: z.string().nullable().optional(), justificativa: z.string().nullable().optional()
   }).safeParse(item.rascunho);
   const ia = result.success ? result.data : undefined;
   return {
-    descricao: p?.descricao ?? ia?.descricao ?? item.descricaoOriginal, recebedorId: p?.recebedorId ?? ia?.recebedorId ?? '', responsavelCompraId: p?.responsavelCompraId ?? ia?.responsavelCompraId ?? '',
+    descricao: p?.descricao ?? ia?.descricao ?? item.descricaoOriginal, recebedorId: p?.recebedorId ?? ia?.recebedorId ?? '', pagadorId: p?.pagadorId ?? ia?.pagadorId ?? '',
     contaPagarSugeridaId: ia?.contaPagarSugeridaId, justificativa: ia?.justificativa,
-    formaPagamentoId, responsaveisAdicionaisIds: [], responsaveisValores: [],
+    formaPagamentoId, pagadoresAdicionaisIds: [], pagadoresValores: [],
     rateios: ratearValor(item.valor, p?.rateios ?? (ia?.contaGerencialId ? [{ contaGerencialId: ia.contaGerencialId, proporcao: 1 }] : [])), observacao: '', aprender: true, camposParaAprender: [...camposMemoria],
     ehRecorrente: !!p?.ehRecorrente && item.quantidadeParcelas === 1 && item.valor > 0, recorrenciaTipoDia: 'DiaFixo',
     recorrenciaDia: Number(item.data.slice(8, 10)), recorrenciaInicio: item.data, recorrenciaFim: '', permiteEdicao: true, recorrenciaObservacao: '',
@@ -67,13 +67,13 @@ export function montarReembolso(draft: RascunhoLancamento): ReembolsoFatura | nu
   return { ...r, pagadoresIds: [...new Set(r.pagadoresIds)], observacao: r.observacao || null };
 }
 export function montarCriacao(item: ItemFaturaConciliacao, draft: RascunhoLancamento): CriarItemFatura {
-  if (!draft.descricao.trim() || draft.descricao.length > 200 || !draft.recebedorId || !draft.responsavelCompraId || !draft.formaPagamentoId)
-    throw new Error('Complete descrição, recebedor, responsável e forma de pagamento.');
+  if (!draft.descricao.trim() || draft.descricao.length > 200 || !draft.recebedorId || !draft.pagadorId || !draft.formaPagamentoId)
+    throw new Error('Complete descrição, recebedor, pagador e forma de pagamento.');
   validarRateios(draft.rateios, item.valor);
   if (draft.ehRecorrente && (item.quantidadeParcelas !== 1 || item.valor <= 0)) throw new Error('Recorrência não pode ser combinada com parcelamento ou estorno.');
-  return { descricao: draft.descricao.trim(), recebedorId: draft.recebedorId, responsavelCompraId: draft.responsavelCompraId,
-    formaPagamentoId: draft.formaPagamentoId, responsaveisAdicionaisIds: draft.responsaveisAdicionaisIds.length ? draft.responsaveisAdicionaisIds : undefined,
-    valoresPorResponsavel: draft.responsaveisValores.length ? draft.responsaveisValores : undefined,
+  return { descricao: draft.descricao.trim(), recebedorId: draft.recebedorId, pagadorId: draft.pagadorId,
+    formaPagamentoId: draft.formaPagamentoId, pagadoresAdicionaisIds: draft.pagadoresAdicionaisIds.length ? draft.pagadoresAdicionaisIds : undefined,
+    valoresPorPagador: draft.pagadoresValores.length ? draft.pagadoresValores : undefined,
     rateios: draft.rateios, observacao: draft.observacao || null,
     aprender: draft.aprender, camposParaAprender: draft.camposParaAprender,
     recorrencia: draft.ehRecorrente ? { tipoPeriodicidade: 'Mensal', tipoDia: draft.recorrenciaTipoDia, diaOrdemMensal: draft.recorrenciaDia,

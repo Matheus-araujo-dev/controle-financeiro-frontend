@@ -92,8 +92,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: 'PREVISTO',
           statusPrevisaoNome: 'Previsto',
@@ -103,8 +103,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           predicao: {
             contaGerencialId: 'cg1',
             contaGerencialDescricao: 'Supermercado',
-            responsavelId: 'p1',
-            responsavelNome: 'Pessoa Reembolsável',
+            pagadorId: 'p1',
+            pagadorNome: 'Pessoa Reembolsável',
             descricaoAjustada: 'Mercado da família',
             gerarContaReceber: true,
             marcarComoRecorrente: true,
@@ -125,8 +125,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -148,8 +148,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -261,8 +261,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: true,
           contaGerencialId: 'cg1',
           contaGerencialDescricao: 'Supermercado',
-          responsavelId: 'p1',
-          responsavelNome: 'Pessoa Reembolsável',
+          pagadorId: 'p1',
+          pagadorNome: 'Pessoa Reembolsável',
           contaReceberId: 'cr1',
           statusPrevisaoCodigo: 'PREVISTO',
           statusPrevisaoNome: 'Previsto',
@@ -304,8 +304,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: true,
           contaGerencialId: 'cg1',
           contaGerencialDescricao: 'Supermercado',
-          responsavelId: 'p1',
-          responsavelNome: 'Pessoa Reembolsável',
+          pagadorId: 'p1',
+          pagadorNome: 'Pessoa Reembolsável',
           contaReceberId: 'cr1',
           statusPrevisaoCodigo: 'PREVISTO',
           statusPrevisaoNome: 'Previsto',
@@ -347,8 +347,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: true,
           contaGerencialId: 'cg1',
           contaGerencialDescricao: 'Supermercado',
-          responsavelId: 'p1',
-          responsavelNome: 'Pessoa Reembolsável',
+          pagadorId: 'p1',
+          pagadorNome: 'Pessoa Reembolsável',
           contaReceberId: 'cr1',
           statusPrevisaoCodigo: 'PREVISTO',
           statusPrevisaoNome: 'Previsto',
@@ -390,8 +390,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: 'NAO_PREVISTO',
           statusPrevisaoNome: 'Não previsto',
@@ -440,7 +440,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
         observacao: 'Compra para terceiro',
         descricaoAjustada: 'Mercado da família',
         contaGerencialId: 'cg1',
-        responsavelId: 'p1',
+        pagadorId: 'p1',
         dataVencimentoContaReceber: null,
         gerarContaReceber: true,
         marcarComoRecorrente: true
@@ -453,7 +453,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
     await waitFor(() =>
       expect(importacoesWhatsappApi.aprovarImportacao).toHaveBeenCalledWith('iw1', {
         recebedorFaturaId: 'p-nubank',
-        responsavelPagamentoFaturaId: 'p1',
+        pagadorFaturaId: 'p1',
         cartaoIds: ['card1']
       })
     );
@@ -508,8 +508,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: 'NAO_PREVISTO',
           statusPrevisaoNome: 'Não previsto',
@@ -519,8 +519,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           predicao: {
             contaGerencialId: 'cg1',
             contaGerencialDescricao: 'Supermercado',
-            responsavelId: 'p1',
-            responsavelNome: 'Matheus',
+            pagadorId: 'p1',
+            pagadorNome: 'Matheus',
             descricaoAjustada: null,
             gerarContaReceber: false,
             marcarComoRecorrente: false,
@@ -589,8 +589,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -646,8 +646,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -711,8 +711,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -735,8 +735,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           ativo: true,
           aceitaLancamentos: true,
           ehPadraoRecebimentoFaturaCartao: false,
-          responsavelPadraoId: 'p2',
-          responsavelPadraoNome: 'Michelle'
+          membroPadraoId: 'p2',
+          membroPadraoNome: 'Michelle'
         }
       ],
       page: 1,
@@ -801,8 +801,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: 'cg-rest',
           contaGerencialDescricao: 'Restaurantes',
-          responsavelId: 'p2',
-          responsavelNome: 'Michelle',
+          pagadorId: 'p2',
+          pagadorNome: 'Michelle',
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -832,7 +832,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
         observacao: null,
         descricaoAjustada: 'Restaurante',
         contaGerencialId: 'cg-rest',
-        responsavelId: 'p2',
+        pagadorId: 'p2',
         dataVencimentoContaReceber: null,
         gerarContaReceber: false,
         marcarComoRecorrente: false
@@ -872,8 +872,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -951,8 +951,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: 'cg-familia',
           contaGerencialDescricao: 'Compras para amigos e família',
-          responsavelId: 'p-mirce',
-          responsavelNome: 'Mirce',
+          pagadorId: 'p-mirce',
+          pagadorNome: 'Mirce',
           contaReceberId: 'cr-manual',
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -975,7 +975,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
     await screen.findByText('ZP *STUDIO CO46667 1/10');
     await userEvent.click(screen.getByTestId('conta-gerencial-select-item-bradesco'));
     await userEvent.click(await screen.findByText('DES.11.03 - Compras para amigos e família'));
-    await userEvent.click(screen.getByTestId('responsavel-select-item-bradesco'));
+    await userEvent.click(screen.getByTestId('pagador-select-item-bradesco'));
     await userEvent.click(await screen.findByText('Mirce'));
     await userEvent.click(screen.getByRole('checkbox', { name: 'A receber' }));
 
@@ -992,7 +992,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
         observacao: null,
         descricaoAjustada: 'ZP *STUDIO CO46667 1/10',
         contaGerencialId: 'cg-familia',
-        responsavelId: 'p-mirce',
+        pagadorId: 'p-mirce',
         dataVencimentoContaReceber: '2026-04-13',
         gerarContaReceber: true,
         marcarComoRecorrente: false
@@ -1032,8 +1032,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -1108,7 +1108,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
     await screen.findByText('Compra para terceiro');
     await userEvent.click(screen.getByTestId('conta-gerencial-select-item-erro'));
     await userEvent.click(await screen.findByText('DES.11.03 - Compras para amigos e família'));
-    await userEvent.click(screen.getByTestId('responsavel-select-item-erro'));
+    await userEvent.click(screen.getByTestId('pagador-select-item-erro'));
     await userEvent.click(await screen.findByText('Mirce'));
     await userEvent.click(screen.getByRole('checkbox', { name: 'A receber' }));
 
@@ -1152,8 +1152,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -1175,8 +1175,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: null,
           contaGerencialDescricao: null,
-          responsavelId: null,
-          responsavelNome: null,
+          pagadorId: null,
+          pagadorNome: null,
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -1256,8 +1256,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: 'cg1',
           contaGerencialDescricao: 'Pets',
-          responsavelId: 'p1',
-          responsavelNome: 'Michelle',
+          pagadorId: 'p1',
+          pagadorNome: 'Michelle',
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -1356,8 +1356,8 @@ describe('ImportacaoWhatsappDetailPage', () => {
           marcarComoRecorrente: false,
           contaGerencialId: 'cg1',
           contaGerencialDescricao: 'Pets',
-          responsavelId: 'p1',
-          responsavelNome: 'Michelle',
+          pagadorId: 'p1',
+          pagadorNome: 'Michelle',
           contaReceberId: null,
           statusPrevisaoCodigo: null,
           statusPrevisaoNome: null,
@@ -1382,7 +1382,7 @@ describe('ImportacaoWhatsappDetailPage', () => {
 
     expect(importacoesWhatsappApi.completarFechamentoFatura).toHaveBeenCalledWith('iw7', {
       recebedorFaturaId: 'p-nubank',
-      responsavelPagamentoFaturaId: 'p1',
+      pagadorFaturaId: 'p1',
       cartaoIds: ['card1']
     });
     expect(await screen.findByText('Fechamento da fatura concluído. Reabra a importação para edição se precisar refazer a materialização.')).toBeInTheDocument();

@@ -27,7 +27,7 @@ const pagarRows = [
     id: 'cp1', descricao: 'Aluguel', recebedorNome: 'Maria', pagadorNome: null,
     dataVencimento: '2026-07-15', valorLiquido: 1200, statusCodigo: 'PENDENTE', statusNome: 'Pendente',
     ehRecorrente: false, numeroParcela: null, quantidadeParcelas: null,
-    responsavelNome: null, formaPagamentoNome: null, numeroDocumento: null,
+    formaPagamentoNome: null, numeroDocumento: null,
   },
 ];
 
@@ -36,7 +36,7 @@ const receberRows = [
     id: 'cr1', descricao: 'Consultoria', pagadorNome: 'Empresa X', recebedorNome: null,
     dataVencimento: '2026-07-20', valorLiquido: 3000, statusCodigo: 'LIQUIDADA', statusNome: 'Liquidada',
     ehRecorrente: false, numeroParcela: null, quantidadeParcelas: null,
-    responsavelNome: null, formaPagamentoNome: null, numeroDocumento: null,
+    formaPagamentoNome: null, numeroDocumento: null,
   },
 ];
 

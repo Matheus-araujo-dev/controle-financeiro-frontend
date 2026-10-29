@@ -25,13 +25,13 @@ const testRows = [
     id: 'rec1', tipoPeriodicidade: 1, tipoDia: 1, diaOrdemMensal: 5,
     dataInicio: '2025-01-05', dataFim: null, ativa: true, permiteEdicaoOcorrenciaIndividual: false,
     observacao: null, contaOrigemTipo: 'ContaReceber' as const,
-    contaOrigemId: 'cr1', descricao: 'Aluguel Recebido', valorLiquido: 2500, pessoaNome: 'João', responsavelNome: 'Ana',
+    contaOrigemId: 'cr1', descricao: 'Aluguel Recebido', valorLiquido: 2500, pessoaNome: 'João', pagadorNome: 'Ana',
   },
   {
     id: 'rec2', tipoPeriodicidade: 1, tipoDia: 1, diaOrdemMensal: 10,
     dataInicio: '2025-03-10', dataFim: '2026-12-31', ativa: false, permiteEdicaoOcorrenciaIndividual: true,
     observacao: 'obs', contaOrigemTipo: 'ContaPagar' as const,
-    contaOrigemId: 'cp1', descricao: 'Internet', valorLiquido: 120, pessoaNome: 'Vivo', responsavelNome: null,
+    contaOrigemId: 'cp1', descricao: 'Internet', valorLiquido: 120, pessoaNome: 'Vivo', pagadorNome: null,
   },
 ];
 
@@ -64,7 +64,7 @@ describe('RecurrenceListPage — export (XLSX + PDF desktop only, no mobile)', (
   });
   afterEach(() => vi.restoreAllMocks());
 
-  it('XLSX export calls createXlsxBlob covering all lambdas (ContaReceber/ContaPagar, ativa true/false, dataFim null/non-null, responsavelNome null/non-null)', async () => {
+  it('XLSX export calls createXlsxBlob covering all lambdas (ContaReceber/ContaPagar, ativa true/false, dataFim null/non-null, pagadorNome null/non-null)', async () => {
     await renderPage();
     expect(await screen.findByText('Aluguel Recebido')).toBeInTheDocument();
     const { createXlsxBlob } = await import('../../shared/export/workbook');

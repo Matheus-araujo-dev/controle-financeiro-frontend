@@ -102,7 +102,7 @@ export function RecurrenceListPage() {
     { header: 'Descrição', value: (r) => r.descricao, cellStyle: STYLE.DATA_TEXT, width: 36 },
     { header: 'Tipo', value: (r) => r.contaOrigemTipo === 'ContaReceber' ? 'Receita' : 'Despesa', cellStyle: STYLE.DATA_TEXT, width: 12 },
     { header: 'Pessoa', value: (r) => r.pessoaNome, cellStyle: STYLE.DATA_TEXT, width: 22 },
-    { header: 'Responsável', value: (r) => r.responsavelNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
+    { header: 'Pagador', value: (r) => r.pagadorNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
     { header: 'Valor (R$)', value: (r) => r.valorLiquido, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + r.valorLiquido, 0), width: 14 },
     { header: 'Situação', value: (r) => r.encerrada ? 'Encerrada' : r.ativa ? 'Ativa' : 'Pausada', cellStyle: STYLE.DATA_TEXT, width: 10 },
     { header: 'Dia do mês', value: (r) => r.diaOrdemMensal, cellStyle: STYLE.DATA_TEXT, width: 12 },

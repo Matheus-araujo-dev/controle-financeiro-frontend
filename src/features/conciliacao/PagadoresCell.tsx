@@ -3,18 +3,18 @@ import { ComboBox, type ComboBoxOption } from '../../components/forms/ComboBox';
 import { formatCurrencyBRL } from '../../shared/currency';
 
 type Props = {
-  responsavelId: string;
+  pagadorId: string;
   adicionaisIds: string[];
   valores: number[];
   total: number;
   options: ComboBoxOption[];
   disabled: boolean;
-  onChange: (patch: { responsavelCompraId?: string; responsaveisAdicionaisIds?: string[]; responsaveisValores?: number[] }) => void;
+  onChange: (patch: { pagadorId?: string; pagadoresAdicionaisIds?: string[]; pagadoresValores?: number[] }) => void;
   onAddNew?: () => void;
 };
 
-export function ResponsaveisCell({ responsavelId, adicionaisIds, valores, total, options, disabled, onChange, onAddNew }: Props) {
-  const allIds = [responsavelId, ...adicionaisIds].filter(Boolean);
+export function PagadoresCell({ pagadorId, adicionaisIds, valores, total, options, disabled, onChange, onAddNew }: Props) {
+  const allIds = [pagadorId, ...adicionaisIds].filter(Boolean);
   const count = allIds.length;
   const available = options.filter(o => !allIds.includes(o.value));
 
@@ -25,19 +25,19 @@ export function ResponsaveisCell({ responsavelId, adicionaisIds, valores, total,
 
   function handleAdd(id: string) {
     if (!id) return;
-    if (!responsavelId) {
-      onChange({ responsavelCompraId: id, responsaveisValores: [] });
+    if (!pagadorId) {
+      onChange({ pagadorId: id, pagadoresValores: [] });
     } else {
-      onChange({ responsaveisAdicionaisIds: [...adicionaisIds, id], responsaveisValores: [] });
+      onChange({ pagadoresAdicionaisIds: [...adicionaisIds, id], pagadoresValores: [] });
     }
   }
 
   function handleRemove(id: string) {
-    if (id === responsavelId) {
+    if (id === pagadorId) {
       const [next, ...rest] = adicionaisIds;
-      onChange({ responsavelCompraId: next ?? '', responsaveisAdicionaisIds: rest, responsaveisValores: [] });
+      onChange({ pagadorId: next ?? '', pagadoresAdicionaisIds: rest, pagadoresValores: [] });
     } else {
-      onChange({ responsaveisAdicionaisIds: adicionaisIds.filter(x => x !== id), responsaveisValores: [] });
+      onChange({ pagadoresAdicionaisIds: adicionaisIds.filter(x => x !== id), pagadoresValores: [] });
     }
   }
 
@@ -46,14 +46,14 @@ export function ResponsaveisCell({ responsavelId, adicionaisIds, valores, total,
     const others = allIds.length - 1;
     const perOther = others > 0 ? Math.round((remainder / others) * 100) / 100 : 0;
     const novos = allIds.map((_, i) => i === index ? newVal : perOther);
-    onChange({ responsaveisValores: novos });
+    onChange({ pagadoresValores: novos });
   }
 
   return (
     <div className="min-w-[180px] space-y-1.5">
       {!disabled && (
-        <ComboBox compact aria-label="Adicionar responsável" value="" options={available}
-          placeholder="Adicionar..." disabled={disabled} onChange={handleAdd} onAddNew={onAddNew} addNewLabel="Novo responsável" />
+        <ComboBox compact aria-label="Adicionar pagador" value="" options={available}
+          placeholder="Adicionar..." disabled={disabled} onChange={handleAdd} onAddNew={onAddNew} addNewLabel="Novo pagador" />
       )}
       {allIds.map((id, i) => {
         const label = options.find(o => o.value === id)?.label ?? id;

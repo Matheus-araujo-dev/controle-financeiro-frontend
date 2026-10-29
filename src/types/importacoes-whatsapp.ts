@@ -20,7 +20,7 @@ export type TipoSugestaoImportacaoWhatsappCodigo =
   | 'ITEM_EXTRATO';
 export type StatusItemImportadoWhatsappCodigo = 'SUGERIDO' | 'CONFIRMADO' | 'REJEITADO';
 
-export type PredicaoClassificacaoImportacaoWhatsapp = ApiContract<Api.PredicaoClassificacaoImportacaoWhatsappResponse, 'contaGerencialId' | 'contaGerencialDescricao' | 'responsavelId' | 'responsavelNome' | 'descricaoAjustada'>;
+export type PredicaoClassificacaoImportacaoWhatsapp = ApiContract<Api.PredicaoClassificacaoImportacaoWhatsappResponse, 'contaGerencialId' | 'contaGerencialDescricao' | 'pagadorId' | 'pagadorNome' | 'descricaoAjustada'>;
 
 export type ImportacoesWhatsappFilters = {
   page: number;
@@ -46,7 +46,7 @@ export type ImportacaoWhatsappResumo = Omit<ApiContract<Api.ImportacaoWhatsappRe
   statusCodigo: StatusImportacaoWhatsappCodigo;
 };
 
-export type ItemImportadoWhatsapp = Omit<ApiContract<Api.ItemImportadoWhatsappResponse, 'descricaoAjustada' | 'contaGerencialId' | 'contaGerencialDescricao' | 'responsavelId' | 'responsavelNome' | 'contaReceberId' | 'statusPrevisaoNome' | 'observacao' | 'confirmadoEmUtc' | 'rejeitadoEmUtc'>, 'tipoSugestaoCodigo' | 'statusCodigo' | 'statusPrevisaoCodigo' | 'predicao'> & {
+export type ItemImportadoWhatsapp = Omit<ApiContract<Api.ItemImportadoWhatsappResponse, 'descricaoAjustada' | 'contaGerencialId' | 'contaGerencialDescricao' | 'pagadorId' | 'pagadorNome' | 'contaReceberId' | 'statusPrevisaoNome' | 'observacao' | 'confirmadoEmUtc' | 'rejeitadoEmUtc'>, 'tipoSugestaoCodigo' | 'statusCodigo' | 'statusPrevisaoCodigo' | 'predicao'> & {
   tipoSugestaoCodigo: TipoSugestaoImportacaoWhatsappCodigo;
   statusCodigo: StatusItemImportadoWhatsappCodigo;
   statusPrevisaoCodigo: 'PREVISTO' | 'NAO_PREVISTO' | null;
@@ -62,9 +62,9 @@ export type ImportacaoWhatsappDetalhe = Omit<ImportacaoWhatsappResumo, 'quantida
   itens: ItemImportadoWhatsapp[];
 };
 
-export type RevisarItemImportadoPayload = ApiContract<Api.RevisarItemImportadoWhatsappRequest, 'observacao' | 'descricaoAjustada' | 'contaGerencialId' | 'responsavelId' | 'dataVencimentoContaReceber'>;
+export type RevisarItemImportadoPayload = ApiContract<Api.RevisarItemImportadoWhatsappRequest, 'observacao' | 'descricaoAjustada' | 'contaGerencialId' | 'pagadorId' | 'dataVencimentoContaReceber'>;
 
-export type AprovarImportacaoWhatsappPayload = Omit<ApiContract<Api.AprovarImportacaoWhatsappRequest, 'recebedorFaturaId' | 'responsavelPagamentoFaturaId'>, 'cartaoIds'> & {
+export type AprovarImportacaoWhatsappPayload = Omit<ApiContract<Api.AprovarImportacaoWhatsappRequest, 'recebedorFaturaId' | 'pagadorFaturaId'>, 'cartaoIds'> & {
   cartaoIds: string[];
 };
 

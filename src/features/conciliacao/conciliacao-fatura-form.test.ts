@@ -3,7 +3,7 @@ import type { ItemFaturaConciliacao } from '../../types/conciliacao-fatura';
 
 const item: ItemFaturaConciliacao = { id: 'i', data: '2026-09-01', descricaoOriginal: 'ASAAS*NEXTFITago 26', valor: 33.33,
   numeroParcela: 1, quantidadeParcelas: 1, status: 'Pendente', contaPagarVinculadaId: null, valorAnteriorSistema: null, candidatos: [],
-  preferencias: { descricao: 'Sistema do pilates', responsavelCompraId: 'p1', recebedorId: 'p2',
+  preferencias: { descricao: 'Sistema do pilates', pagadorId: 'p1', recebedorId: 'p2',
     rateios: [{ contaGerencialId: 'a', proporcao: 0.5 }, { contaGerencialId: 'b', proporcao: 0.5 }], ehRecorrente: false, gerarReembolso: false, reembolsoPagadoresIds: [] } };
 
 describe('rascunho da conciliação', () => {
@@ -29,14 +29,14 @@ describe('rascunho da conciliação', () => {
     draft.gerarReembolso = true;
     expect(() => montarCriacao(item, draft)).toThrow('pagador');
   });
-  it('aplica responsável em lote sem substituir valores e descrições', () => {
+  it('aplica pagador em lote sem substituir valores e descrições', () => {
     const a = criarRascunho(item, '2026-09-20', 'cartao');
     const b = { ...criarRascunho({ ...item, id: 'j', valor: 60 }, '2026-09-20', 'cartao'), descricao: 'Outra compra' };
-    const updated = aplicarCampoEmLote({ i: a, j: b }, ['i', 'j'], 'responsavelCompraId', 'p3');
-    expect(updated.j.responsavelCompraId).toBe('p3');
+    const updated = aplicarCampoEmLote({ i: a, j: b }, ['i', 'j'], 'pagadorId', 'p3');
+    expect(updated.j.pagadorId).toBe('p3');
     expect(updated.j.descricao).toBe('Outra compra');
     expect(updated.j.rateios.reduce((s, r) => s + r.valor, 0)).toBe(60);
-    expect(a.responsavelCompraId).toBe('p1');
+    expect(a.pagadorId).toBe('p1');
   });
 });
 
@@ -48,7 +48,7 @@ describe('validações da revisão financeira', () => {
   });
   it('ignora rascunho inválido e não sugere recorrência ou reembolso para estorno', () => {
     const result = criarRascunho({ ...item, valor: -33.33, rascunho: { descricao: 123 },
-      preferencias: { descricao: null, responsavelCompraId: null, recebedorId: null, rateios: null, reembolsoPagadoresIds: null, ehRecorrente: true, gerarReembolso: true } }, '2026-09-20', 'cartao');
+      preferencias: { descricao: null, pagadorId: null, recebedorId: null, rateios: null, reembolsoPagadoresIds: null, ehRecorrente: true, gerarReembolso: true } }, '2026-09-20', 'cartao');
     expect(result.descricao).toBe(item.descricaoOriginal);
     expect(result.ehRecorrente).toBe(false);
     expect(result.gerarReembolso).toBe(false);
@@ -59,7 +59,7 @@ describe('validações da revisão financeira', () => {
       .toEqual([{ contaGerencialId: 'a', valor: -0.02 }, { contaGerencialId: 'b', valor: -0.01 }]);
     expect(ratearValor(10, [{ contaGerencialId: 'a', proporcao: 0 }])).toEqual([{ contaGerencialId: '', valor: 10 }]);
   });
-  it.each(['descricao', 'recebedorId', 'responsavelCompraId', 'formaPagamentoId'] as const)('bloqueia compra sem %s', campo => {
+  it.each(['descricao', 'recebedorId', 'pagadorId', 'formaPagamentoId'] as const)('bloqueia compra sem %s', campo => {
     expect(() => montarCriacao(item, { ...draft(), [campo]: '' })).toThrow('Complete');
   });
   it.each([

@@ -42,7 +42,7 @@ type FinancialRecord = {
   descricao?: string | null;
   recebedorNome?: string | null;
   pagadorNome?: string | null;
-  responsavelNome?: string | null;
+
   dataVencimento?: string | null;
   statusCodigo?: StatusContaCodigo;
   statusNome?: string | null;
@@ -70,7 +70,7 @@ type ListFilters = {
   sortDirection?: 'Asc' | 'Desc';
   recebedorIds?: string[];
   pagadorIds?: string[];
-  responsavelIds?: string[];
+
   formaPagamentoIds?: string[];
 };
 
@@ -211,13 +211,13 @@ export function FinancialAccountListPage({
   const { data: optionsData } = useQuery({
     queryKey: [config.key, 'filter-options'],
     queryFn: async () => {
-      const [pessoas, responsaveis, formas, contas] = await Promise.all([
+      const [pessoas, membros, formas, contas] = await Promise.all([
         config.loadPessoaOptions(),
-        config.loadResponsavelOptions(),
+        config.loadMembroOptions(),
         config.loadFormaPagamentoOptions(),
         config.loadContaBancariaOptions()
       ]);
-      return { pessoas, responsaveis, formas, contas };
+      return { pessoas, membros, formas, contas };
     },
     staleTime: 5 * 60_000
   });
@@ -226,8 +226,8 @@ export function FinancialAccountListPage({
     () => (optionsData?.pessoas ?? []).map((item) => ({ label: item.label, value: item.value })),
     [optionsData]
   );
-  const responsavelOptions = useMemo(
-    () => (optionsData?.responsaveis ?? []).map((item) => ({ label: item.label, value: item.value })),
+  const membroOptions = useMemo(
+    () => (optionsData?.membros ?? []).map((item) => ({ label: item.label, value: item.value })),
     [optionsData]
   );
   const formaPagamentoOptions = useMemo(
@@ -298,11 +298,13 @@ export function FinancialAccountListPage({
     }));
   }
 
-  function updateResponsavelFilter(values: string[]) {
+  function updateMembroFilter(values: string[]) {
     setFilters((current) => ({
       ...current,
       page: 1,
-      responsavelIds: values.length ? values : undefined
+      ...(isPagar
+        ? { pagadorIds: values.length ? values : undefined }
+        : { recebedorIds: values.length ? values : undefined })
     }));
   }
 
@@ -376,16 +378,16 @@ export function FinancialAccountListPage({
       key: 'pessoa',
       mobileRole: 'subtitle',
       render: (_value, record) => (
-        <span className="text-sm text-on-surface">{record.recebedorNome ?? record.pagadorNome ?? '—'}</span>
+        <span className="text-sm text-on-surface">{(isPagar ? record.recebedorNome : record.pagadorNome) ?? '—'}</span>
       )
     },
     {
-      title: 'Responsável',
-      dataIndex: 'responsavelNome',
-      key: 'responsavel',
+      title: isPagar ? 'Pagador' : 'Recebedor',
+      dataIndex: isPagar ? 'pagadorNome' : 'recebedorNome',
+      key: 'membro',
       mobileRole: 'subtitle',
       render: (_value, record) => (
-        <span className="text-sm text-on-surface-variant">{record.responsavelNome ?? '—'}</span>
+        <span className="text-sm text-on-surface-variant">{(isPagar ? record.pagadorNome : record.recebedorNome) ?? '—'}</span>
       )
     },
     {
@@ -502,8 +504,8 @@ export function FinancialAccountListPage({
   const exportColumns = [
     { header: 'Descrição', value: (r: FinancialRecord) => r.descricao ?? '' },
     { header: 'Nº Documento', value: (r: FinancialRecord) => r.numeroDocumento ?? '' },
-    { header: config.personLabel, value: (r: FinancialRecord) => r.recebedorNome ?? r.pagadorNome ?? '' },
-    { header: 'Responsável', value: (r: FinancialRecord) => r.responsavelNome ?? '' },
+    { header: config.personLabel, value: (r: FinancialRecord) => (isPagar ? r.recebedorNome : r.pagadorNome) ?? '' },
+    { header: isPagar ? 'Pagador' : 'Recebedor', value: (r: FinancialRecord) => (isPagar ? r.pagadorNome : r.recebedorNome) ?? '' },
     { header: 'Vencimento', value: (r: FinancialRecord) => r.dataVencimento ?? '' },
     { header: 'Status', value: (r: FinancialRecord) => r.statusNome ?? '' },
     { header: 'Forma de pagamento', value: (r: FinancialRecord) => r.formaPagamentoNome ?? '' },
@@ -514,8 +516,8 @@ export function FinancialAccountListPage({
   const richExportColumns: RichColumn<FinancialRecord>[] = [
     { header: 'Descrição', value: (r) => r.descricao ?? '', cellStyle: STYLE.DATA_TEXT, width: 42 },
     { header: 'Nº Documento', value: (r) => r.numeroDocumento ?? '', cellStyle: STYLE.DATA_TEXT, width: 16 },
-    { header: config.personLabel, value: (r) => r.recebedorNome ?? r.pagadorNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 22 },
-    { header: 'Responsável', value: (r) => r.responsavelNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
+    { header: config.personLabel, value: (r) => (isPagar ? r.recebedorNome : r.pagadorNome) ?? '', cellStyle: STYLE.DATA_TEXT, width: 22 },
+    { header: isPagar ? 'Pagador' : 'Recebedor', value: (r) => (isPagar ? r.pagadorNome : r.recebedorNome) ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
     { header: 'Vencimento', value: (r) => r.dataVencimento ? formatDateBR(r.dataVencimento) : '', cellStyle: STYLE.DATA_TEXT, width: 12 },
     { header: 'Parcela', value: (r) => r.numeroParcela && r.quantidadeParcelas ? `${r.numeroParcela}/${r.quantidadeParcelas}` : '', cellStyle: STYLE.DATA_TEXT, width: 10 },
     { header: 'Forma de Pagamento', value: (r) => r.formaPagamentoNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
@@ -532,8 +534,8 @@ export function FinancialAccountListPage({
   const printColumns: PrintColumn<FinancialRecord>[] = [
     { header: 'Descrição', value: (r) => r.descricao ?? '' },
     { header: 'Nº Documento', value: (r) => r.numeroDocumento ?? '' },
-    { header: config.personLabel, value: (r) => r.recebedorNome ?? r.pagadorNome ?? '' },
-    { header: 'Responsável', value: (r) => r.responsavelNome ?? '' },
+    { header: config.personLabel, value: (r) => (isPagar ? r.recebedorNome : r.pagadorNome) ?? '' },
+    { header: isPagar ? 'Pagador' : 'Recebedor', value: (r) => (isPagar ? r.pagadorNome : r.recebedorNome) ?? '' },
     { header: 'Vencimento', value: (r) => r.dataVencimento ? formatDateBR(r.dataVencimento) : '' },
     { header: 'Parcela', value: (r) => r.numeroParcela && r.quantidadeParcelas ? `${r.numeroParcela}/${r.quantidadeParcelas}` : '' },
     { header: 'Forma de Pgto', value: (r) => r.formaPagamentoNome ?? '' },
@@ -563,11 +565,12 @@ export function FinancialAccountListPage({
         .join(', ');
       result.push([`${config.personLabel}:`, labels]);
     }
-    if (filters.responsavelIds?.length) {
-      const labels = filters.responsavelIds
-        .map((id) => responsavelOptions.find((o) => o.value === id)?.label ?? id)
+    const membroIds = isPagar ? filters.pagadorIds : filters.recebedorIds;
+    if (membroIds?.length) {
+      const labels = membroIds
+        .map((id) => membroOptions.find((o) => o.value === id)?.label ?? id)
         .join(', ');
-      result.push(['Responsável:', labels]);
+      result.push([isPagar ? 'Pagador:' : 'Recebedor:', labels]);
     }
     if (filters.formaPagamentoIds?.length) {
       const labels = filters.formaPagamentoIds
@@ -639,7 +642,7 @@ export function FinancialAccountListPage({
       rows,
       dateValue: (r) => r.dataVencimento ?? '',
       descriptionValue: (r) => r.descricao ?? '',
-      subtitleValue: (r) => r.recebedorNome ?? r.pagadorNome ?? '',
+      subtitleValue: (r) => (isPagar ? r.recebedorNome : r.pagadorNome) ?? '',
       signedValue: (r) => isPagar ? -(r.valorLiquido ?? 0) : (r.valorLiquido ?? 0),
     }, win);
   }
@@ -721,13 +724,13 @@ export function FinancialAccountListPage({
             />
           </FilterField>
 
-          <FilterField label="Responsável">
+          <FilterField label={isPagar ? 'Pagador' : 'Recebedor'}>
             <MultiSelectFilter
-              ariaLabel="Responsável"
+              ariaLabel={isPagar ? 'Pagador' : 'Recebedor'}
               placeholder="Todos"
-              options={responsavelOptions}
-              value={filters.responsavelIds ?? []}
-              onChange={updateResponsavelFilter}
+              options={membroOptions}
+              value={(isPagar ? filters.pagadorIds : filters.recebedorIds) ?? []}
+              onChange={updateMembroFilter}
               searchable
             />
           </FilterField>

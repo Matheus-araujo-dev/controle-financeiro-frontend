@@ -15,7 +15,7 @@ vi.mock('../../services/http/conciliacao-fatura-api', () => ({ conciliacaoFatura
 vi.mock('../../services/http/financeiro-api', () => ({ financeiroApi: { faturas: { obterPorId: vi.fn().mockResolvedValue({ dataVencimento: '2026-09-20', cartaoNome: 'Meu cartão' }) } } }));
 vi.mock('../financeiro/module-config', () => {
   const config = { loadPessoaOptions: vi.fn().mockResolvedValue([{ value: 'p', label: 'Pessoa' }]),
-    loadResponsavelOptions: vi.fn().mockResolvedValue([{ value: 'p', label: 'Pessoa' }]),
+    loadPagadorOptions: vi.fn().mockResolvedValue([{ value: 'p', label: 'Pessoa' }]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([{ value: 'fp', label: 'Cartão', ehCartao: true }]),
     loadRateioOptions: vi.fn().mockResolvedValue([{ value: 'cg', label: 'Categoria' }]) };
   return { contasPagarModuleConfig: config, contasReceberModuleConfig: config };

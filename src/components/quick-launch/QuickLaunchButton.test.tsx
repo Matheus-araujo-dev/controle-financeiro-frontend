@@ -340,7 +340,7 @@ describe('QuickLaunchButton', () => {
         descricao: 'Compra do mes',
         valorOriginal: 120,
         recebedorId: 'p1',
-        responsavelCompraId: 'r1',
+        pagadorId: 'r1',
         formaPagamentoId: 'f-card',
         cartaoId: 'c1',
         rateios: [{ contaGerencialId: 'cd1', valor: 120 }]
@@ -414,12 +414,12 @@ describe('QuickLaunchButton', () => {
     );
   });
 
-  it('auto-fills responsável from conta gerencial responsavelPadraoId', async () => {
+  it('auto-fills responsável from conta gerencial membroPadraoId', async () => {
     vi.mocked(cadastrosApi.contasGerenciais.listar).mockImplementation((filters: { tipo?: string }) => {
       if (filters.tipo === 'Receita') return Promise.resolve(receitasResponse as never);
       return Promise.resolve({
         items: [
-          { id: 'cd1', codigo: '1.1', descricao: 'Mercado', aceitaLancamentos: true, responsavelPadraoId: 'r1' }
+          { id: 'cd1', codigo: '1.1', descricao: 'Mercado', aceitaLancamentos: true, membroPadraoId: 'r1' }
         ]
       } as never);
     });
@@ -470,7 +470,7 @@ describe('QuickLaunchButton', () => {
     expect(notify).toHaveBeenCalledWith('success', 'Transferência registrada');
   });
 
-  it('mostra chips com QLValorInput para multiplos responsaveis e envia responsaveisAdicionaisIds', async () => {
+  it('mostra chips com QLValorInput para multiplos responsaveis e envia pagadoresAdicionaisIds', async () => {
     const { user, dialog } = await openQuickLaunch();
 
     await user.type(within(dialog).getByPlaceholderText(/mercado/i), 'Rateio teste');
@@ -502,7 +502,7 @@ describe('QuickLaunchButton', () => {
     await waitFor(() => expect(financeiroApi.contasPagar.criar).toHaveBeenCalledTimes(1));
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
       expect.objectContaining({
-        responsaveisAdicionaisIds: ['r1', 'r2']
+        pagadoresAdicionaisIds: ['r1', 'r2']
       })
     );
   });
@@ -550,7 +550,7 @@ describe('QuickLaunchButton', () => {
     await waitFor(() => expect(screen.queryByRole('dialog', { name: /Nova conta gerencial/i })).not.toBeInTheDocument());
   });
 
-  it('QLValorInput: focus mostra valor raw, blur com novo valor distribui remainder e envia valoresPorResponsavel', async () => {
+  it('QLValorInput: focus mostra valor raw, blur com novo valor distribui remainder e envia valoresPorPagador', async () => {
     const { user, dialog } = await openQuickLaunch();
 
     await user.type(within(dialog).getByPlaceholderText(/mercado/i), 'Teste valor');
@@ -585,11 +585,11 @@ describe('QuickLaunchButton', () => {
     await user.click(within(dialog).getByRole('button', { name: /^Lan./i }));
 
     await waitFor(() => expect(financeiroApi.contasPagar.criar).toHaveBeenCalledTimes(1));
-    // valoresOk = true → payload inclui valoresPorResponsavel
+    // valoresOk = true → payload inclui valoresPorPagador
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
       expect.objectContaining({
-        responsaveisAdicionaisIds: ['r1', 'r2'],
-        valoresPorResponsavel: [150, 50]
+        pagadoresAdicionaisIds: ['r1', 'r2'],
+        valoresPorPagador: [150, 50]
       })
     );
   });
@@ -649,13 +649,13 @@ describe('QuickLaunchButton', () => {
         pessoaNome: 'Responsavel Dois',
         responsavelId: 'r1',
         responsavelNome: 'Responsavel',
-        responsaveisAdicionaisIds: undefined,
+        pagadoresAdicionaisIds: undefined,
         contaVinculadaOrigemId: 'cr-456'
       })
     );
   });
 
-  it('preenche chips com nomes via initialValues.responsaveisAdicionaisIds e responsaveisNomes', async () => {
+  it('preenche chips com nomes via initialValues.pagadoresAdicionaisIds e responsaveisNomes', async () => {
     render(
       <QuickLaunchModal
         initialValues={{
@@ -665,7 +665,7 @@ describe('QuickLaunchButton', () => {
           responsavelId: 'r1',
           // responsavelNome ausente propositalmente — cobre o branch `?? nomes[id]`
           responsaveisNomes: { r1: 'Responsavel', r2: 'Responsavel Dois' },
-          responsaveisAdicionaisIds: ['r2'],
+          pagadoresAdicionaisIds: ['r2'],
           valor: 200,
           dataVencimento: '2026-09-20',
           descricao: 'Reembolso: Compra',
