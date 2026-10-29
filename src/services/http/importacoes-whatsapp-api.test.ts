@@ -22,7 +22,7 @@ describe('importacoesWhatsappApi', () => {
     await importacoesWhatsappApi.reprocessar('iw1');
     await importacoesWhatsappApi.aprovarImportacao('iw1', {
       recebedorFaturaId: 'p2',
-      responsavelPagamentoFaturaId: 'p1',
+      pagadorFaturaId: 'p1',
       cartaoIds: ['cartao1', 'cartao2']
     });
     await importacoesWhatsappApi.reabrirImportacao('iw1');
@@ -30,7 +30,7 @@ describe('importacoesWhatsappApi', () => {
       observacao: 'Confirmado manualmente',
       descricaoAjustada: 'URBANUS BURGUER',
       contaGerencialId: 'cg1',
-      responsavelId: 'p1',
+      pagadorId: 'p1',
       dataVencimentoContaReceber: '2026-04-13',
       gerarContaReceber: true,
       marcarComoRecorrente: true
@@ -39,7 +39,7 @@ describe('importacoesWhatsappApi', () => {
       observacao: 'Arquivo invalido',
       descricaoAjustada: null,
       contaGerencialId: null,
-      responsavelId: null,
+      pagadorId: null,
       dataVencimentoContaReceber: null,
       gerarContaReceber: false,
       marcarComoRecorrente: false
@@ -57,7 +57,7 @@ describe('importacoesWhatsappApi', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/importacoes-whatsapp/iw1/reprocessar', undefined);
     expect(apiClient.post).toHaveBeenCalledWith('/importacoes-whatsapp/iw1/confirmar', {
       recebedorFaturaId: 'p2',
-      responsavelPagamentoFaturaId: 'p1',
+      pagadorFaturaId: 'p1',
       cartaoIds: ['cartao1', 'cartao2']
     });
     expect(apiClient.post).toHaveBeenCalledWith('/importacoes-whatsapp/iw1/reabrir', undefined);
@@ -65,7 +65,7 @@ describe('importacoesWhatsappApi', () => {
       observacao: 'Confirmado manualmente',
       descricaoAjustada: 'URBANUS BURGUER',
       contaGerencialId: 'cg1',
-      responsavelId: 'p1',
+      pagadorId: 'p1',
       dataVencimentoContaReceber: '2026-04-13',
       gerarContaReceber: true,
       marcarComoRecorrente: true
@@ -74,7 +74,7 @@ describe('importacoesWhatsappApi', () => {
       observacao: 'Arquivo invalido',
       descricaoAjustada: null,
       contaGerencialId: null,
-      responsavelId: null,
+      pagadorId: null,
       dataVencimentoContaReceber: null,
       gerarContaReceber: false,
       marcarComoRecorrente: false

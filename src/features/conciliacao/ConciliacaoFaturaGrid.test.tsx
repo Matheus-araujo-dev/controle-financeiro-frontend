@@ -8,11 +8,23 @@ const session = {
     numeroParcela: 2, quantidadeParcelas: 3, status: 'Pendente', contaPagarVinculadaId: null,
     valorAnteriorSistema: null, candidatos: [{ contaId: 'c1', diferenca: -0.01, pontos: 95, motivo: 'Diferença de centavos', correspondenciaClara: true }] }],
   contasSistema: [{ id: 'c1', dataCompra: '2026-09-01', descricao: 'Meu tênis', valor: 33.34,
-    numeroParcela: 2, quantidadeParcelas: 3, responsavelCompraId: null, recebedorId: 'p1',
+    numeroParcela: 2, quantidadeParcelas: 3, pagadorId: null, recebedorId: 'p1',
     formaPagamentoId: 'fp1', regraRecorrenciaId: null, grupoReembolsoId: null, rateios: [] }]
 };
 
 describe('ConciliacaoFaturaGrid', () => {
+  it('exibe justificativa da IA e exige escolha humana antes de vincular', async () => {
+    const confirmar = vi.fn();
+    const review = { ...session, itens: [{ ...session.itens[0], candidatos: [{
+      ...session.itens[0].candidatos[0], correspondenciaClara: false, motivo: 'IA: Mesma parcela, diferença de um centavo'
+    }] }] };
+    render(<ConciliacaoFaturaGrid session={review} onConfirmar={confirmar} onCriar={vi.fn()} />);
+    expect(screen.getByText('IA: Mesma parcela, diferença de um centavo')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Conciliar selecionados (0)' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Usar sugestão: Meu tênis' }));
+    expect(screen.getByRole('checkbox', { name: 'Usar valor da fatura para LOJA' })).not.toBeChecked();
+    expect(confirmar).not.toHaveBeenCalled();
+  });
   it('exige aceite do valor antes de confirmar a diferença', async () => {
     const confirmar = vi.fn().mockResolvedValue(undefined);
     render(<ConciliacaoFaturaGrid session={session} onConfirmar={confirmar} />);

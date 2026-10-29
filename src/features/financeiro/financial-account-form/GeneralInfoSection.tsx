@@ -43,10 +43,10 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
   const descricaoWatched = useWatch({ control, name: 'descricao' });
   const categoriaAtual = useWatch({ control, name: 'rateios.0.contaGerencialId' });
   const pessoaWatched = useWatch({ control, name: 'pessoaId' });
-  const responsavelAtual = useWatch({ control, name: 'responsavelId' });
-  const responsaveisAdicionaisAtual = useWatch({ control, name: 'responsaveisAdicionaisIds' }) ?? [];
+  const membroAtual = useWatch({ control, name: 'membroId' });
+  const responsaveisAdicionaisAtual = useWatch({ control, name: 'pagadoresAdicionaisIds' }) ?? [];
   const lastAutoFilledContaRef = useRef<string | null>(null);
-  const lastAutoFilledResponsavelRef = useRef<string | null>(null);
+  const lastAutoFilledMembroRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!pessoaWatched) return;
@@ -69,15 +69,14 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
   useEffect(() => {
     if (!categoriaAtual) return;
     const option = rateioOptions.find((o) => o.value === categoriaAtual);
-    const responsavelId = option?.responsavelPadraoId;
-    if (!responsavelId) return;
-    // Skip auto-fill when there are multiple responsáveis (user is managing chips manually)
+    const membroPadraoId = option?.membroPadraoId;
+    if (!membroPadraoId) return;
     if (responsaveisAdicionaisAtual.length > 0) return;
-    const manuallyChanged = responsavelAtual && responsavelAtual !== lastAutoFilledResponsavelRef.current;
+    const manuallyChanged = membroAtual && membroAtual !== lastAutoFilledMembroRef.current;
     if (manuallyChanged) return;
-    setValue('responsavelId', responsavelId);
-    lastAutoFilledResponsavelRef.current = responsavelId;
-  }, [categoriaAtual, rateioOptions, responsavelAtual, responsaveisAdicionaisAtual, setValue]);
+    setValue('membroId', membroPadraoId);
+    lastAutoFilledMembroRef.current = membroPadraoId;
+  }, [categoriaAtual, rateioOptions, membroAtual, responsaveisAdicionaisAtual, setValue]);
 
   useEffect(() => {
     if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current);
@@ -274,7 +273,7 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
         open={pessoaModalTarget !== null}
         onClose={() => setPessoaModalTarget(null)}
         onSuccess={handlePessoaSuccess}
-        defaultRole={personRole}
+        defaultRole="recebedor"
       />
       <QuickAddContaGerencialModal open={contaGerencialModalOpen} onClose={() => setContaGerencialModalOpen(false)} onSuccess={handleContaGerencialSuccess} />
     </FormSection>

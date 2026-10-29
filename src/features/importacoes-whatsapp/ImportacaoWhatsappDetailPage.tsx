@@ -20,8 +20,8 @@ type SelectOption = {
   label: string;
   value: string;
   data?: {
-    responsavelPadraoId?: string | null;
-    responsavelPadraoNome?: string | null;
+    membroPadraoId?: string | null;
+    membroPadraoNome?: string | null;
   };
 };
 
@@ -35,7 +35,7 @@ type CardSelectOption = {
 
 type ImportApprovalDraft = {
   recebedorFaturaId?: string;
-  responsavelPagamentoFaturaId?: string;
+  pagadorFaturaId?: string;
   cartaoIds: string[];
 };
 
@@ -62,7 +62,7 @@ type ItemReviewDraft = {
   observacao: string;
   descricaoAjustada: string;
   contaGerencialId?: string;
-  responsavelId?: string;
+  pagadorId?: string;
   dataVencimentoContaReceber: string;
   gerarContaReceber: boolean;
   marcarComoRecorrente: boolean;
@@ -92,7 +92,7 @@ function buildInitialDraft(record: ItemImportadoWhatsapp): ItemReviewDraft {
     observacao: record.observacao ?? '',
     descricaoAjustada: record.descricaoAjustada ?? record.predicao?.descricaoAjustada ?? payload?.descricao ?? '',
     contaGerencialId: record.contaGerencialId ?? record.predicao?.contaGerencialId ?? undefined,
-    responsavelId: record.responsavelId ?? record.predicao?.responsavelId ?? undefined,
+    pagadorId: record.pagadorId ?? record.predicao?.pagadorId ?? undefined,
     dataVencimentoContaReceber: payload?.dataVencimento ?? '',
     gerarContaReceber: record.contaReceberId !== null || record.predicao?.gerarContaReceber === true,
     marcarComoRecorrente: record.marcarComoRecorrente || record.predicao?.marcarComoRecorrente === true
@@ -151,8 +151,8 @@ function buildImportApprovalDraft(
     )
   );
 
-  const responsavelIds = Array.from(
-    new Set(confirmedCardItems.map((item) => item.responsavelId).filter((value): value is string => Boolean(value)))
+  const pagadorIds = Array.from(
+    new Set(confirmedCardItems.map((item) => item.pagadorId).filter((value): value is string => Boolean(value)))
   );
 
   const emissoresNormalizados = Array.from(
@@ -168,9 +168,9 @@ function buildImportApprovalDraft(
     recebedorFaturaId:
       current?.recebedorFaturaId ??
       (recebedorCandidates.length === 1 ? recebedorCandidates[0].value : undefined),
-    responsavelPagamentoFaturaId:
-      current?.responsavelPagamentoFaturaId ??
-      (responsavelIds.length === 1 ? responsavelIds[0] : undefined),
+    pagadorFaturaId:
+      current?.pagadorFaturaId ??
+      (pagadorIds.length === 1 ? pagadorIds[0] : undefined),
     cartaoIds: current?.cartaoIds?.length ? current.cartaoIds : resolvedCardIds
   };
 }
@@ -325,7 +325,7 @@ export function ImportacaoWhatsappDetailPage() {
   const [detail, setDetail] = useState<ImportacaoWhatsappDetalhe>();
   const [selectedPayload, setSelectedPayload] = useState<string>();
   const [contasGerenciaisOptions, setContasGerenciaisOptions] = useState<SelectOption[]>([]);
-  const [responsavelOptions, setResponsavelOptions] = useState<SelectOption[]>([]);
+  const [pagadorOptions, setPagadorOptions] = useState<SelectOption[]>([]);
   const [recebedorOptions, setRecebedorOptions] = useState<SelectOption[]>([]);
   const [cartaoOptions, setCartaoOptions] = useState<CardSelectOption[]>([]);
   const [approvalDraft, setApprovalDraft] = useState<ImportApprovalDraft>({ cartaoIds: [] });
@@ -399,7 +399,7 @@ export function ImportacaoWhatsappDetailPage() {
             pageSize: 200,
             search: '',
             ativo: true,
-            ehResponsavel: true
+            ehPagador: true
           }),
           cadastrosApi.cartoes.listar({
             page: 1,
@@ -420,7 +420,7 @@ export function ImportacaoWhatsappDetailPage() {
           Object.fromEntries(importacao.itens.map((item) => [item.id, buildInitialDraft(item)]))
         );
         setContasGerenciaisOptions(mapContaGerencialSelectOptionsWithData(filterContaGerencialLancavel(contasGerenciais.items)));
-        setResponsavelOptions(peopleOptions);
+        setPagadorOptions(peopleOptions);
         setRecebedorOptions(peopleOptions);
         setCartaoOptions(builtCardOptions);
         setApprovalDraft(buildImportApprovalDraft(importacao, peopleOptions, builtCardOptions));
@@ -505,7 +505,7 @@ export function ImportacaoWhatsappDetailPage() {
   const missingInvoiceApprovalData =
     hasConfirmedCardItems &&
     (!approvalDraft.recebedorFaturaId ||
-      !approvalDraft.responsavelPagamentoFaturaId ||
+      !approvalDraft.pagadorFaturaId ||
       approvalDraft.cartaoIds.length === 0);
 
   return (
@@ -529,7 +529,7 @@ export function ImportacaoWhatsappDetailPage() {
                   hasConfirmedCardItems
                     ? importacoesWhatsappApi.aprovarImportacao(detail.id, {
                         recebedorFaturaId: approvalDraft.recebedorFaturaId ?? null,
-                        responsavelPagamentoFaturaId: approvalDraft.responsavelPagamentoFaturaId ?? null,
+                        pagadorFaturaId: approvalDraft.pagadorFaturaId ?? null,
                         cartaoIds: approvalDraft.cartaoIds
                       })
                     : importacoesWhatsappApi.aprovarImportacao(detail.id)
@@ -548,7 +548,7 @@ export function ImportacaoWhatsappDetailPage() {
                 void executeReviewAction(() =>
                   importacoesWhatsappApi.completarFechamentoFatura(detail.id, {
                     recebedorFaturaId: approvalDraft.recebedorFaturaId ?? null,
-                    responsavelPagamentoFaturaId: approvalDraft.responsavelPagamentoFaturaId ?? null,
+                    pagadorFaturaId: approvalDraft.pagadorFaturaId ?? null,
                     cartaoIds: approvalDraft.cartaoIds
                   }),
                   undefined,
@@ -656,7 +656,7 @@ export function ImportacaoWhatsappDetailPage() {
             <div>
               <Typography.Title level={5} style={{ margin: 0 }}>Fechamento da fatura</Typography.Title>
               <Typography.Text type="secondary">
-                Defina recebedor, responsável e cartões para gerar a conta da fatura e consolidar os rateios aprovados.
+                Defina recebedor, pagador e cartões para gerar a conta da fatura e consolidar os rateios aprovados.
               </Typography.Text>
             </div>
           </div>
@@ -683,9 +683,9 @@ export function ImportacaoWhatsappDetailPage() {
 
             <Select
               size="middle"
-              value={approvalDraft.responsavelPagamentoFaturaId}
-              placeholder="Responsável pelo pagamento"
-              options={responsavelOptions}
+              value={approvalDraft.pagadorFaturaId}
+              placeholder="Pagador pelo pagamento"
+              options={pagadorOptions}
               style={{ width: '100%' }}
               showSearch
               optionFilterProp="label"
@@ -695,7 +695,7 @@ export function ImportacaoWhatsappDetailPage() {
               onChange={(value) =>
                 setApprovalDraft((current) => ({
                   ...current,
-                  responsavelPagamentoFaturaId: value
+                  pagadorFaturaId: value
                 }))
               }
             />
@@ -723,7 +723,7 @@ export function ImportacaoWhatsappDetailPage() {
 
           {missingInvoiceApprovalData ? (
             <Typography.Text type="warning" style={{ display: 'block', marginTop: 12 }}>
-              Recebedor, responsável e pelo menos um cartão são obrigatórios para aprovar itens confirmados da fatura.
+              Recebedor, pagador e pelo menos um cartão são obrigatórios para aprovar itens confirmados da fatura.
             </Typography.Text>
           ) : null}
         </Card>
@@ -843,7 +843,7 @@ export function ImportacaoWhatsappDetailPage() {
                         <Typography.Text type="secondary">
                           {record.predicao.descricaoAjustada ? record.predicao.descricaoAjustada : 'Sem nome ajustado'}
                           {record.predicao.contaGerencialDescricao ? ` • ${record.predicao.contaGerencialDescricao}` : ''}
-                          {record.predicao.responsavelNome ? ` • ${record.predicao.responsavelNome}` : ''}
+                          {record.predicao.pagadorNome ? ` • ${record.predicao.pagadorNome}` : ''}
                           {record.predicao.gerarContaReceber ? ' • A receber' : ''}
                           {record.predicao.marcarComoRecorrente ? ' • Recorrente' : ''}
                           {` • Confiança ${Math.round(record.predicao.confiancaHistorico * 100)}%`}
@@ -884,17 +884,17 @@ export function ImportacaoWhatsappDetailPage() {
 
                                 updateDraft(record.id, {
                                   contaGerencialId: value,
-                                  responsavelId: contaGerencialSelecionada?.data?.responsavelPadraoId ?? draft.responsavelId
+                                  pagadorId: contaGerencialSelecionada?.data?.membroPadraoId ?? draft.pagadorId
                                 });
                               }}
                             />
 
                             <Select
                               size="small"
-                              data-testid={`responsavel-select-${record.id}`}
-                              value={draft.responsavelId}
-                              placeholder="Responsável"
-                              options={responsavelOptions}
+                              data-testid={`pagador-select-${record.id}`}
+                              value={draft.pagadorId}
+                              placeholder="Pagador"
+                              options={pagadorOptions}
                               style={{ width: '100%' }}
                               allowClear
                               showSearch
@@ -902,7 +902,7 @@ export function ImportacaoWhatsappDetailPage() {
                               filterOption={(input, option) =>
                                 String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                               }
-                              onChange={(value) => updateDraft(record.id, { responsavelId: value })}
+                              onChange={(value) => updateDraft(record.id, { pagadorId: value })}
                             />
 
                             <div className="review-classification__switches">
@@ -941,9 +941,9 @@ export function ImportacaoWhatsappDetailPage() {
                           onChange={(event) => updateDraft(record.id, { observacao: event.target.value })}
                         />
 
-                        {(!draft.contaGerencialId || !draft.responsavelId) && record.tipoSugestaoCodigo === 'COMPRA_CARTAO' ? (
+                        {(!draft.contaGerencialId || !draft.pagadorId) && record.tipoSugestaoCodigo === 'COMPRA_CARTAO' ? (
                           <Typography.Text type="danger" className="review-classification__warning">
-                            * Conta e responsável obrigatórios
+                            * Conta e pagador obrigatórios
                           </Typography.Text>
                         ) : null}
                         {requiresManualDueDate ? (
@@ -961,7 +961,7 @@ export function ImportacaoWhatsappDetailPage() {
                           Conta gerencial: {record.contaGerencialDescricao ?? '-'}
                         </Typography.Text>
                         <Typography.Text type="secondary">
-                          Responsável: {record.responsavelNome ?? '-'}
+                          Pagador: {record.pagadorNome ?? '-'}
                         </Typography.Text>
                         <div className="review-classification__readonly-tags">
                           {record.statusPrevisaoNome ? (
@@ -986,7 +986,7 @@ export function ImportacaoWhatsappDetailPage() {
                 const draft = getDraft(record);
                 const payload = parsePayload(record.payloadSugeridoJson);
                 const missingMandatoryCardClassification =
-                  record.tipoSugestaoCodigo === 'COMPRA_CARTAO' && (!draft.contaGerencialId || !draft.responsavelId);
+                  record.tipoSugestaoCodigo === 'COMPRA_CARTAO' && (!draft.contaGerencialId || !draft.pagadorId);
                 const missingManualDueDate =
                   record.tipoSugestaoCodigo === 'COMPRA_CARTAO' &&
                   draft.gerarContaReceber &&
@@ -1002,7 +1002,7 @@ export function ImportacaoWhatsappDetailPage() {
                       loading={saving}
                       disabled={
                         missingMandatoryCardClassification ||
-                        (draft.gerarContaReceber && !draft.responsavelId) ||
+                        (draft.gerarContaReceber && !draft.pagadorId) ||
                         missingManualDueDate
                       }
                       onClick={() =>
@@ -1015,7 +1015,7 @@ export function ImportacaoWhatsappDetailPage() {
                                   ? draft.descricaoAjustada.trim()
                                   : null,
                               contaGerencialId: record.tipoSugestaoCodigo === 'COMPRA_CARTAO' ? draft.contaGerencialId ?? null : null,
-                              responsavelId: record.tipoSugestaoCodigo === 'COMPRA_CARTAO' ? draft.responsavelId ?? null : null,
+                              pagadorId: record.tipoSugestaoCodigo === 'COMPRA_CARTAO' ? draft.pagadorId ?? null : null,
                               dataVencimentoContaReceber:
                                 record.tipoSugestaoCodigo === 'COMPRA_CARTAO' &&
                                 draft.gerarContaReceber &&
@@ -1042,7 +1042,7 @@ export function ImportacaoWhatsappDetailPage() {
                               observacao: draft.observacao.trim() === '' ? null : draft.observacao.trim(),
                               descricaoAjustada: null,
                               contaGerencialId: null,
-                              responsavelId: null,
+                              pagadorId: null,
                               dataVencimentoContaReceber: null,
                               gerarContaReceber: false,
                               marcarComoRecorrente: false

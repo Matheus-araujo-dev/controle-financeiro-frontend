@@ -538,13 +538,13 @@ export function SummarySidebar({ form }: SummarySidebarProps) {
             </div>
           ) : null}
 
-          {/* Grupo de responsáveis — mostra quando conta é parte de um grupo criado com multi-responsável */}
+          {/* Grupo de membros — mostra quando conta é parte de um grupo criado com multi-membro */}
           {grupoResponsaveis ? (
             <div className="rounded-2xl border border-tertiary/20 bg-tertiary/5 p-4 space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>group</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-tertiary">Grupo de Responsáveis</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-tertiary">Grupo de Membros</span>
                 </div>
                 <span className="text-[10px] font-bold text-tertiary/70">{grupoResponsaveis.contas.length} conta{grupoResponsaveis.contas.length !== 1 ? 's' : ''}</span>
               </div>

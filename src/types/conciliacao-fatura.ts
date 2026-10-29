@@ -4,7 +4,7 @@ import type { CriarReembolsoPayload, RecorrenciaPayload } from './financeiro';
 
 export type ReembolsoFatura = Omit<CriarReembolsoPayload, 'contaOrigemId'>;
 export type VincularItemFatura = Omit<ApiContract<Api.VincularItemFaturaRequest, 'reembolso', 'aprender' | 'camposParaAprender' | 'reembolso'>, 'reembolso'> & { reembolso?: ReembolsoFatura | null };
-export type ContaConciliacao = Omit<ApiContract<Api.ContaConciliacaoResponse, 'responsavelCompraId' | 'regraRecorrenciaId' | 'grupoReembolsoId'>, 'rateios'> & {
+export type ContaConciliacao = Omit<ApiContract<Api.ContaConciliacaoResponse, 'pagadorId' | 'regraRecorrenciaId' | 'grupoReembolsoId'>, 'rateios'> & {
   rateios: ApiContract<Api.RateioConciliacaoResponse>[];
 };
 export type PreferenciasFatura = Omit<ApiContract<Api.PreferenciasFaturaResponse, keyof Api.PreferenciasFaturaResponse>, 'rateios'> & {
@@ -19,11 +19,11 @@ export type ItemFaturaConciliacao = Omit<ApiContract<Api.ItemFaturaConciliacaoRe
 export type ConciliacaoFatura = Omit<ApiContract<Api.ConciliacaoFaturaResponse, 'avisoLeitura' | 'totalDocumento', 'avisoLeitura' | 'totalDocumento'>, 'itens' | 'contasSistema'> & {
   itens: ItemFaturaConciliacao[]; contasSistema: ContaConciliacao[];
 };
-export type CriarItemFatura = Omit<ApiContract<Api.CriarItemFaturaRequest, 'responsavelCompraId' | 'observacao'>,
-  'rateios' | 'recorrencia' | 'reembolso'> & {
+export type CriarItemFatura = Omit<ApiContract<Api.CriarItemFaturaRequest, 'pagadorId' | 'observacao'>,
+  'rateios' | 'recorrencia' | 'reembolso' | 'pagadoresAdicionaisIds' | 'valoresPorPagador'> & {
   rateios: ApiContract<Api.RateioRequest>[]; recorrencia: RecorrenciaPayload | null; reembolso: ReembolsoFatura | null;
-  responsaveisAdicionaisIds?: string[]; valoresPorResponsavel?: number[];
+  pagadoresAdicionaisIds?: string[]; valoresPorPagador?: number[];
 };
 export type RevisaoFaturaResumo = ApiContract<Api.RevisaoFaturaResumoResponse>;
-export type SugestaoItemConciliacao = { itemId: string; descricao: string | null; recebedorId: string | null; responsavelCompraId: string | null; contaGerencialId: string | null; confianca: number };
+export type SugestaoItemConciliacao = ApiContract<Api.SugestaoItemConciliacaoResponse, 'descricao' | 'recebedorId' | 'pagadorId' | 'contaGerencialId' | 'contaPagarId' | 'justificativa', 'contaPagarId' | 'justificativa'>;
 export type SugestoesConciliacao = { sugestoes: SugestaoItemConciliacao[] };

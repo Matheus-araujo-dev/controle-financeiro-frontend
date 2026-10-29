@@ -79,7 +79,7 @@ function buildConfig(listFn: ReturnType<typeof vi.fn>) {
       { label: 'Fornecedor A', value: 'p1' },
       { label: 'Fornecedor B', value: 'p2' }
     ]),
-    loadResponsavelOptions: vi.fn().mockResolvedValue([{ label: 'João', value: 'r1' }]),
+    loadMembroOptions: vi.fn().mockResolvedValue([{ label: 'João', value: 'r1' }]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([
       { label: 'Pix', value: 'fp1', ehCartao: false, baixarAutomaticamente: false },
       { label: 'Boleto', value: 'fp2', ehCartao: false, baixarAutomaticamente: false }

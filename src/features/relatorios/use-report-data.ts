@@ -72,7 +72,7 @@ export function useReportData(activeReport: ReportKey, filters: ReportFilters) {
               statusCodigo: ['VENCIDA'],
               dataInicial: range.start,
               dataFinal: range.end,
-              responsavelIds: responsavelId ? [responsavelId] : undefined,
+              pagadorIds: responsavelId ? [responsavelId] : undefined,
               sortBy: 'dataVencimento',
               sortDirection: 'Asc'
             }))
@@ -85,7 +85,7 @@ export function useReportData(activeReport: ReportKey, filters: ReportFilters) {
               statusCodigo: ['VENCIDA'],
               dataInicial: range.start,
               dataFinal: range.end,
-              responsavelIds: responsavelId ? [responsavelId] : undefined,
+              recebedorIds: responsavelId ? [responsavelId] : undefined,
               sortBy: 'dataVencimento',
               sortDirection: 'Asc'
             }))
@@ -118,7 +118,7 @@ export function useReportData(activeReport: ReportKey, filters: ReportFilters) {
           prioridade: compraPrioridade[0] as CompraPlanejadaPrioridade | undefined,
           dataDesejadaInicial: range.start,
           dataDesejadaFinal: range.end,
-          responsavelId: responsavelId || undefined,
+          pagadorId: responsavelId || undefined,
           sortBy: 'dataDesejada',
           sortDirection: 'Asc'
         })) }) },
@@ -131,7 +131,7 @@ export function useReportData(activeReport: ReportKey, filters: ReportFilters) {
               search: deferredLancamentosSearch,
               dataEmissaoInicial: range.start,
               dataEmissaoFinal: range.end,
-              responsavelIds: lancamentosResponsavelId ? [lancamentosResponsavelId] : undefined,
+              pagadorIds: lancamentosResponsavelId ? [lancamentosResponsavelId] : undefined,
               statusCodigo: lancamentosStatus[0] as StatusContaCodigo | undefined,
               sortBy: 'dataEmissao',
               sortDirection: 'Desc'
@@ -144,7 +144,7 @@ export function useReportData(activeReport: ReportKey, filters: ReportFilters) {
               search: deferredLancamentosSearch,
               dataEmissaoInicial: range.start,
               dataEmissaoFinal: range.end,
-              responsavelIds: lancamentosResponsavelId ? [lancamentosResponsavelId] : undefined,
+              recebedorIds: lancamentosResponsavelId ? [lancamentosResponsavelId] : undefined,
               statusCodigo: lancamentosStatus[0] as StatusContaCodigo | undefined,
               sortBy: 'dataEmissao',
               sortDirection: 'Desc'

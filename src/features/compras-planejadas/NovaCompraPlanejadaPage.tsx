@@ -47,7 +47,7 @@ const defaultValues: CompraPlanejadaPayload = {
   parcelavel: false,
   quantidadeParcelasDesejada: null,
   contaGerencialId: '',
-  responsavelId: '',
+  pagadorId: '',
   link: '',
   observacao: ''
 };
@@ -65,9 +65,9 @@ export function NovaCompraPlanejadaPage() {
   const [photos, setPhotos] = useState<File[]>([]);
   const [createdId, setCreatedId] = useState<string>();
   const [contaGerencialOptions, setContaGerencialOptions] = useState<SelectOption[]>([]);
-  const [responsavelOptions, setResponsavelOptions] = useState<SelectOption[]>([]);
+  const [pagadorOptions, setPagadorOptions] = useState<SelectOption[]>([]);
   const [contaGerencialModalOpen, setContaGerencialModalOpen] = useState(false);
-  const [responsavelModalOpen, setResponsavelModalOpen] = useState(false);
+  const [pagadorModalOpen, setPagadorModalOpen] = useState(false);
 
   const {
     control,
@@ -104,9 +104,9 @@ export function NovaCompraPlanejadaPage() {
     })));
   }, []);
 
-  const reloadResponsavelOptions = useCallback(async () => {
-    const response = await cadastrosApi.pessoas.listar({ page: 1, pageSize: 100, search: '', ativo: true, ehResponsavel: true });
-    setResponsavelOptions(response.items.map((item) => ({ label: item.nome, value: item.id })));
+  const reloadPagadorOptions = useCallback(async () => {
+    const response = await cadastrosApi.pessoas.listar({ page: 1, pageSize: 100, search: '', ativo: true, ehPagador: true });
+    setPagadorOptions(response.items.map((item) => ({ label: item.nome, value: item.id })));
   }, []);
 
   useEffect(() => {
@@ -114,7 +114,7 @@ export function NovaCompraPlanejadaPage() {
       setLoading(true);
       setLoadError(undefined);
       try {
-        const [contasGerenciais, responsaveis] = await Promise.all([
+        const [contasGerenciais, pagadores] = await Promise.all([
           cadastrosApi.contasGerenciais.listar({
             page: 1,
             pageSize: 500,
@@ -140,7 +140,7 @@ export function NovaCompraPlanejadaPage() {
             </>
           ) : main
         })));
-        setResponsavelOptions(responsaveis.items.map((item) => ({ label: item.nome, value: item.id })));
+        setPagadorOptions(pagadores.items.map((item) => ({ label: item.nome, value: item.id })));
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : 'Falha ao carregar dados de apoio.');
       } finally {
@@ -359,21 +359,21 @@ export function NovaCompraPlanejadaPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className={labelClassName}>Responsável <span className="text-error normal-case">*</span></label>
+                  <label className={labelClassName}>Pagador <span className="text-error normal-case">*</span></label>
                   <Controller
                     control={control}
-                    name="responsavelId"
+                    name="pagadorId"
                     render={({ field }) => (
                       <ComboBox
-                        aria-label="Responsável"
+                        aria-label="Pagador"
                         value={field.value}
                         onChange={field.onChange}
-                        onAddNew={() => setResponsavelModalOpen(true)}
-                        options={responsavelOptions}
+                        onAddNew={() => setPagadorModalOpen(true)}
+                        options={pagadorOptions}
                       />
                     )}
                   />
-                  {errors.responsavelId && <p className="text-error text-xs ml-1 font-bold">{errors.responsavelId.message}</p>}
+                  {errors.pagadorId && <p className="text-error text-xs ml-1 font-bold">{errors.pagadorId.message}</p>}
                 </div>
               </div>
             </FormSection>
@@ -542,10 +542,10 @@ export function NovaCompraPlanejadaPage() {
         }}
       />
       <QuickAddPessoaModal
-        open={responsavelModalOpen}
-        onClose={() => setResponsavelModalOpen(false)}
+        open={pagadorModalOpen}
+        onClose={() => setPagadorModalOpen(false)}
         onSuccess={(newId) => {
-          void reloadResponsavelOptions().then(() => setValue('responsavelId', newId));
+          void reloadPagadorOptions().then(() => setValue('pagadorId', newId));
         }}
       />
     </>

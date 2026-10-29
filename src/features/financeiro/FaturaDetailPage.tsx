@@ -52,7 +52,7 @@ export function FaturaDetailPage() {
   const [itemsPageSize, setItemsPageSize] = useState(50);
   const [itemsSortBy, setItemsSortBy] = useState<string | undefined>(undefined);
   const [itemsSortDirection, setItemsSortDirection] = useState<'Asc' | 'Desc'>('Asc');
-  const [itemsResponsavelId, setItemsResponsavelId] = useState<string>('');
+  const [itemsPagadorId, setItemsPagadorId] = useState<string>('');
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['faturas', 'detail', id],
@@ -66,7 +66,7 @@ export function FaturaDetailPage() {
       return {
         detail: fatura,
         contaOptions: contas.items.map((item) => ({ label: `${item.nome} — ${item.banco}`, value: item.id })),
-        responsavelOptions: responsaveis.items.map((item) => ({ label: item.nome, value: item.id }))
+        pagadorOptions: responsaveis.items.map((item) => ({ label: item.nome, value: item.id }))
       };
     },
     enabled: !!id,
@@ -153,8 +153,8 @@ export function FaturaDetailPage() {
   };
 
   const { data: itensData, isFetching: loadingItens } = useQuery({
-    queryKey: ['faturas', 'itens', id, itemsPage, itemsPageSize, itemsSortBy, itemsSortDirection, itemsResponsavelId],
-    queryFn: () => financeiroApi.faturas.listarItens(id!, { page: itemsPage, pageSize: itemsPageSize, sortBy: itemsSortBy, sortDirection: itemsSortDirection, responsavelId: itemsResponsavelId || undefined }),
+    queryKey: ['faturas', 'itens', id, itemsPage, itemsPageSize, itemsSortBy, itemsSortDirection, itemsPagadorId],
+    queryFn: () => financeiroApi.faturas.listarItens(id!, { page: itemsPage, pageSize: itemsPageSize, sortBy: itemsSortBy, sortDirection: itemsSortDirection, pagadorId: itemsPagadorId || undefined }),
     enabled: !!data?.detail,
     staleTime: 30_000,
     placeholderData: (prev) => prev
@@ -162,7 +162,7 @@ export function FaturaDetailPage() {
 
   const detail = data?.detail;
   const contaOptions = data?.contaOptions ?? [];
-  const responsavelOptions = data?.responsavelOptions ?? [];
+  const pagadorOptions = data?.pagadorOptions ?? [];
   const saving = pagarMutation.isPending || estornarMutation.isPending || fecharMutation.isPending || reabrirMutation.isPending;
   const errorMessage = actionError ?? (error instanceof Error ? error.message : error ? 'Falha ao carregar a fatura.' : undefined);
 
@@ -196,7 +196,7 @@ export function FaturaDetailPage() {
   const richExportColumns: RichColumn<FaturaItem>[] = [
     { header: 'Descrição', value: (r) => r.descricao, cellStyle: STYLE.DATA_TEXT, width: 36 },
     { header: 'Recebedor', value: (r) => r.recebedorNome, cellStyle: STYLE.DATA_TEXT, width: 24 },
-    { header: 'Responsável', value: (r) => r.responsavelNome ?? '—', cellStyle: STYLE.DATA_TEXT, width: 20 },
+    { header: 'Pagador', value: (r) => r.pagadorNome ?? '—', cellStyle: STYLE.DATA_TEXT, width: 20 },
     { header: 'Data da compra', value: (r) => formatDateBR(r.dataCompra), cellStyle: STYLE.DATA_TEXT, width: 16 },
     { header: 'Valor (R$)', value: (r) => r.ehEstorno ? r.valorLiquido : -r.valorLiquido, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + (r.ehEstorno ? r.valorLiquido : -r.valorLiquido), 0), width: 14 },
     { header: 'Status', value: (r) => r.ehEstorno ? 'Estorno' : r.statusCodigo, cellStyle: STYLE.DATA_TEXT, width: 12 },
@@ -206,7 +206,7 @@ export function FaturaDetailPage() {
   const printColumns: PrintColumn<FaturaItem>[] = [
     { header: 'Descrição', value: (r) => r.descricao },
     { header: 'Recebedor', value: (r) => r.recebedorNome },
-    { header: 'Responsável', value: (r) => r.responsavelNome ?? '—' },
+    { header: 'Pagador', value: (r) => r.pagadorNome ?? '—' },
     { header: 'Data', value: (r) => formatDateBR(r.dataCompra) },
     { header: 'Valor (R$)', value: (r) => formatCurrencyBRL(r.valorLiquido), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorLiquido, 0)) },
     { header: 'Status', value: (r) => r.ehEstorno ? 'Estorno' : r.statusCodigo },
@@ -456,11 +456,11 @@ export function FaturaDetailPage() {
           </div>
           <div className="w-full max-w-xs">
             <ComboBox
-              aria-label="Filtrar por responsável"
-              value={itemsResponsavelId}
-              onChange={(v) => { setItemsResponsavelId(v); setItemsPage(1); }}
-              options={responsavelOptions}
-              placeholder="Todos os responsáveis..."
+              aria-label="Filtrar por pagador"
+              value={itemsPagadorId}
+              onChange={(v) => { setItemsPagadorId(v); setItemsPage(1); }}
+              options={pagadorOptions}
+              placeholder="Todos os pagadores..."
             />
           </div>
         </div>
@@ -494,9 +494,9 @@ export function FaturaDetailPage() {
             },
             { title: 'Recebedor', dataIndex: 'recebedorNome', key: 'recebedorNome', sorter: true, mobileRole: 'subtitle' },
             {
-              title: 'Responsável',
-              dataIndex: 'responsavelNome',
-              key: 'responsavelNome',
+              title: 'Pagador',
+              dataIndex: 'pagadorNome',
+              key: 'pagadorNome',
               sorter: true,
               render: (value) => <span className="text-sm text-on-surface-variant">{value ?? '—'}</span>
             },

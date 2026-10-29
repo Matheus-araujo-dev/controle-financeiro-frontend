@@ -170,7 +170,7 @@ export function MovimentacaoDetailPage() {
         <InfoCard icon="account_balance" label="Conta bancária" value={mov.contaBancariaNome ?? '—'} />
         <InfoCard icon="sync" label="Natureza" value={naturezaLabel(mov.natureza)} />
         {mov.responsavelNome && (
-          <InfoCard icon="person" label="Responsável" value={mov.responsavelNome} accent />
+          <InfoCard icon="person" label={mov.contaPagarId ? 'Pagador' : 'Recebedor'} value={mov.responsavelNome} accent />
         )}
         {mov.statusNome && (
           <InfoCard icon="fact_check" label="Status" value={mov.statusNome} />
@@ -214,14 +214,12 @@ export function MovimentacaoDetailPage() {
               {origemConta && (
                 <div className="space-y-0">
                   <OrigemInfoRow
-                    label="Responsável"
-                    value={'responsavelCompraNome' in origemConta
-                      ? origemConta.responsavelCompraNome
-                      : origemConta.responsavelNome}
+                    label={mov.contaPagarId ? 'Pagador' : 'Recebedor'}
+                    value={mov.contaPagarId ? origemConta.pagadorNome : origemConta.recebedorNome}
                   />
                   <OrigemInfoRow
                     label={mov.contaPagarId ? 'Recebedor' : 'Pagador'}
-                    value={'recebedorNome' in origemConta ? origemConta.recebedorNome : origemConta.pagadorNome}
+                    value={mov.contaPagarId ? origemConta.recebedorNome : origemConta.pagadorNome}
                   />
                   <OrigemInfoRow label="Vencimento" value={formatDateBR(origemConta.dataVencimento)} />
                   <OrigemInfoRow label="Valor" value={formatCurrencyBRL(origemConta.valorLiquido)} />
