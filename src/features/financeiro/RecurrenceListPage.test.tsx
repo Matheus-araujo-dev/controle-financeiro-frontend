@@ -40,7 +40,7 @@ const recorrenciaPagar = {
   descricao: 'Aluguel da sede',
   valorLiquido: 450,
   pessoaNome: 'Fornecedor Fase 3',
-  responsavelNome: 'Responsável Fase 3'
+  pagadorNome: 'Pagador Fase 3'
 };
 
 const recorrenciaReceber = {
@@ -58,7 +58,7 @@ const recorrenciaReceber = {
   descricao: 'Contrato de consultoria',
   valorLiquido: 1200,
   pessoaNome: 'Cliente Fase 3',
-  responsavelNome: 'Matheus'
+  pagadorNome: 'Matheus'
 };
 
 function mockListar(items: Array<typeof recorrenciaPagar | typeof recorrenciaReceber>) {
@@ -284,9 +284,9 @@ describe('RecurrenceListPage', () => {
     );
   }, 20000);
 
-  it('triggers export and covers exportColumns lambdas including null responsavelNome and null dataFim', async () => {
+  it('triggers export and covers exportColumns lambdas including null pagadorNome and null dataFim', async () => {
     const { downloadBlob } = await import('../../shared/export/workbook');
-    const itemNullFields = { ...recorrenciaPagar, responsavelNome: null, dataFim: null };
+    const itemNullFields = { ...recorrenciaPagar, pagadorNome: null, dataFim: null };
     mockListar([recorrenciaReceber, itemNullFields as unknown as typeof recorrenciaPagar]);
     renderPage();
     await screen.findByText('Contrato de consultoria');

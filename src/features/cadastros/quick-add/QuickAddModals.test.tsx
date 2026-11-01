@@ -42,7 +42,6 @@ describe('quick add modals', () => {
       ativo: true,
       ehPagador: true,
       ehRecebedor: true,
-      ehResponsavel: true,
       contaGerencialDespesaId: null,
       contaGerencialReceitaId: null,
       createdAtUtc: '2026-06-21T00:00:00Z',

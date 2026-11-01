@@ -8,7 +8,7 @@ const session = {
     numeroParcela: 2, quantidadeParcelas: 3, status: 'Pendente', contaPagarVinculadaId: null,
     valorAnteriorSistema: null, candidatos: [{ contaId: 'c1', diferenca: -0.01, pontos: 95, motivo: 'Diferença de centavos', correspondenciaClara: true }] }],
   contasSistema: [{ id: 'c1', dataCompra: '2026-09-01', descricao: 'Meu tênis', valor: 33.34,
-    numeroParcela: 2, quantidadeParcelas: 3, responsavelCompraId: null, recebedorId: 'p1',
+    numeroParcela: 2, quantidadeParcelas: 3, pagadorId: null, recebedorId: 'p1',
     formaPagamentoId: 'fp1', regraRecorrenciaId: null, grupoReembolsoId: null, rateios: [] }]
 };
 

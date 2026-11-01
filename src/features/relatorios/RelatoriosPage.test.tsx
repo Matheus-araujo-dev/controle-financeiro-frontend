@@ -198,7 +198,7 @@ function mockReports() {
         descricao: 'Internet recorrente',
         valorLiquido: 150,
         pessoaNome: 'Sempre Internet',
-        responsavelNome: 'Matheus'
+        pagadorNome: 'Matheus'
       }
     ]
   } as never);
@@ -249,7 +249,7 @@ function mockReports() {
         descricao: 'Aluguel vencido',
         recebedorId: 'for-1',
         recebedorNome: 'Imobiliária',
-        responsavelNome: 'Matheus',
+        pagadorNome: 'Matheus',
         dataEmissao: '2026-06-01',
         dataVencimento: '2026-06-10',
         dataLiquidacao: null,
@@ -282,8 +282,8 @@ function mockReports() {
         quantidadeParcelasDesejada: 10,
         contaGerencialId: 'cg-1',
         contaGerencialDescricao: 'Saúde de alto valor',
-        responsavelId: 'p-1',
-        responsavelNome: 'Vilani',
+        pagadorId: 'p-1',
+        pagadorNome: 'Vilani',
         link: null,
         contaPagarGeradaId: null,
         convertidaEmContaPagarEmUtc: null
@@ -413,7 +413,7 @@ const recorrenciasRich = {
       descricao: 'Aluguel recebido',
       valorLiquido: 200,
       pessoaNome: 'Inquilino',
-      responsavelNome: null as null
+      pagadorNome: null as null
     },
     {
       id: 'rec-paused',
@@ -430,7 +430,7 @@ const recorrenciasRich = {
       descricao: 'Assinatura pausada',
       valorLiquido: 50,
       pessoaNome: 'Serviço',
-      responsavelNome: 'Gerente'
+      pagadorNome: 'Gerente'
     }
   ]
 };
@@ -453,8 +453,8 @@ const comprasRich = {
       quantidadeParcelasDesejada: null as null,
       contaGerencialId: 'cg-1',
       contaGerencialDescricao: 'Equipamentos',
-      responsavelId: 'p-1',
-      responsavelNome: 'Joao',
+      pagadorId: 'p-1',
+      pagadorNome: 'Joao',
       link: 'https://example.com/notebook',
       contaPagarGeradaId: null as null,
       convertidaEmContaPagarEmUtc: null as null
@@ -470,8 +470,8 @@ const comprasRich = {
       quantidadeParcelasDesejada: 3,
       contaGerencialId: 'cg-1',
       contaGerencialDescricao: 'Movel',
-      responsavelId: 'p-1',
-      responsavelNome: 'Maria',
+      pagadorId: 'p-1',
+      pagadorNome: 'Maria',
       link: null as null,
       contaPagarGeradaId: null as null,
       convertidaEmContaPagarEmUtc: null as null
@@ -615,12 +615,12 @@ describe('RelatoriosPage', () => {
     expect(screen.getByText('Saida')).toBeInTheDocument();
   });
 
-  it('renders recorrencias tab covering responsavelNome null, ativa false, and dataFim branches', async () => {
+  it('renders recorrencias tab covering pagadorNome null, ativa false, and dataFim branches', async () => {
     vi.mocked(financeiroApi.recorrencias.listar).mockResolvedValue(recorrenciasRich as never);
     renderPage();
     await screen.findByText(/Leitura gerencial/);
     await userEvent.click(screen.getByRole('button', { name: /recorrências/i }));
-    // null responsavelNome → shows '-'
+    // null pagadorNome → shows '-'
     const dashes = await screen.findAllByText('-');
     expect(dashes.length).toBeGreaterThan(0);
     // ativa=false → shows 'Pausada'
@@ -919,7 +919,7 @@ describe('RelatoriosPage', () => {
     });
   });
 
-  it('filters recorrencias client-side by responsavelId', async () => {
+  it('filters recorrencias client-side by pagadorNome', async () => {
     vi.mocked(financeiroApi.recorrencias.listar).mockResolvedValue(recorrenciasRich as never);
     renderPage();
     await screen.findByText(/Leitura gerencial/);
@@ -928,14 +928,12 @@ describe('RelatoriosPage', () => {
 
     const comboBtn = screen.getByLabelText('Responsável (recorrências)');
     await userEvent.click(comboBtn);
-    // 'Gerente' corresponds to 'rec-paused'; only that item has a matching responsavelNome
-    // (no responsavelId match since 'Gerente' isn't in responsavelOptions → empty result)
     const option = await screen.findByRole('button', { name: /Matheus/i });
     await userEvent.click(option);
 
     await waitFor(() => {
-      // p-1 maps to 'Matheus'; recorrencias use responsavelNome for client-side match
-      // rec-1 has responsavelNome 'Matheus' → still visible
+      // p-1 maps to 'Matheus'; recorrencias use pagadorNome for client-side match
+      // rec-active has pagadorNome null → filtered out
       expect(screen.queryByText('Aluguel recebido')).not.toBeInTheDocument();
     });
   });
@@ -952,7 +950,7 @@ describe('RelatoriosPage', () => {
 
     await waitFor(() => {
       expect(financeiroApi.contasPagar.listar).toHaveBeenCalledWith(
-        expect.objectContaining({ responsavelIds: ['p-1'], statusCodigo: ['VENCIDA'] })
+        expect.objectContaining({ pagadorIds: ['p-1'], statusCodigo: ['VENCIDA'] })
       );
     });
   });
@@ -982,7 +980,7 @@ describe('RelatoriosPage', () => {
           descricao: 'Notebook parcelado',
           recebedorId: 'for-2',
           recebedorNome: 'Loja',
-          responsavelNome: null,
+          pagadorNome: null,
           dataEmissao: '2026-06-01',
           dataVencimento: '2026-07-01',
           dataLiquidacao: null,
@@ -1003,7 +1001,7 @@ describe('RelatoriosPage', () => {
           descricao: 'Notebook parcelado',
           recebedorId: 'for-2',
           recebedorNome: 'Loja',
-          responsavelNome: null,
+          pagadorNome: null,
           dataEmissao: '2026-06-01',
           dataVencimento: '2026-08-01',
           dataLiquidacao: null,
@@ -1024,7 +1022,7 @@ describe('RelatoriosPage', () => {
           descricao: 'Notebook parcelado',
           recebedorId: 'for-2',
           recebedorNome: 'Loja',
-          responsavelNome: null,
+          pagadorNome: null,
           dataEmissao: '2026-06-01',
           dataVencimento: '2026-09-01',
           dataLiquidacao: null,
@@ -1060,7 +1058,7 @@ describe('RelatoriosPage', () => {
           id: 'receber-r',
           descricao: 'Honorários',
           pagadorNome: 'Cliente XYZ',
-          responsavelNome: null,
+          recebedorNome: null,
           dataEmissao: '2026-06-05',
           dataVencimento: '2026-06-20',
           dataLiquidacao: '2026-06-20',
@@ -1114,7 +1112,7 @@ describe('RelatoriosPage', () => {
 
     await waitFor(() => {
       expect(financeiroApi.contasPagar.listar).toHaveBeenCalledWith(
-        expect.objectContaining({ responsavelIds: ['p-1'] })
+        expect.objectContaining({ pagadorIds: ['p-1'] })
       );
     });
   });

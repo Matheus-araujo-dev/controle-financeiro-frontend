@@ -5,12 +5,12 @@ import { Button } from '../../components/ui/Button';
 import type { OpcoesConciliacao } from './ConciliacaoFaturaCampos';
 import type { RascunhoLancamento } from './conciliacao-fatura-form';
 
-type Campo = 'responsavelCompraId' | 'recebedorId' | 'formaPagamentoId' | 'categoria' | 'pagador' | 'receita' | 'formaReembolso' | 'vencimentoReembolso' | 'gerarReembolso';
+type Campo = 'pagadorId' | 'recebedorId' | 'formaPagamentoId' | 'categoria' | 'pagador' | 'receita' | 'formaReembolso' | 'vencimentoReembolso' | 'gerarReembolso';
 export function ConciliacaoFaturaLote({ ids, options, disabled, onApply }: { ids: string[]; options: OpcoesConciliacao; disabled: boolean;
   onApply: (ids: string[], transform: (r: RascunhoLancamento) => RascunhoLancamento) => void }) {
-  const [campo, setCampo] = useState<Campo>('responsavelCompraId');
+  const [campo, setCampo] = useState<Campo>('pagadorId');
   const [valor, setValor] = useState('');
-  const choices = campo === 'responsavelCompraId' ? options.responsaveis : campo === 'recebedorId' ? options.recebedores
+  const choices = campo === 'pagadorId' ? options.pagadores : campo === 'recebedorId' ? options.recebedores
     : campo === 'categoria' ? options.despesas : campo === 'pagador' ? options.pagadores : campo === 'receita' ? options.receitas
       : campo === 'gerarReembolso' ? [{ value: 'sim', label: 'Sim' }, { value: 'nao', label: 'Não' }]
         : options.formas.filter(f => campo !== 'formaPagamentoId' || f.ehCartao);
@@ -28,7 +28,7 @@ export function ConciliacaoFaturaLote({ ids, options, disabled, onApply }: { ids
   return <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface-container-low p-3">
     <span className="text-sm">Preencher em lote:</span>
     <div className="w-full md:w-64"><ComboBox compact aria-label="Campo para preencher em lote" value={campo} disabled={disabled} onChange={v => { setCampo(v as Campo); setValor(''); }} options={[
-      { value: 'responsavelCompraId', label: 'Responsável' }, { value: 'recebedorId', label: 'Recebedor' }, { value: 'formaPagamentoId', label: 'Pagamento da compra' },
+      { value: 'pagadorId', label: 'Pagador' }, { value: 'recebedorId', label: 'Recebedor' }, { value: 'formaPagamentoId', label: 'Pagamento da compra' },
       { value: 'categoria', label: 'Substituir rateio de despesa' }, { value: 'pagador', label: 'Pagador do reembolso' }, { value: 'receita', label: 'Substituir rateio de receita' },
       { value: 'formaReembolso', label: 'Pagamento do reembolso' }, { value: 'vencimentoReembolso', label: 'Vencimento do reembolso' }, { value: 'gerarReembolso', label: 'Gerar reembolso' }
     ]} /></div>

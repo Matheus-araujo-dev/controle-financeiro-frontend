@@ -67,7 +67,7 @@ function buildConfig(listFn: ReturnType<typeof vi.fn>) {
     encerrarRecorrencia: vi.fn().mockResolvedValue({ id: '1' }),
     toFormValues: vi.fn(),
     loadPessoaOptions: vi.fn().mockResolvedValue([]),
-    loadResponsavelOptions: vi.fn().mockResolvedValue([]),
+    loadMembroOptions: vi.fn().mockResolvedValue([]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([]),
     loadContaBancariaOptions: vi.fn().mockResolvedValue([]),
     loadCartaoOptions: vi.fn(),

@@ -7,7 +7,7 @@ const validValues = {
   origemCompraPlanejadaId: '',
   numeroDocumento: '',
   pessoaId: 'p1',
-  responsavelId: 'p2',
+  membroId: 'p2',
   dataEmissao: '2026-04-04',
   dataVencimento: '2026-04-20',
   formaPagamentoId: 'f1',
@@ -59,10 +59,10 @@ function createConfig() {
     toFormValues: vi.fn().mockReturnValue(validValues),
     loadPessoaOptions: vi.fn().mockResolvedValue([
       { label: 'Fornecedor', value: 'p1' },
-      { label: 'Responsável', value: 'p2' }
+      { label: 'Membro', value: 'p2' }
     ]),
-    loadResponsavelOptions: vi.fn().mockResolvedValue([
-      { label: 'Responsável', value: 'p2' }
+    loadMembroOptions: vi.fn().mockResolvedValue([
+      { label: 'Membro', value: 'p2' }
     ]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([
       { label: 'Débito automático', value: 'f1', ehCartao: false, baixarAutomaticamente: true }
@@ -122,17 +122,17 @@ describe('FinancialAccountFormPage recurrence fixes', () => {
     expect(dataLiquidacaoWrapper?.className).toContain('bg-surface-container');
   });
 
-  it('requires responsável when validating the form payload', () => {
+  it('requires membro when validating the form payload', () => {
     const result = financialAccountFormSchema.safeParse({
       ...validValues,
-      responsavelId: ''
+      membroId: ''
     });
 
     expect(result.success).toBe(false);
     if (result.success) {
-      throw new Error('Expected schema validation to fail without responsável.');
+      throw new Error('Expected schema validation to fail without membro.');
     }
 
-    expect(result.error.flatten().fieldErrors.responsavelId).toContain('Selecione o responsável');
+    expect(result.error.flatten().fieldErrors.membroId).toContain('Selecione o membro');
   });
 });

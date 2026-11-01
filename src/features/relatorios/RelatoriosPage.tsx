@@ -166,7 +166,7 @@ export function RelatoriosPage() {
     const option = responsavelOptions.find((o) => o.value === responsavelId);
     if (!option) return recorrencias;
     const name = option.label.toLowerCase();
-    return recorrencias.filter((r) => r.responsavelNome?.toLowerCase() === name);
+    return recorrencias.filter((r) => r.pagadorNome?.toLowerCase() === name);
   }, [recorrencias, responsavelId, responsavelOptions]);
 
   const lancamentosRows = useMemo(() => {
@@ -177,7 +177,7 @@ export function RelatoriosPage() {
       descricao: p.descricao,
       quantidadeParcelas: p.quantidadeParcelas,
       pessoa: p.recebedorNome,
-      responsavelNome: p.responsavelNome,
+      responsavelNome: p.pagadorNome,
       dataEmissao: p.dataEmissao,
       dataVencimento: p.dataVencimento,
       dataLiquidacao: p.dataLiquidacao,
@@ -193,7 +193,7 @@ export function RelatoriosPage() {
       descricao: r.descricao,
       quantidadeParcelas: r.quantidadeParcelas,
       pessoa: r.pagadorNome,
-      responsavelNome: r.responsavelNome,
+      responsavelNome: r.recebedorNome,
       dataEmissao: r.dataEmissao,
       dataVencimento: r.dataVencimento,
       dataLiquidacao: r.dataLiquidacao,
@@ -834,7 +834,7 @@ export function RelatoriosPage() {
                           <span key="cell0" className="font-bold">{getRecorrenciaTipoLabel(item.contaOrigemTipo)}</span>,
                           <span key="cell1" className="font-bold">{item.descricao}</span>,
                           <span key="cell2" className="text-on-surface-variant">{item.pessoaNome}</span>,
-                          <span key="cell3" className="text-on-surface-variant">{item.responsavelNome ?? '-'}</span>,
+                          <span key="cell3" className="text-on-surface-variant">{item.pagadorNome ?? '-'}</span>,
                           <span key="cell4" className="font-bold">{formatCurrencyBRL(item.valorLiquido)}</span>,
                           <span key="cell5">{formatDateBR(item.dataInicio)}</span>,
                           <span key="cell6">{item.dataFim ? formatDateBR(item.dataFim) : '-'}</span>,
@@ -880,7 +880,7 @@ export function RelatoriosPage() {
                   ? compras.map((item, rowIndex) => (({
                       id: String(rowIndex), className: "hover:bg-primary/5", cells: [
                           <span key="cell0" className="font-bold">{item.titulo}</span>,
-                          <span key="cell1" className="text-on-surface-variant">{item.responsavelNome}</span>,
+                          <span key="cell1" className="text-on-surface-variant">{item.pagadorNome}</span>,
                           <span key="cell2" className="text-on-surface-variant">{item.contaGerencialDescricao}</span>,
                           <span key="cell3">{item.prioridade === 'Media' ? 'Média' : item.prioridade}</span>,
                           <span key="cell4">{item.status}</span>,

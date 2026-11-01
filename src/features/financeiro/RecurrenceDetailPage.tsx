@@ -216,8 +216,8 @@ export function RecurrenceDetailPage() {
           label="Data de encerramento"
           value={recorrencia.dataFim ? formatDateBR(recorrencia.dataFim) : 'Sem data definida'}
         />
-        {recorrencia.responsavelNome && (
-          <InfoCard icon="person" label="Responsável" value={recorrencia.responsavelNome} />
+        {recorrencia.pagadorNome && (
+          <InfoCard icon="person" label="Pagador" value={recorrencia.pagadorNome} />
         )}
       </div>
 

@@ -86,8 +86,8 @@ describe('cadastros module config', () => {
           descricao: 'Alimentacao',
           tipo: 'Despesa',
           contaPaiId: null,
-          responsavelPadraoId: 'pessoa-1',
-          responsavelPadraoNome: 'Responsavel',
+          membroPadraoId: 'pessoa-1',
+          membroPadraoNome: 'Responsavel',
           aceitaLancamentos: true
         }
       ]
@@ -118,7 +118,6 @@ describe('cadastros module config', () => {
       chavesPix: [],
       ehPagador: true,
       ehRecebedor: true,
-      ehResponsavel: true,
       contaGerencialDespesaId: '',
       contaGerencialReceitaId: ''
     });
@@ -165,7 +164,7 @@ describe('cadastros module config', () => {
 
     expect(renderColumn(contasGerenciaisModuleConfig as never, 'codigo', null, { ativo: true })).toBe('-');
     expect(renderColumn(contasGerenciaisModuleConfig as never, 'contaPaiDescricao', null, { ativo: true })).toBe('-');
-    expect(renderColumn(contasGerenciaisModuleConfig as never, 'responsavelPadraoNome', null, { ativo: true })).toBe('-');
+    expect(renderColumn(contasGerenciaisModuleConfig as never, 'membroPadraoNome', null, { ativo: true })).toBe('-');
     expect(
       isValidElement(renderColumn(contasGerenciaisModuleConfig as never, 'aceitaLancamentos', undefined, { aceitaLancamentos: true }))
     ).toBe(true);
@@ -246,35 +245,35 @@ describe('cadastros module config', () => {
       descricao: 'Alimentacao',
       tipo: 'Despesa' as const,
       contaPaiId: '',
-      responsavelPadraoId: '',
+      membroPadraoId: '',
       contaGerencialContrariaId: '',
       ehPadraoRecebimentoFaturaCartao: false,
       ativo: true
     };
 
     await contasGerenciaisModuleConfig.create(payload);
-    await contasGerenciaisModuleConfig.update('cg-1', { ...payload, contaPaiId: 'pai-1', responsavelPadraoId: 'pessoa-1' });
+    await contasGerenciaisModuleConfig.update('cg-1', { ...payload, contaPaiId: 'pai-1', membroPadraoId: 'pessoa-1' });
 
     expect(cadastrosApi.contasGerenciais.criar).toHaveBeenCalledWith(
-      expect.objectContaining({ contaPaiId: null, responsavelPadraoId: null })
+      expect.objectContaining({ contaPaiId: null, membroPadraoId: null })
     );
     expect(cadastrosApi.contasGerenciais.atualizar).toHaveBeenCalledWith(
       'cg-1',
-      expect.objectContaining({ contaPaiId: 'pai-1', responsavelPadraoId: 'pessoa-1' })
+      expect.objectContaining({ contaPaiId: 'pai-1', membroPadraoId: 'pessoa-1' })
     );
     expect(
       contasGerenciaisModuleConfig.toFormValues({
         ...payload,
         contaPaiId: null,
-        responsavelPadraoId: null,
+        membroPadraoId: null,
         ehPadraoRecebimentoFaturaCartao: true
       } as never)
-    ).toEqual(expect.objectContaining({ contaPaiId: '', responsavelPadraoId: '', ehPadraoRecebimentoFaturaCartao: true }));
+    ).toEqual(expect.objectContaining({ contaPaiId: '', membroPadraoId: '', ehPadraoRecebimentoFaturaCartao: true }));
 
     await expect(contasGerenciaisModuleConfig.fields.find((item) => item.name === 'contaPaiId')?.loadOptions?.()).resolves.toEqual([
       expect.objectContaining({ label: '1.1 - Alimentacao', value: 'pai-1' })
     ]);
-    await expect(contasGerenciaisModuleConfig.fields.find((item) => item.name === 'responsavelPadraoId')?.loadOptions?.()).resolves.toEqual([
+    await expect(contasGerenciaisModuleConfig.fields.find((item) => item.name === 'membroPadraoId')?.loadOptions?.()).resolves.toEqual([
       { label: 'Responsavel', value: 'pessoa-1' }
     ]);
   });
@@ -352,14 +351,14 @@ describe('cadastros module config', () => {
   });
 
   it('covers contasGerenciais exportColumns, href and toggle actions', async () => {
-    const rec = { id: 'cg1', codigo: '1.1', descricao: 'Despesas', tipo: 'Despesa', contaPaiDescricao: 'Pai', responsavelPadraoNome: 'Ana', aceitaLancamentos: true, ativo: true };
+    const rec = { id: 'cg1', codigo: '1.1', descricao: 'Despesas', tipo: 'Despesa', contaPaiDescricao: 'Pai', membroPadraoNome: 'Ana', aceitaLancamentos: true, ativo: true };
     const vals = contasGerenciaisModuleConfig.exportColumns!.map((c) => c.value(rec as never));
     expect(vals[0]).toBe('1.1');
     expect(vals[5]).toBe('Lançável');
     expect(vals[6]).toBe('Ativo');
 
     // null codigo, null contaPaiDescricao, aceitaLancamentos=false, ativo=false
-    const recNull = { ...rec, codigo: null, contaPaiDescricao: null, responsavelPadraoNome: null, aceitaLancamentos: false, ativo: false };
+    const recNull = { ...rec, codigo: null, contaPaiDescricao: null, membroPadraoNome: null, aceitaLancamentos: false, ativo: false };
     const valsNull = contasGerenciaisModuleConfig.exportColumns!.map((c) => c.value(recNull as never));
     expect(valsNull[0]).toBe('');
     expect(valsNull[3]).toBe('');
