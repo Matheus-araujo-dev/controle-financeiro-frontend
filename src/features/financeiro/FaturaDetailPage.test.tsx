@@ -60,7 +60,7 @@ describe('FaturaDetailPage', () => {
   it.each([false, true])('opens the payable account from an invoice item (refund: %s)', async (ehEstorno) => {
     const item = {
       contaPagarId: 'conta-original', descricao: ehEstorno ? 'Estorno: Compra' : 'Compra de tênis',
-      recebedorNome: 'Loja', responsavelNome: null, dataCompra: '2026-04-05',
+      recebedorNome: 'Loja', pagadorNome: null, dataCompra: '2026-04-05',
       valorLiquido: ehEstorno ? -100 : 100, statusCodigo: ehEstorno ? 'ESTORNO' : 'EM_FATURA',
       numeroParcela: 1, quantidadeParcelas: 1, ehEstorno
     };
@@ -113,7 +113,7 @@ describe('FaturaDetailPage', () => {
       contaPagarId: 'cp1',
       descricao: 'Compra cartao abril A',
       recebedorNome: 'Fornecedor X',
-      responsavelNome: null,
+      pagadorNome: null,
       dataCompra: '2026-04-05',
       valorLiquido: 100,
       statusCodigo: 'PENDENTE',
@@ -166,7 +166,7 @@ describe('FaturaDetailPage', () => {
           contaPagarId: 'cp1',
           descricao: 'Compra cartao abril A',
           recebedorNome: 'Fornecedor X',
-      responsavelNome: null,
+      pagadorNome: null,
           dataCompra: '2026-04-05',
           valorLiquido: 100,
           statusCodigo: 'LIQUIDADA',
@@ -222,7 +222,7 @@ describe('FaturaDetailPage', () => {
         contaPagarId: 'cp1',
         descricao: 'Compra cartao abril A',
         recebedorNome: 'Fornecedor X',
-      responsavelNome: null,
+      pagadorNome: null,
         dataCompra: '2026-04-05',
         valorLiquido: 100,
         statusCodigo: 'LIQUIDADA',
@@ -254,7 +254,7 @@ describe('FaturaDetailPage', () => {
           contaPagarId: 'cp1',
           descricao: 'Compra cartao abril A',
           recebedorNome: 'Fornecedor X',
-      responsavelNome: null,
+      pagadorNome: null,
           dataCompra: '2026-04-05',
           valorLiquido: 100,
           statusCodigo: 'LIQUIDADA',
@@ -285,7 +285,7 @@ describe('FaturaDetailPage', () => {
           contaPagarId: 'cp1',
           descricao: 'Compra cartao abril A',
           recebedorNome: 'Fornecedor X',
-      responsavelNome: null,
+      pagadorNome: null,
           dataCompra: '2026-04-05',
           valorLiquido: 100,
           statusCodigo: 'PENDENTE',

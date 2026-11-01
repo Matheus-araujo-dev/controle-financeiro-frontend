@@ -619,7 +619,7 @@ export function RealizarCompraPlanejadaPage() {
               items={[
                 { label: 'Compra', value: detail.titulo },
                 { label: 'Valor Planejado', value: formatCurrencyBRL(detail.valorEstimado), accent: true },
-                { label: 'Responsável', value: detail.responsavelNome },
+                { label: 'Pagador', value: detail.pagadorNome },
                 { label: 'Fluxo Gerado', value: formaEhCartao ? 'Fatura cartão' : formaBaixarAutomaticamente ? 'Baixa imediata' : 'Conta a pagar' }
               ]}
               submitLabel="Confirmar Compra"

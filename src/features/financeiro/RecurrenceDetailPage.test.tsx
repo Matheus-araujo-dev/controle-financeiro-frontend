@@ -50,7 +50,7 @@ const baseRecorrencia = {
   descricao: 'Aluguel comercial',
   valorLiquido: 1500,
   pessoaNome: 'Imobiliária XPTO',
-  responsavelNome: 'Matheus'
+  pagadorNome: 'Matheus'
 };
 
 describe('RecurrenceDetailPage', () => {
@@ -91,7 +91,7 @@ describe('RecurrenceDetailPage', () => {
       contaOrigemTipo: 'ContaReceber',
       ativa: false,
       observacao: null,
-      responsavelNome: null,
+      pagadorNome: null,
       dataFim: null,
       tipoDia: 'DiaUtil' as const
     });
@@ -104,7 +104,7 @@ describe('RecurrenceDetailPage', () => {
     expect(screen.getByRole('button', { name: /Retomar recorrência/i })).toBeInTheDocument();
     // no observação section
     expect(screen.queryByText('Pagar todo mês 15')).not.toBeInTheDocument();
-    // no responsável
+    // no pagador
     expect(screen.queryByText('Matheus')).not.toBeInTheDocument();
   });
 

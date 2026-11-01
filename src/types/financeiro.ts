@@ -57,7 +57,7 @@ export type RecorrenciaDetalhe = Omit<ApiContract<Api.RecorrenciaResponse, 'data
   contaOrigemTipo: 'ContaPagar' | 'ContaReceber';
 };
 
-export type RecorrenciaListItem = RecorrenciaDetalhe & ApiContract<Pick<Api.RecorrenciaListItemResponse, 'contaOrigemId' | 'descricao' | 'valorLiquido' | 'pessoaNome' | 'responsavelNome'>, 'responsavelNome'>;
+export type RecorrenciaListItem = RecorrenciaDetalhe & ApiContract<Pick<Api.RecorrenciaListItemResponse, 'contaOrigemId' | 'descricao' | 'valorLiquido' | 'pessoaNome' | 'pagadorNome'>, 'pagadorNome'>;
 
 export type ContaFinanceiraListSummary = ApiContract<Api.ContaPagarListSummaryResponse>;
 
@@ -82,12 +82,12 @@ export type RecorrenciaPayload = Omit<ApiContract<Api.RecorrenciaConfigRequest, 
   tipoDia: TipoDiaRecorrencia;
 };
 
-export type ContaPagarResumo = Omit<ApiContract<Api.ContaPagarResumoResponse, 'numeroDocumento' | 'responsavelNome' | 'dataLiquidacao' | 'valorPago' | 'grupoParcelamentoId'>, 'statusCodigo' | 'contaVinculadaId'> & {
+export type ContaPagarResumo = Omit<ApiContract<Api.ContaPagarResumoResponse, 'numeroDocumento' | 'pagadorNome' | 'dataLiquidacao' | 'valorPago' | 'grupoParcelamentoId'>, 'statusCodigo' | 'contaVinculadaId'> & {
   statusCodigo: StatusContaCodigo;
   contaVinculadaId?: string | null;
 };
 
-export type ContaPagarDetalhe = Omit<ApiContract<Api.ContaPagarDetalheResponse, 'numeroDocumento' | 'responsavelCompraId' | 'responsavelCompraNome' | 'dataLiquidacao' | 'dataCompra' | 'cartaoId' | 'cartaoNome' | 'contaBancariaId' | 'contaBancariaNome' | 'valorPago' | 'grupoParcelamentoId' | 'origemCompraPlanejadaId' | 'observacao' | 'competenciaFaturaCartao' | 'dataFechamentoFaturaCartao' | 'dataVencimentoFaturaCartao' | 'grupoReembolsoId' | 'grupoResponsaveisId', 'grupoReembolsoId' | 'grupoResponsaveisId'>, 'statusCodigo' | 'origem' | 'recorrencia' | 'statusFaturaCartao' | 'rateios' | 'contaVinculada' | 'grupoReembolso' | 'grupoResponsaveis'> & {
+export type ContaPagarDetalhe = Omit<ApiContract<Api.ContaPagarDetalheResponse, 'numeroDocumento' | 'pagadorId' | 'pagadorNome' | 'dataLiquidacao' | 'dataCompra' | 'cartaoId' | 'cartaoNome' | 'contaBancariaId' | 'contaBancariaNome' | 'valorPago' | 'grupoParcelamentoId' | 'origemCompraPlanejadaId' | 'observacao' | 'competenciaFaturaCartao' | 'dataFechamentoFaturaCartao' | 'dataVencimentoFaturaCartao' | 'grupoReembolsoId' | 'grupoPagadoresId', 'grupoReembolsoId' | 'grupoPagadoresId'>, 'statusCodigo' | 'origem' | 'recorrencia' | 'statusFaturaCartao' | 'rateios' | 'contaVinculada' | 'grupoReembolso' | 'grupoPagadores'> & {
   statusCodigo: StatusContaCodigo;
   origem: LancamentoOrigem;
   recorrencia: RecorrenciaDetalhe | null;
@@ -95,13 +95,13 @@ export type ContaPagarDetalhe = Omit<ApiContract<Api.ContaPagarDetalheResponse, 
   rateios: RateioDetalhe[];
   contaVinculada: ContaVinculadaResumo | null;
   grupoReembolso?: GrupoReembolsoInfo | null;
-  grupoResponsaveis?: GrupoResponsaveisInfo | null;
+  grupoPagadores?: GrupoResponsaveisInfo | null;
 };
 
-export type ContaPagarPayload = Omit<ApiContract<Pick<Api.CriarContaPagarRequest, 'origemCompraPlanejadaId' | 'numeroDocumento' | 'dataEmissao' | 'responsavelCompraId' | 'recebedorId' | 'dataVencimento' | 'formaPagamentoId' | 'cartaoId' | 'contaBancariaId' | 'dataLiquidacao' | 'dataCompra' | 'valorOriginal' | 'valorDesconto' | 'valorJuros' | 'valorMulta' | 'quantidadeParcelas' | 'descricao' | 'observacao' | 'rateios' | 'recorrencia' | 'forcarProximaFatura' | 'contaVinculadaOrigemId' | 'responsaveisAdicionaisIds'>, 'origemCompraPlanejadaId' | 'numeroDocumento' | 'cartaoId' | 'contaBancariaId' | 'dataLiquidacao' | 'dataCompra' | 'observacao' | 'contaVinculadaOrigemId', 'forcarProximaFatura' | 'contaVinculadaOrigemId'>, 'rateios' | 'recorrencia' | 'responsaveisAdicionaisIds'> & {
+export type ContaPagarPayload = Omit<ApiContract<Pick<Api.CriarContaPagarRequest, 'origemCompraPlanejadaId' | 'numeroDocumento' | 'dataEmissao' | 'pagadorId' | 'recebedorId' | 'dataVencimento' | 'formaPagamentoId' | 'cartaoId' | 'contaBancariaId' | 'dataLiquidacao' | 'dataCompra' | 'valorOriginal' | 'valorDesconto' | 'valorJuros' | 'valorMulta' | 'quantidadeParcelas' | 'descricao' | 'observacao' | 'rateios' | 'recorrencia' | 'forcarProximaFatura' | 'contaVinculadaOrigemId' | 'pagadoresAdicionaisIds'>, 'origemCompraPlanejadaId' | 'numeroDocumento' | 'cartaoId' | 'contaBancariaId' | 'dataLiquidacao' | 'dataCompra' | 'observacao' | 'contaVinculadaOrigemId', 'forcarProximaFatura' | 'contaVinculadaOrigemId'>, 'rateios' | 'recorrencia' | 'pagadoresAdicionaisIds'> & {
   rateios: RateioPayload[];
   recorrencia: RecorrenciaPayload | null;
-  responsaveisAdicionaisIds?: string[];
+  pagadoresAdicionaisIds?: string[];
 };
 
 export type ContaPagarFilters = ListQueryBase & {
@@ -111,7 +111,7 @@ export type ContaPagarFilters = ListQueryBase & {
   recebedorIds?: string[];
   formaPagamentoId?: string;
   formaPagamentoIds?: string[];
-  responsavelIds?: string[];
+  pagadorIds?: string[];
   statusCodigo?: StatusContaCodigo | StatusContaCodigo[];
   statusCodigos?: StatusContaCodigo[];
   dataEmissaoInicial?: string;
@@ -123,25 +123,25 @@ export type ContaPagarFilters = ListQueryBase & {
   ehRecorrente?: boolean;
 };
 
-export type ContaReceberResumo = Omit<ApiContract<Api.ContaReceberResumoResponse, 'numeroDocumento' | 'responsavelNome' | 'dataLiquidacao' | 'valorPago' | 'grupoParcelamentoId'>, 'statusCodigo' | 'contaVinculadaId'> & {
+export type ContaReceberResumo = Omit<ApiContract<Api.ContaReceberResumoResponse, 'numeroDocumento' | 'recebedorNome' | 'dataLiquidacao' | 'valorPago' | 'grupoParcelamentoId'>, 'statusCodigo' | 'contaVinculadaId'> & {
   statusCodigo: StatusContaCodigo;
   contaVinculadaId?: string | null;
 };
 
-export type ContaReceberDetalhe = Omit<ApiContract<Api.ContaReceberDetalheResponse, 'numeroDocumento' | 'responsavelId' | 'responsavelNome' | 'dataLiquidacao' | 'cartaoId' | 'cartaoNome' | 'contaBancariaId' | 'contaBancariaNome' | 'valorPago' | 'grupoParcelamentoId' | 'observacao' | 'grupoReembolsoId' | 'grupoResponsaveisId', 'grupoReembolsoId' | 'grupoResponsaveisId'>, 'statusCodigo' | 'origem' | 'recorrencia' | 'rateios' | 'contaVinculada' | 'grupoReembolso' | 'grupoResponsaveis'> & {
+export type ContaReceberDetalhe = Omit<ApiContract<Api.ContaReceberDetalheResponse, 'numeroDocumento' | 'recebedorId' | 'recebedorNome' | 'dataLiquidacao' | 'cartaoId' | 'cartaoNome' | 'contaBancariaId' | 'contaBancariaNome' | 'valorPago' | 'grupoParcelamentoId' | 'observacao' | 'grupoReembolsoId' | 'grupoRecebedoresId', 'grupoReembolsoId' | 'grupoRecebedoresId'>, 'statusCodigo' | 'origem' | 'recorrencia' | 'rateios' | 'contaVinculada' | 'grupoReembolso' | 'grupoRecebedores'> & {
   statusCodigo: StatusContaCodigo;
   origem: LancamentoOrigem;
   recorrencia: RecorrenciaDetalhe | null;
   rateios: RateioDetalhe[];
   contaVinculada: ContaVinculadaResumo | null;
   grupoReembolso?: GrupoReembolsoInfo | null;
-  grupoResponsaveis?: GrupoResponsaveisInfo | null;
+  grupoRecebedores?: GrupoResponsaveisInfo | null;
 };
 
-export type ContaReceberPayload = Omit<ApiContract<Pick<Api.CriarContaReceberRequest, 'numeroDocumento' | 'dataEmissao' | 'responsavelId' | 'pagadorId' | 'dataVencimento' | 'formaPagamentoId' | 'cartaoId' | 'contaBancariaId' | 'dataLiquidacao' | 'valorOriginal' | 'valorDesconto' | 'valorJuros' | 'valorMulta' | 'quantidadeParcelas' | 'descricao' | 'observacao' | 'rateios' | 'recorrencia' | 'contaVinculadaOrigemId'>, 'numeroDocumento' | 'cartaoId' | 'contaBancariaId' | 'dataLiquidacao' | 'observacao' | 'contaVinculadaOrigemId', 'contaVinculadaOrigemId'>, 'rateios' | 'recorrencia' | 'responsaveisAdicionaisIds'> & {
+export type ContaReceberPayload = Omit<ApiContract<Pick<Api.CriarContaReceberRequest, 'numeroDocumento' | 'dataEmissao' | 'recebedorId' | 'pagadorId' | 'dataVencimento' | 'formaPagamentoId' | 'cartaoId' | 'contaBancariaId' | 'dataLiquidacao' | 'valorOriginal' | 'valorDesconto' | 'valorJuros' | 'valorMulta' | 'quantidadeParcelas' | 'descricao' | 'observacao' | 'rateios' | 'recorrencia' | 'contaVinculadaOrigemId'>, 'numeroDocumento' | 'cartaoId' | 'contaBancariaId' | 'dataLiquidacao' | 'observacao' | 'contaVinculadaOrigemId', 'contaVinculadaOrigemId'>, 'rateios' | 'recorrencia' | 'pagadoresAdicionaisIds'> & {
   rateios: RateioPayload[];
   recorrencia: RecorrenciaPayload | null;
-  responsaveisAdicionaisIds?: string[];
+  pagadoresAdicionaisIds?: string[];
 };
 
 export type ContaReceberFilters = ListQueryBase & {
@@ -151,7 +151,7 @@ export type ContaReceberFilters = ListQueryBase & {
   pagadorIds?: string[];
   formaPagamentoId?: string;
   formaPagamentoIds?: string[];
-  responsavelIds?: string[];
+  recebedorIds?: string[];
   statusCodigo?: StatusContaCodigo | StatusContaCodigo[];
   statusCodigos?: StatusContaCodigo[];
   dataEmissaoInicial?: string;
@@ -213,7 +213,7 @@ export type FaturaListSummary = Omit<ApiContract<Api.FaturaListSummaryResponse>,
   porCompetencia: FaturaAgrupamentoResumo[];
 };
 
-export type FaturaItem = ApiContract<Api.FaturaItemResponse, 'responsavelNome', 'ehEstorno'>;
+export type FaturaItem = ApiContract<Api.FaturaItemResponse, 'pagadorNome', 'ehEstorno'>;
 
 export type FaturaDetalhe = FaturaResumo & ApiContract<Pick<Api.FaturaDetalheResponse, 'contaBancariaPagamentoId' | 'contaBancariaPagamentoNome' | 'observacao' | 'createdAtUtc' | 'updatedAtUtc'>, 'contaBancariaPagamentoId' | 'contaBancariaPagamentoNome' | 'observacao'> & {
   itens: FaturaItem[];

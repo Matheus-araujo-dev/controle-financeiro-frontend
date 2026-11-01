@@ -89,7 +89,7 @@ export function ComprasPlanejadasListPage() {
     search: '',
     prioridades: undefined,
     statuses: undefined,
-    responsavelId: undefined,
+    pagadorId: undefined,
     contaGerencialId: undefined,
     parcelavel: undefined,
     sortBy: 'dataDesejada',
@@ -119,7 +119,7 @@ export function ComprasPlanejadasListPage() {
     queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 200, search: '', ativo: true }),
     staleTime: 5 * 60_000
   });
-  const responsavelOptions: FilterOption[] = (pessoasData?.items ?? []).map((item) => ({ label: item.nome, value: item.id }));
+  const pagadorOptions: FilterOption[] = (pessoasData?.items ?? []).map((item) => ({ label: item.nome, value: item.id }));
 
   const error = queryError instanceof Error ? queryError.message : queryError ? 'Falha ao carregar compras planejadas.' : undefined;
 
@@ -187,9 +187,9 @@ export function ComprasPlanejadasListPage() {
       render: (value) => <span className="text-sm text-on-surface-variant">{String(value)}</span>
     },
     {
-      title: 'Responsável',
-      dataIndex: 'responsavelNome',
-      key: 'responsavelNome',
+      title: 'Pagador',
+      dataIndex: 'pagadorNome',
+      key: 'pagadorNome',
       mobileRole: 'subtitle',
       render: (value) => <span className="text-sm text-on-surface-variant">{String(value)}</span>
     },
@@ -241,7 +241,7 @@ export function ComprasPlanejadasListPage() {
     { header: 'Prioridade', value: (r) => prioridadeLabel(r.prioridade), cellStyle: STYLE.DATA_TEXT, width: 12 },
     { header: 'Status', value: (r) => r.status, cellStyle: STYLE.DATA_TEXT, width: 12 },
     { header: 'Conta gerencial', value: (r) => r.contaGerencialDescricao ?? '', cellStyle: STYLE.DATA_TEXT, width: 28 },
-    { header: 'Responsável', value: (r) => r.responsavelNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
+    { header: 'Pagador', value: (r) => r.pagadorNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
     { header: 'Parcelas', value: (r) => r.parcelavel ? (r.quantidadeParcelasDesejada ?? 1) : 1, cellStyle: STYLE.DATA_TEXT, width: 10 },
     { header: 'Link', value: (r) => r.link ?? '', cellStyle: STYLE.DATA_TEXT, width: 30 },
   ];
@@ -251,7 +251,7 @@ export function ComprasPlanejadasListPage() {
     { header: 'Prioridade', value: (r) => prioridadeLabel(r.prioridade) },
     { header: 'Status', value: (r) => r.status },
     { header: 'Data desejada', value: (r) => r.dataDesejada ? formatDateBR(r.dataDesejada) : '—' },
-    { header: 'Responsável', value: (r) => r.responsavelNome ?? '' },
+    { header: 'Pagador', value: (r) => r.pagadorNome ?? '' },
     { header: 'Valor estimado (R$)', value: (r) => formatCurrencyBRL(r.valorEstimado), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorEstimado, 0)) },
   ];
 
@@ -297,7 +297,7 @@ export function ComprasPlanejadasListPage() {
       rows,
       dateValue: (r) => r.dataDesejada ?? new Date().toISOString().slice(0, 10),
       descriptionValue: (r) => r.titulo,
-      subtitleValue: (r) => r.responsavelNome ?? '',
+      subtitleValue: (r) => r.pagadorNome ?? '',
       signedValue: (r) => -r.valorEstimado,
     }, win);
   }
@@ -348,7 +348,7 @@ export function ComprasPlanejadasListPage() {
               <FilterInputWrapper>
                 <input
                   className={filterInputClass}
-                  placeholder="Título, conta, responsável ou link"
+                  placeholder="Título, conta, pagador ou link"
                   value={filters.search ?? ''}
                   onChange={(event) => setFilters((prev) => ({ ...prev, page: 1, search: event.target.value }))}
                 />
@@ -409,13 +409,13 @@ export function ComprasPlanejadasListPage() {
                 searchable
               />
             </FilterField>
-            <FilterField label="Responsável">
+            <FilterField label="Pagador">
               <MultiSelectFilter
-                ariaLabel="Responsável"
-                options={responsavelOptions}
+                ariaLabel="Pagador"
+                options={pagadorOptions}
                 placeholder="Todos"
-                value={filters.responsavelId ? [filters.responsavelId] : []}
-                onChange={(next) => setFilters((prev) => ({ ...prev, page: 1, responsavelId: next[0] || undefined }))}
+                value={filters.pagadorId ? [filters.pagadorId] : []}
+                onChange={(next) => setFilters((prev) => ({ ...prev, page: 1, pagadorId: next[0] || undefined }))}
                 searchable
               />
             </FilterField>

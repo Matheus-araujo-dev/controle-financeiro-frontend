@@ -46,16 +46,6 @@ describe('normalizeContaFilters', () => {
     expect(result.formaPagamentoIds).toBeUndefined();
   });
 
-  it('keeps non-empty responsavelIds array', () => {
-    const result = normalizeContaFilters({ responsavelIds: ['r1'] });
-    expect(result.responsavelIds).toEqual(['r1']);
-  });
-
-  it('returns undefined for empty responsavelIds', () => {
-    const result = normalizeContaFilters({ responsavelIds: [] });
-    expect(result.responsavelIds).toBeUndefined();
-  });
-
   it('renames dataInicial/dataFinal to dataVencimentoInicial/dataVencimentoFinal', () => {
     const result = normalizeContaFilters({ dataInicial: '2026-01-01', dataFinal: '2026-12-31' });
     expect(result.dataVencimentoInicial).toBe('2026-01-01');

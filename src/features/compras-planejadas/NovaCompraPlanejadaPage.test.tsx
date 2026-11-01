@@ -104,8 +104,8 @@ describe('NovaCompraPlanejadaPage', () => {
       quantidadeParcelasDesejada: 10,
       contaGerencialId: 'cg-1',
       contaGerencialDescricao: 'Tecnologia',
-      responsavelId: 'p-1',
-      responsavelNome: 'Michelle',
+      pagadorId: 'p-1',
+      pagadorNome: 'Michelle',
       link: 'https://loja.exemplo.com/notebook',
       observacao: 'Aguardar melhor janela',
       contaPagarGeradaId: null,
@@ -121,7 +121,7 @@ describe('NovaCompraPlanejadaPage', () => {
     fireEvent.change(screen.getByLabelText('Valor Estimado (R$)'), { target: { value: '200' } });
     await userEvent.click(screen.getByLabelText('Conta Gerencial'));
     await userEvent.click(screen.getByRole('button', { name: 'DES.10.01 - Tecnologia' }));
-    await userEvent.click(screen.getByLabelText('Responsável'));
+    await userEvent.click(screen.getByLabelText('Pagador'));
     await userEvent.click(screen.getByRole('button', { name: 'Michelle' }));
   }
 
@@ -137,7 +137,7 @@ describe('NovaCompraPlanejadaPage', () => {
     renderPage(); await screen.findByText('Classificação Técnica');
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar Planejamento' }));
     expect(await screen.findByText('Título é obrigatório.')).toBeInTheDocument();
-    expect(screen.getByText('Responsável é obrigatório.')).toBeInTheDocument();
+    expect(screen.getByText('Pagador é obrigatório.')).toBeInTheDocument();
     expect(comprasPlanejadasApi.criar).not.toHaveBeenCalled();
   });
 
@@ -182,7 +182,7 @@ describe('NovaCompraPlanejadaPage', () => {
     expect(screen.getByText('Configurações de Fluxo')).toBeInTheDocument();
     expect(screen.getByText('Pronto para salvar?')).toBeInTheDocument();
     expect(screen.getByLabelText('Título da Compra')).toBeInTheDocument();
-    expect(screen.getByLabelText('Responsável')).toBeInTheDocument();
+    expect(screen.getByLabelText('Pagador')).toBeInTheDocument();
   });
 
   it('submits the planned purchase payload and navigates back to the planner', async () => {
@@ -208,7 +208,7 @@ describe('NovaCompraPlanejadaPage', () => {
 
     await userEvent.click(screen.getByLabelText('Conta Gerencial'));
     await userEvent.click(screen.getByRole('button', { name: 'DES.10.01 - Tecnologia' }));
-    await userEvent.click(screen.getByLabelText('Responsável'));
+    await userEvent.click(screen.getByLabelText('Pagador'));
     await userEvent.click(screen.getByRole('button', { name: 'Michelle' }));
 
     await userEvent.type(screen.getByLabelText('Link de Referência'), 'https://loja.exemplo.com/notebook');
@@ -229,7 +229,7 @@ describe('NovaCompraPlanejadaPage', () => {
         parcelavel: true,
         quantidadeParcelasDesejada: 10,
         contaGerencialId: 'cg-1',
-        responsavelId: 'p-1',
+        pagadorId: 'p-1',
         link: 'https://loja.exemplo.com/notebook',
         observacao: 'Aguardar melhor janela'
       })
