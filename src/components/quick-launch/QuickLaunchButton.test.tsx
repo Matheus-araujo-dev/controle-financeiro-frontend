@@ -203,9 +203,9 @@ const contasBancariasResponse = {
 
 const pessoasResponse = {
   items: [
-    { id: 'p1', nome: 'Mercado', ehResponsavel: false, ehRecebedor: true },
-    { id: 'r1', nome: 'Responsavel', ehResponsavel: true, ehRecebedor: false },
-    { id: 'r2', nome: 'Responsavel Dois', ehResponsavel: true, ehRecebedor: false }
+    { id: 'p1', nome: 'Mercado', ehPagador: false, ehRecebedor: true },
+    { id: 'r1', nome: 'Responsavel', ehPagador: true, ehRecebedor: true },
+    { id: 'r2', nome: 'Responsavel Dois', ehPagador: true, ehRecebedor: true }
   ]
 };
 
@@ -232,13 +232,13 @@ const receitasResponse = {
 };
 
 const recebedoresResponse = {
-  items: [{ id: 'p1', nome: 'Mercado', ehResponsavel: false, ehRecebedor: true }]
+  items: [{ id: 'p1', nome: 'Mercado', ehPagador: false, ehRecebedor: true }]
 };
 
-const responsaveisResponse = {
+const membrosResponse = {
   items: [
-    { id: 'r1', nome: 'Responsavel', ehResponsavel: true, ehRecebedor: false },
-    { id: 'r2', nome: 'Responsavel Dois', ehResponsavel: true, ehRecebedor: false }
+    { id: 'r1', nome: 'Responsavel', ehPagador: true, ehRecebedor: true },
+    { id: 'r2', nome: 'Responsavel Dois', ehPagador: true, ehRecebedor: true }
   ]
 };
 
@@ -252,7 +252,7 @@ const pagadoresResponse = {
 function mockSuccessfulOptions() {
   vi.mocked(cadastrosApi.pessoas.listar).mockImplementation((filters: Record<string, unknown>) => {
     if (filters.ehRecebedor === true) return Promise.resolve(recebedoresResponse as never);
-    if (filters.ehResponsavel === true) return Promise.resolve(responsaveisResponse as never);
+    if (filters.ehPagador === true && filters.ehRecebedor === true) return Promise.resolve(membrosResponse as never);
     if (filters.ehPagador === true) return Promise.resolve(pagadoresResponse as never);
     return Promise.resolve(pessoasResponse as never);
   });
@@ -324,7 +324,7 @@ describe('QuickLaunchButton', () => {
     await user.type(within(dialog).getByPlaceholderText(/mercado/i), 'Compra do mes');
     await user.type(within(dialog).getByLabelText('Valor'), '120');
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
-    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar pagador/i), 'r1');
     await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-card');
     await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cd1');
 
@@ -375,7 +375,7 @@ describe('QuickLaunchButton', () => {
         descricao: 'Servico prestado',
         valorOriginal: 300,
         pagadorId: 'r1',
-        responsavelId: 'p-new',
+        recebedorId: 'p-new',
         formaPagamentoId: 'f-new',
         cartaoId: null,
         rateios: [{ contaGerencialId: 'cg-new', valor: 300 }]
@@ -402,7 +402,7 @@ describe('QuickLaunchButton', () => {
     await user.type(within(dialog).getByLabelText('Valor'), '300');
     fireEvent.change(within(dialog).getByLabelText('Número de parcelas'), { target: { value: '3' } });
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
-    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar pagador/i), 'r1');
     await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-pix');
     await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cd1');
 
@@ -414,7 +414,7 @@ describe('QuickLaunchButton', () => {
     );
   });
 
-  it('auto-fills responsável from conta gerencial membroPadraoId', async () => {
+  it('auto-fills pagador from conta gerencial membroPadraoId', async () => {
     vi.mocked(cadastrosApi.contasGerenciais.listar).mockImplementation((filters: { tipo?: string }) => {
       if (filters.tipo === 'Receita') return Promise.resolve(receitasResponse as never);
       return Promise.resolve({
@@ -428,7 +428,7 @@ describe('QuickLaunchButton', () => {
 
     await user.selectOptions(await within(dialog).findByLabelText('Categoria'), 'cd1');
 
-    // Auto-fill adds responsável as a chip — verify via the remove button's aria-label
+    // Auto-fill adds pagador as a chip — verify via the remove button's aria-label
     await waitFor(() => {
       expect(within(dialog).getByRole('button', { name: /Remover Responsavel/i })).toBeInTheDocument();
     });
@@ -470,7 +470,7 @@ describe('QuickLaunchButton', () => {
     expect(notify).toHaveBeenCalledWith('success', 'Transferência registrada');
   });
 
-  it('mostra chips com QLValorInput para multiplos responsaveis e envia pagadoresAdicionaisIds', async () => {
+  it('mostra chips com QLValorInput para multiplos pagadores e envia pagadoresAdicionaisIds', async () => {
     const { user, dialog } = await openQuickLaunch();
 
     await user.type(within(dialog).getByPlaceholderText(/mercado/i), 'Rateio teste');
@@ -478,20 +478,20 @@ describe('QuickLaunchButton', () => {
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
 
     // Selecionar auto-adiciona (não há botão add externo)
-    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar pagador/i), 'r1');
 
-    // Chip do primeiro responsável aparece
+    // Chip do primeiro pagador aparece
     await waitFor(() =>
       expect(within(dialog).getByRole('button', { name: /Remover Responsavel$/i })).toBeInTheDocument()
     );
 
-    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r2');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar pagador/i), 'r2');
 
-    // Chip do segundo responsável aparece e QLValorInputs ficam visíveis (count > 1)
+    // Chip do segundo pagador aparece e QLValorInputs ficam visíveis (count > 1)
     await waitFor(() =>
       expect(within(dialog).getByRole('button', { name: /Remover Responsavel Dois/i })).toBeInTheDocument()
     );
-    // Dois inputs de valor devem existir (QLValorInput para cada responsável)
+    // Dois inputs de valor devem existir (QLValorInput para cada pagador)
     const valorInputs = within(dialog).getAllByDisplayValue(/R\$/);
     expect(valorInputs.length).toBeGreaterThanOrEqual(2);
 
@@ -507,11 +507,11 @@ describe('QuickLaunchButton', () => {
     );
   });
 
-  it('remove responsavel secundario mantendo o primario como chip', async () => {
+  it('remove pagador secundario mantendo o primario como chip', async () => {
     const { user, dialog } = await openQuickLaunch();
 
-    await user.selectOptions(await within(dialog).findByLabelText(/adicionar respons.vel/i), 'r1');
-    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r2');
+    await user.selectOptions(await within(dialog).findByLabelText(/adicionar pagador/i), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar pagador/i), 'r2');
 
     await waitFor(() =>
       expect(within(dialog).getByRole('button', { name: /Remover Responsavel Dois/i })).toBeInTheDocument()
@@ -525,7 +525,7 @@ describe('QuickLaunchButton', () => {
     );
     // Primário permanece
     expect(within(dialog).getByRole('button', { name: /Remover Responsavel$/i })).toBeInTheDocument();
-    // Com apenas 1 responsável, nenhum QLValorInput deve aparecer (count <= 1)
+    // Com apenas 1 pagador, nenhum QLValorInput deve aparecer (count <= 1)
     expect(within(dialog).queryAllByDisplayValue(/R\$/).length).toBe(0);
   });
 
@@ -557,8 +557,8 @@ describe('QuickLaunchButton', () => {
     await user.type(within(dialog).getByLabelText('Valor'), '200');
     await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'p1');
 
-    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r1');
-    await user.selectOptions(within(dialog).getByLabelText(/adicionar respons.vel/i), 'r2');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar pagador/i), 'r1');
+    await user.selectOptions(within(dialog).getByLabelText(/adicionar pagador/i), 'r2');
 
     await waitFor(() =>
       expect(within(dialog).getByRole('button', { name: /Remover Responsavel Dois/i })).toBeInTheDocument()
@@ -612,7 +612,7 @@ describe('QuickLaunchButton', () => {
     });
   });
 
-  it('gerar reembolso de ContaReceber inverte pessoaId e responsavelId no onGerarReembolso', async () => {
+  it('gerar reembolso de ContaReceber inverte pessoaId e membroId no onGerarReembolso', async () => {
     const onGerarReembolso = vi.fn();
     const user = userEvent.setup();
 
@@ -631,7 +631,7 @@ describe('QuickLaunchButton', () => {
 
     await user.type(within(dialog).getByPlaceholderText(/sal.rio/i), 'Vale salario');
     await user.type(within(dialog).getByLabelText('Valor'), '1000');
-    await user.selectOptions(await within(dialog).findByLabelText('Responsável'), 'r1');
+    await user.selectOptions(await within(dialog).findByLabelText('Recebedor'), 'r1');
     await user.selectOptions(within(dialog).getByLabelText(/adicionar pagador/i), 'r2');
     await user.selectOptions(within(dialog).getByLabelText('Forma de pagamento'), 'f-pix');
     await user.selectOptions(within(dialog).getByLabelText('Categoria'), 'cr1');
@@ -647,24 +647,24 @@ describe('QuickLaunchButton', () => {
         tipo: 'pagar',
         pessoaId: 'r2',
         pessoaNome: 'Responsavel Dois',
-        responsavelId: 'r1',
-        responsavelNome: 'Responsavel',
+        membroId: 'r1',
+        membroNome: 'Responsavel',
         pagadoresAdicionaisIds: undefined,
         contaVinculadaOrigemId: 'cr-456'
       })
     );
   });
 
-  it('preenche chips com nomes via initialValues.pagadoresAdicionaisIds e responsaveisNomes', async () => {
+  it('preenche chips com nomes via initialValues.pagadoresAdicionaisIds e membrosNomes', async () => {
     render(
       <QuickLaunchModal
         initialValues={{
           tipo: 'pagar',
           pessoaId: 'p1',
           pessoaNome: 'Mercado',
-          responsavelId: 'r1',
-          // responsavelNome ausente propositalmente — cobre o branch `?? nomes[id]`
-          responsaveisNomes: { r1: 'Responsavel', r2: 'Responsavel Dois' },
+          membroId: 'r1',
+          // membroNome ausente propositalmente — cobre o branch `?? nomes[id]`
+          membrosNomes: { r1: 'Responsavel', r2: 'Responsavel Dois' },
           pagadoresAdicionaisIds: ['r2'],
           valor: 200,
           dataVencimento: '2026-09-20',

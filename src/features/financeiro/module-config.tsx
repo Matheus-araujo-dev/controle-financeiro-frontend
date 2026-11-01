@@ -163,7 +163,7 @@ const defaultValues: FinanceiroFormValues = {
   numeroDocumento: '',
   pessoaId: '',
   membroId: '',
-  dataEmissao: '',;
+  dataEmissao: '',
   dataVencimento: '',
   formaPagamentoId: '',
   cartaoId: '',

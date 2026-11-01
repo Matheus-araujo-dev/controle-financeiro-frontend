@@ -771,7 +771,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     { title: 'Descrição', dataIndex: 'descricao', key: 'descricao', mobileRole: 'title' },
     { title: 'Tipo', dataIndex: 'tipo', key: 'tipo', mobileRole: 'status' },
     { title: 'Conta pai', dataIndex: 'contaPaiDescricao', key: 'contaPaiDescricao', render: (value) => value ?? '-' },
-    { title: 'Responsável padrão', dataIndex: 'membroPadraoNome', key: 'membroPadraoNome', render: (value) => value ?? '-' },
+    { title: 'Membro padrão', dataIndex: 'membroPadraoNome', key: 'membroPadraoNome', render: (value) => value ?? '-' },
     {
       title: 'Uso',
       dataIndex: 'aceitaLancamentos',
@@ -792,7 +792,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Código ou descrição' },
     { name: 'tipos', label: 'Tipo', kind: 'multiselect', options: contaGerencialTipoOptions },
     { name: 'contaPai', label: 'Conta pai', kind: 'text' },
-    { name: 'responsavelPadrao', label: 'Responsável padrão', kind: 'text' },
+    { name: 'membroPadrao', label: 'Membro padrão', kind: 'text' },
     { name: 'aceitaLancamentos', label: 'Uso', kind: 'multiselect', options: yesNoOptions },
     { name: 'ehPadraoRecebimentoFaturaCartao', label: 'Receb. fatura', kind: 'multiselect', options: yesNoOptions },
     { name: 'ativo', label: 'Status', kind: 'multiselect', options: statusOptions }
@@ -802,7 +802,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     { name: 'codigo', label: 'Código', kind: 'text' },
     { name: 'descricao', label: 'Descrição', kind: 'text' },
     { name: 'tipo', label: 'Tipo', kind: 'select', options: contaGerencialTipoOptions },
-    { name: 'membroPadraoId', label: 'Responsável padrão', kind: 'select', loadOptions: loadPessoaOptions },
+    { name: 'membroPadraoId', label: 'Membro padrão', kind: 'select', loadOptions: loadPessoaOptions },
     { name: 'contaGerencialContrariaId', label: 'Conta de reembolso', kind: 'select', loadOptionsWith: loadContaGerencialContrariaOptions },
     { name: 'ehPadraoRecebimentoFaturaCartao', label: 'Padrão para recebimento de fatura', kind: 'switch' },
     { name: 'ativo', label: 'Ativo', kind: 'switch' }
@@ -850,7 +850,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     { header: 'Descrição', value: (r: ContaGerencialResumo) => r.descricao },
     { header: 'Tipo', value: (r: ContaGerencialResumo) => r.tipo },
     { header: 'Conta pai', value: (r: ContaGerencialResumo) => r.contaPaiDescricao ?? '' },
-    { header: 'Responsável padrão', value: (r: ContaGerencialResumo) => r.membroPadraoNome ?? '' },
+    { header: 'Membro padrão', value: (r: ContaGerencialResumo) => r.membroPadraoNome ?? '' },
     { header: 'Uso', value: (r: ContaGerencialResumo) => (r.aceitaLancamentos ? 'Lançável' : 'Estrutural') },
     { header: 'Status', value: (r: ContaGerencialResumo) => (r.ativo ? 'Ativo' : 'Inativo') }
   ],
@@ -891,11 +891,11 @@ if (contaGerencialDescricaoColumn) {
   contaGerencialDescricaoColumn.title = 'Descrição';
 }
 
-const contaGerencialResponsavelColumn = contasGerenciaisModuleConfig.columns.find(
+const contaGerencialMembroColumn = contasGerenciaisModuleConfig.columns.find(
   (column) => column.key === 'membroPadraoNome'
 );
-if (contaGerencialResponsavelColumn) {
-  contaGerencialResponsavelColumn.title = 'Responsável padrão';
+if (contaGerencialMembroColumn) {
+  contaGerencialMembroColumn.title = 'Membro padrão';
 }
 
 const contaGerencialUsoColumn = contasGerenciaisModuleConfig.columns.find((column) => column.key === 'aceitaLancamentos');
@@ -926,11 +926,11 @@ if (contaGerencialDescricaoField) {
   contaGerencialDescricaoField.label = 'Descrição';
 }
 
-const contaGerencialResponsavelField = contasGerenciaisModuleConfig.fields.find(
+const contaGerencialMembroField = contasGerenciaisModuleConfig.fields.find(
   (field) => field.name === 'membroPadraoId'
 );
-if (contaGerencialResponsavelField) {
-  contaGerencialResponsavelField.label = 'Responsável padrão';
+if (contaGerencialMembroField) {
+  contaGerencialMembroField.label = 'Membro padrão';
 }
 
 const contaGerencialPadraoFaturaField = contasGerenciaisModuleConfig.fields.find(
