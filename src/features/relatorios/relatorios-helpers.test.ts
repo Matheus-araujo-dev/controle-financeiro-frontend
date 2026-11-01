@@ -155,7 +155,7 @@ function reportData(): ReportState {
           contaOrigemTipo: 'ContaPagar',
           descricao: 'Internet',
           pessoaNome: 'Operadora',
-          responsavelNome: null,
+          pagadorNome: null,
           valorLiquido: 120,
           dataInicio: '2026-01-01',
           dataFim: null,
@@ -168,7 +168,7 @@ function reportData(): ReportState {
       items: [
         {
           titulo: 'Notebook',
-          responsavelNome: 'Joao',
+          pagadorNome: 'Joao',
           contaGerencialDescricao: 'Equipamentos',
           prioridade: 'Alta',
           status: 'Planejada',
@@ -186,7 +186,7 @@ function reportData(): ReportState {
           id: 'pl-1',
           descricao: 'Aluguel',
           recebedorNome: 'Imobiliária',
-          responsavelNome: 'Maria',
+          pagadorNome: 'Maria',
           dataEmissao: '2026-06-01',
           dataVencimento: '2026-06-10',
           dataLiquidacao: null,
@@ -206,7 +206,7 @@ function reportData(): ReportState {
           id: 'rl-1',
           descricao: 'Honorários',
           pagadorNome: 'Cliente XYZ',
-          responsavelNome: null,
+          recebedorNome: null,
           dataEmissao: '2026-06-05',
           dataVencimento: '2026-06-20',
           dataLiquidacao: '2026-06-20',
@@ -222,7 +222,7 @@ function reportData(): ReportState {
           id: 'rl-2',
           descricao: 'Honorários',
           pagadorNome: 'Cliente XYZ',
-          responsavelNome: null,
+          recebedorNome: null,
           dataEmissao: '2026-06-05',
           dataVencimento: '2026-07-20',
           dataLiquidacao: null,
@@ -415,7 +415,7 @@ describe('buildAlertas', () => {
   it('pushes info for active recorrencias', () => {
     const alertas = buildAlertas({
       recorrencias: {
-        items: [{ ativa: true, valorLiquido: 200, descricao: 'Netflix', pessoaNome: '', responsavelNome: null, contaOrigemTipo: 'ContaPagar', dataInicio: '', dataFim: null, diaOrdemMensal: 1, id: 'r1' }],
+        items: [{ ativa: true, valorLiquido: 200, descricao: 'Netflix', pessoaNome: '', pagadorNome: null, contaOrigemTipo: 'ContaPagar', dataInicio: '', dataFim: null, diaOrdemMensal: 1, id: 'r1' }],
         page: 1, pageSize: 250, totalItems: 1, totalPages: 1
       } as never
     });
@@ -425,7 +425,7 @@ describe('buildAlertas', () => {
   it('does not push recorrencia alert when total is 0', () => {
     const alertas = buildAlertas({
       recorrencias: {
-        items: [{ ativa: false, valorLiquido: 200, descricao: 'Pausada', pessoaNome: '', responsavelNome: null, contaOrigemTipo: 'ContaPagar', dataInicio: '', dataFim: null, diaOrdemMensal: 1, id: 'r2' }],
+        items: [{ ativa: false, valorLiquido: 200, descricao: 'Pausada', pessoaNome: '', pagadorNome: null, contaOrigemTipo: 'ContaPagar', dataInicio: '', dataFim: null, diaOrdemMensal: 1, id: 'r2' }],
         page: 1, pageSize: 250, totalItems: 1, totalPages: 1
       } as never
     });
