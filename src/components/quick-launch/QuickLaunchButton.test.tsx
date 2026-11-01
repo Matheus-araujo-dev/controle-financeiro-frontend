@@ -251,8 +251,8 @@ const pagadoresResponse = {
 
 function mockSuccessfulOptions() {
   vi.mocked(cadastrosApi.pessoas.listar).mockImplementation((filters: Record<string, unknown>) => {
-    if (filters.ehRecebedor === true) return Promise.resolve(recebedoresResponse as never);
     if (filters.ehPagador === true && filters.ehRecebedor === true) return Promise.resolve(membrosResponse as never);
+    if (filters.ehRecebedor === true) return Promise.resolve(recebedoresResponse as never);
     if (filters.ehPagador === true) return Promise.resolve(pagadoresResponse as never);
     return Promise.resolve(pessoasResponse as never);
   });
