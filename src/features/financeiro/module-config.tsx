@@ -666,7 +666,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
   title: 'Contas a receber',
   singularTitle: 'Conta a receber',
   routeBase: '/contas-receber',
-  personLabel: 'Recebedor',
+  personLabel: 'Pagador',
   personRole: 'pagador',
   listDescription: '',
   formDescription: 'Cadastre receitas mantendo os contratos e a composição de rateio coerentes com o backend.',
