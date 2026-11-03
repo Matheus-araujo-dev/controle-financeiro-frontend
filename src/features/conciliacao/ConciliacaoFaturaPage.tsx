@@ -13,7 +13,7 @@ import { formatCurrencyBRL } from '../../shared/currency';
 import { ConciliacaoFaturaGrid } from './ConciliacaoFaturaGrid';
 import { criarCamposGrade, type AcoesCriacao } from './ConciliacaoFaturaCampos';
 import { ConciliacaoFaturaLote } from './ConciliacaoFaturaLote';
-import { criarRascunho, montarCriacao, montarReembolso, type RascunhoLancamento } from './conciliacao-fatura-form';
+import { criarRascunho, montarCriacao, montarReembolso, applySmartFill, type RascunhoLancamento } from './conciliacao-fatura-form';
 import { QuickAddPessoaModal } from '../cadastros/quick-add/QuickAddPessoaModal';
 import { QuickAddContaGerencialModal } from '../cadastros/quick-add/QuickAddContaGerencialModal';
 
@@ -61,11 +61,23 @@ export function ConciliacaoFaturaPage() {
   }
   async function importar(file: File) {
     setBusy(true); setUploading(true); setError('');
-    try { carregar(await (senha ? conciliacaoFaturaApi.iniciar(id!, file, senha) : conciliacaoFaturaApi.iniciar(id!, file))); setSenha(''); await queryClient.invalidateQueries({ queryKey: ['conciliacao-fatura-options', id] }); }
+    try {
+      carregar(await (senha ? conciliacaoFaturaApi.iniciar(id!, file, senha) : conciliacaoFaturaApi.iniciar(id!, file)));
+      setSenha('');
+      await queryClient.invalidateQueries({ queryKey: ['conciliacao-fatura-options', id] });
+      void queryClient.invalidateQueries({ queryKey: ['faturas'] });
+      void queryClient.invalidateQueries({ queryKey: ['faturas', 'detail', id] });
+    }
     catch (e) { setError(getApiErrorMessage(e)); }
     finally { setBusy(false); setUploading(false); }
   }
-  const update = useCallback((itemId: string, patch: Partial<RascunhoLancamento>) => { setRows(current => ({ ...current, [itemId]: { ...current[itemId], ...patch } })); setDirty(true); setMessage('Alterações ainda não salvas.'); }, []);
+  const update = useCallback((itemId: string, patch: Partial<RascunhoLancamento>) => {
+    setRows(current => {
+      const updated = { ...current, [itemId]: { ...current[itemId], ...patch } };
+      return session ? applySmartFill(updated, itemId, patch, session.itens, data?.despesas as Array<{ value: string; membroPadraoId?: string | null }>) : updated;
+    });
+    setDirty(true); setMessage('Alterações ainda não salvas.');
+  }, [session, data?.despesas]);
   async function salvar() {
     if (!session) return;
     setBusy(true); setError('');
@@ -81,13 +93,11 @@ export function ConciliacaoFaturaPage() {
     if (!failures.length) setDirty(false);
     setError(failures.join(' / ')); setMessage(failures.length ? 'Algumas linhas não foram salvas.' : 'Rascunho salvo. Nenhuma conta foi criada.'); setBusy(false);
   }
-  async function confirmar(action: () => Promise<void>) {
-    try {
-      await action();
-      setSession(await conciliacaoFaturaApi.obter(id!, session!.id));
-      setDirty(false);
-      void queryClient.invalidateQueries({ queryKey: ['faturas'] });
-    } catch (e) { throw new Error(getApiErrorMessage(e), { cause: e }); }
+  async function recarregarSessao() {
+    setSession(await conciliacaoFaturaApi.obter(id!, session!.id));
+    setDirty(false);
+    void queryClient.invalidateQueries({ queryKey: ['faturas'] });
+    void queryClient.invalidateQueries({ queryKey: ['faturas', 'detail', id] });
   }
   function handlePessoaCriada(newId: string, label: string, role: 'recebedor' | 'pagador') {
     const option = { label, value: newId };
@@ -190,11 +200,32 @@ export function ConciliacaoFaturaPage() {
           setRows(current => Object.fromEntries(Object.entries(current).map(([key, row]) => [key, selected.includes(key) ? transform(row) : row])));
           setMessage('Alterações ainda não salvas.');
         }} />}
-        onConfirmar={(itemId, request) => confirmar(() => conciliacaoFaturaApi.vincular(id, session.id, itemId,
-          { ...request, aprender: rows[itemId].aprender, camposParaAprender: rows[itemId].camposParaAprender,
-            reembolso: session.contasSistema.find(c => c.id === request.contaPagarId)?.grupoReembolsoId ? null : montarReembolso(rows[itemId]) }))}
-        onCriar={itemId => confirmar(() => conciliacaoFaturaApi.criar(id, session.id, itemId, montarCriacao(session.itens.find(i => i.id === itemId)!, rows[itemId])))}
-        onIgnorar={itemId => confirmar(() => conciliacaoFaturaApi.ignorar(id, session.id, itemId))} />
+        renderSummary={itemId => {
+          const row = rows[itemId];
+          if (!row) return null;
+          const parts: string[] = [];
+          if (row.pagadorId) { const o = data.pagadores.find(p => p.value === row.pagadorId); if (o) parts.push(`Pagador: ${o.label}`); }
+          if (row.recebedorId) { const o = data.recebedores.find(r => r.value === row.recebedorId); if (o) parts.push(`Recebedor: ${o.label}`); }
+          const cgId = row.rateios[0]?.contaGerencialId;
+          if (cgId) { const o = data.despesas.find(d => d.value === cgId); if (o) parts.push(`Conta: ${typeof o.label === 'string' ? o.label : (o as { displayText?: string }).displayText ?? ''}`); }
+          return parts.length ? <span className="text-xs text-on-surface-variant">{parts.join(' · ')}</span> : null;
+        }}
+        onBatchComplete={recarregarSessao}
+        onConfirmar={async (itemId, request) => {
+          try {
+            await conciliacaoFaturaApi.vincular(id, session.id, itemId,
+              { ...request, aprender: rows[itemId].aprender, camposParaAprender: rows[itemId].camposParaAprender,
+                reembolso: session.contasSistema.find(c => c.id === request.contaPagarId)?.grupoReembolsoId ? null : montarReembolso(rows[itemId]) });
+          } catch (e) { throw new Error(getApiErrorMessage(e), { cause: e }); }
+        }}
+        onCriar={async itemId => {
+          try { await conciliacaoFaturaApi.criar(id, session.id, itemId, montarCriacao(session.itens.find(i => i.id === itemId)!, rows[itemId])); }
+          catch (e) { throw new Error(getApiErrorMessage(e), { cause: e }); }
+        }}
+        onIgnorar={async itemId => {
+          try { await conciliacaoFaturaApi.ignorar(id, session.id, itemId); }
+          catch (e) { throw new Error(getApiErrorMessage(e), { cause: e }); }
+        }} />
       <section className="space-y-2 rounded-2xl bg-surface-container-low p-4"><h2 className="font-bold">Ainda sem vínculo no sistema ({semVinculo.length})</h2>
         {semVinculo.map(c => <p key={c.id}><Link className="text-primary" to={`/contas-pagar/${c.id}`}>{c.descricao}</Link> · {formatCurrencyBRL(c.valor)}</p>)}
         {!semVinculo.length && <p className="text-sm text-on-surface-variant">Todos os lançamentos do sistema estão vinculados.</p>}
