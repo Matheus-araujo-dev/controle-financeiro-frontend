@@ -25,11 +25,11 @@ export function normalizarEstabelecimento(descricao: string): string {
 
 export function applySmartFill(
   rows: Record<string, RascunhoLancamento>, itemId: string, patch: Partial<RascunhoLancamento>,
-  itens: ItemFaturaConciliacao[], despesas?: Array<{ value: string; membroPadraoId?: string | null }>
+  itens: ItemFaturaConciliacao[], despesas?: Array<{ value: string; responsavelPadraoId?: string | null }>
 ): Record<string, RascunhoLancamento> {
   let next = rows;
   if (patch.rateios?.length === 1 && !next[itemId].pagadorId && despesas) {
-    const mId = despesas.find(d => d.value === patch.rateios![0].contaGerencialId)?.membroPadraoId;
+    const mId = despesas.find(d => d.value === patch.rateios![0].contaGerencialId)?.responsavelPadraoId;
     if (mId) next = { ...next, [itemId]: { ...next[itemId], pagadorId: mId } };
   }
   const propagaveis = ['pagadorId', 'recebedorId', 'rateios', 'gerarReembolso'];
@@ -49,7 +49,7 @@ export function applySmartFill(
     if (patch.rateios && sr.rateios.every(r => !r.contaGerencialId)) {
       sp.rateios = ratearValor(sib.valor, patch.rateios.map(r => ({ contaGerencialId: r.contaGerencialId, proporcao: r.valor })));
       if (patch.rateios.length === 1 && !sr.pagadorId && !sp.pagadorId && despesas) {
-        const mId = despesas.find(d => d.value === patch.rateios![0].contaGerencialId)?.membroPadraoId;
+        const mId = despesas.find(d => d.value === patch.rateios![0].contaGerencialId)?.responsavelPadraoId;
         if (mId) sp.pagadorId = mId;
       }
     }
