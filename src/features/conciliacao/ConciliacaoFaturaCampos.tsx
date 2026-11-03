@@ -10,7 +10,7 @@ import type { RascunhoLancamento } from './conciliacao-fatura-form';
 import { camposMemoria, ratearValor } from './conciliacao-fatura-form';
 
 export type OpcoesConciliacao = { recebedores: ComboBoxOption[]; pagadores: ComboBoxOption[];
-  formas: (ComboBoxOption & { ehCartao?: boolean })[]; despesas: ComboBoxOption[]; receitas: ComboBoxOption[] };
+  formas: (ComboBoxOption & { ehCartao?: boolean })[]; despesas: (ComboBoxOption & { membroPadraoId?: string | null })[]; receitas: ComboBoxOption[] };
 const nome = (options: ComboBoxOption[], id?: string | null) => options.find(x => x.value === id)?.label ?? 'Não informado';
 
 
