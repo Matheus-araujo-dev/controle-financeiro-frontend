@@ -16,6 +16,50 @@ const rascunhoSchema = z.object({
 export type RascunhoLancamento = z.infer<typeof rascunhoSchema>;
 export const centavos = (value: number) => Math.round((value + Number.EPSILON * Math.sign(value)) * 100);
 
+export function normalizarEstabelecimento(descricao: string): string {
+  let text = descricao.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+  text = text.replace(/(?:JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)\s*\d{2,4}\s*$/, '');
+  text = text.replace(/\s*\d{1,2}\/\d{1,3}\s*$/, '');
+  return text.replace(/[^A-Z0-9]+/g, ' ').trim();
+}
+
+export function applySmartFill(
+  rows: Record<string, RascunhoLancamento>, itemId: string, patch: Partial<RascunhoLancamento>,
+  itens: ItemFaturaConciliacao[], despesas?: Array<{ value: string; membroPadraoId?: string | null }>
+): Record<string, RascunhoLancamento> {
+  let next = rows;
+  if (patch.rateios?.length === 1 && !next[itemId].pagadorId && despesas) {
+    const mId = despesas.find(d => d.value === patch.rateios![0].contaGerencialId)?.membroPadraoId;
+    if (mId) next = { ...next, [itemId]: { ...next[itemId], pagadorId: mId } };
+  }
+  const propagaveis = ['pagadorId', 'recebedorId', 'rateios', 'gerarReembolso'];
+  if (!propagaveis.some(c => c in patch)) return next;
+  const item = itens.find(i => i.id === itemId);
+  if (!item) return next;
+  const key = normalizarEstabelecimento(item.descricaoOriginal);
+  if (!key) return next;
+  for (const sib of itens) {
+    if (sib.id === itemId || sib.status !== 'Pendente') continue;
+    if (normalizarEstabelecimento(sib.descricaoOriginal) !== key) continue;
+    const sr = next[sib.id];
+    if (!sr) continue;
+    const sp: Partial<RascunhoLancamento> = {};
+    if (patch.pagadorId && !sr.pagadorId) sp.pagadorId = patch.pagadorId;
+    if (patch.recebedorId && !sr.recebedorId) sp.recebedorId = patch.recebedorId;
+    if (patch.rateios && sr.rateios.every(r => !r.contaGerencialId)) {
+      sp.rateios = ratearValor(sib.valor, patch.rateios.map(r => ({ contaGerencialId: r.contaGerencialId, proporcao: r.valor })));
+      if (patch.rateios.length === 1 && !sr.pagadorId && !sp.pagadorId && despesas) {
+        const mId = despesas.find(d => d.value === patch.rateios![0].contaGerencialId)?.membroPadraoId;
+        if (mId) sp.pagadorId = mId;
+      }
+    }
+    if (patch.gerarReembolso !== undefined && sr.gerarReembolso !== patch.gerarReembolso && sib.valor > 0)
+      sp.gerarReembolso = patch.gerarReembolso;
+    if (Object.keys(sp).length) next = { ...next, [sib.id]: { ...sr, ...sp } };
+  }
+  return next;
+}
+
 export function ratearValor(valor: number, parcelas: { contaGerencialId: string; proporcao: number }[]) {
   const total = centavos(valor);
   const pesos = parcelas.map(r => Math.abs(r.proporcao));
