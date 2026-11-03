@@ -43,8 +43,8 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
   const descricaoWatched = useWatch({ control, name: 'descricao' });
   const categoriaAtual = useWatch({ control, name: 'rateios.0.contaGerencialId' });
   const pessoaWatched = useWatch({ control, name: 'pessoaId' });
-  const membroAtual = useWatch({ control, name: 'membroId' });
-  const responsaveisAdicionaisAtual = useWatch({ control, name: 'pagadoresAdicionaisIds' }) ?? [];
+  const membroAtual = useWatch({ control, name: 'responsavelId' });
+  const responsaveisAdicionaisAtual = useWatch({ control, name: 'responsaveisAdicionaisIds' }) ?? [];
   const lastAutoFilledContaRef = useRef<string | null>(null);
   const lastAutoFilledMembroRef = useRef<string | null>(null);
 
@@ -69,13 +69,13 @@ export function GeneralInfoSection({ form, personLabel, personRole }: GeneralInf
   useEffect(() => {
     if (!categoriaAtual) return;
     const option = rateioOptions.find((o) => o.value === categoriaAtual);
-    const membroPadraoId = option?.membroPadraoId;
-    if (!membroPadraoId) return;
+    const responsavelPadraoId = option?.responsavelPadraoId;
+    if (!responsavelPadraoId) return;
     if (responsaveisAdicionaisAtual.length > 0) return;
     const manuallyChanged = membroAtual && membroAtual !== lastAutoFilledMembroRef.current;
     if (manuallyChanged) return;
-    setValue('membroId', membroPadraoId);
-    lastAutoFilledMembroRef.current = membroPadraoId;
+    setValue('responsavelId', responsavelPadraoId);
+    lastAutoFilledMembroRef.current = responsavelPadraoId;
   }, [categoriaAtual, rateioOptions, membroAtual, responsaveisAdicionaisAtual, setValue]);
 
   useEffect(() => {
