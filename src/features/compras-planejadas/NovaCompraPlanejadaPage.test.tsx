@@ -104,8 +104,8 @@ describe('NovaCompraPlanejadaPage', () => {
       quantidadeParcelasDesejada: 10,
       contaGerencialId: 'cg-1',
       contaGerencialDescricao: 'Tecnologia',
-      pagadorId: 'p-1',
-      pagadorNome: 'Michelle',
+      responsavelId: 'p-1',
+      responsavelNome: 'Michelle',
       link: 'https://loja.exemplo.com/notebook',
       observacao: 'Aguardar melhor janela',
       contaPagarGeradaId: null,
@@ -229,7 +229,7 @@ describe('NovaCompraPlanejadaPage', () => {
         parcelavel: true,
         quantidadeParcelasDesejada: 10,
         contaGerencialId: 'cg-1',
-        pagadorId: 'p-1',
+        responsavelId: 'p-1',
         link: 'https://loja.exemplo.com/notebook',
         observacao: 'Aguardar melhor janela'
       })

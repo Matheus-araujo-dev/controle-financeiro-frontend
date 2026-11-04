@@ -47,7 +47,7 @@ const defaultValues: CompraPlanejadaPayload = {
   parcelavel: false,
   quantidadeParcelasDesejada: null,
   contaGerencialId: '',
-  pagadorId: '',
+  responsavelId: '',
   link: '',
   observacao: ''
 };
@@ -362,7 +362,7 @@ export function NovaCompraPlanejadaPage() {
                   <label className={labelClassName}>Pagador <span className="text-error normal-case">*</span></label>
                   <Controller
                     control={control}
-                    name="pagadorId"
+                    name="responsavelId"
                     render={({ field }) => (
                       <ComboBox
                         aria-label="Pagador"
@@ -373,7 +373,7 @@ export function NovaCompraPlanejadaPage() {
                       />
                     )}
                   />
-                  {errors.pagadorId && <p className="text-error text-xs ml-1 font-bold">{errors.pagadorId.message}</p>}
+                  {errors.responsavelId && <p className="text-error text-xs ml-1 font-bold">{errors.responsavelId.message}</p>}
                 </div>
               </div>
             </FormSection>
@@ -545,7 +545,7 @@ export function NovaCompraPlanejadaPage() {
         open={pagadorModalOpen}
         onClose={() => setPagadorModalOpen(false)}
         onSuccess={(newId) => {
-          void reloadPagadorOptions().then(() => setValue('pagadorId', newId));
+          void reloadPagadorOptions().then(() => setValue('responsavelId', newId));
         }}
       />
     </>

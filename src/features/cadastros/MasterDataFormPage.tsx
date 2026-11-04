@@ -119,7 +119,7 @@ function toComboOptions(options: SelectOption[], includeEmpty = false): ComboBox
 }
 
 function isOptionalSelect(fieldName: string) {
-  return ['contaPaiId', 'membroPadraoId', 'contaBancariaPagamentoPadraoId', 'contaGerencialDespesaId', 'contaGerencialReceitaId'].includes(fieldName);
+  return ['contaPaiId', 'responsavelPadraoId', 'contaBancariaPagamentoPadraoId', 'contaGerencialDespesaId', 'contaGerencialReceitaId'].includes(fieldName);
 }
 
 function sectionPlanFor(key: string) {
@@ -166,7 +166,7 @@ function sectionPlanFor(key: string) {
         title: 'Responsabilidade e Regras',
         eyebrow: 'Governança',
         icon: 'admin_panel_settings',
-        fields: ['membroPadraoId', 'contaGerencialContrariaId', 'ehPadraoRecebimentoFaturaCartao', 'ativo']
+        fields: ['responsavelPadraoId', 'contaGerencialContrariaId', 'ehPadraoRecebimentoFaturaCartao', 'ativo']
       }
     ]
   };
@@ -512,7 +512,7 @@ export function MasterDataFormPage({
                   placeholder="Selecione..."
                   onChange={(value) => controlledField.onChange(value)}
                   onAddNew={
-                    (isContaGerencial && field.name === 'membroPadraoId') ? () => setMembroModalOpen(true) :
+                    (isContaGerencial && field.name === 'responsavelPadraoId') ? () => setMembroModalOpen(true) :
                     (config.key === 'cartoes' && field.name === 'contaBancariaPagamentoPadraoId') ? () => setContaBancariaModalOpen(true) :
                     undefined
                   }
@@ -651,7 +651,7 @@ export function MasterDataFormPage({
         open={membroModalOpen}
         onClose={() => setMembroModalOpen(false)}
         onSuccess={(newId) => {
-          void reloadFieldOptions('membroPadraoId').then(() => setValue('membroPadraoId', newId, { shouldValidate: true }));
+          void reloadFieldOptions('responsavelPadraoId').then(() => setValue('responsavelPadraoId', newId, { shouldValidate: true }));
         }}
       />
 

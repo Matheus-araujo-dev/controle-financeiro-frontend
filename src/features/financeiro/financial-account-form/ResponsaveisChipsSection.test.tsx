@@ -92,7 +92,7 @@ function Wrapper({
     pessoaOptions: OPTIONS,
     setValue,
     valorLiquido,
-    reloadMembroOptions: vi.fn().mockResolvedValue(undefined)
+    reloadResponsavelOptions: vi.fn().mockResolvedValue(undefined)
   } as unknown as FinancialAccountFormApi;
 
   return <ResponsaveisChipsSection form={form} personRole={personRole} />;
@@ -189,7 +189,7 @@ describe('ResponsaveisChipsSection', () => {
       membroOptions: OPTIONS,
       setValue,
       valorLiquido: 0,
-      reloadMembroOptions: vi.fn().mockResolvedValue(undefined)
+      reloadResponsavelOptions: vi.fn().mockResolvedValue(undefined)
     } as unknown as FinancialAccountFormApi;
 
     render(<ResponsaveisChipsSection form={formWithError} />);

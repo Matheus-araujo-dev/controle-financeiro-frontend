@@ -24,8 +24,8 @@ describe('QuickAddContaGerencialModal', () => {
       tipo: 'Despesa',
       contaPaiId: null,
       contaPaiDescricao: null,
-      membroPadraoId: null,
-      membroPadraoNome: null,
+      responsavelPadraoId: null,
+      responsavelPadraoNome: null,
       contaGerencialContrariaId: null,
       contaGerencialContrariaNome: null,
       ativo: true,
@@ -51,7 +51,7 @@ describe('QuickAddContaGerencialModal', () => {
         expect.objectContaining({
           descricao: 'Alimentacao',
           contaPaiId: null,
-          membroPadraoId: null
+          responsavelPadraoId: null
         })
       );
     });
