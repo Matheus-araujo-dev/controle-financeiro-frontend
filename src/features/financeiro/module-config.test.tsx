@@ -66,7 +66,7 @@ function formValues(overrides: Partial<FinanceiroFormValues> = {}): FinanceiroFo
     origemCompraPlanejadaId: '',
     numeroDocumento: ' DOC-1 ',
     pessoaId: 'pessoa-1',
-    membroId: 'resp-1',
+    responsavelId: 'resp-1',
     dataEmissao: '2026-06-10',
     dataVencimento: '2026-06-20',
     formaPagamentoId: 'forma-1',
@@ -270,7 +270,7 @@ describe('financeiro module config', () => {
       expect.objectContaining({
         origemCompraPlanejadaId: 'compra-1',
         pessoaId: 'pessoa-1',
-        membroId: '',
+        responsavelId: '',
         formaPagamentoId: 'forma-1',
         recorrenciaTipoDia: 'DiaUtil',
         recorrenciaDataInicio: '2026-06',
@@ -284,7 +284,7 @@ describe('financeiro module config', () => {
         pagadorId: 'pessoa-2',
         recebedorId: 'resp-2'
       } as never)
-    ).toEqual(expect.objectContaining({ pessoaId: 'resp-2', membroId: 'pessoa-2', formaPagamentoId: 'forma-1' }));
+    ).toEqual(expect.objectContaining({ pessoaId: 'resp-2', responsavelId: 'pessoa-2', formaPagamentoId: 'forma-1' }));
   });
 
   it('loads select options and builds summary items', async () => {
@@ -387,7 +387,7 @@ describe('financeiro module config', () => {
   });
 
   it('inclui pagadoresAdicionaisIds quando ha multiplos responsaveis sem valores customizados', async () => {
-    const values = formValues({ pagadoresAdicionaisIds: ['resp-2'], pagadoresValores: [] });
+    const values = formValues({ responsaveisAdicionaisIds: ['resp-2'], responsaveisValores: [] });
 
     await contasPagarModuleConfig.create(values);
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
@@ -407,7 +407,7 @@ describe('financeiro module config', () => {
   });
 
   it('inclui valoresPorPagador e valoresPorPagador quando array de valores bate com total de ids', async () => {
-    const values = formValues({ pagadoresAdicionaisIds: ['resp-2'], pagadoresValores: [60, 40] });
+    const values = formValues({ responsaveisAdicionaisIds: ['resp-2'], responsaveisValores: [60, 40] });
 
     await contasPagarModuleConfig.create(values);
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
