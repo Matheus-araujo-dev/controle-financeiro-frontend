@@ -44,7 +44,7 @@ function QLValorInput({ value, onChange }: { value: number; onChange: (v: number
 }
 
 type Option = { label: string; value: string };
-type ContaGerencialOption = ComboBoxOption & { membroPadraoId?: string | null };
+type ContaGerencialOption = ComboBoxOption & { responsavelPadraoId?: string | null };
 type QuickLaunchTipo = 'pagar' | 'receber' | 'transferencia';
 type QuickAddTarget = 'pessoaId' | 'membroId' | null;
 type QuickAddContaBancariaTarget = 'origem' | 'destino' | null;
@@ -296,7 +296,7 @@ export function QuickLaunchModal({
     const fromServer = mapContaGerencialHierarchyData(items).map(({ value, main, chain }) => ({
       value,
       displayText: main,
-      membroPadraoId: byId.get(value)?.membroPadraoId ?? null,
+      responsavelPadraoId: byId.get(value)?.responsavelPadraoId ?? null,
       label: chain ? (
         <span>
           {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
@@ -312,7 +312,7 @@ export function QuickLaunchModal({
     const fromServer = mapContaGerencialHierarchyData(items).map(({ value, main, chain }) => ({
       value,
       displayText: main,
-      membroPadraoId: byId.get(value)?.membroPadraoId ?? null,
+      responsavelPadraoId: byId.get(value)?.responsavelPadraoId ?? null,
       label: chain ? (
         <span>
           {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
@@ -354,12 +354,12 @@ export function QuickLaunchModal({
   useEffect(() => {
     if (!contaGerencialId) return;
     const option = contasGerenciais.find((c) => c.value === contaGerencialId);
-    const membroPadraoId = option?.membroPadraoId;
-    if (!membroPadraoId) return;
+    const responsavelPadraoId = option?.responsavelPadraoId;
+    if (!responsavelPadraoId) return;
     const manuallyChanged = membroId && membroId !== lastAutoFilledMembroRef.current;
     if (manuallyChanged) return;
-    setMembroId(membroPadraoId);
-    lastAutoFilledMembroRef.current = membroPadraoId;
+    setMembroId(responsavelPadraoId);
+    lastAutoFilledMembroRef.current = responsavelPadraoId;
   }, [contaGerencialId, contasGerenciais, membroId]);
 
   const contasBancarias = useMemo<Option[]>(() => {
@@ -474,10 +474,10 @@ export function QuickLaunchModal({
           const criada = await financeiroApi.contasPagar.obterPorId(createdId);
           reembolsoDate = criada.dataVencimento;
           reembolsoParcelas = criada.quantidadeParcelas;
-          membroNome = criada.pagadorNome ?? undefined;
+          membroNome = criada.responsavelCompraNome ?? undefined;
           pessoaNome = criada.recebedorNome;
-          if (criada.pagadorId && criada.pagadorNome)
-            nomesMap[criada.pagadorId] = criada.pagadorNome;
+          if (criada.responsavelCompraId && criada.responsavelCompraNome)
+            nomesMap[criada.responsavelCompraId] = criada.responsavelCompraNome;
         } catch {
           // se falhar, usa os valores atuais do form
         }
@@ -583,13 +583,13 @@ export function QuickLaunchModal({
           const result = await financeiroApi.contasPagar.criar({
             ...base,
             origemCompraPlanejadaId: null,
-            pagadorId: membroId,
+            responsavelCompraId: membroId,
             recebedorId: pessoaId,
             dataCompra: exigeCartao ? dataVencimento : null,
             forcarProximaFatura,
             contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
-            ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
-            ...(temMultiplos && valoresOk && { valoresPorPagador: membrosValores })
+            ...(temMultiplos && { responsaveisAdicionaisIds: allRespIds }),
+            ...(temMultiplos && valoresOk && { valoresPorResponsavel: membrosValores })
           });
           notify('success', 'Lançamento criado', base.descricao);
           return result.id;
@@ -598,7 +598,7 @@ export function QuickLaunchModal({
       return async () => {
         const result = await financeiroApi.contasReceber.criar({
           ...base,
-          recebedorId: pessoaId,
+          responsavelId: pessoaId,
           pagadorId: membroId,
           contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
           ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
@@ -677,7 +677,7 @@ export function QuickLaunchModal({
           const result = await financeiroApi.contasPagar.criar({
             ...base,
             origemCompraPlanejadaId: null,
-            pagadorId: membroId,
+            responsavelCompraId: membroId,
             recebedorId: pessoaId,
             dataCompra: exigeCartao ? dataVencimento : null,
             forcarProximaFatura,
@@ -692,7 +692,7 @@ export function QuickLaunchModal({
       return async () => {
         const result = await financeiroApi.contasReceber.criar({
           ...base,
-          recebedorId: pessoaId,
+          responsavelId: pessoaId,
           pagadorId: membroId,
           contaVinculadaOrigemId: null,
           ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
