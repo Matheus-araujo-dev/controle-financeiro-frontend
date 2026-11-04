@@ -7,7 +7,7 @@ const validValues = {
   origemCompraPlanejadaId: '',
   numeroDocumento: '',
   pessoaId: 'p1',
-  membroId: 'p2',
+  responsavelId: 'p2',
   dataEmissao: '2026-04-04',
   dataVencimento: '2026-04-20',
   formaPagamentoId: 'f1',
@@ -61,7 +61,7 @@ function createConfig() {
       { label: 'Fornecedor', value: 'p1' },
       { label: 'Membro', value: 'p2' }
     ]),
-    loadMembroOptions: vi.fn().mockResolvedValue([
+    loadResponsavelOptions: vi.fn().mockResolvedValue([
       { label: 'Membro', value: 'p2' }
     ]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([
@@ -125,7 +125,7 @@ describe('FinancialAccountFormPage recurrence fixes', () => {
   it('requires membro when validating the form payload', () => {
     const result = financialAccountFormSchema.safeParse({
       ...validValues,
-      membroId: ''
+      responsavelId: ''
     });
 
     expect(result.success).toBe(false);
@@ -133,6 +133,6 @@ describe('FinancialAccountFormPage recurrence fixes', () => {
       throw new Error('Expected schema validation to fail without membro.');
     }
 
-    expect(result.error.flatten().fieldErrors.membroId).toContain('Selecione o membro');
+    expect(result.error.flatten().fieldErrors.responsavelId).toContain('Selecione o membro');
   });
 });

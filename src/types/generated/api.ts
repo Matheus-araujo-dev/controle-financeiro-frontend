@@ -140,7 +140,7 @@ export interface AprovarImportacaoWhatsappRequest {
   /** @format uuid */
   recebedorFaturaId?: string | null;
   /** @format uuid */
-  pagadorFaturaId?: string | null;
+  responsavelPagamentoFaturaId?: string | null;
   cartaoIds?: string[] | null;
 }
 
@@ -180,7 +180,7 @@ export interface AtualizarCompraPlanejadaRequest {
   /** @format uuid */
   contaGerencialId?: string;
   /** @format uuid */
-  pagadorId?: string;
+  responsavelId?: string;
   link?: string | null;
   observacao?: string | null;
 }
@@ -209,7 +209,7 @@ export interface AtualizarContaGerencialRequest {
   /** @format uuid */
   contaPaiId?: string | null;
   /** @format uuid */
-  membroPadraoId?: string | null;
+  responsavelPadraoId?: string | null;
   ativo?: boolean;
   ehPadraoRecebimentoFaturaCartao?: boolean;
   /** @format uuid */
@@ -223,7 +223,7 @@ export interface AtualizarContaPagarRequest {
   /** @format date */
   dataEmissao?: string;
   /** @format uuid */
-  pagadorId?: string | null;
+  responsavelCompraId?: string | null;
   /** @format uuid */
   recebedorId?: string;
   /** @format date */
@@ -263,7 +263,7 @@ export interface AtualizarContaReceberRequest {
   /** @format date */
   dataEmissao?: string;
   /** @format uuid */
-  recebedorId?: string | null;
+  responsavelId?: string | null;
   /** @format uuid */
   pagadorId?: string;
   /** @format date */
@@ -321,6 +321,7 @@ export interface AtualizarPessoaRequest {
   chavesPix?: PessoaChavePixRequest[] | null;
   ehPagador?: boolean;
   ehRecebedor?: boolean;
+  ehResponsavel?: boolean;
   /** @format uuid */
   contaGerencialDespesaId?: string | null;
   /** @format uuid */
@@ -513,8 +514,8 @@ export interface CompraPlanejadaDetalheResponse {
   contaGerencialId?: string;
   contaGerencialDescricao?: string | null;
   /** @format uuid */
-  pagadorId?: string;
-  pagadorNome?: string | null;
+  responsavelId?: string;
+  responsavelNome?: string | null;
   link?: string | null;
   observacao?: string | null;
   /** @format uuid */
@@ -564,8 +565,8 @@ export interface CompraPlanejadaResumoResponse {
   contaGerencialId?: string;
   contaGerencialDescricao?: string | null;
   /** @format uuid */
-  pagadorId?: string;
-  pagadorNome?: string | null;
+  responsavelId?: string;
+  responsavelNome?: string | null;
   link?: string | null;
   /** @format uuid */
   contaPagarGeradaId?: string | null;
@@ -755,7 +756,7 @@ export interface ContaConciliacaoResponse {
   /** @format int32 */
   quantidadeParcelas?: number;
   /** @format uuid */
-  pagadorId?: string | null;
+  responsavelCompraId?: string | null;
   /** @format uuid */
   recebedorId?: string;
   /** @format uuid */
@@ -777,8 +778,8 @@ export interface ContaGerencialDetalheResponse {
   contaPaiId?: string | null;
   contaPaiDescricao?: string | null;
   /** @format uuid */
-  membroPadraoId?: string | null;
-  membroPadraoNome?: string | null;
+  responsavelPadraoId?: string | null;
+  responsavelPadraoNome?: string | null;
   ativo?: boolean;
   aceitaLancamentos?: boolean;
   ehPadraoRecebimentoFaturaCartao?: boolean;
@@ -801,8 +802,8 @@ export interface ContaGerencialResumoResponse {
   contaPaiId?: string | null;
   contaPaiDescricao?: string | null;
   /** @format uuid */
-  membroPadraoId?: string | null;
-  membroPadraoNome?: string | null;
+  responsavelPadraoId?: string | null;
+  responsavelPadraoNome?: string | null;
   ativo?: boolean;
   aceitaLancamentos?: boolean;
   ehPadraoRecebimentoFaturaCartao?: boolean;
@@ -830,8 +831,8 @@ export interface ContaPagarDetalheResponse {
   /** @format date */
   dataEmissao?: string;
   /** @format uuid */
-  pagadorId?: string | null;
-  pagadorNome?: string | null;
+  responsavelCompraId?: string | null;
+  responsavelCompraNome?: string | null;
   /** @format uuid */
   recebedorId?: string;
   recebedorNome?: string | null;
@@ -894,9 +895,9 @@ export interface ContaPagarDetalheResponse {
   /** @format uuid */
   grupoReembolsoId?: string | null;
   /** @format uuid */
-  grupoPagadoresId?: string | null;
+  grupoResponsaveisId?: string | null;
   grupoReembolso?: GrupoReembolsoInfo;
-  grupoPagadores?: GrupoResponsaveisInfo;
+  grupoResponsaveis?: GrupoResponsaveisInfo;
 }
 
 export interface ContaPagarListResponse {
@@ -935,7 +936,7 @@ export interface ContaPagarResumoResponse {
   /** @format uuid */
   recebedorId?: string;
   recebedorNome?: string | null;
-  pagadorNome?: string | null;
+  responsavelNome?: string | null;
   /** @format date */
   dataEmissao?: string;
   /** @format date */
@@ -973,8 +974,8 @@ export interface ContaReceberDetalheResponse {
   /** @format date */
   dataEmissao?: string;
   /** @format uuid */
-  recebedorId?: string | null;
-  recebedorNome?: string | null;
+  responsavelId?: string | null;
+  responsavelNome?: string | null;
   /** @format uuid */
   pagadorId?: string;
   pagadorNome?: string | null;
@@ -1027,9 +1028,9 @@ export interface ContaReceberDetalheResponse {
   /** @format uuid */
   grupoReembolsoId?: string | null;
   /** @format uuid */
-  grupoRecebedoresId?: string | null;
+  grupoResponsaveisId?: string | null;
   grupoReembolso?: GrupoReembolsoInfo;
-  grupoRecebedores?: GrupoResponsaveisInfo;
+  grupoResponsaveis?: GrupoResponsaveisInfo;
 }
 
 export interface ContaReceberListResponse {
@@ -1068,7 +1069,7 @@ export interface ContaReceberResumoResponse {
   /** @format uuid */
   pagadorId?: string;
   pagadorNome?: string | null;
-  recebedorNome?: string | null;
+  responsavelNome?: string | null;
   /** @format date */
   dataEmissao?: string;
   /** @format date */
@@ -1174,7 +1175,7 @@ export interface CriarCompraPlanejadaRequest {
   /** @format uuid */
   contaGerencialId?: string;
   /** @format uuid */
-  pagadorId?: string;
+  responsavelId?: string;
   link?: string | null;
   observacao?: string | null;
 }
@@ -1203,7 +1204,7 @@ export interface CriarContaGerencialRequest {
   /** @format uuid */
   contaPaiId?: string | null;
   /** @format uuid */
-  membroPadraoId?: string | null;
+  responsavelPadraoId?: string | null;
   ativo?: boolean;
   ehPadraoRecebimentoFaturaCartao?: boolean;
   /** @format uuid */
@@ -1217,7 +1218,7 @@ export interface CriarContaPagarRequest {
   /** @format date */
   dataEmissao?: string;
   /** @format uuid */
-  pagadorId?: string | null;
+  responsavelCompraId?: string | null;
   /** @format uuid */
   recebedorId?: string;
   /** @format date */
@@ -1249,8 +1250,8 @@ export interface CriarContaPagarRequest {
   forcarProximaFatura?: boolean;
   /** @format uuid */
   contaVinculadaOrigemId?: string | null;
-  pagadoresAdicionaisIds?: string[] | null;
-  valoresPorPagador?: number[] | null;
+  responsaveisAdicionaisIds?: string[] | null;
+  valoresPorResponsavel?: number[] | null;
 }
 
 export interface CriarContaReceberRequest {
@@ -1258,7 +1259,7 @@ export interface CriarContaReceberRequest {
   /** @format date */
   dataEmissao?: string;
   /** @format uuid */
-  recebedorId?: string | null;
+  responsavelId?: string | null;
   /** @format uuid */
   pagadorId?: string;
   /** @format date */
@@ -1326,7 +1327,7 @@ export interface CriarItemFaturaRequest {
   /** @format uuid */
   recebedorId?: string;
   /** @format uuid */
-  pagadorId?: string | null;
+  responsavelCompraId?: string | null;
   /** @format uuid */
   formaPagamentoId?: string;
   rateios?: RateioRequest[] | null;
@@ -1347,6 +1348,7 @@ export interface CriarPessoaRequest {
   chavesPix?: PessoaChavePixRequest[] | null;
   ehPagador?: boolean;
   ehRecebedor?: boolean;
+  ehResponsavel?: boolean;
   /** @format uuid */
   contaGerencialDespesaId?: string | null;
   /** @format uuid */
@@ -1766,7 +1768,7 @@ export interface FaturaItemResponse {
   contaPagarId?: string;
   descricao?: string | null;
   recebedorNome?: string | null;
-  pagadorNome?: string | null;
+  responsavelNome?: string | null;
   /** @format date */
   dataCompra?: string;
   /** @format double */
@@ -2179,8 +2181,8 @@ export interface ItemImportadoWhatsappResponse {
   contaGerencialId?: string | null;
   contaGerencialDescricao?: string | null;
   /** @format uuid */
-  pagadorId?: string | null;
-  pagadorNome?: string | null;
+  responsavelId?: string | null;
+  responsavelNome?: string | null;
   /** @format uuid */
   contaReceberId?: string | null;
   statusPrevisaoCodigo?: string | null;
@@ -2403,6 +2405,7 @@ export interface PessoaDetalheResponse {
   updatedAtUtc?: string;
   ehPagador?: boolean;
   ehRecebedor?: boolean;
+  ehResponsavel?: boolean;
   /** @format uuid */
   contaGerencialDespesaId?: string | null;
   /** @format uuid */
@@ -2471,6 +2474,7 @@ export interface PessoaResumoResponse {
   ativo?: boolean;
   ehPagador?: boolean;
   ehRecebedor?: boolean;
+  ehResponsavel?: boolean;
   /** @format uuid */
   contaGerencialDespesaId?: string | null;
   /** @format uuid */
@@ -2526,8 +2530,8 @@ export interface PredicaoClassificacaoImportacaoWhatsappResponse {
   contaGerencialId?: string | null;
   contaGerencialDescricao?: string | null;
   /** @format uuid */
-  pagadorId?: string | null;
-  pagadorNome?: string | null;
+  responsavelId?: string | null;
+  responsavelNome?: string | null;
   descricaoAjustada?: string | null;
   gerarContaReceber?: boolean;
   marcarComoRecorrente?: boolean;
@@ -2540,7 +2544,7 @@ export interface PredicaoClassificacaoImportacaoWhatsappResponse {
 export interface PreferenciasFaturaResponse {
   descricao?: string | null;
   /** @format uuid */
-  pagadorId?: string | null;
+  responsavelCompraId?: string | null;
   /** @format uuid */
   recebedorId?: string | null;
   rateios?: RateioMemoriaResponse[] | null;
@@ -2703,7 +2707,7 @@ export interface RecorrenciaListItemResponse {
   /** @format double */
   valorLiquido?: number;
   pessoaNome?: string | null;
-  pagadorNome?: string | null;
+  responsavelNome?: string | null;
   encerrada?: boolean;
 }
 
@@ -2805,7 +2809,7 @@ export interface RevisarItemImportadoWhatsappRequest {
   /** @format uuid */
   contaGerencialId?: string | null;
   /** @format uuid */
-  pagadorId?: string | null;
+  responsavelId?: string | null;
   /** @format date */
   dataVencimentoContaReceber?: string | null;
   gerarContaReceber?: boolean;

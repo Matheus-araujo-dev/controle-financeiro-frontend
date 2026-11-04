@@ -337,7 +337,7 @@ async function loadResponsavelOptions() {
     pageSize: 500,
     search: '',
     ativo: true,
-    ehResponsavel: true
+    ehPagador: true
   });
 
   return response.items.map((item) => ({ label: item.nome, value: item.id }));

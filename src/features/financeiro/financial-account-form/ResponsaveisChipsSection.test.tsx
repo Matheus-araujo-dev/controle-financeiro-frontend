@@ -78,8 +78,8 @@ function Wrapper({
 }) {
   const { control, setValue, formState: { errors } } = useForm<FinanceiroFormValues>({
     defaultValues: {
-      membroId: '',
-      pagadoresAdicionaisIds: [],
+      responsavelId: '',
+      responsaveisAdicionaisIds: [],
       ...defaultValues
     }
   });
@@ -92,7 +92,7 @@ function Wrapper({
     pessoaOptions: OPTIONS,
     setValue,
     valorLiquido,
-    reloadMembroOptions: vi.fn().mockResolvedValue(undefined)
+    reloadResponsavelOptions: vi.fn().mockResolvedValue(undefined)
   } as unknown as FinancialAccountFormApi;
 
   return <ResponsaveisChipsSection form={form} personRole={personRole} />;
@@ -116,14 +116,14 @@ describe('ResponsaveisChipsSection', () => {
     expect(screen.queryByRole('option', { name: 'Alice' })).not.toBeInTheDocument();
   });
 
-  it('auto-adiciona segundo membro a pagadoresAdicionaisIds ao selecionar', () => {
-    render(<Wrapper defaultValues={{ membroId: 'r1', pagadoresAdicionaisIds: [] }} />);
+  it('auto-adiciona segundo membro a responsaveisAdicionaisIds ao selecionar', () => {
+    render(<Wrapper defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: [] }} />);
     fireEvent.change(screen.getByLabelText('Adicionar membro'), { target: { value: 'r2' } });
     expect(screen.getByRole('button', { name: /Remover Bob/i })).toBeInTheDocument();
   });
 
   it('removing primary membro promotes the first additional', () => {
-    render(<Wrapper defaultValues={{ membroId: 'r1', pagadoresAdicionaisIds: ['r2'] }} />);
+    render(<Wrapper defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: ['r2'] }} />);
     // Both Alice and Bob are chips
     expect(screen.getByRole('button', { name: /Remover Alice/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Remover Bob/i })).toBeInTheDocument();
@@ -136,7 +136,7 @@ describe('ResponsaveisChipsSection', () => {
   });
 
   it('removing an additional membro leaves primary untouched', () => {
-    render(<Wrapper defaultValues={{ membroId: 'r1', pagadoresAdicionaisIds: ['r2'] }} />);
+    render(<Wrapper defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: ['r2'] }} />);
     fireEvent.click(screen.getByRole('button', { name: /Remover Bob/i }));
     expect(screen.getByRole('button', { name: /Remover Alice/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Remover Bob/i })).not.toBeInTheDocument();
@@ -145,7 +145,7 @@ describe('ResponsaveisChipsSection', () => {
   it('shows total distribuído and valor inputs when count > 1 and valorLiquido > 0', () => {
     render(
       <Wrapper
-        defaultValues={{ membroId: 'r1', pagadoresAdicionaisIds: ['r2'] }}
+        defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: ['r2'] }}
         valorLiquido={300}
       />
     );
@@ -154,14 +154,14 @@ describe('ResponsaveisChipsSection', () => {
   });
 
   it('does not show total distribuído when only one membro', () => {
-    render(<Wrapper defaultValues={{ membroId: 'r1', pagadoresAdicionaisIds: [] }} valorLiquido={300} />);
+    render(<Wrapper defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: [] }} valorLiquido={300} />);
     expect(screen.queryByText(/total distribuído/i)).not.toBeInTheDocument();
   });
 
   it('hides add controls when canEdit is false', () => {
     render(
       <Wrapper
-        defaultValues={{ membroId: 'r1', pagadoresAdicionaisIds: [] }}
+        defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: [] }}
         canEdit={false}
       />
     );
@@ -170,11 +170,11 @@ describe('ResponsaveisChipsSection', () => {
     expect(screen.queryByRole('button', { name: /Remover/i })).not.toBeInTheDocument();
   });
 
-  it('shows error message when errors.membroId is set', () => {
+  it('shows error message when errors.responsavelId is set', () => {
     const { control, setValue, formState: { errors } } = (() => {
       let captured: ReturnType<typeof useForm<FinanceiroFormValues>> | null = null;
       function Capture() {
-        captured = useForm<FinanceiroFormValues>({ defaultValues: { membroId: '', pagadoresAdicionaisIds: [] } });
+        captured = useForm<FinanceiroFormValues>({ defaultValues: { responsavelId: '', responsaveisAdicionaisIds: [] } });
         return null;
       }
       render(<Capture />);
@@ -184,12 +184,12 @@ describe('ResponsaveisChipsSection', () => {
     // Build form with a fake error
     const formWithError = {
       control,
-      errors: { membroId: { message: 'Selecione o membro', type: 'required' } },
+      errors: { responsavelId: { message: 'Selecione o membro', type: 'required' } },
       canEdit: true,
       membroOptions: OPTIONS,
       setValue,
       valorLiquido: 0,
-      reloadMembroOptions: vi.fn().mockResolvedValue(undefined)
+      reloadResponsavelOptions: vi.fn().mockResolvedValue(undefined)
     } as unknown as FinancialAccountFormApi;
 
     render(<ResponsaveisChipsSection form={formWithError} />);
@@ -207,7 +207,7 @@ describe('ResponsaveisChipsSection', () => {
   });
 
   it('label shows "Membros" when count > 1', () => {
-    render(<Wrapper defaultValues={{ membroId: 'r1', pagadoresAdicionaisIds: ['r2'] }} />);
+    render(<Wrapper defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: ['r2'] }} />);
     // plural: Membro + s
     expect(screen.getByText('Membros')).toBeInTheDocument();
   });
@@ -226,7 +226,7 @@ describe('ResponsaveisChipsSection', () => {
   });
 
   it('personRole=pagador shows Pagadores label when count > 1', () => {
-    render(<Wrapper personRole="pagador" defaultValues={{ membroId: 'r1', pagadoresAdicionaisIds: ['r2'] }} />);
+    render(<Wrapper personRole="pagador" defaultValues={{ responsavelId: 'r1', responsaveisAdicionaisIds: ['r2'] }} />);
     expect(screen.getByText('Pagadores')).toBeInTheDocument();
   });
 });

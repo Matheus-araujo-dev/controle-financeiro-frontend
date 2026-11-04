@@ -213,7 +213,7 @@ export function FinancialAccountListPage({
     queryFn: async () => {
       const [pessoas, membros, formas, contas] = await Promise.all([
         config.loadPessoaOptions(),
-        config.loadMembroOptions(),
+        config.loadResponsavelOptions(),
         config.loadFormaPagamentoOptions(),
         config.loadContaBancariaOptions()
       ]);

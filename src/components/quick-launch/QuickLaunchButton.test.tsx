@@ -340,7 +340,7 @@ describe('QuickLaunchButton', () => {
         descricao: 'Compra do mes',
         valorOriginal: 120,
         recebedorId: 'p1',
-        pagadorId: 'r1',
+        responsavelCompraId: 'r1',
         formaPagamentoId: 'f-card',
         cartaoId: 'c1',
         rateios: [{ contaGerencialId: 'cd1', valor: 120 }]
@@ -375,7 +375,7 @@ describe('QuickLaunchButton', () => {
         descricao: 'Servico prestado',
         valorOriginal: 300,
         pagadorId: 'r1',
-        recebedorId: 'p-new',
+        responsavelId: 'p-new',
         formaPagamentoId: 'f-new',
         cartaoId: null,
         rateios: [{ contaGerencialId: 'cg-new', valor: 300 }]
@@ -414,12 +414,12 @@ describe('QuickLaunchButton', () => {
     );
   });
 
-  it('auto-fills pagador from conta gerencial membroPadraoId', async () => {
+  it('auto-fills pagador from conta gerencial responsavelPadraoId', async () => {
     vi.mocked(cadastrosApi.contasGerenciais.listar).mockImplementation((filters: { tipo?: string }) => {
       if (filters.tipo === 'Receita') return Promise.resolve(receitasResponse as never);
       return Promise.resolve({
         items: [
-          { id: 'cd1', codigo: '1.1', descricao: 'Mercado', aceitaLancamentos: true, membroPadraoId: 'r1' }
+          { id: 'cd1', codigo: '1.1', descricao: 'Mercado', aceitaLancamentos: true, responsavelPadraoId: 'r1' }
         ]
       } as never);
     });
@@ -502,7 +502,7 @@ describe('QuickLaunchButton', () => {
     await waitFor(() => expect(financeiroApi.contasPagar.criar).toHaveBeenCalledTimes(1));
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
       expect.objectContaining({
-        pagadoresAdicionaisIds: ['r1', 'r2']
+        responsaveisAdicionaisIds: ['r1', 'r2']
       })
     );
   });
@@ -588,8 +588,8 @@ describe('QuickLaunchButton', () => {
     // valoresOk = true → payload inclui valoresPorPagador
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
       expect.objectContaining({
-        pagadoresAdicionaisIds: ['r1', 'r2'],
-        valoresPorPagador: [150, 50]
+        responsaveisAdicionaisIds: ['r1', 'r2'],
+        valoresPorResponsavel: [150, 50]
       })
     );
   });

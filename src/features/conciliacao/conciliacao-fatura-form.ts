@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { CriarItemFatura, ItemFaturaConciliacao, ReembolsoFatura } from '../../types/conciliacao-fatura';
 
-export const camposMemoria = ['descricao', 'pagadorId', 'recebedorId', 'rateios', 'ehRecorrente', 'gerarReembolso', 'reembolsoPagadoresIds'];
+export const camposMemoria = ['descricao', 'responsavelCompraId', 'recebedorId', 'rateios', 'ehRecorrente', 'gerarReembolso', 'reembolsoPagadoresIds'];
 const rateioSchema = z.object({ contaGerencialId: z.string(), valor: z.number().finite() });
 const rascunhoSchema = z.object({
   vinculo: z.string().optional(), selecionado: z.boolean().optional(), usarValor: z.boolean().optional(),
@@ -25,11 +25,11 @@ export function normalizarEstabelecimento(descricao: string): string {
 
 export function applySmartFill(
   rows: Record<string, RascunhoLancamento>, itemId: string, patch: Partial<RascunhoLancamento>,
-  itens: ItemFaturaConciliacao[], despesas?: Array<{ value: string; membroPadraoId?: string | null }>
+  itens: ItemFaturaConciliacao[], despesas?: Array<{ value: string; responsavelPadraoId?: string | null }>
 ): Record<string, RascunhoLancamento> {
   let next = rows;
   if (patch.rateios?.length === 1 && !next[itemId].pagadorId && despesas) {
-    const mId = despesas.find(d => d.value === patch.rateios![0].contaGerencialId)?.membroPadraoId;
+    const mId = despesas.find(d => d.value === patch.rateios![0].contaGerencialId)?.responsavelPadraoId;
     if (mId) next = { ...next, [itemId]: { ...next[itemId], pagadorId: mId } };
   }
   const propagaveis = ['pagadorId', 'recebedorId', 'rateios', 'gerarReembolso'];
@@ -49,7 +49,7 @@ export function applySmartFill(
     if (patch.rateios && sr.rateios.every(r => !r.contaGerencialId)) {
       sp.rateios = ratearValor(sib.valor, patch.rateios.map(r => ({ contaGerencialId: r.contaGerencialId, proporcao: r.valor })));
       if (patch.rateios.length === 1 && !sr.pagadorId && !sp.pagadorId && despesas) {
-        const mId = despesas.find(d => d.value === patch.rateios![0].contaGerencialId)?.membroPadraoId;
+        const mId = despesas.find(d => d.value === patch.rateios![0].contaGerencialId)?.responsavelPadraoId;
         if (mId) sp.pagadorId = mId;
       }
     }
@@ -76,7 +76,7 @@ export function criarRascunho(item: ItemFaturaConciliacao, vencimento: string, f
   if (saved.success) return saved.data;
   const p = item.preferencias;
   return {
-    descricao: p?.descricao ?? item.descricaoOriginal, recebedorId: p?.recebedorId ?? '', pagadorId: p?.pagadorId ?? '',
+    descricao: p?.descricao ?? item.descricaoOriginal, recebedorId: p?.recebedorId ?? '', pagadorId: p?.responsavelCompraId ?? '',
     formaPagamentoId, pagadoresAdicionaisIds: [], pagadoresValores: [],
     rateios: ratearValor(item.valor, p?.rateios ?? []), observacao: '', aprender: true, camposParaAprender: [...camposMemoria],
     ehRecorrente: !!p?.ehRecorrente && item.quantidadeParcelas === 1 && item.valor > 0, recorrenciaTipoDia: 'DiaFixo',
@@ -107,7 +107,7 @@ export function montarCriacao(item: ItemFaturaConciliacao, draft: RascunhoLancam
     throw new Error('Complete descrição, recebedor, pagador e forma de pagamento.');
   validarRateios(draft.rateios, item.valor);
   if (draft.ehRecorrente && (item.quantidadeParcelas !== 1 || item.valor <= 0)) throw new Error('Recorrência não pode ser combinada com parcelamento ou estorno.');
-  return { descricao: draft.descricao.trim(), recebedorId: draft.recebedorId, pagadorId: draft.pagadorId,
+  return { descricao: draft.descricao.trim(), recebedorId: draft.recebedorId, responsavelCompraId: draft.pagadorId,
     formaPagamentoId: draft.formaPagamentoId, pagadoresAdicionaisIds: draft.pagadoresAdicionaisIds.length ? draft.pagadoresAdicionaisIds : undefined,
     valoresPorPagador: draft.pagadoresValores.length ? draft.pagadoresValores : undefined,
     rateios: draft.rateios, observacao: draft.observacao || null,

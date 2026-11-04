@@ -193,7 +193,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     async function loadOptions() {
       const [pessoas, responsaveis, formas, contas, cartoes, rateios] = await Promise.all([
         config.loadPessoaOptions(),
-        config.loadMembroOptions(),
+        config.loadResponsavelOptions(),
         config.loadFormaPagamentoOptions(),
         config.loadContaBancariaOptions(),
         config.loadCartaoOptions(),
@@ -519,8 +519,8 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     setPessoaOptions(options);
   }, [config]);
 
-  const reloadMembroOptions = useCallback(async () => {
-    const options = await config.loadMembroOptions();
+  const reloadResponsavelOptions = useCallback(async () => {
+    const options = await config.loadResponsavelOptions();
     setMembroOptions(options);
   }, [config]);
 
@@ -623,7 +623,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
     confirmarProximaFatura,
     cancelarFaturaIndisponivel,
     reloadPessoaOptions,
-    reloadMembroOptions,
+    reloadResponsavelOptions,
     reloadFormaPagamentoOptions,
     reloadContaBancariaOptions,
     reloadCartaoOptions,

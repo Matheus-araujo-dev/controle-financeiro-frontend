@@ -10,7 +10,7 @@ import type { RascunhoLancamento } from './conciliacao-fatura-form';
 import { camposMemoria, ratearValor } from './conciliacao-fatura-form';
 
 export type OpcoesConciliacao = { recebedores: ComboBoxOption[]; pagadores: ComboBoxOption[];
-  formas: (ComboBoxOption & { ehCartao?: boolean })[]; despesas: (ComboBoxOption & { membroPadraoId?: string | null })[]; receitas: ComboBoxOption[] };
+  formas: (ComboBoxOption & { ehCartao?: boolean })[]; despesas: (ComboBoxOption & { responsavelPadraoId?: string | null })[]; receitas: ComboBoxOption[] };
 const nome = (options: ComboBoxOption[], id?: string | null) => options.find(x => x.value === id)?.label ?? 'Não informado';
 
 
@@ -32,7 +32,7 @@ export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, optio
       ? <PagadoresCell pagadorId={rows[item.id].pagadorId} adicionaisIds={rows[item.id].pagadoresAdicionaisIds}
           valores={rows[item.id].pagadoresValores} total={item.valor} options={options.pagadores} disabled={locked}
           onChange={patch => update(item.id, patch)} onAddNew={acoes?.onAddPagador} />
-      : <span>{nome(options.pagadores, conta?.pagadorId)}</span> },
+      : <span>{nome(options.pagadores, conta?.responsavelCompraId)}</span> },
     { titulo: 'Recebedor', render: (item, conta, novo, locked) => novo
       ? <ComboBox compact aria-label={`Recebedor de ${item.descricaoOriginal}`} options={options.recebedores} value={rows[item.id].recebedorId} disabled={locked}
           onChange={id => update(item.id, { recebedorId: id })} onAddNew={acoes?.onAddRecebedor} addNewLabel="Novo recebedor" /> : <span>{nome(options.recebedores, conta?.recebedorId)}</span> },
