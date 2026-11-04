@@ -149,7 +149,7 @@ describe('financeiro module config', () => {
       link: 'https://example.test/produto',
       valorEstimado: 3000,
       quantidadeParcelasDesejada: null,
-      pagadorId: 'resp-2',
+      responsavelId: 'resp-2',
       dataDesejada: null,
       contaGerencialId: 'conta-2'
     } as never);
@@ -183,7 +183,7 @@ describe('financeiro module config', () => {
         observacao: 'Observacao',
         cartaoId: 'cartao-1',
         contaBancariaId: 'banco-1',
-        pagadorId: 'resp-1',
+        responsavelCompraId: 'resp-1',
         recebedorId: 'pessoa-1',
         recorrencia: expect.objectContaining({
           dataInicio: '2026-02-28',
@@ -251,7 +251,7 @@ describe('financeiro module config', () => {
         cartaoId: null,
         contaBancariaId: null,
         pagadorId: 'resp-1',
-        recebedorId: 'pessoa-1',
+        responsavelId: 'pessoa-1',
         recorrencia: null
       })
     );
@@ -264,7 +264,7 @@ describe('financeiro module config', () => {
         ...detailBase,
         origemCompraPlanejadaId: 'compra-1',
         recebedorId: 'pessoa-1',
-        pagadorId: null
+        responsavelCompraId: null
       } as never)
     ).toEqual(
       expect.objectContaining({
@@ -282,7 +282,7 @@ describe('financeiro module config', () => {
       contasReceberModuleConfig.toFormValues({
         ...detailBase,
         pagadorId: 'pessoa-2',
-        recebedorId: 'resp-2'
+        responsavelId: 'resp-2'
       } as never)
     ).toEqual(expect.objectContaining({ pessoaId: 'resp-2', responsavelId: 'pessoa-2', formaPagamentoId: 'forma-1' }));
   });
@@ -391,10 +391,10 @@ describe('financeiro module config', () => {
 
     await contasPagarModuleConfig.create(values);
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
-      expect.objectContaining({ pagadoresAdicionaisIds: ['resp-1', 'resp-2'] })
+      expect.objectContaining({ responsaveisAdicionaisIds: ['resp-1', 'resp-2'] })
     );
     expect(financeiroApi.contasPagar.criar).not.toHaveBeenCalledWith(
-      expect.objectContaining({ valoresPorPagador: expect.anything() })
+      expect.objectContaining({ valoresPorResponsavel: expect.anything() })
     );
 
     await contasReceberModuleConfig.create(values);
@@ -406,12 +406,12 @@ describe('financeiro module config', () => {
     );
   });
 
-  it('inclui valoresPorPagador e valoresPorPagador quando array de valores bate com total de ids', async () => {
+  it('inclui valoresPorResponsavel e valoresPorPagador quando array de valores bate com total de ids', async () => {
     const values = formValues({ responsaveisAdicionaisIds: ['resp-2'], responsaveisValores: [60, 40] });
 
     await contasPagarModuleConfig.create(values);
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
-      expect.objectContaining({ pagadoresAdicionaisIds: ['resp-1', 'resp-2'], valoresPorPagador: [60, 40] })
+      expect.objectContaining({ responsaveisAdicionaisIds: ['resp-1', 'resp-2'], valoresPorResponsavel: [60, 40] })
     );
 
     await contasReceberModuleConfig.create(values);

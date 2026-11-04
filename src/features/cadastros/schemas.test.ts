@@ -17,6 +17,7 @@ function validPessoa(overrides = {}) {
     chavesPix: [],
     ehPagador: false,
     ehRecebedor: false,
+    ehResponsavel: false,
     contaGerencialDespesaId: '',
     contaGerencialReceitaId: '',
     ...overrides
@@ -304,7 +305,7 @@ describe('contaGerencialSchema', () => {
       descricao: 'Despesas Operacionais',
       tipo: 'Despesa',
       contaPaiId: '',
-      membroPadraoId: '',
+      responsavelPadraoId: '',
       contaGerencialContrariaId: '',
       ativo: true,
       ehPadraoRecebimentoFaturaCartao: false
@@ -318,7 +319,7 @@ describe('contaGerencialSchema', () => {
       descricao: '',
       tipo: 'Despesa',
       contaPaiId: '',
-      membroPadraoId: '',
+      responsavelPadraoId: '',
       contaGerencialContrariaId: '',
       ativo: true,
       ehPadraoRecebimentoFaturaCartao: false
@@ -332,7 +333,7 @@ describe('contaGerencialSchema', () => {
       descricao: 'Test',
       tipo: 'Invalido',
       contaPaiId: '',
-      membroPadraoId: '',
+      responsavelPadraoId: '',
       contaGerencialContrariaId: '',
       ativo: true,
       ehPadraoRecebimentoFaturaCartao: false
@@ -346,7 +347,7 @@ describe('contaGerencialSchema', () => {
       descricao: 'Receitas',
       tipo: 'Receita',
       contaPaiId: '',
-      membroPadraoId: '',
+      responsavelPadraoId: '',
       contaGerencialContrariaId: '',
       ativo: true,
       ehPadraoRecebimentoFaturaCartao: false

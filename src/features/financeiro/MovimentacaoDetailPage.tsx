@@ -215,11 +215,11 @@ export function MovimentacaoDetailPage() {
                 <div className="space-y-0">
                   <OrigemInfoRow
                     label="Responsável"
-                    value={mov.contaPagarId ? origemConta.pagadorNome : origemConta.recebedorNome}
+                    value={mov.contaPagarId ? (origemConta as ContaPagarDetalhe).responsavelCompraNome : (origemConta as ContaReceberDetalhe).responsavelNome}
                   />
                   <OrigemInfoRow
                     label={mov.contaPagarId ? 'Recebedor' : 'Pagador'}
-                    value={mov.contaPagarId ? origemConta.recebedorNome : origemConta.pagadorNome}
+                    value={mov.contaPagarId ? (origemConta as ContaPagarDetalhe).recebedorNome : (origemConta as ContaReceberDetalhe).pagadorNome}
                   />
                   <OrigemInfoRow label="Vencimento" value={formatDateBR(origemConta.dataVencimento)} />
                   <OrigemInfoRow label="Valor" value={formatCurrencyBRL(origemConta.valorLiquido)} />

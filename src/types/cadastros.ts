@@ -94,7 +94,7 @@ export type CartaoFilters = ListQueryBase & {
   ativo?: boolean;
 };
 
-export type ContaGerencialResumo = Omit<ApiContract<Api.ContaGerencialResumoResponse, 'codigo' | 'contaPaiId' | 'contaPaiDescricao' | 'membroPadraoId' | 'membroPadraoNome' | 'contaGerencialContrariaId' | 'contaGerencialContrariaNome'>, 'tipo'> & {
+export type ContaGerencialResumo = Omit<ApiContract<Api.ContaGerencialResumoResponse, 'codigo' | 'contaPaiId' | 'contaPaiDescricao' | 'responsavelPadraoId' | 'responsavelPadraoNome' | 'contaGerencialContrariaId' | 'contaGerencialContrariaNome'>, 'tipo'> & {
   tipo: ContaGerencialTipo;
 };
 
@@ -102,7 +102,7 @@ export type ContaGerencialDetalhe = ContaGerencialResumo & ApiContract<Pick<Api.
 
 export type ContaGerencialPayload = Omit<
   ContaGerencialResumo,
-  'id' | 'contaPaiDescricao' | 'membroPadraoNome' | 'aceitaLancamentos' | 'contaGerencialContrariaNome'
+  'id' | 'contaPaiDescricao' | 'responsavelPadraoNome' | 'aceitaLancamentos' | 'contaGerencialContrariaNome'
 >;
 
 export type ContaGerencialFilters = ListQueryBase & {
@@ -110,8 +110,8 @@ export type ContaGerencialFilters = ListQueryBase & {
   tipos?: ContaGerencialTipo[];
   contaPaiId?: string;
   contaPai?: string;
-  membroPadraoId?: string;
-  membroPadrao?: string;
+  responsavelPadraoId?: string;
+  responsavelPadrao?: string;
   ativo?: boolean;
   aceitaLancamentos?: boolean;
   ehPadraoRecebimentoFaturaCartao?: boolean;
