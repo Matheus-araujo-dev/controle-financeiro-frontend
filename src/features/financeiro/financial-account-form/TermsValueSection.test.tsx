@@ -61,7 +61,7 @@ function buildMockFormApi(
     confirmarProximaFatura: vi.fn(),
     cancelarFaturaIndisponivel: vi.fn(),
     reloadPessoaOptions: vi.fn(),
-    reloadMembroOptions: vi.fn(),
+    reloadResponsavelOptions: vi.fn(),
     reloadFormaPagamentoOptions: vi.fn(),
     reloadContaBancariaOptions: vi.fn(),
     reloadCartaoOptions: vi.fn(),
