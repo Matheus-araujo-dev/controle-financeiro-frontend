@@ -740,7 +740,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
       dataLiquidacao: detail.dataLiquidacao,
       dataCompra: null,
       rateios: detail.rateios,
-      pessoaId: detail.pagadorId ?? '',
+      pessoaId: detail.responsavelId ?? '',
       responsavelId: detail.pagadorId,
       ehRecorrente: detail.ehRecorrente,
       recorrencia: detail.recorrencia

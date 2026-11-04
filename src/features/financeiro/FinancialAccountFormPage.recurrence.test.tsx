@@ -61,7 +61,7 @@ function createConfig() {
       { label: 'Fornecedor', value: 'p1' },
       { label: 'Membro', value: 'p2' }
     ]),
-    loadMembroOptions: vi.fn().mockResolvedValue([
+    loadResponsavelOptions: vi.fn().mockResolvedValue([
       { label: 'Membro', value: 'p2' }
     ]),
     loadFormaPagamentoOptions: vi.fn().mockResolvedValue([
