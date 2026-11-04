@@ -285,6 +285,7 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     { name: 'observacao', label: 'Observação', kind: 'textarea' },
     { name: 'ehPagador', label: 'Pagador', kind: 'switch' },
     { name: 'ehRecebedor', label: 'Recebedor', kind: 'switch' },
+    { name: 'ehResponsavel', label: 'Responsável', kind: 'switch' },
     {
       name: 'contaGerencialDespesaId',
       label: 'Conta gerencial de despesa padrão',
@@ -310,6 +311,7 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     chavesPix: [],
     ehPagador: true,
     ehRecebedor: true,
+    ehResponsavel: false,
     contaGerencialDespesaId: '',
     contaGerencialReceitaId: ''
   },
@@ -337,6 +339,7 @@ export const pessoasModuleConfig: MasterDataModuleConfig<PessoaResumo, PessoaDet
     chavesPix: detail.chavesPix ?? [],
     ehPagador: detail.ehPagador ?? true,
     ehRecebedor: detail.ehRecebedor ?? true,
+    ehResponsavel: detail.ehResponsavel ?? false,
     contaGerencialDespesaId: detail.contaGerencialDespesaId ?? '',
     contaGerencialReceitaId: detail.contaGerencialReceitaId ?? ''
   }),
@@ -771,7 +774,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     { title: 'Descrição', dataIndex: 'descricao', key: 'descricao', mobileRole: 'title' },
     { title: 'Tipo', dataIndex: 'tipo', key: 'tipo', mobileRole: 'status' },
     { title: 'Conta pai', dataIndex: 'contaPaiDescricao', key: 'contaPaiDescricao', render: (value) => value ?? '-' },
-    { title: 'Membro padrão', dataIndex: 'membroPadraoNome', key: 'membroPadraoNome', render: (value) => value ?? '-' },
+    { title: 'Membro padrão', dataIndex: 'responsavelPadraoNome', key: 'responsavelPadraoNome', render: (value) => value ?? '-' },
     {
       title: 'Uso',
       dataIndex: 'aceitaLancamentos',
@@ -792,7 +795,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     { name: 'search', label: 'Busca', kind: 'text', placeholder: 'Código ou descrição' },
     { name: 'tipos', label: 'Tipo', kind: 'multiselect', options: contaGerencialTipoOptions },
     { name: 'contaPai', label: 'Conta pai', kind: 'text' },
-    { name: 'membroPadrao', label: 'Membro padrão', kind: 'text' },
+    { name: 'responsavelPadrao', label: 'Membro padrão', kind: 'text' },
     { name: 'aceitaLancamentos', label: 'Uso', kind: 'multiselect', options: yesNoOptions },
     { name: 'ehPadraoRecebimentoFaturaCartao', label: 'Receb. fatura', kind: 'multiselect', options: yesNoOptions },
     { name: 'ativo', label: 'Status', kind: 'multiselect', options: statusOptions }
@@ -802,7 +805,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     { name: 'codigo', label: 'Código', kind: 'text' },
     { name: 'descricao', label: 'Descrição', kind: 'text' },
     { name: 'tipo', label: 'Tipo', kind: 'select', options: contaGerencialTipoOptions },
-    { name: 'membroPadraoId', label: 'Membro padrão', kind: 'select', loadOptions: loadPessoaOptions },
+    { name: 'responsavelPadraoId', label: 'Membro padrão', kind: 'select', loadOptions: loadPessoaOptions },
     { name: 'contaGerencialContrariaId', label: 'Conta de reembolso', kind: 'select', loadOptionsWith: loadContaGerencialContrariaOptions },
     { name: 'ehPadraoRecebimentoFaturaCartao', label: 'Padrão para recebimento de fatura', kind: 'switch' },
     { name: 'ativo', label: 'Ativo', kind: 'switch' }
@@ -814,7 +817,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     descricao: '',
     tipo: 'Despesa',
     contaPaiId: '',
-    membroPadraoId: '',
+    responsavelPadraoId: '',
     contaGerencialContrariaId: '',
     ehPadraoRecebimentoFaturaCartao: false,
     ativo: true
@@ -825,14 +828,14 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     cadastrosApi.contasGerenciais.criar({
       ...payload,
       contaPaiId: payload.contaPaiId || null,
-      membroPadraoId: payload.membroPadraoId || null,
+      responsavelPadraoId: payload.responsavelPadraoId || null,
       contaGerencialContrariaId: payload.contaGerencialContrariaId || null
     }),
   update: (id, payload) =>
     cadastrosApi.contasGerenciais.atualizar(id, {
       ...payload,
       contaPaiId: payload.contaPaiId || null,
-      membroPadraoId: payload.membroPadraoId || null,
+      responsavelPadraoId: payload.responsavelPadraoId || null,
       contaGerencialContrariaId: payload.contaGerencialContrariaId || null
     }),
   toFormValues: (detail) => ({
@@ -840,7 +843,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     descricao: detail.descricao,
     tipo: detail.tipo,
     contaPaiId: detail.contaPaiId ?? '',
-    membroPadraoId: detail.membroPadraoId ?? '',
+    responsavelPadraoId: detail.responsavelPadraoId ?? '',
     contaGerencialContrariaId: detail.contaGerencialContrariaId ?? '',
     ehPadraoRecebimentoFaturaCartao: detail.ehPadraoRecebimentoFaturaCartao,
     ativo: detail.ativo
@@ -850,7 +853,7 @@ export const contasGerenciaisModuleConfig: MasterDataModuleConfig<
     { header: 'Descrição', value: (r: ContaGerencialResumo) => r.descricao },
     { header: 'Tipo', value: (r: ContaGerencialResumo) => r.tipo },
     { header: 'Conta pai', value: (r: ContaGerencialResumo) => r.contaPaiDescricao ?? '' },
-    { header: 'Membro padrão', value: (r: ContaGerencialResumo) => r.membroPadraoNome ?? '' },
+    { header: 'Membro padrão', value: (r: ContaGerencialResumo) => r.responsavelPadraoNome ?? '' },
     { header: 'Uso', value: (r: ContaGerencialResumo) => (r.aceitaLancamentos ? 'Lançável' : 'Estrutural') },
     { header: 'Status', value: (r: ContaGerencialResumo) => (r.ativo ? 'Ativo' : 'Inativo') }
   ],
@@ -892,7 +895,7 @@ if (contaGerencialDescricaoColumn) {
 }
 
 const contaGerencialMembroColumn = contasGerenciaisModuleConfig.columns.find(
-  (column) => column.key === 'membroPadraoNome'
+  (column) => column.key === 'responsavelPadraoNome'
 );
 if (contaGerencialMembroColumn) {
   contaGerencialMembroColumn.title = 'Membro padrão';
@@ -927,7 +930,7 @@ if (contaGerencialDescricaoField) {
 }
 
 const contaGerencialMembroField = contasGerenciaisModuleConfig.fields.find(
-  (field) => field.name === 'membroPadraoId'
+  (field) => field.name === 'responsavelPadraoId'
 );
 if (contaGerencialMembroField) {
   contaGerencialMembroField.label = 'Membro padrão';

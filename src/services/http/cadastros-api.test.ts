@@ -33,6 +33,7 @@ describe('cadastrosApi', () => {
       chavesPix: [],
       ehPagador: true,
       ehRecebedor: true,
+      ehResponsavel: false,
       contaGerencialDespesaId: '',
       contaGerencialReceitaId: ''
     });
@@ -46,6 +47,7 @@ describe('cadastrosApi', () => {
       chavesPix: [],
       ehPagador: true,
       ehRecebedor: true,
+      ehResponsavel: false,
       contaGerencialDespesaId: '',
       contaGerencialReceitaId: ''
     });
@@ -107,7 +109,7 @@ describe('cadastrosApi', () => {
       descricao: 'Despesa',
       tipo: 'Despesa',
       contaPaiId: null,
-      membroPadraoId: null,
+      responsavelPadraoId: null,
       contaGerencialContrariaId: null,
       ehPadraoRecebimentoFaturaCartao: false,
       ativo: true
@@ -145,7 +147,7 @@ describe('cadastrosApi', () => {
       descricao: 'Despesa',
       tipo: 'Despesa',
       contaPaiId: null,
-      membroPadraoId: null,
+      responsavelPadraoId: null,
       contaGerencialContrariaId: null,
       ehPadraoRecebimentoFaturaCartao: false,
       ativo: true
