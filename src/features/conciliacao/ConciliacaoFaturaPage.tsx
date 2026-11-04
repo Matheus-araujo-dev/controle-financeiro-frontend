@@ -43,7 +43,7 @@ export function ConciliacaoFaturaPage() {
   const { data, isLoading, error: loadError } = useQuery({ queryKey: ['conciliacao-fatura-options', id], enabled: !!id, queryFn: async () => {
     const [fatura, revisoes, recebedores, pagadores, formas, despesas, receitas] = await Promise.all([
       financeiroApi.faturas.obterPorId(id!), conciliacaoFaturaApi.listar(id!), contasPagarModuleConfig.loadPessoaOptions(),
-      contasPagarModuleConfig.loadMembroOptions(), contasPagarModuleConfig.loadFormaPagamentoOptions(),
+      contasPagarModuleConfig.loadResponsavelOptions(), contasPagarModuleConfig.loadFormaPagamentoOptions(),
       contasPagarModuleConfig.loadRateioOptions(), contasReceberModuleConfig.loadRateioOptions()
     ]);
     return { fatura, revisoes, recebedores, pagadores, formas, despesas, receitas };
@@ -74,7 +74,7 @@ export function ConciliacaoFaturaPage() {
   const update = useCallback((itemId: string, patch: Partial<RascunhoLancamento>) => {
     setRows(current => {
       const updated = { ...current, [itemId]: { ...current[itemId], ...patch } };
-      return session ? applySmartFill(updated, itemId, patch, session.itens, data?.despesas as Array<{ value: string; membroPadraoId?: string | null }>) : updated;
+      return session ? applySmartFill(updated, itemId, patch, session.itens, data?.despesas as Array<{ value: string; responsavelPadraoId?: string | null }>) : updated;
     });
     setDirty(true); setMessage('Alterações ainda não salvas.');
   }, [session, data?.despesas]);

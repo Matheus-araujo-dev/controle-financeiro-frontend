@@ -12,15 +12,15 @@ type ResponsaveisChipsSectionProps = {
 };
 
 export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: ResponsaveisChipsSectionProps) {
-  const { control, errors, canEdit, membroOptions, pessoaOptions, setValue, reloadMembroOptions } = form;
+  const { control, errors, canEdit, membroOptions, pessoaOptions, setValue, reloadResponsavelOptions } = form;
   const isPagador = personRole === 'pagador';
   const chipOptions = isPagador ? pessoaOptions : membroOptions;
 
   const [quickAddOpen, setQuickAddOpen] = useState(false);
 
-  const membroId = useWatch({ control, name: 'membroId' }) ?? '';
-  const pagadoresAdicionaisIds = useWatch({ control, name: 'pagadoresAdicionaisIds' }) ?? [];
-  const pagadoresValores = useWatch({ control, name: 'pagadoresValores' }) ?? [];
+  const membroId = useWatch({ control, name: 'responsavelId' }) ?? '';
+  const pagadoresAdicionaisIds = useWatch({ control, name: 'responsaveisAdicionaisIds' }) ?? [];
+  const pagadoresValores = useWatch({ control, name: 'responsaveisValores' }) ?? [];
 
   const allSelected: Array<{ id: string; label: string }> = buildChipList(
     membroId,
@@ -45,28 +45,28 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
     const remainder = Math.max(0, valorLiquido - newValor);
     const perOther = others.length > 0 ? Math.round((remainder / others.length) * 100) / 100 : 0;
     const novosValores = allSelected.map((_, i) => (i === changedIndex ? newValor : perOther));
-    setValue('pagadoresValores', novosValores, { shouldValidate: false });
+    setValue('responsaveisValores', novosValores, { shouldValidate: false });
   }
 
   function handleRemove(id: string) {
     if (id === membroId) {
       const [next, ...rest] = pagadoresAdicionaisIds;
-      setValue('membroId', next ?? '', { shouldValidate: true });
-      setValue('pagadoresAdicionaisIds', rest ?? [], { shouldValidate: true });
+      setValue('responsavelId', next ?? '', { shouldValidate: true });
+      setValue('responsaveisAdicionaisIds', rest ?? [], { shouldValidate: true });
     } else {
-      setValue('pagadoresAdicionaisIds', pagadoresAdicionaisIds.filter((x: string) => x !== id), { shouldValidate: true });
+      setValue('responsaveisAdicionaisIds', pagadoresAdicionaisIds.filter((x: string) => x !== id), { shouldValidate: true });
     }
-    setValue('pagadoresValores', [], { shouldValidate: false });
+    setValue('responsaveisValores', [], { shouldValidate: false });
   }
 
   function handleQuickAddSuccess(newId: string) {
-    void reloadMembroOptions().then(() => {
+    void reloadResponsavelOptions().then(() => {
       if (!membroId) {
-        setValue('membroId', newId, { shouldValidate: true });
+        setValue('responsavelId', newId, { shouldValidate: true });
       } else {
-        setValue('pagadoresAdicionaisIds', [...pagadoresAdicionaisIds, newId], { shouldValidate: true });
+        setValue('responsaveisAdicionaisIds', [...pagadoresAdicionaisIds, newId], { shouldValidate: true });
       }
-      setValue('pagadoresValores', [], { shouldValidate: false });
+      setValue('responsaveisValores', [], { shouldValidate: false });
     });
   }
 
@@ -78,9 +78,9 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
       <label className={fieldLabelClass}>{isPagador ? `Pagador${count > 1 ? 'es' : ''}` : `Membro${count > 1 ? 's' : ''}`}</label>
 
       {/* Hidden controllers to wire into RHF */}
-      <Controller control={control} name="membroId" render={() => <input type="hidden" />} />
-      <Controller control={control} name="pagadoresAdicionaisIds" render={() => <input type="hidden" />} />
-      <Controller control={control} name="pagadoresValores" render={() => <input type="hidden" />} />
+      <Controller control={control} name="responsavelId" render={() => <input type="hidden" />} />
+      <Controller control={control} name="responsaveisAdicionaisIds" render={() => <input type="hidden" />} />
+      <Controller control={control} name="responsaveisValores" render={() => <input type="hidden" />} />
 
       {canEdit && (
         <ComboBox
@@ -88,11 +88,11 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
           onChange={(id) => {
             if (!id) return;
             if (!membroId) {
-              setValue('membroId', id, { shouldValidate: true });
+              setValue('responsavelId', id, { shouldValidate: true });
             } else {
-              setValue('pagadoresAdicionaisIds', [...pagadoresAdicionaisIds, id], { shouldValidate: true });
+              setValue('responsaveisAdicionaisIds', [...pagadoresAdicionaisIds, id], { shouldValidate: true });
             }
-            setValue('pagadoresValores', [], { shouldValidate: false });
+            setValue('responsaveisValores', [], { shouldValidate: false });
           }}
           aria-label={isPagador ? 'Adicionar pagador' : 'Adicionar membro'}
           onAddNew={() => setQuickAddOpen(true)}
@@ -107,8 +107,8 @@ export function ResponsaveisChipsSection({ form, personRole = 'recebedor' }: Res
         </ComboBox>
       )}
 
-      {errors.membroId ? (
-        <span className={errorTextClass}>{errors.membroId.message}</span>
+      {errors.responsavelId ? (
+        <span className={errorTextClass}>{errors.responsavelId.message}</span>
       ) : null}
 
       {/* Chips + valores por membro */}
