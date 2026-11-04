@@ -328,7 +328,7 @@ describe('ComprasPlanejadasListPage', () => {
           statuses: ['Comprada'],
           parcelavel: true,
           contaGerencialId: 'cg-1',
-          pagadorId: 'p-1',
+          responsavelId: 'p-1',
           dataDesejadaInicial: '2026-11-01'
         })
       )
