@@ -5,7 +5,8 @@ vi.mock('./api-client', () => ({
   apiClient: {
     get: vi.fn(),
     post: vi.fn(),
-    put: vi.fn()
+    put: vi.fn(),
+    delete: vi.fn()
   }
 }));
 
@@ -308,5 +309,72 @@ describe('financeiroApi', () => {
       observacao: 'Pagamento integral'
     });
     expect(apiClient.post).toHaveBeenCalledWith('/faturas/f1/estornar', undefined);
+  });
+
+  it('normaliza faturas com competencias array em vez de competencia singular', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { items: [] } } as never);
+    await financeiroApi.faturas.listar({ page: 1, pageSize: 10, competencias: ['2026-04', '2026-05'] });
+    expect(apiClient.get).toHaveBeenCalledWith('/faturas', { params: expect.objectContaining({ competencias: ['2026-04', '2026-05'] }) });
+  });
+
+  it('normaliza faturas sem competencia nem competencias', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { items: [] } } as never);
+    await financeiroApi.faturas.listar({ page: 1, pageSize: 10 });
+    expect(apiClient.get).toHaveBeenCalledWith('/faturas', { params: { page: 1, pageSize: 10 } });
+  });
+
+  it('chama endpoints de transferências e recorrências', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { items: [] } } as never);
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { id: '1' } } as never);
+
+    await financeiroApi.transferencias.listar({ page: 1, pageSize: 10 } as never);
+    await financeiroApi.transferencias.obterPorId('t1');
+    await financeiroApi.transferencias.criar({ contaOrigemId: 'a', contaDestinoId: 'b', valor: 100, data: '2026-04-01' } as never);
+
+    await financeiroApi.recorrencias.listar({ page: 1, pageSize: 10 } as never);
+    await financeiroApi.recorrencias.obter('r1');
+    await financeiroApi.recorrencias.pausar('r1');
+    await financeiroApi.recorrencias.encerrar('r1');
+    await financeiroApi.recorrencias.retomar('r1');
+
+    expect(apiClient.get).toHaveBeenCalledWith('/transferencias', expect.any(Object));
+    expect(apiClient.get).toHaveBeenCalledWith('/transferencias/t1');
+    expect(apiClient.post).toHaveBeenCalledWith('/transferencias', expect.any(Object));
+    expect(apiClient.get).toHaveBeenCalledWith('/recorrencias', expect.any(Object));
+    expect(apiClient.get).toHaveBeenCalledWith('/recorrencias/r1');
+    expect(apiClient.post).toHaveBeenCalledWith('/recorrencias/r1/pausar', {});
+    expect(apiClient.post).toHaveBeenCalledWith('/recorrencias/r1/encerrar', {});
+    expect(apiClient.post).toHaveBeenCalledWith('/recorrencias/r1/retomar', {});
+  });
+
+  it('chama endpoints de fechar, reabrir, listar itens e historico', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { items: [] } } as never);
+    vi.mocked(apiClient.post).mockResolvedValue({ data: { id: '1' } } as never);
+
+    await financeiroApi.faturas.fechar('f1');
+    await financeiroApi.faturas.reabrir('f1');
+    await financeiroApi.faturas.listarItens('f1', { page: 1, pageSize: 10 });
+    await financeiroApi.contasPagar.estornar('1');
+    await financeiroApi.contasPagar.removerDaFatura('1');
+    await financeiroApi.contasPagar.historico('1');
+    await financeiroApi.contasReceber.estornar('1');
+    await financeiroApi.contasReceber.historico('1');
+    await financeiroApi.reembolsos.criar({ contaOrigemId: 'c1' } as never);
+
+    expect(apiClient.post).toHaveBeenCalledWith('/faturas/f1/fechar', undefined);
+    expect(apiClient.post).toHaveBeenCalledWith('/faturas/f1/reabrir', undefined);
+    expect(apiClient.get).toHaveBeenCalledWith('/faturas/f1/itens', expect.any(Object));
+    expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/estornar', undefined);
+    expect(apiClient.post).toHaveBeenCalledWith('/contas-pagar/1/remover-da-fatura', undefined);
+    expect(apiClient.get).toHaveBeenCalledWith('/contas-pagar/1/historico');
+    expect(apiClient.post).toHaveBeenCalledWith('/contas-receber/1/estornar', undefined);
+    expect(apiClient.get).toHaveBeenCalledWith('/contas-receber/1/historico');
+    expect(apiClient.post).toHaveBeenCalledWith('/reembolsos/contas-pagar', expect.any(Object));
+  });
+
+  it('chama delete de transferências', async () => {
+    vi.mocked(apiClient.delete).mockResolvedValue({ data: {} } as never);
+    await financeiroApi.transferencias.cancelar('t1');
+    expect(apiClient.delete).toHaveBeenCalledWith('/transferencias/t1');
   });
 });
