@@ -5,7 +5,7 @@ import type { ItemFaturaConciliacao } from '../../types/conciliacao-fatura';
 const item: ItemFaturaConciliacao = { id: 'i', data: '2026-09-01', descricaoOriginal: 'ASAAS*NEXTFITago 26', valor: 33.33,
   numeroParcela: 1, quantidadeParcelas: 1, status: 'Pendente', contaPagarVinculadaId: null, valorAnteriorSistema: null, candidatos: [],
   preferencias: { descricao: 'Sistema do pilates', responsavelCompraId: 'p1', recebedorId: 'p2',
-    rateios: [{ contaGerencialId: 'a', proporcao: 0.5 }, { contaGerencialId: 'b', proporcao: 0.5 }], ehRecorrente: false, gerarReembolso: false, reembolsoPagadoresIds: [] } };
+    rateios: [{ contaGerencialId: 'a', proporcao: 0.5 }, { contaGerencialId: 'b', proporcao: 0.5 }], ehRecorrente: false, gerarReembolso: false, reembolsoPagadoresIds: [], pagadoresAdicionaisIds: [] } };
 
 describe('rascunho da conciliação', () => {
   it('aplica memória sem perder o título original e fecha os centavos dos rateios', () => {
@@ -39,7 +39,7 @@ describe('validações da revisão financeira', () => {
   });
   it('ignora rascunho inválido e não sugere recorrência ou reembolso para estorno', () => {
     const result = criarRascunho({ ...item, valor: -33.33, rascunho: { descricao: 123 },
-      preferencias: { descricao: null, responsavelCompraId: null, recebedorId: null, rateios: null, reembolsoPagadoresIds: null, ehRecorrente: true, gerarReembolso: true } }, '2026-09-20', 'cartao');
+      preferencias: { descricao: null, responsavelCompraId: null, recebedorId: null, rateios: null, reembolsoPagadoresIds: null, pagadoresAdicionaisIds: null, ehRecorrente: true, gerarReembolso: true } }, '2026-09-20', 'cartao');
     expect(result.descricao).toBe(item.descricaoOriginal);
     expect(result.ehRecorrente).toBe(false);
     expect(result.gerarReembolso).toBe(false);
