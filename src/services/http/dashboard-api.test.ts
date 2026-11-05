@@ -111,4 +111,16 @@ describe('dashboardApi', () => {
       }
     });
   });
+
+  it('chama endpoint de resumo por responsáveis', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { itens: [] } } as never);
+    await dashboardApi.obterResumoPorResponsaveis({ mesReferencia: '2026-04' });
+    expect(apiClient.get).toHaveBeenCalledWith('/dashboard/responsaveis/resumo', { params: { mesReferencia: '2026-04' } });
+  });
+
+  it('chama endpoint de comparativo mensal', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { meses: [] } } as never);
+    await dashboardApi.obterComparativoMensal({ meses: 6 });
+    expect(apiClient.get).toHaveBeenCalledWith('/dashboard/comparativo-mensal', { params: { meses: 6 } });
+  });
 });
