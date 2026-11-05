@@ -29,7 +29,7 @@ test('cadastra compra sem data e envia a foto selecionada', async ({ page }) => 
   await page.getByLabel('Valor Estimado (R$)', { exact: true }).fill('200');
   await page.getByLabel('Conta Gerencial', { exact: true }).click();
   await page.getByRole('button', { name: '2.1 - Tecnologia', exact: true }).click();
-  await page.getByLabel('Responsável', { exact: true }).click();
+  await page.getByLabel('Pagador', { exact: true }).click();
   await page.getByRole('button', { name: 'Matheus', exact: true }).click();
   await page.getByLabel('Fotos do produto', { exact: true }).setInputFiles({
     name: 'mouse.png', mimeType: 'image/png',
