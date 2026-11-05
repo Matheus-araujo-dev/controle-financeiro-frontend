@@ -1,4 +1,4 @@
-import { criarRascunho, montarCriacao, aplicarCampoEmLote, montarReembolso, ratearValor } from './conciliacao-fatura-form';
+import { criarRascunho, montarCriacao, aplicarCampoEmLote, montarReembolso, ratearValor, applySmartFill } from './conciliacao-fatura-form';
 import type { ItemFaturaConciliacao } from '../../types/conciliacao-fatura';
 
 const item: ItemFaturaConciliacao = { id: 'i', data: '2026-09-01', descricaoOriginal: 'ASAAS*NEXTFITago 26', valor: 33.33,
@@ -79,5 +79,40 @@ describe('validações da revisão financeira', () => {
   it('não altera linha fora da seleção', () => {
     const row = draft();
     expect(aplicarCampoEmLote({ a: row }, [], 'descricao', 'Outra').a).toEqual(row);
+  });
+});
+
+describe('pagadores adicionais na memória', () => {
+  it('preenche pagadoresAdicionaisIds das preferências', () => {
+    const comPagadores: ItemFaturaConciliacao = { ...item,
+      preferencias: { ...item.preferencias!, pagadoresAdicionaisIds: ['p3', 'p4'] } };
+    const draft = criarRascunho(comPagadores, '2026-09-20', 'cartao');
+    expect(draft.pagadoresAdicionaisIds).toEqual(['p3', 'p4']);
+  });
+  it('mantém lista vazia quando não há pagadores adicionais na memória', () => {
+    const draft = criarRascunho(item, '2026-09-20', 'cartao');
+    expect(draft.pagadoresAdicionaisIds).toEqual([]);
+  });
+  it('propaga pagadoresAdicionaisIds via smartFill para mesmo estabelecimento', () => {
+    const items: ItemFaturaConciliacao[] = [
+      { ...item, id: 'a', descricaoOriginal: 'SUPERKIT SUPERMERCADO', valor: 386.14 },
+      { ...item, id: 'b', descricaoOriginal: 'SUPERKIT SUPERMERCADO', valor: 67.73, preferencias: null },
+    ];
+    const a = criarRascunho(items[0], '2026-09-20', 'cartao');
+    const b = criarRascunho(items[1], '2026-09-20', 'cartao');
+    const rows = { a: { ...a, pagadoresAdicionaisIds: ['p3', 'p4'] }, b };
+    const result = applySmartFill(rows, 'a', { pagadoresAdicionaisIds: ['p3', 'p4'] }, items);
+    expect(result.b.pagadoresAdicionaisIds).toEqual(['p3', 'p4']);
+  });
+  it('não sobrescreve pagadoresAdicionaisIds já preenchidos no sibling', () => {
+    const items: ItemFaturaConciliacao[] = [
+      { ...item, id: 'a', descricaoOriginal: 'SUPERKIT', valor: 100 },
+      { ...item, id: 'b', descricaoOriginal: 'SUPERKIT', valor: 50, preferencias: null },
+    ];
+    const a = criarRascunho(items[0], '2026-09-20', 'cartao');
+    const b = { ...criarRascunho(items[1], '2026-09-20', 'cartao'), pagadoresAdicionaisIds: ['p5'] };
+    const rows = { a: { ...a, pagadoresAdicionaisIds: ['p3', 'p4'] }, b };
+    const result = applySmartFill(rows, 'a', { pagadoresAdicionaisIds: ['p3', 'p4'] }, items);
+    expect(result.b.pagadoresAdicionaisIds).toEqual(['p5']);
   });
 });

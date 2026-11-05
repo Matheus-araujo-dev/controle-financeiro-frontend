@@ -2551,6 +2551,7 @@ export interface PreferenciasFaturaResponse {
   ehRecorrente?: boolean | null;
   gerarReembolso?: boolean | null;
   reembolsoPagadoresIds?: string[] | null;
+  pagadoresAdicionaisIds?: string[] | null;
 }
 
 export interface PreviaReembolsoFaturaRequest {
