@@ -120,7 +120,7 @@ describe('dashboardApi', () => {
 
   it('chama endpoint de comparativo mensal', async () => {
     vi.mocked(apiClient.get).mockResolvedValue({ data: { meses: [] } } as never);
-    await dashboardApi.obterComparativoMensal({ mesReferencia: '2026-04' });
-    expect(apiClient.get).toHaveBeenCalledWith('/dashboard/comparativo-mensal', { params: { mesReferencia: '2026-04' } });
+    await dashboardApi.obterComparativoMensal({ meses: 6 });
+    expect(apiClient.get).toHaveBeenCalledWith('/dashboard/comparativo-mensal', { params: { meses: 6 } });
   });
 });
