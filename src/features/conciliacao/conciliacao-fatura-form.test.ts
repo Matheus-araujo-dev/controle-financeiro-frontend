@@ -5,7 +5,7 @@ import type { ItemFaturaConciliacao } from '../../types/conciliacao-fatura';
 const item: ItemFaturaConciliacao = { id: 'i', data: '2026-09-01', descricaoOriginal: 'ASAAS*NEXTFITago 26', valor: 33.33,
   numeroParcela: 1, quantidadeParcelas: 1, status: 'Pendente', contaPagarVinculadaId: null, valorAnteriorSistema: null, candidatos: [],
   preferencias: { descricao: 'Sistema do pilates', responsavelCompraId: 'p1', recebedorId: 'p2',
-    rateios: [{ contaGerencialId: 'a', proporcao: 0.5 }, { contaGerencialId: 'b', proporcao: 0.5 }], ehRecorrente: false, gerarReembolso: false, reembolsoPagadoresIds: [] } };
+    rateios: [{ contaGerencialId: 'a', proporcao: 0.5 }, { contaGerencialId: 'b', proporcao: 0.5 }], ehRecorrente: false, gerarReembolso: false, reembolsoPagadoresIds: [], pagadoresAdicionaisIds: [] } };
 
 describe('rascunho da conciliação', () => {
   it('aplica memória sem perder o título original e fecha os centavos dos rateios', () => {
@@ -39,7 +39,7 @@ describe('validações da revisão financeira', () => {
   });
   it('ignora rascunho inválido e não sugere recorrência ou reembolso para estorno', () => {
     const result = criarRascunho({ ...item, valor: -33.33, rascunho: { descricao: 123 },
-      preferencias: { descricao: null, responsavelCompraId: null, recebedorId: null, rateios: null, reembolsoPagadoresIds: null, ehRecorrente: true, gerarReembolso: true } }, '2026-09-20', 'cartao');
+      preferencias: { descricao: null, responsavelCompraId: null, recebedorId: null, rateios: null, reembolsoPagadoresIds: null, pagadoresAdicionaisIds: null, ehRecorrente: true, gerarReembolso: true } }, '2026-09-20', 'cartao');
     expect(result.descricao).toBe(item.descricaoOriginal);
     expect(result.ehRecorrente).toBe(false);
     expect(result.gerarReembolso).toBe(false);
@@ -296,5 +296,40 @@ describe('applySmartFill', () => {
     const result = applySmartFill(rows, 'i1', { rateios: [{ contaGerencialId: 'a', valor: 60 }, { contaGerencialId: 'b', valor: 40 }] }, [i1, i2], despesas);
     expect(result.i2.rateios).toHaveLength(2);
     expect(result.i2.rateios[0].contaGerencialId).toBe('a');
+  });
+});
+
+describe('pagadores adicionais na memória', () => {
+  it('preenche pagadoresAdicionaisIds das preferências', () => {
+    const comPagadores: ItemFaturaConciliacao = { ...item,
+      preferencias: { ...item.preferencias!, pagadoresAdicionaisIds: ['p3', 'p4'] } };
+    const draft = criarRascunho(comPagadores, '2026-09-20', 'cartao');
+    expect(draft.pagadoresAdicionaisIds).toEqual(['p3', 'p4']);
+  });
+  it('mantém lista vazia quando não há pagadores adicionais na memória', () => {
+    const draft = criarRascunho(item, '2026-09-20', 'cartao');
+    expect(draft.pagadoresAdicionaisIds).toEqual([]);
+  });
+  it('propaga pagadoresAdicionaisIds via smartFill para mesmo estabelecimento', () => {
+    const items: ItemFaturaConciliacao[] = [
+      { ...item, id: 'a', descricaoOriginal: 'SUPERKIT SUPERMERCADO', valor: 386.14 },
+      { ...item, id: 'b', descricaoOriginal: 'SUPERKIT SUPERMERCADO', valor: 67.73, preferencias: null },
+    ];
+    const a = criarRascunho(items[0], '2026-09-20', 'cartao');
+    const b = criarRascunho(items[1], '2026-09-20', 'cartao');
+    const rows = { a: { ...a, pagadoresAdicionaisIds: ['p3', 'p4'] }, b };
+    const result = applySmartFill(rows, 'a', { pagadoresAdicionaisIds: ['p3', 'p4'] }, items);
+    expect(result.b.pagadoresAdicionaisIds).toEqual(['p3', 'p4']);
+  });
+  it('não sobrescreve pagadoresAdicionaisIds já preenchidos no sibling', () => {
+    const items: ItemFaturaConciliacao[] = [
+      { ...item, id: 'a', descricaoOriginal: 'SUPERKIT', valor: 100 },
+      { ...item, id: 'b', descricaoOriginal: 'SUPERKIT', valor: 50, preferencias: null },
+    ];
+    const a = criarRascunho(items[0], '2026-09-20', 'cartao');
+    const b = { ...criarRascunho(items[1], '2026-09-20', 'cartao'), pagadoresAdicionaisIds: ['p5'] };
+    const rows = { a: { ...a, pagadoresAdicionaisIds: ['p3', 'p4'] }, b };
+    const result = applySmartFill(rows, 'a', { pagadoresAdicionaisIds: ['p3', 'p4'] }, items);
+    expect(result.b.pagadoresAdicionaisIds).toEqual(['p5']);
   });
 });

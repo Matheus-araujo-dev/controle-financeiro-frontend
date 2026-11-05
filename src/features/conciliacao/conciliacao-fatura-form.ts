@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { CriarItemFatura, ItemFaturaConciliacao, ReembolsoFatura } from '../../types/conciliacao-fatura';
 
-export const camposMemoria = ['descricao', 'responsavelCompraId', 'recebedorId', 'rateios', 'ehRecorrente', 'gerarReembolso', 'reembolsoPagadoresIds'];
+export const camposMemoria = ['descricao', 'responsavelCompraId', 'recebedorId', 'rateios', 'ehRecorrente', 'gerarReembolso', 'reembolsoPagadoresIds', 'pagadoresAdicionaisIds'];
 const rateioSchema = z.object({ contaGerencialId: z.string(), valor: z.number().finite() });
 const rascunhoSchema = z.object({
   vinculo: z.string().optional(), selecionado: z.boolean().optional(), usarValor: z.boolean().optional(),
@@ -32,7 +32,7 @@ export function applySmartFill(
     const mId = despesas.find(d => d.value === patch.rateios![0].contaGerencialId)?.responsavelPadraoId;
     if (mId) next = { ...next, [itemId]: { ...next[itemId], pagadorId: mId } };
   }
-  const propagaveis = ['pagadorId', 'recebedorId', 'rateios', 'gerarReembolso'];
+  const propagaveis = ['pagadorId', 'recebedorId', 'rateios', 'gerarReembolso', 'pagadoresAdicionaisIds'];
   if (!propagaveis.some(c => c in patch)) return next;
   const item = itens.find(i => i.id === itemId);
   if (!item) return next;
@@ -53,6 +53,8 @@ export function applySmartFill(
         if (mId) sp.pagadorId = mId;
       }
     }
+    if (patch.pagadoresAdicionaisIds?.length && !sr.pagadoresAdicionaisIds.length)
+      sp.pagadoresAdicionaisIds = [...patch.pagadoresAdicionaisIds];
     if (patch.gerarReembolso !== undefined && sr.gerarReembolso !== patch.gerarReembolso && sib.valor > 0)
       sp.gerarReembolso = patch.gerarReembolso;
     if (Object.keys(sp).length) next = { ...next, [sib.id]: { ...sr, ...sp } };
@@ -77,7 +79,7 @@ export function criarRascunho(item: ItemFaturaConciliacao, vencimento: string, f
   const p = item.preferencias;
   return {
     descricao: p?.descricao ?? item.descricaoOriginal, recebedorId: p?.recebedorId ?? '', pagadorId: p?.responsavelCompraId ?? '',
-    formaPagamentoId, pagadoresAdicionaisIds: [], pagadoresValores: [],
+    formaPagamentoId, pagadoresAdicionaisIds: p?.pagadoresAdicionaisIds ?? [], pagadoresValores: [],
     rateios: ratearValor(item.valor, p?.rateios ?? []), observacao: '', aprender: true, camposParaAprender: [...camposMemoria],
     ehRecorrente: !!p?.ehRecorrente && item.quantidadeParcelas === 1 && item.valor > 0, recorrenciaTipoDia: 'DiaFixo',
     recorrenciaDia: Number(item.data.slice(8, 10)), recorrenciaInicio: item.data, recorrenciaFim: '', permiteEdicao: true, recorrenciaObservacao: '',
