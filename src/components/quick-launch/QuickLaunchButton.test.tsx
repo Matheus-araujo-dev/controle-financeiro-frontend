@@ -340,7 +340,7 @@ describe('QuickLaunchButton', () => {
         descricao: 'Compra do mes',
         valorOriginal: 120,
         recebedorId: 'p1',
-        responsavelCompraId: 'r1',
+        pagadorId: 'r1',
         formaPagamentoId: 'f-card',
         cartaoId: 'c1',
         rateios: [{ contaGerencialId: 'cd1', valor: 120 }]
@@ -413,12 +413,12 @@ describe('QuickLaunchButton', () => {
     );
   });
 
-  it('auto-fills pagador from conta gerencial responsavelPadraoId', async () => {
+  it('auto-fills pagador from conta gerencial membroPadraoId', async () => {
     vi.mocked(cadastrosApi.contasGerenciais.listar).mockImplementation((filters: { tipo?: string }) => {
       if (filters.tipo === 'Receita') return Promise.resolve(receitasResponse as never);
       return Promise.resolve({
         items: [
-          { id: 'cd1', codigo: '1.1', descricao: 'Mercado', aceitaLancamentos: true, responsavelPadraoId: 'r1' }
+          { id: 'cd1', codigo: '1.1', descricao: 'Mercado', aceitaLancamentos: true, membroPadraoId: 'r1' }
         ]
       } as never);
     });
