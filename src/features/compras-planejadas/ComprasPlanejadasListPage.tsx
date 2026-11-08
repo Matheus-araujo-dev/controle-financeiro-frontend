@@ -89,7 +89,7 @@ export function ComprasPlanejadasListPage() {
     search: '',
     prioridades: undefined,
     statuses: undefined,
-    responsavelId: undefined,
+    pagadorId: undefined,
     contaGerencialId: undefined,
     parcelavel: undefined,
     sortBy: 'dataDesejada',
@@ -414,8 +414,8 @@ export function ComprasPlanejadasListPage() {
                 ariaLabel="Pagador"
                 options={pagadorOptions}
                 placeholder="Todos"
-                value={filters.responsavelId ? [filters.responsavelId] : []}
-                onChange={(next) => setFilters((prev) => ({ ...prev, page: 1, responsavelId: next[0] || undefined }))}
+                value={filters.pagadorId ? [filters.pagadorId] : []}
+                onChange={(next) => setFilters((prev) => ({ ...prev, page: 1, pagadorId: next[0] || undefined }))}
                 searchable
               />
             </FilterField>

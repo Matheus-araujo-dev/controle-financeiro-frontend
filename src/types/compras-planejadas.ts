@@ -33,7 +33,7 @@ export type CompraPlanejadaFilters = ListQueryBase & {
   prioridades?: CompraPlanejadaPrioridade[];
   status?: CompraPlanejadaStatus;
   statuses?: CompraPlanejadaStatus[];
-  responsavelId?: string;
+  pagadorId?: string;
   contaGerencialId?: string;
   parcelavel?: boolean;
   dataDesejadaInicial?: string;

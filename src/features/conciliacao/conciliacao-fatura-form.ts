@@ -110,8 +110,8 @@ export function montarCriacao(item: ItemFaturaConciliacao, draft: RascunhoLancam
   validarRateios(draft.rateios, item.valor);
   if (draft.ehRecorrente && (item.quantidadeParcelas !== 1 || item.valor <= 0)) throw new Error('Recorrência não pode ser combinada com parcelamento ou estorno.');
   return { descricao: draft.descricao.trim(), recebedorId: draft.recebedorId, pagadorId: draft.pagadorId,
-    formaPagamentoId: draft.formaPagamentoId, pagadoresAdicionaisIds: draft.pagadoresAdicionaisIds.length ? draft.pagadoresAdicionaisIds : [],
-    valoresPorPagador: draft.pagadoresValores.length ? draft.pagadoresValores : [],
+    formaPagamentoId: draft.formaPagamentoId, pagadoresAdicionaisIds: draft.pagadoresAdicionaisIds.length ? draft.pagadoresAdicionaisIds : undefined,
+    valoresPorPagador: draft.pagadoresValores.length ? draft.pagadoresValores : undefined,
     rateios: draft.rateios, observacao: draft.observacao || null,
     aprender: draft.aprender, camposParaAprender: draft.camposParaAprender,
     recorrencia: draft.ehRecorrente ? { tipoPeriodicidade: 'Mensal', tipoDia: draft.recorrenciaTipoDia, diaOrdemMensal: draft.recorrenciaDia,

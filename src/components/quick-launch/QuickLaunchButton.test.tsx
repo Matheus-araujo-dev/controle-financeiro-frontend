@@ -374,8 +374,7 @@ describe('QuickLaunchButton', () => {
       expect.objectContaining({
         descricao: 'Servico prestado',
         valorOriginal: 300,
-        pagadorId: 'r1',
-        responsavelId: 'p-new',
+        pagadorId: 'p-new',
         formaPagamentoId: 'f-new',
         cartaoId: null,
         rateios: [{ contaGerencialId: 'cg-new', valor: 300 }]
@@ -502,7 +501,7 @@ describe('QuickLaunchButton', () => {
     await waitFor(() => expect(financeiroApi.contasPagar.criar).toHaveBeenCalledTimes(1));
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
       expect.objectContaining({
-        responsaveisAdicionaisIds: ['r1', 'r2']
+        pagadoresAdicionaisIds: ['r1', 'r2']
       })
     );
   });
@@ -588,8 +587,8 @@ describe('QuickLaunchButton', () => {
     // valoresOk = true → payload inclui valoresPorPagador
     expect(financeiroApi.contasPagar.criar).toHaveBeenCalledWith(
       expect.objectContaining({
-        responsaveisAdicionaisIds: ['r1', 'r2'],
-        valoresPorResponsavel: [150, 50]
+        pagadoresAdicionaisIds: ['r1', 'r2'],
+        valoresPorPagador: [150, 50]
       })
     );
   });
