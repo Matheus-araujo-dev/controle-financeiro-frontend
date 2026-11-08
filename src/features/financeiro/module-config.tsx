@@ -396,7 +396,7 @@ async function loadRateioOptions(tipo: ContaGerencialTipo): Promise<RateioOption
     ativo: true
   });
 
-  const responsavelMap = new Map(response.items.map((i) => [i.id, i.responsavelPadraoId ?? null]));
+  const responsavelMap = new Map(response.items.map((i) => [i.id, i.membroPadraoId ?? null]));
 
   return mapContaGerencialHierarchyData(response.items).map(({ value, main, chain }) => ({
     value,
@@ -416,7 +416,7 @@ function buildContaPagarPayload(values: FinanceiroFormValues, opts?: { forcarPro
     origemCompraPlanejadaId: normalizeNullableId(values.origemCompraPlanejadaId),
     numeroDocumento: normalizeNullableText(values.numeroDocumento),
     dataEmissao: values.dataEmissao || new Date().toISOString().split('T')[0],
-    responsavelCompraId: values.responsavelId,
+    pagadorId: values.responsavelId,
     recebedorId: values.pessoaId,
     dataVencimento: values.dataVencimento,
     formaPagamentoId: values.formaPagamentoId,
@@ -463,8 +463,7 @@ function buildContaReceberPayload(values: FinanceiroFormValues): ContaReceberPay
   return {
     numeroDocumento: normalizeNullableText(values.numeroDocumento),
     dataEmissao: values.dataEmissao || new Date().toISOString().split('T')[0],
-    responsavelId: values.pessoaId || '',
-    pagadorId: values.responsavelId,
+    pagadorId: values.pessoaId || '',
     dataVencimento: values.dataVencimento,
     formaPagamentoId: values.formaPagamentoId,
     cartaoId: normalizeNullableId(values.cartaoId),
@@ -625,7 +624,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
       dataCompra: detail.dataCompra,
       rateios: detail.rateios,
       pessoaId: detail.recebedorId,
-      responsavelId: detail.responsavelCompraId,
+      responsavelId: detail.pagadorId,
       ehRecorrente: detail.ehRecorrente,
       recorrencia: detail.recorrencia
     }),
@@ -654,7 +653,7 @@ export const contasPagarModuleConfig: FinanceiroModuleConfig<ContaPagarResumo, C
         : 'Origem: compra planejada',
       valorOriginal: compraPlanejada.valorEstimado,
       quantidadeParcelas: compraPlanejada.quantidadeParcelasDesejada ?? 1,
-      responsavelId: compraPlanejada.responsavelId,
+      responsavelId: compraPlanejada.pagadorId,
       dataEmissao: compraPlanejada.dataDesejada ?? '',
       dataVencimento: compraPlanejada.dataDesejada ?? '',
       rateios: [
@@ -740,7 +739,7 @@ export const contasReceberModuleConfig: FinanceiroModuleConfig<ContaReceberResum
       dataLiquidacao: detail.dataLiquidacao,
       dataCompra: null,
       rateios: detail.rateios,
-      pessoaId: detail.responsavelId ?? '',
+      pessoaId: detail.pagadorId ?? '',
       responsavelId: detail.pagadorId,
       ehRecorrente: detail.ehRecorrente,
       recorrencia: detail.recorrencia

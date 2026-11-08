@@ -28,6 +28,6 @@ export async function loadPendingItems(today: string) {
     loadPendingPages(page => importacoesWhatsappApi.listar({ page, pageSize: 100, statusCodigo: 'PENDENTE_REVISAO' })),
     loadPendingPages(page => importacoesWhatsappApi.listar({ page, pageSize: 100, statusCodigo: 'EXTRAIDO_COM_SUCESSO' })),
   ]);
-  return buildPendingItems({ pagar: pagar.map(item => ({ ...item, pessoaNome: item.recebedorNome })), receber: receber.map(item => ({ ...item, pessoaNome: item.pagadorNome })), importacoes: [...revisar, ...extraidas] }, today);
+  return buildPendingItems({ pagar: pagar.map(item => ({ ...item, pessoaNome: item.recebedorNome })), receber: receber.map(item => ({ ...item, pessoaNome: item.pagadorNome ?? '' })), importacoes: [...revisar, ...extraidas] }, today);
 }
 

@@ -31,14 +31,14 @@ const testRows = [
   {
     id: 'cp1', titulo: 'Notebook', valorEstimado: 4500, dataDesejada: '2026-08-15',
     prioridade: 'Alta', status: 'Planejada', parcelavel: true, quantidadeParcelasDesejada: 12,
-    contaGerencialId: 'cg1', contaGerencialDescricao: 'TI', responsavelId: 'r1',
-    responsavelNome: 'Ana', link: 'https://example.com', contaPagarGeradaId: null, convertidaEmContaPagarEmUtc: null,
+    contaGerencialId: 'cg1', contaGerencialDescricao: 'TI', pagadorId: 'r1',
+    pagadorNome: 'Ana', link: 'https://example.com', contaPagarGeradaId: null, convertidaEmContaPagarEmUtc: null,
   },
   {
     id: 'cp2', titulo: 'Cadeira', valorEstimado: 800, dataDesejada: null,
     prioridade: 'Baixa', status: 'Comprada', parcelavel: false, quantidadeParcelasDesejada: null,
-    contaGerencialId: 'cg2', contaGerencialDescricao: 'Móveis', responsavelId: 'r2',
-    responsavelNome: null, link: null, contaPagarGeradaId: 'cp-pagar-1', convertidaEmContaPagarEmUtc: '2026-07-01T00:00:00Z',
+    contaGerencialId: 'cg2', contaGerencialDescricao: 'Móveis', pagadorId: 'r2',
+    pagadorNome: null, link: null, contaPagarGeradaId: 'cp-pagar-1', convertidaEmContaPagarEmUtc: '2026-07-01T00:00:00Z',
   },
 ];
 

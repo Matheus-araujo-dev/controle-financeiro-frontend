@@ -47,7 +47,7 @@ export function QuickAddContaGerencialModal({ open, onClose, onSuccess, defaultT
         descricao: descricao.trim(),
         tipo,
         contaPaiId: contaPaiId || null,
-        responsavelPadraoId: null,
+        membroPadraoId: null,
         contaGerencialContrariaId: null,
         ativo: true,
         ehPadraoRecebimentoFaturaCartao: false

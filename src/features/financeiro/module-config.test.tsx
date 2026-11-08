@@ -149,7 +149,7 @@ describe('financeiro module config', () => {
       link: 'https://example.test/produto',
       valorEstimado: 3000,
       quantidadeParcelasDesejada: null,
-      responsavelId: 'resp-2',
+      pagadorId: 'resp-2',
       dataDesejada: null,
       contaGerencialId: 'conta-2'
     } as never);
@@ -183,7 +183,7 @@ describe('financeiro module config', () => {
         observacao: 'Observacao',
         cartaoId: 'cartao-1',
         contaBancariaId: 'banco-1',
-        responsavelCompraId: 'resp-1',
+        pagadorId: 'resp-1',
         recebedorId: 'pessoa-1',
         recorrencia: expect.objectContaining({
           dataInicio: '2026-02-28',
@@ -250,8 +250,7 @@ describe('financeiro module config', () => {
         dataLiquidacao: null,
         cartaoId: null,
         contaBancariaId: null,
-        pagadorId: 'resp-1',
-        responsavelId: 'pessoa-1',
+        pagadorId: 'pessoa-1',
         recorrencia: null
       })
     );
@@ -264,7 +263,7 @@ describe('financeiro module config', () => {
         ...detailBase,
         origemCompraPlanejadaId: 'compra-1',
         recebedorId: 'pessoa-1',
-        responsavelCompraId: null
+        pagadorId: null
       } as never)
     ).toEqual(
       expect.objectContaining({
@@ -281,10 +280,9 @@ describe('financeiro module config', () => {
     expect(
       contasReceberModuleConfig.toFormValues({
         ...detailBase,
-        pagadorId: 'pessoa-2',
-        responsavelId: 'resp-2'
+        pagadorId: 'pessoa-2'
       } as never)
-    ).toEqual(expect.objectContaining({ pessoaId: 'resp-2', responsavelId: 'pessoa-2', formaPagamentoId: 'forma-1' }));
+    ).toEqual(expect.objectContaining({ pessoaId: 'pessoa-2', responsavelId: 'pessoa-2', formaPagamentoId: 'forma-1' }));
   });
 
   it('loads select options and builds summary items', async () => {

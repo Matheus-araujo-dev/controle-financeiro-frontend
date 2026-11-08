@@ -128,7 +128,7 @@ export function ConciliacaoFaturaPage() {
           const patch: Partial<RascunhoLancamento> = {};
           if (s.descricao) patch.descricao = s.descricao;
           if (s.recebedorId) patch.recebedorId = s.recebedorId;
-          if (s.responsavelCompraId) patch.pagadorId = s.responsavelCompraId;
+          if (s.pagadorId) patch.pagadorId = s.pagadorId;
           if (s.contaGerencialId) patch.rateios = [{ contaGerencialId: s.contaGerencialId, valor: item.valor }];
           next[s.itemId] = { ...next[s.itemId], ...patch };
         }

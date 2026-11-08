@@ -166,7 +166,7 @@ export function MovimentacoesPage() {
 
   const { data: pessoasData } = useQuery({
     queryKey: ['pessoas', 'options'],
-    queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 100, search: '', ativo: true }),
+    queryFn: () => cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true }),
     staleTime: 5 * 60_000
   });
   const responsavelOptions: FilterOption[] = (pessoasData?.items ?? []).map((item) => ({

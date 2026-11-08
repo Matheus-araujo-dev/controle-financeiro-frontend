@@ -18,8 +18,8 @@ type SelectOptionWithContaGerencialData = SelectOption & {
     descricao: string;
     tipo?: string;
     contaPaiId?: string | null;
-    responsavelPadraoId?: string | null;
-    responsavelPadraoNome?: string | null;
+    membroPadraoId?: string | null;
+    membroPadraoNome?: string | null;
   };
 };
 
@@ -89,8 +89,8 @@ export function mapContaGerencialSelectOptionsWithData<
   T extends ContaGerencialLike & {
     tipo?: string;
     contaPaiId?: string | null;
-    responsavelPadraoId?: string | null;
-    responsavelPadraoNome?: string | null;
+    membroPadraoId?: string | null;
+    membroPadraoNome?: string | null;
   }
 >(items: T[]): SelectOptionWithContaGerencialData[] {
   return sortContasGerenciaisByCodigo(items).map((item) => ({
@@ -101,8 +101,8 @@ export function mapContaGerencialSelectOptionsWithData<
       descricao: item.descricao,
       tipo: item.tipo,
       contaPaiId: item.contaPaiId ?? null,
-      responsavelPadraoId: item.responsavelPadraoId ?? null,
-      responsavelPadraoNome: item.responsavelPadraoNome ?? null
+      membroPadraoId: item.membroPadraoId ?? null,
+      membroPadraoNome: item.membroPadraoNome ?? null
     }
   }));
 }

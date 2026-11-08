@@ -305,7 +305,7 @@ describe('contaGerencialSchema', () => {
       descricao: 'Despesas Operacionais',
       tipo: 'Despesa',
       contaPaiId: '',
-      responsavelPadraoId: '',
+      membroPadraoId: '',
       contaGerencialContrariaId: '',
       ativo: true,
       ehPadraoRecebimentoFaturaCartao: false
@@ -319,7 +319,7 @@ describe('contaGerencialSchema', () => {
       descricao: '',
       tipo: 'Despesa',
       contaPaiId: '',
-      responsavelPadraoId: '',
+      membroPadraoId: '',
       contaGerencialContrariaId: '',
       ativo: true,
       ehPadraoRecebimentoFaturaCartao: false
@@ -333,7 +333,7 @@ describe('contaGerencialSchema', () => {
       descricao: 'Test',
       tipo: 'Invalido',
       contaPaiId: '',
-      responsavelPadraoId: '',
+      membroPadraoId: '',
       contaGerencialContrariaId: '',
       ativo: true,
       ehPadraoRecebimentoFaturaCartao: false
@@ -347,7 +347,7 @@ describe('contaGerencialSchema', () => {
       descricao: 'Receitas',
       tipo: 'Receita',
       contaPaiId: '',
-      responsavelPadraoId: '',
+      membroPadraoId: '',
       contaGerencialContrariaId: '',
       ativo: true,
       ehPadraoRecebimentoFaturaCartao: false
