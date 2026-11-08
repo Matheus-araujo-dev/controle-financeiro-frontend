@@ -32,7 +32,7 @@ export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, optio
       ? <PagadoresCell pagadorId={rows[item.id].pagadorId} adicionaisIds={rows[item.id].pagadoresAdicionaisIds}
           valores={rows[item.id].pagadoresValores} total={item.valor} options={options.pagadores} disabled={locked}
           onChange={patch => update(item.id, patch)} onAddNew={acoes?.onAddPagador} />
-      : <span>{nome(options.pagadores, conta?.responsavelCompraId)}</span> },
+      : <span>{nome(options.pagadores, conta?.pagadorId)}</span> },
     { titulo: 'Recebedor', render: (item, conta, novo, locked) => novo
       ? <ComboBox compact aria-label={`Recebedor de ${item.descricaoOriginal}`} options={options.recebedores} value={rows[item.id].recebedorId} disabled={locked}
           onChange={id => update(item.id, { recebedorId: id })} onAddNew={acoes?.onAddRecebedor} addNewLabel="Novo recebedor" /> : <span>{nome(options.recebedores, conta?.recebedorId)}</span> },

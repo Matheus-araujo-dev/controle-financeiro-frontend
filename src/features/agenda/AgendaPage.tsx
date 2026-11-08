@@ -151,7 +151,7 @@ export function AgendaPage() {
       id: c.id,
       tipo: 'ContaReceber',
       descricao: c.descricao,
-      pessoaNome: c.pagadorNome,
+      pessoaNome: c.pagadorNome ?? '',
       dataVencimento: c.dataVencimento,
       valor: c.valorLiquido,
       statusCodigo: c.statusCodigo,

@@ -27,7 +27,7 @@ function mapReceber(item: ContaReceberResumo): DuplicateItemSummary {
   return {
     id: item.id,
     descricao: item.descricao,
-    pessoaNome: item.pagadorNome,
+    pessoaNome: item.pagadorNome ?? '',
     valorLiquido: item.valorLiquido,
     dataVencimento: item.dataVencimento,
     statusNome: item.statusNome,

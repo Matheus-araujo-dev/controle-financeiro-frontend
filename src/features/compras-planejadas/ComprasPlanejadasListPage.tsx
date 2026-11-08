@@ -188,8 +188,8 @@ export function ComprasPlanejadasListPage() {
     },
     {
       title: 'Pagador',
-      dataIndex: 'responsavelNome',
-      key: 'responsavelNome',
+      dataIndex: 'pagadorNome',
+      key: 'pagadorNome',
       mobileRole: 'subtitle',
       render: (value) => <span className="text-sm text-on-surface-variant">{String(value)}</span>
     },
@@ -241,7 +241,7 @@ export function ComprasPlanejadasListPage() {
     { header: 'Prioridade', value: (r) => prioridadeLabel(r.prioridade), cellStyle: STYLE.DATA_TEXT, width: 12 },
     { header: 'Status', value: (r) => r.status, cellStyle: STYLE.DATA_TEXT, width: 12 },
     { header: 'Conta gerencial', value: (r) => r.contaGerencialDescricao ?? '', cellStyle: STYLE.DATA_TEXT, width: 28 },
-    { header: 'Pagador', value: (r) => r.responsavelNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
+    { header: 'Pagador', value: (r) => r.pagadorNome ?? '', cellStyle: STYLE.DATA_TEXT, width: 20 },
     { header: 'Parcelas', value: (r) => r.parcelavel ? (r.quantidadeParcelasDesejada ?? 1) : 1, cellStyle: STYLE.DATA_TEXT, width: 10 },
     { header: 'Link', value: (r) => r.link ?? '', cellStyle: STYLE.DATA_TEXT, width: 30 },
   ];
@@ -251,7 +251,7 @@ export function ComprasPlanejadasListPage() {
     { header: 'Prioridade', value: (r) => prioridadeLabel(r.prioridade) },
     { header: 'Status', value: (r) => r.status },
     { header: 'Data desejada', value: (r) => r.dataDesejada ? formatDateBR(r.dataDesejada) : '—' },
-    { header: 'Pagador', value: (r) => r.responsavelNome ?? '' },
+    { header: 'Pagador', value: (r) => r.pagadorNome ?? '' },
     { header: 'Valor estimado (R$)', value: (r) => formatCurrencyBRL(r.valorEstimado), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorEstimado, 0)) },
   ];
 
@@ -297,7 +297,7 @@ export function ComprasPlanejadasListPage() {
       rows,
       dateValue: (r) => r.dataDesejada ?? new Date().toISOString().slice(0, 10),
       descriptionValue: (r) => r.titulo,
-      subtitleValue: (r) => r.responsavelNome ?? '',
+      subtitleValue: (r) => r.pagadorNome ?? '',
       signedValue: (r) => -r.valorEstimado,
     }, win);
   }
