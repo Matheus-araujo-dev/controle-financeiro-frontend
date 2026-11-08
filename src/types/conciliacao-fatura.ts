@@ -20,7 +20,7 @@ export type ConciliacaoFatura = Omit<ApiContract<Api.ConciliacaoFaturaResponse, 
   itens: ItemFaturaConciliacao[]; contasSistema: ContaConciliacao[];
 };
 export type CriarItemFatura = Omit<ApiContract<Api.CriarItemFaturaRequest, 'pagadorId' | 'observacao'>,
-  'rateios' | 'recorrencia' | 'reembolso'> & {
+  'rateios' | 'recorrencia' | 'reembolso' | 'pagadoresAdicionaisIds' | 'valoresPorPagador'> & {
   rateios: ApiContract<Api.RateioRequest>[]; recorrencia: RecorrenciaPayload | null; reembolso: ReembolsoFatura | null;
   pagadoresAdicionaisIds?: string[]; valoresPorPagador?: number[];
 };
