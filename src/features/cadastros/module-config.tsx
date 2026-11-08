@@ -165,7 +165,7 @@ function renderCurrency(value: number | null | undefined) {
 async function loadContaBancariaOptions() {
   const response = await cadastrosApi.contasBancarias.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: ''
   });
 
@@ -178,7 +178,7 @@ async function loadContaBancariaOptions() {
 async function loadContaGerencialOptions(filters?: Partial<ContaGerencialFilters>) {
   const response = await cadastrosApi.contasGerenciais.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: '',
     ...filters
   });
@@ -220,7 +220,7 @@ async function loadContaGerencialContrariaOptions(values: Record<string, unknown
 async function loadPessoaOptions() {
   const response = await cadastrosApi.pessoas.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: '',
     ativo: true
   });
@@ -234,7 +234,7 @@ async function loadPessoaOptions() {
 async function loadFormaPagamentoOptions() {
   const response = await cadastrosApi.formasPagamento.listar({
     page: 1,
-    pageSize: 100,
+    pageSize: 500,
     search: ''
   });
 

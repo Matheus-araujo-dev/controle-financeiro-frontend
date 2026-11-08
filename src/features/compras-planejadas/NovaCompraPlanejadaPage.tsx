@@ -105,7 +105,7 @@ export function NovaCompraPlanejadaPage() {
   }, []);
 
   const reloadPagadorOptions = useCallback(async () => {
-    const response = await cadastrosApi.pessoas.listar({ page: 1, pageSize: 100, search: '', ativo: true, ehPagador: true });
+    const response = await cadastrosApi.pessoas.listar({ page: 1, pageSize: 500, search: '', ativo: true, ehPagador: true });
     setPagadorOptions(response.items.map((item) => ({ label: item.nome, value: item.id })));
   }, []);
 
