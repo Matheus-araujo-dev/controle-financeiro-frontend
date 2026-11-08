@@ -66,8 +66,8 @@ describe('ComprasPlanejadasListPage', () => {
           quantidadeParcelasDesejada: 10,
           contaGerencialId: 'cg-1',
           contaGerencialDescricao: 'Tecnologia',
-          responsavelId: 'p-1',
-          responsavelNome: 'Michelle',
+          pagadorId: 'p-1',
+          pagadorNome: 'Michelle',
           link: 'https://loja.exemplo.com/notebook',
           contaPagarGeradaId: null,
           convertidaEmContaPagarEmUtc: null
@@ -195,8 +195,8 @@ describe('ComprasPlanejadasListPage', () => {
         quantidadeParcelasDesejada: null,
         contaGerencialId: '',
         contaGerencialDescricao: '',
-        responsavelId: '',
-        responsavelNome: '',
+        pagadorId: '',
+        pagadorNome: '',
         link: null,
         contaPagarGeradaId: null,
         convertidaEmContaPagarEmUtc: null
@@ -224,8 +224,8 @@ describe('ComprasPlanejadasListPage', () => {
         quantidadeParcelasDesejada: 6,
         contaGerencialId: '',
         contaGerencialDescricao: '',
-        responsavelId: '',
-        responsavelNome: '',
+        pagadorId: '',
+        pagadorNome: '',
         link: null,
         contaPagarGeradaId: null,
         convertidaEmContaPagarEmUtc: null
@@ -256,8 +256,8 @@ describe('ComprasPlanejadasListPage', () => {
         quantidadeParcelasDesejada: null,
         contaGerencialId: '',
         contaGerencialDescricao: '',
-        responsavelId: '',
-        responsavelNome: '',
+        pagadorId: '',
+        pagadorNome: '',
         link: null,
         contaPagarGeradaId: 'conta-pagar-123',
         convertidaEmContaPagarEmUtc: '2026-10-02T12:00:00Z'
@@ -328,7 +328,7 @@ describe('ComprasPlanejadasListPage', () => {
           statuses: ['Comprada'],
           parcelavel: true,
           contaGerencialId: 'cg-1',
-          responsavelId: 'p-1',
+          pagadorId: 'p-1',
           dataDesejadaInicial: '2026-11-01'
         })
       )

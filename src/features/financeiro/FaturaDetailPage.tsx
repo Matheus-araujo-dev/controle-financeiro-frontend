@@ -196,7 +196,7 @@ export function FaturaDetailPage() {
   const richExportColumns: RichColumn<FaturaItem>[] = [
     { header: 'Descrição', value: (r) => r.descricao, cellStyle: STYLE.DATA_TEXT, width: 36 },
     { header: 'Recebedor', value: (r) => r.recebedorNome, cellStyle: STYLE.DATA_TEXT, width: 24 },
-    { header: 'Pagador', value: (r) => r.responsavelNome ?? '—', cellStyle: STYLE.DATA_TEXT, width: 20 },
+    { header: 'Pagador', value: (r) => r.pagadorNome ?? '—', cellStyle: STYLE.DATA_TEXT, width: 20 },
     { header: 'Data da compra', value: (r) => formatDateBR(r.dataCompra), cellStyle: STYLE.DATA_TEXT, width: 16 },
     { header: 'Valor (R$)', value: (r) => r.ehEstorno ? r.valorLiquido : -r.valorLiquido, cellStyle: STYLE.DATA_CURRENCY, totalValue: (rows) => rows.reduce((s, r) => s + (r.ehEstorno ? r.valorLiquido : -r.valorLiquido), 0), width: 14 },
     { header: 'Status', value: (r) => r.ehEstorno ? 'Estorno' : r.statusCodigo, cellStyle: STYLE.DATA_TEXT, width: 12 },
@@ -206,7 +206,7 @@ export function FaturaDetailPage() {
   const printColumns: PrintColumn<FaturaItem>[] = [
     { header: 'Descrição', value: (r) => r.descricao },
     { header: 'Recebedor', value: (r) => r.recebedorNome },
-    { header: 'Pagador', value: (r) => r.responsavelNome ?? '—' },
+    { header: 'Pagador', value: (r) => r.pagadorNome ?? '—' },
     { header: 'Data', value: (r) => formatDateBR(r.dataCompra) },
     { header: 'Valor (R$)', value: (r) => formatCurrencyBRL(r.valorLiquido), align: 'right', totalValue: (rows) => formatCurrencyBRL(rows.reduce((s, r) => s + r.valorLiquido, 0)) },
     { header: 'Status', value: (r) => r.ehEstorno ? 'Estorno' : r.statusCodigo },

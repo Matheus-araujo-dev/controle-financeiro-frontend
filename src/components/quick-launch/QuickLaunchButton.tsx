@@ -296,7 +296,7 @@ export function QuickLaunchModal({
     const fromServer = mapContaGerencialHierarchyData(items).map(({ value, main, chain }) => ({
       value,
       displayText: main,
-      responsavelPadraoId: byId.get(value)?.responsavelPadraoId ?? null,
+      responsavelPadraoId: byId.get(value)?.membroPadraoId ?? null,
       label: chain ? (
         <span>
           {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
@@ -312,7 +312,7 @@ export function QuickLaunchModal({
     const fromServer = mapContaGerencialHierarchyData(items).map(({ value, main, chain }) => ({
       value,
       displayText: main,
-      responsavelPadraoId: byId.get(value)?.responsavelPadraoId ?? null,
+      responsavelPadraoId: byId.get(value)?.membroPadraoId ?? null,
       label: chain ? (
         <span>
           {main} <span className="text-on-surface-variant/50 text-xs font-normal">{chain}</span>
@@ -474,10 +474,10 @@ export function QuickLaunchModal({
           const criada = await financeiroApi.contasPagar.obterPorId(createdId);
           reembolsoDate = criada.dataVencimento;
           reembolsoParcelas = criada.quantidadeParcelas;
-          membroNome = criada.responsavelCompraNome ?? undefined;
+          membroNome = criada.pagadorNome ?? undefined;
           pessoaNome = criada.recebedorNome;
-          if (criada.responsavelCompraId && criada.responsavelCompraNome)
-            nomesMap[criada.responsavelCompraId] = criada.responsavelCompraNome;
+          if (criada.pagadorId && criada.pagadorNome)
+            nomesMap[criada.pagadorId] = criada.pagadorNome;
         } catch {
           // se falhar, usa os valores atuais do form
         }
@@ -583,13 +583,13 @@ export function QuickLaunchModal({
           const result = await financeiroApi.contasPagar.criar({
             ...base,
             origemCompraPlanejadaId: null,
-            responsavelCompraId: membroId,
+            pagadorId: membroId,
             recebedorId: pessoaId,
             dataCompra: exigeCartao ? dataVencimento : null,
             forcarProximaFatura,
             contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
-            ...(temMultiplos && { responsaveisAdicionaisIds: allRespIds }),
-            ...(temMultiplos && valoresOk && { valoresPorResponsavel: membrosValores })
+            ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
+            ...(temMultiplos && valoresOk && { valoresPorPagador: membrosValores })
           });
           notify('success', 'Lançamento criado', base.descricao);
           return result.id;
@@ -598,8 +598,7 @@ export function QuickLaunchModal({
       return async () => {
         const result = await financeiroApi.contasReceber.criar({
           ...base,
-          responsavelId: pessoaId,
-          pagadorId: membroId,
+          pagadorId: pessoaId,
           contaVinculadaOrigemId: initialValues?.contaVinculadaOrigemId ?? null,
           ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
           ...(temMultiplos && valoresOk && { valoresPorPagador: membrosValores })
@@ -677,7 +676,7 @@ export function QuickLaunchModal({
           const result = await financeiroApi.contasPagar.criar({
             ...base,
             origemCompraPlanejadaId: null,
-            responsavelCompraId: membroId,
+            pagadorId: membroId,
             recebedorId: pessoaId,
             dataCompra: exigeCartao ? dataVencimento : null,
             forcarProximaFatura,
@@ -692,8 +691,7 @@ export function QuickLaunchModal({
       return async () => {
         const result = await financeiroApi.contasReceber.criar({
           ...base,
-          responsavelId: pessoaId,
-          pagadorId: membroId,
+          pagadorId: pessoaId,
           contaVinculadaOrigemId: null,
           ...(temMultiplos && { pagadoresAdicionaisIds: allRespIds }),
           ...(temMultiplos && valoresOk && { valoresPorPagador: membrosValores })

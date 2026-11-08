@@ -50,7 +50,7 @@ const baseRecorrencia = {
   descricao: 'Aluguel comercial',
   valorLiquido: 1500,
   pessoaNome: 'Imobiliária XPTO',
-  responsavelNome: 'Matheus'
+  pessoaSecundariaNome: 'Matheus'
 };
 
 describe('RecurrenceDetailPage', () => {
@@ -91,7 +91,7 @@ describe('RecurrenceDetailPage', () => {
       contaOrigemTipo: 'ContaReceber',
       ativa: false,
       observacao: null,
-      responsavelNome: null,
+      pessoaSecundariaNome: null,
       dataFim: null,
       tipoDia: 'DiaUtil' as const
     });

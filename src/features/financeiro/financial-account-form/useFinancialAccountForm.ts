@@ -18,7 +18,7 @@ import { calculateValorLiquido, resolveFormaPagamentoBehavior } from '../module-
 import { financialAccountFormSchema } from '../schemas';
 import { formatMonthYearBR } from '../../../shared/date';
 import { extractCardInvoicePreview, type CardInvoicePreview } from './card-invoice';
-import type { CancelarContaPagarPayload, ContaVinculadaResumo, GrupoReembolsoInfo, GrupoResponsaveisInfo } from '../../../types/financeiro';
+import type { CancelarContaPagarPayload, ContaVinculadaResumo, GrupoReembolsoInfo, GrupoPagadoresInfo } from '../../../types/financeiro';
 import type { DuplicateItemSummary } from '../financial-rules';
 import { financeiroApi } from '../../../services/http/financeiro-api';
 import { contasPagarModuleConfig, contasReceberModuleConfig } from '../module-config';
@@ -96,7 +96,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
   const [grupoReembolsoId, setGrupoReembolsoId] = useState<string | null>(null);
   const [grupoReembolso, setGrupoReembolso] = useState<GrupoReembolsoInfo | null>(null);
   const [grupoResponsaveisId, setGrupoResponsaveisId] = useState<string | null>(null);
-  const [grupoResponsaveis, setGrupoResponsaveis] = useState<GrupoResponsaveisInfo | null>(null);
+  const [grupoResponsaveis, setGrupoResponsaveis] = useState<GrupoPagadoresInfo | null>(null);
   const [pendingPropagation, setPendingPropagation] = useState<PendingPropagation | null>(null);
   const originalValuesRef = useRef<FinanceiroFormValues | null>(null);
 
@@ -236,7 +236,7 @@ export function useFinancialAccountForm(config: FinanceiroModuleConfig<any, any,
         setGrupoReembolso((detail as Record<string, unknown>).grupoReembolso as GrupoReembolsoInfo | null ?? null);
         const isPagarConfig = config.key === 'contas-pagar';
         setGrupoResponsaveisId((detail as Record<string, unknown>)[isPagarConfig ? 'grupoPagadoresId' : 'grupoRecebedoresId'] as string | null ?? null);
-        setGrupoResponsaveis((detail as Record<string, unknown>)[isPagarConfig ? 'grupoPagadores' : 'grupoRecebedores'] as GrupoResponsaveisInfo | null ?? null);
+        setGrupoResponsaveis((detail as Record<string, unknown>)[isPagarConfig ? 'grupoPagadores' : 'grupoRecebedores'] as GrupoPagadoresInfo | null ?? null);
         if ('grupoParcelamentoId' in detail) {
           setGrupoParcelamentoId((detail as Record<string, unknown>).grupoParcelamentoId as string | null);
           setNumeroParcela((detail as Record<string, unknown>).numeroParcela as number | undefined);

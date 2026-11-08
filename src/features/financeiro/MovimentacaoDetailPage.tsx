@@ -215,7 +215,7 @@ export function MovimentacaoDetailPage() {
                 <div className="space-y-0">
                   <OrigemInfoRow
                     label="Responsável"
-                    value={mov.contaPagarId ? (origemConta as ContaPagarDetalhe).responsavelCompraNome : (origemConta as ContaReceberDetalhe).responsavelNome}
+                    value={mov.contaPagarId ? (origemConta as ContaPagarDetalhe).pagadorNome : (origemConta as ContaReceberDetalhe).pagadorNome}
                   />
                   <OrigemInfoRow
                     label={mov.contaPagarId ? 'Recebedor' : 'Pagador'}
