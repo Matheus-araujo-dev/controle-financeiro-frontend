@@ -118,7 +118,7 @@ export function useReportData(activeReport: ReportKey, filters: ReportFilters) {
           prioridade: compraPrioridade[0] as CompraPlanejadaPrioridade | undefined,
           dataDesejadaInicial: range.start,
           dataDesejadaFinal: range.end,
-          responsavelId: responsavelId || undefined,
+          pagadorId: responsavelId || undefined,
           sortBy: 'dataDesejada',
           sortDirection: 'Asc'
         })) }) },
