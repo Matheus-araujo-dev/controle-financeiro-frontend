@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Checkbox, Input } from 'antd';
 import { Button } from '../../components/ui/Button';
 import { PageState } from '../../components/states/PageState';
@@ -14,11 +14,13 @@ import { ConciliacaoFaturaGrid } from './ConciliacaoFaturaGrid';
 import { criarCamposGrade, type AcoesCriacao } from './ConciliacaoFaturaCampos';
 import { ConciliacaoFaturaLote } from './ConciliacaoFaturaLote';
 import { criarRascunho, montarCriacao, montarReembolso, applySmartFill, type RascunhoLancamento } from './conciliacao-fatura-form';
+import { notify } from '../../store/notification-store';
 import { QuickAddPessoaModal } from '../cadastros/quick-add/QuickAddPessoaModal';
 import { QuickAddContaGerencialModal } from '../cadastros/quick-add/QuickAddContaGerencialModal';
 
 export function ConciliacaoFaturaPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const fileInput = useRef<HTMLInputElement>(null);
   const [senha, setSenha] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -94,10 +96,15 @@ export function ConciliacaoFaturaPage() {
     setError(failures.join(' / ')); setMessage(failures.length ? 'Algumas linhas não foram salvas.' : 'Rascunho salvo. Nenhuma conta foi criada.'); setBusy(false);
   }
   async function recarregarSessao() {
-    setSession(await conciliacaoFaturaApi.obter(id!, session!.id));
+    const updated = await conciliacaoFaturaApi.obter(id!, session!.id);
+    setSession(updated);
     setDirty(false);
     void queryClient.invalidateQueries({ queryKey: ['faturas'] });
     void queryClient.invalidateQueries({ queryKey: ['faturas', 'detail', id] });
+    if (updated.itens.every(i => i.status !== 'Pendente')) {
+      notify('success', 'Conciliação concluída', 'Todos os itens da fatura foram processados.');
+      navigate(`/faturas/${id}`);
+    }
   }
   function handlePessoaCriada(newId: string, label: string, role: 'recebedor' | 'pagador') {
     const option = { label, value: newId };
