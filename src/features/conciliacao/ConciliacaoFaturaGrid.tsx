@@ -69,21 +69,25 @@ export function ConciliacaoFaturaGrid({ session, onConfirmar, onCriar, onIgnorar
         validItems.push({ item, action: 'vincular', conta });
       }
       if (!validItems.length) return;
-      const results = await Promise.allSettled(validItems.map(async ({ item, action, conta }) => {
-        if (action === 'criar') { await onCriar!(item.id); return { ignorado: false }; }
-        if (action === 'ignorar') { await onIgnorar!(item.id); return { ignorado: true }; }
-        await onConfirmar(item.id, { contaPagarId: conta!.id, valorEsperadoSistema: conta!.valor, usarValorFatura: escolhas[item.id]?.usarValor ?? false });
-        return { ignorado: false };
-      }));
+      const batchSize = 5;
       const processedIds = new Set<string>();
-      for (let i = 0; i < results.length; i++) {
-        const { item } = validItems[i];
-        processedIds.add(item.id);
-        if (results[i].status === 'fulfilled') {
-          atualizar(item.id, { concluido: true, selecionado: false, ignorado: (results[i] as PromiseFulfilledResult<{ ignorado: boolean }>).value.ignorado, erro: undefined });
-        } else {
-          const reason = (results[i] as PromiseRejectedResult).reason;
-          atualizar(item.id, { erro: reason instanceof Error ? reason.message : 'Não foi possível processar esta linha.' });
+      for (let start = 0; start < validItems.length; start += batchSize) {
+        const batch = validItems.slice(start, start + batchSize);
+        const results = await Promise.allSettled(batch.map(async ({ item, action, conta }) => {
+          if (action === 'criar') { await onCriar!(item.id); return { ignorado: false }; }
+          if (action === 'ignorar') { await onIgnorar!(item.id); return { ignorado: true }; }
+          await onConfirmar(item.id, { contaPagarId: conta!.id, valorEsperadoSistema: conta!.valor, usarValorFatura: escolhas[item.id]?.usarValor ?? false });
+          return { ignorado: false };
+        }));
+        for (let i = 0; i < results.length; i++) {
+          const { item } = batch[i];
+          processedIds.add(item.id);
+          if (results[i].status === 'fulfilled') {
+            atualizar(item.id, { concluido: true, selecionado: false, ignorado: (results[i] as PromiseFulfilledResult<{ ignorado: boolean }>).value.ignorado, erro: undefined });
+          } else {
+            const reason = (results[i] as PromiseRejectedResult).reason;
+            atualizar(item.id, { erro: reason instanceof Error ? reason.message : 'Não foi possível processar esta linha.' });
+          }
         }
       }
       try { await onBatchComplete?.(); } catch { /* page handles */ }

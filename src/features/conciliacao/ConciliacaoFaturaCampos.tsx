@@ -78,7 +78,7 @@ export function criarCamposGrade(rows: Record<string, RascunhoLancamento>, optio
     { titulo: 'Memória', largura: 200, render: (item, _, __, locked) => <div className="space-y-2">
       <Checkbox checked={rows[item.id].aprender} disabled={locked} onChange={e => update(item.id, { aprender: e.target.checked })}>Aprender esta decisão</Checkbox>
       {rows[item.id].aprender && <Select mode="multiple" aria-label="Campos para aprender" className="w-full" disabled={locked} value={rows[item.id].camposParaAprender}
-        options={camposMemoria.map((value, i) => ({ value, label: ['Descrição', 'Pagador', 'Recebedor', 'Rateios', 'Recorrência', 'Gerar reembolso', 'Pagadores do reembolso'][i] }))}
+        options={camposMemoria.map((value, i) => ({ value, label: ['Descrição', 'Pagador', 'Recebedor', 'Rateios', 'Recorrência', 'Gerar reembolso', 'Pagadores do reembolso', 'Pagadores adicionais'][i] }))}
         onChange={camposParaAprender => update(item.id, { camposParaAprender })} />}
       {!rows[item.id].aprender && <p className="text-xs text-on-surface-variant">Somente desta vez</p>}
     </div> }
