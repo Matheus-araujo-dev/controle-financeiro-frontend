@@ -188,7 +188,7 @@ export function FaturaDetailPage() {
       {
         key: 'itens',
         eyebrow: 'Lançamentos',
-        value: String(detail.itens.length)
+        value: String(detail.itens?.length ?? 0)
       }
     ];
   }, [detail]);
@@ -451,7 +451,7 @@ export function FaturaDetailPage() {
             <div className="flex items-center gap-2">
               <button onClick={() => void handleXlsxExport()} className="px-3 h-8 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-bold text-on-surface-variant hover:text-white transition-all uppercase tracking-wider">XLSX</button>
               <button onClick={() => void handlePdfExport()} className="px-3 h-8 rounded-xl bg-surface-container hover:bg-surface-container-high border border-white/5 text-xs font-bold text-on-surface-variant hover:text-white transition-all uppercase tracking-wider">PDF</button>
-              <NeonBadge variant="neutral">{itensData?.totalItems ?? detail.itens.length} item(ns)</NeonBadge>
+              <NeonBadge variant="neutral">{itensData?.totalItems ?? detail.itens?.length ?? 0} item(ns)</NeonBadge>
             </div>
           </div>
           <div className="w-full max-w-xs">
@@ -472,7 +472,7 @@ export function FaturaDetailPage() {
           pagination={{
             current: itemsPage,
             pageSize: itemsPageSize,
-            total: itensData?.totalItems ?? detail.itens.length,
+            total: itensData?.totalItems ?? detail.itens?.length ?? 0,
             onChange: (page, size) => { setItemsPage(page); setItemsPageSize(size); }
           }}
           onTableChange={handleItensTableChange}
